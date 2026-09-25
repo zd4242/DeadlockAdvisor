@@ -1,0 +1,42 @@
+{
+ "fetched_at": 1790400000,
+ "latest_patch": {
+  "title": "09-16-2026 Gameplay Update",
+  "label": "09-16",
+  "start": 1789603200
+ },
+ "rank": "all",
+ "match_mode": "ranked,unranked",
+ "lane_end_s": 600,
+ "min_n": 2000,
+ "min_reliability": 0.5,
+ "families": {
+  "against/full": {
+   "since": 1789603200,
+   "since_patch": "09-16",
+   "rows": 5928,
+   "noise_scale": 0.994,
+   "tau": 0.596,
+   "reliability": 0.593,
+   "kept": true
+  },
+  "as/full": {
+   "since": 1787443200,
+   "since_patch": "08-22",
+   "rows": 5928,
+   "noise_scale": 1.011,
+   "tau": 2.018,
+   "reliability": 0.942,
+   "kept": true
+  },
+  "as/lane": {
+   "since": 1787443200,
+   "since_patch": "08-22",
+   "rows": 2508,
+   "noise_scale": 0.991,
+   "tau": 2.047,
+   "reliability": 0.946,
+   "kept": true
+  }
+ }
+}

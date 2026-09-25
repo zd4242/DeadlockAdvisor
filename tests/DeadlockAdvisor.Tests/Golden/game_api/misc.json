@@ -1,0 +1,116 @@
+{
+ "norm": [
+  [
+   "Mo & Krill",
+   "moandkrill"
+  ],
+  [
+   "The Doorman",
+   "doorman"
+  ],
+  [
+   "the",
+   "the"
+  ],
+  [
+   "Theo",
+   "o"
+  ],
+  [
+   "Grey Talon",
+   "greytalon"
+  ],
+  [
+   "Lady Geist",
+   "ladygeist"
+  ],
+  [
+   "  ",
+   ""
+  ],
+  [
+   "Holliday!",
+   "holliday"
+  ],
+  [
+   "McGinnis",
+   "mcginnis"
+  ]
+ ],
+ "make_id": [
+  [
+   "Diviner's Kevlar",
+   "diviners_kevlar"
+  ],
+  [
+   "High-Velocity Rounds",
+   "high_velocity_rounds"
+  ],
+  [
+   "Mo & Krill",
+   "mo_and_krill"
+  ],
+  [
+   "  Spaced  Out  ",
+   "spaced_out"
+  ],
+  [
+   "Café",
+   "caf"
+  ],
+  [
+   "Rapid-Fire!!",
+   "rapid_fire"
+  ]
+ ],
+ "number": [
+  [
+   "30",
+   30.0
+  ],
+  [
+   "0.75m",
+   0.75
+  ],
+  [
+   "-35",
+   -35.0
+  ],
+  [
+   " 12.5 %",
+   12.5
+  ],
+  [
+   "abc",
+   null
+  ],
+  [
+   "",
+   null
+  ],
+  [
+   null,
+   null
+  ],
+  [
+   16.0,
+   16.0
+  ],
+  [
+   "1e3",
+   1.0
+  ],
+  [
+   "+4",
+   null
+  ],
+  [
+   ".5",
+   null
+  ],
+  [
+   "7.",
+   7.0
+  ]
+ ]
+}

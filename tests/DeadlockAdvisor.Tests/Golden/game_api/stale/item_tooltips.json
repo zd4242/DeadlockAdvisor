@@ -1,0 +1,9031 @@
+{
+ "active_reload": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+20%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "12s",
+    "blocks": [
+     {
+      "text": "While reloading, pressing Reload during the highlighted portion will <b>instantly finish your reload</b> and grant you <b>Fire Rate</b>, <b>Bullet Lifesteal</b> and <b>Move Speed</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+16%",
+        "label": "Bullet Lifesteal",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+0.75 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "alchemical_fire": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "30s",
+    "blocks": [
+     {
+      "text": "Throw a flask that explodes on contact, creating an area that does increasing spirit damage <b>per second</b> and reduces enemy <b>Bullet Resist</b>.<br><br>50% less effective vs non-heroes.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "45",
+        "label": "Damage Per Second",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-7%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "95",
+        "label": "Max DPS",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "arcane_surge": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1",
+        "label": "Stamina",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+12%",
+        "label": "Stamina Recovery",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "After you <b>Dash-Jump</b>, the <b>next ability you use</b> within 7s will have bonus <b>Range, Duration,</b> and <b>Spirit Power</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+12%",
+        "label": "Ability Range",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+15%",
+        "label": "Ability Duration",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+20",
+        "label": "Spirit Power",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Cast Window",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_stamina"
+  ]
+ },
+ "arctic_blast": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "24s",
+    "blocks": [
+     {
+      "text": "Release an expanding ice blast that deals spirit damage, <b>Freezing</b> and then <b>Slowing</b> targets it hits.<br><br>Slowed targets have their <b>stamina regen frozen</b>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "175",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "1s",
+        "label": "Freeze Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "16m",
+        "label": "End Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "cold_front"
+  ]
+ },
+ "armor_piercing_rounds": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+60%",
+        "label": "Bullet Velocity",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your Bullets have a chance to become unavoidable, <b>piercing through</b> enemies and <b>ignoring their Bullet Resistance</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "55%",
+        "label": "Proc Chance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "high_velocity_rounds"
+  ]
+ },
+ "ballistic_enchantment": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Imbue an ability with increased <b>range</b>. Dealing damage with that ability grants you increased <b>weapon damage</b> per <b>unique hero hit</b>. Has reduced effect on non-heroes.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+20%",
+        "label": "Weapon Damage per Stack",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+22%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5%",
+        "label": "Non-Hero Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8",
+        "label": "Non-Hero Stack Limit",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_expansion"
+  ]
+ },
+ "battle_vest": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+18%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+3",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "While you are <b>above 65% health</b>, gain <b> weapon damage</b> and <b> <span style=\"color:#EC9719\">bonus fire rate</span></b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+18%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+7%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "berserker": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your <b>Weapon Damage</b> increases as you take sustained damage.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+7%",
+        "label": "Weapon Damage per Stack",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "120",
+        "label": "Damage taken to Stack",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "blood_tribute": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+4",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Toggle: Continually sacrifice Health to improve <span style=\"color:#EC9719\">fire rate</span>, <b>Debuff Resistance</b> and <b>Move Speed</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "50/s",
+        "label": "Health Drain",
+        "conditional": false,
+        "negative": true
+       }
+      ],
+      "stats": [
+       {
+        "value": "+35%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+35%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+2 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "boundless_spirit": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+15%",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+30",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+4",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "improved_spirit"
+  ]
+ },
+ "bullet_lifesteal": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+13%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "bullet_resilience": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+30%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+3",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When below <b>50% health</b>, gain additional <b>Bullet Resist</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+15%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "bullet_resist_shredder": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+9%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+9%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces <b>Bullet Resist</b> on enemies when you deal spirit damage.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-10%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "burst_fire": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+50%",
+        "label": "Slide Distance",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "9s",
+    "blocks": [
+     {
+      "text": "Briefly gain <b>Fire Rate</b> and <b>Move Speed</b> when one of your bullets hits an enemy hero.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+32%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+1.25 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "4.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "rapid_rounds"
+  ]
+ },
+ "capacitor": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+5%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets have a chance to <b>shock</b> your target. The <b>shock</b> will jump to a nearby enemy.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "43",
+        "label": "Shock Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "20%",
+        "label": "Proc Chance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "0.2s",
+        "label": "Max Frequency",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "6",
+        "label": "Max Jumps",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10m",
+        "label": "Jump Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "40s",
+    "blocks": [
+     {
+      "text": "Launch a projectile that deals <b> damage</b>, applies a strong slow that recovers over time, <b>prevents Stamina usage</b> and <b>Silences</b> their <b>movement-based items and abilities</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "100",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-60%",
+        "label": "Max Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "3s",
+        "label": "Slow Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "tesla_bullets"
+  ]
+ },
+ "cheat_death": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+200",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+15%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "90s",
+    "blocks": [
+     {
+      "text": "When you would take lethal damage, instead become <b>temporarily death immune</b> and <b>remove all non-stun debuffs</b>.<br><br>While death immune, you deal <b>reduced damage</b> and have <b>reduced healing</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4.5s",
+        "label": "Death Immunity Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "-60%",
+        "label": "Damage Reduction",
+        "conditional": true,
+        "negative": true
+       },
+       {
+        "value": "-60%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "close_quarters": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+20%",
+        "label": "Melee Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Deal additional <b>Weapon Damage</b> when in <b>close range</b> to your target.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+20%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "15m",
+        "label": "Close Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "cold_front": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+6%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "25s",
+    "blocks": [
+     {
+      "text": "Release an expanding ice blast that deals spirit damage and <b>Slows</b> targets it hits.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "95",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-48%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "4s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10m",
+        "label": "End Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "colossus": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+25%",
+        "label": "Base Health",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+15%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "37s",
+    "blocks": [
+     {
+      "text": "Grow <b>larger in size</b>, gaining <span style=\"color:#EC9719\">bullet resist</span>, <span style=\"color:#CE90FF\">spirit resist</span>, and <span style=\"color:#EC9719\">melee damage</span>.<br><br>Nearby enemies suffer from slow and have reduced <b>dash speed</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "35%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "35%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-24%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "14m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "20%",
+        "label": "Model Scale",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_health"
+  ]
+ },
+ "compress_cooldown": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Imbue an ability to reduce its <b>Cooldown</b>.",
+      "elevated": [
+       {
+        "value": "+18%",
+        "label": "Ability Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "counterspell": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "23s",
+    "blocks": [
+     {
+      "text": "Your next parry <b>protects you from the damage and effects of enemy abilities and items</b>. On a successful spell parry <span style=\"color:#0F9\">heal</span> and gain <span style=\"color:#0F9\">move speed</span> and <span style=\"color:#CE90FF\">Spirit</span>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "150",
+        "label": "Healing",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+20",
+        "label": "Spirit Power",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+1.75 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.8s",
+        "label": "Spell Parry Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "crippling_headshot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Landing a <b>Headshot</b> will reduce their <b>Bullet and Spirit Resist</b> and applies <b>Healing Reduction</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-16%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-16%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-35%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "12s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "weakening_headshot"
+  ]
+ },
+ "crushing_fists": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+60%",
+        "label": "Heavy Melee Distance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+22%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+12%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "5s",
+    "blocks": [
+     {
+      "text": "Your next <b>Heavy Melee</b> attack against an enemy <b>deals increased damage</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Bonus Heavy Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your <b><span style=\"color:#EC9719\">melee damage</span></b> will <b>restore ammo</b> and apply a <b>stacking bullet resist debuff</b> on enemies. Heavy melee applies 2 stacks.<br><br>If the target reaches max stacks, they will be <b>stunned</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+15%",
+        "label": "Ammo",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-5%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "6",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "0.75s",
+        "label": "Stun Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "melee_charge"
+  ]
+ },
+ "cultist_sacrifice": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Weapon Damage vs. NPCs",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Bullet Resist vs. NPCs",
+        "conditional": true,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "270s",
+    "blocks": [
+     {
+      "text": "Target an enemy NPC and consume it for <b>170% Bonus Souls</b> and grants a powerful long lasting buff.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+10%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+12%",
+        "label": "Ability Range",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "160s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "monster_rounds"
+  ]
+ },
+ "cursed_relic": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "55s",
+    "blocks": [
+     {
+      "text": "Curses an enemy - <b>interrupting, Silencing, Disarming</b>, and <b>preventing item usage</b>. <b>Removes all non-ultimate buffs</b>.<br><br>Your own <b>Damage Output</b> is reduced for the duration.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Silenced",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "",
+        "label": "Disarm",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "3.25s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "20m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-25%",
+        "label": "Damage Penalty",
+        "conditional": true,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "debuff_reducer": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces the <b>duration</b> of all negative effects applied to you.",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+25%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "decay": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+65",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "30s",
+    "blocks": [
+     {
+      "text": "Inflict <b>damage over time</b> to a target, dealing damage based on their current health.<br>Decay's damage is non-lethal and does not apply item procs.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "1.95%/sec",
+        "label": "Bleed Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-50%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "20m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "disarming_hex": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "<b>Disarms</b> enemy target and reduces their <b>Bullet Resist</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Disarm",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-13%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "32m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4.25s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "rusted_barrel"
+  ]
+ },
+ "dispel_magic": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "45s",
+    "blocks": [
+     {
+      "text": "<b>Purge all non-ultimate negative effects</b> currently applied to you. If any effects were removed, <b>heal yourself</b> and gain a <b>move speed bonus</b>.<br><i>Cannot be used while Stunned or Slept.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "250",
+        "label": "HP Healed On Activate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+2m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "3s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "divine_barrier": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "45s",
+    "blocks": [
+     {
+      "text": "<b>Remove all non-stun debuffs</b> from the target and provide them with a <b>Barrier</b> and <b>Move Speed</b>. <i><br>Can be self-cast. Cooldown is reduced by half when cast on someone else.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "600",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+2.75 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "40m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "guardian_ward"
+  ]
+ },
+ "diviners_kevlar": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+15%",
+        "label": "Ability Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Ultimate Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "40s",
+    "blocks": [
+     {
+      "text": "Upon casting an <b>ultimate ability</b> gain a <b>Barrier</b> and temporary <b>Spirit Power</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "1000",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+40",
+        "label": "Spirit Power",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "duration_extender": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Imbue an ability to increase its <b>Duration</b>.",
+      "elevated": [
+       {
+        "value": "+22%",
+        "label": "Ability Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "echo_shard": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+5%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "<b>Reset the cooldown</b> of the imbued non-ultimate ability.<br><br>This item's cooldown is increased by <b>the cooldown of the imbued ability</b>.",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "enchanters_emblem": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+18%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "While you are <b>above 65% health</b>, gain bonus <b> <span style=\"color:#CE90FF\">Spirit</span></b> and <b>Cooldown Reduction</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+15",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5%",
+        "label": "Ability Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "enduring_speed": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+2 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces the effect of enemy <b>Move Speed</b> penalties.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Slow Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "sprint_boots"
+  ]
+ },
+ "escalating_exposure": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-8%",
+        "label": "Spirit Resist On Spirit Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+17%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Dealing spirit damage applies a stacking <b>Spirit Amp</b> that increases your spirit damage to the target.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+4.5%",
+        "label": "Spirit Amp per Stack",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "12",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.7s",
+        "label": "Max Frequency Per Target",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_vulnerability"
+  ]
+ },
+ "escalating_resilience": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+35%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Grants <b>Bullet Resist</b> when your bullets hit an enemy hero. <b>Each shot can only grant one stack.</b>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "30%",
+        "label": "Max Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2%",
+        "label": "Bullet Resist per Stack",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "24s",
+        "label": "Stack Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extended_magazine"
+  ]
+ },
+ "ethereal_shift": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "37s",
+    "blocks": [
+     {
+      "text": "You enter a void state and become <b>untargetable and invincible</b> for a short duration, during which you float slowly and cannot perform actions. Afterwards you gain <b>Spirit Power, Move Speed, and Spirit Resist</b>.<br>Can be canceled early.<br><i>Activation cancels any active ability.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+20",
+        "label": "Spirit Power",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+3 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "5s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "2.5 m",
+        "label": "Float Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "express_shot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+60%",
+        "label": "Bullet Velocity",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "8s",
+    "blocks": [
+     {
+      "text": "Your next attack will <b>fire twice</b> in quick succession with <b>increased damage</b> and velocity. This attack consumes extra ammo.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+125%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+40%",
+        "label": "Secondary Fire Weapon Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+100%",
+        "label": "Bullet Velocity",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "2",
+        "label": "Extra Ammo Consumed",
+        "conditional": false,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "high_velocity_rounds"
+  ]
+ },
+ "extended_magazine": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+30%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "extra_charge": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+1",
+        "label": "Bonus Ability Charges",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+7",
+        "label": "Bonus Spirit Power for Charged Abilities",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "extra_health": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+210",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "extra_spirit": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+10",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "extra_stamina": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+1",
+        "label": "Stamina",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+12%",
+        "label": "Stamina Recovery",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "fleetfoot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+6%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+35%",
+        "label": "Slide Distance",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Removes the <b>Move Speed</b> penalty while shooting.",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "Gain bonus <b>Move Speed</b> and <b>Slow Resistance</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+3m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+40%",
+        "label": "Slow Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "fortitude": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+375",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "After not taking damage for a period, gain health regen.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+10 s",
+        "label": "Restore Delay",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+2.25 %",
+        "label": "Max Health Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When you are <b>above 75% health</b>, you have bonus <b>Move Speed</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+1.5 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_health"
+  ]
+ },
+ "frenzy": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+160",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+15%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "While you are <b>below 50% health</b>, you gain stat bonuses for a duration and existing debuffs on you are reduced.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4 m/s",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "40%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+40%",
+        "label": "Debuff Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "fury_trance": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+14%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "18s",
+    "blocks": [
+     {
+      "text": "Grants <b>Fire Rate</b>, <b>Spirit Resistance</b> and <b>Move Speed</b>, and removes the <b>Move Speed</b> penalty while shooting, but <b>Silences</b> you and <b>disables stamina usage and regeneration</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "32%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+40%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "bullet_lifesteal"
+  ]
+ },
+ "glass_cannon": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+80%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-13%",
+        "label": "Max Health",
+        "conditional": false,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Each hero kill grants <b>permanent Fire Rate</b> (up to a max of 8 times). Death results in the loss of 1 stack.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+7%",
+        "label": "Fire Rate per Kill",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "golden_goose_egg": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "-15%",
+        "label": "Damage Penalty",
+        "conditional": false,
+        "negative": true
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Hatch the egg, gaining <b>souls</b> and <b>permanent buffs</b>.<br><br>The value of the egg grows the longer you hold onto it.<br><br><i>Gain a permanent buff per 80 Souls accrued when hatched.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "80",
+        "label": "Soul Value per Minute",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "greater_expansion": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Increases the <b>range</b> and <b>effect radius</b> of your abilities and items.",
+      "elevated": [
+       {
+        "value": "+30%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_expansion"
+  ]
+ },
+ "grit": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "60s",
+    "blocks": [
+     {
+      "text": "Gain a <b>Barrier</b> for a short duration.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "200",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "4s",
+        "label": "Barrier Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "guardian_ward": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+8%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "60s",
+    "blocks": [
+     {
+      "text": "Provide the target with a <b>Barrier</b> and temporary <b>Move Speed</b>. <i><br>Can be self-cast.<br>Cooldown is reduced by half when cast on someone else.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "250",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+2.75 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "40m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "grit"
+  ]
+ },
+ "headhunter": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+5%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "8s",
+    "blocks": [
+     {
+      "text": "Your next <b>headshot</b> against an enemy Hero deals bonus weapon damage, <span style=\"color:#0F9\">heal</span> you, and briefly grants <span style=\"color:#0F9\">bonus move speed</span>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+75",
+        "label": "Head Shot Bonus Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4%",
+        "label": "Heal Per Headshot",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+1.75 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "3s",
+        "label": "Move Speed Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "headshot_booster"
+  ]
+ },
+ "headshot_booster": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+30",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "9s",
+    "blocks": [
+     {
+      "text": "Your next <b>headshot</b> against an enemy Hero deals bonus weapon damage.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+45",
+        "label": "Head Shot Bonus Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "healbane": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+7",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your spirit damage applies <b>Healing Reduction</b>. If an enemy hero dies under this effect, you receive a large heal.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-35%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "275",
+        "label": "Heal On Hero Kill",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "healing_booster": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+3",
+        "label": "Health Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Increases the effectiveness of your <b>healing</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+20%",
+        "label": "Healing Effectiveness",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_regen"
+  ]
+ },
+ "healing_nova": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+5%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "60s",
+    "blocks": [
+     {
+      "text": "<b>Heal</b> yourself and nearby allies.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "325",
+        "label": "Total HP Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2s",
+        "label": "Regen Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "18m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "healing_rite"
+  ]
+ },
+ "healing_rite": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "70s",
+    "blocks": [
+     {
+      "text": "Grant <b>Regen</b> and <b>Sprint Speed</b> to the target. Gets dispelled if you take damage from enemy players or objectives. Can be self-cast.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "300",
+        "label": "Total HP Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+2m",
+        "label": "Sprint Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20s",
+        "label": "Regen Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "30m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "healing_tempo": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+25%",
+        "label": "Healing Effectiveness",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Health Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+4",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Applying <span style=\"color:#0F9\">heal</span> to yourself or an ally grants the target <span style=\"color:#EC9719\">bonus fire rate</span> and <span style=\"color:#0F9\">bonus move speed</span>.<br><br><i>Does not apply on innate Regen or passive Bullet/Spirit Lifesteals.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+35%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1.25 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "healing_booster"
+  ]
+ },
+ "heroic_aura": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1.5m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Provides <b>Bullet Resist</b> to nearby friendly units.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+17%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "35m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "22s",
+    "blocks": [
+     {
+      "text": "Provides <b> <span style=\"color:#0F9\">move speed</span></b> and <b> <span style=\"color:#EC9719\">fire rate</span></b> to you and nearby allies. <b>Minions</b> get double value.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+2.25m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+26%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "35m",
+        "label": "Active Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "high_velocity_rounds": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+60%",
+        "label": "Bullet Velocity",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "hollow_point": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+4.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When you are <b>above 65% health</b>, deal additional <b>Weapon Damage</b> and your bullets reduce enemy <b>Bullet Resist</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+35%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-10%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "hunters_aura": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces nearby enemies' <b>Bullet Resist and Fire Rate</b>. If there is only one enemy hero nearby, this <b>effect is doubled</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-10%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-15%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "15m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "improved_spirit": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+18",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_spirit"
+  ]
+ },
+ "indomitable": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+10%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "55s",
+    "blocks": [
+     {
+      "text": "The next <b>Stun, Chain, Immobilize, Sleep or Silence</b> is automatically cleansed. When this happens, you gain a <b>barrier</b> and all your <b>ability cooldowns</b> get reduced by 20%.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "325",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "reactive_barrier"
+  ]
+ },
+ "infuser": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+13%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "30s",
+    "blocks": [
+     {
+      "text": "Gain <b>Spirit Lifesteal</b> and <b>Spirit Power</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+70%",
+        "label": "Spirit Lifesteal",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+30",
+        "label": "Spirit Power",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "spirit_lifesteal"
+  ]
+ },
+ "inhibitor": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+150",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets build up to reduce the target's <b>outgoing damage</b> and apply <b>healing reduction</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-30%",
+        "label": "Damage Penalty",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-40%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "5s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.77%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "intensifying_magazine": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+20%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Increases <b>Weapon Damage</b> as you continuously fire your weapon.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "45%",
+        "label": "Max Weapon Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "2.5s",
+        "label": "Time for Max Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "juggernaut": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+50%",
+        "label": "Slow Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2.5 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Melee Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8",
+        "label": "Health Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Enemies that shoot you have their <b>Fire Rate</b> slowed.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-40%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "4s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "enduring_speed"
+  ]
+ },
+ "kinetic_dash": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1",
+        "label": "Stamina",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+12%",
+        "label": "Stamina Recovery",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When you <b>Dash-Jump</b> you gain <b>Fire Rate</b> and bonus <b>Ammo</b> until your next reload. Lasts up to 7s.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Temporary Ammo",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_stamina"
+  ]
+ },
+ "knockdown": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Apply a <b>Stun</b> after <b>2s</b>. Stun duration is increased against <b>airborne</b> targets.<br><br><i>Increases the target's gravity for the duration of the stun.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Stun",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.5s",
+        "label": "Stun Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "45m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "leech": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+28%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+28%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+180",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+12%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+12",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "bullet_lifesteal",
+   "spirit_lifesteal"
+  ]
+ },
+ "lifestrike": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+16%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "4s",
+    "blocks": [
+     {
+      "text": "Your <b>Melee Attack</b> applies <b>Movement Slow</b> and <b>heals you</b> for a percentage of the <b>Melee Damage</b> dealt plus a fixed amount. <i><br><br>This heal is 40% effective vs non-heroes.<br>Cooldown is 1.5x as long for Light Melee hits.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-48%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "120",
+        "label": "Heal on Melee Hit",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "35%",
+        "label": "Melee Hit Heal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2.5s",
+        "label": "Slow Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "melee_lifesteal"
+  ]
+ },
+ "lightning_scroll": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-24%",
+        "label": "Move Speed on Spirit Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Damage from your ultimate applies a stun and deals bonus spirit damage after a short delay.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Stun",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.75s",
+        "label": "Stun Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "150",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "3s",
+        "label": "Delay Before Effect",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     },
+     {
+      "text": "<i>This effect can only trigger once per target per ultimate.</i>",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "<b>Mystic Slow effects</b>",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_slow"
+  ]
+ },
+ "long_range": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Weapon Fall-off Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Deal additional <b>Weapon Damage</b> when <b>beyond a minimum distance</b> from your target.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+40%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "15m",
+        "label": "Min. Distance",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "lucky_shot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+30%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets have a chance to be empowered, causing them to deal <b>bonus weapon damage</b> on hit.<br><i>Bonus damage cannot Crit.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+100%",
+        "label": "Bonus Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "25%",
+        "label": "Proc Chance",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "magic_carpet": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+15%",
+        "label": "Ability Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+14",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-15%",
+        "label": "Gravity Scale",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Air Control",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Summon a Magic Carpet that will <b>fly</b> you away. While flying you are immune to slows and doing any action will dismiss the carpet. <i><br>Cannot use abilities while the carpet is being summoned.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "12s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+7m",
+        "label": "Bonus Fly Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "1.3s",
+        "label": "Summon Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "majestic_leap": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "45s",
+    "blocks": [
+     {
+      "text": "<b>Launch yourself</b> high into the air and grant yourself a <b>Barrier</b>. While in the air, you can use the active again to drop down faster.<br><br><i>Cannot be used for 5s if attacked by enemy Hero.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "200",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "5s",
+        "label": "Interrupt Cooldown",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Barrier Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+50%",
+        "label": "Air Control",
+        "conditional": true,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "melee_charge": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+50%",
+        "label": "Heavy Melee Distance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "5s",
+    "blocks": [
+     {
+      "text": "Your next <b>Heavy Melee</b> attack against an enemy <b>deals increased damage</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Bonus Heavy Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "melee_lifesteal": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+12%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "8s",
+    "blocks": [
+     {
+      "text": "Your next <b>Melee</b> attack <b>heals you</b>. <i><br><br>This heal is 30% effective vs non-heroes.<br>Cooldown is 1.5x as long for Light Melee hits.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "100",
+        "label": "Heal on Melee Hit",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mercurial_magnum": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+20%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+7",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your imbued ability charges up over time with bonus spirit damage, <span style=\"color:#EC9719\">bonus fire rate</span>, and <b>reloads bullets</b> on use. Until your next reload, your <b>bullets deal bonus spirit damage</b> based on your Spirit Power.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+20%",
+        "label": "Base Bullet Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "60",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+22%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "100%",
+        "label": "Bullets Reloaded",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "14s",
+        "label": "Charge-Up Time",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "quicksilver_reload"
+  ]
+ },
+ "metal_skin": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+12%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "24s",
+    "blocks": [
+     {
+      "text": "Become <b>immune to bullets</b>.",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-1.5m",
+        "label": "Active Movespeed Penalty",
+        "conditional": true,
+        "negative": true
+       },
+       {
+        "value": "-20%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": true
+       },
+       {
+        "value": "5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "monster_rounds": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+25%",
+        "label": "Weapon Damage vs. NPCs",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Bullet Resist vs. NPCs",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_burst": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Charges up over time with bonus spirit damage, causing abilities dealing more than <b>80</b> damage to deal additional damage.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "40",
+        "label": "Bonus Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "14s",
+        "label": "Charge-Up Time",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_expansion": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Imbue an ability to increase its <b>range</b> and <b>effect radius</b>.",
+      "elevated": [
+       {
+        "value": "+20%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_regeneration": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Dealing spirit damage to enemy Heroes grants you Bonus <span style=\"color:#0F9\">regeneration</span>. Stacks when dealing damage to different heroes.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4 HP/s",
+        "label": "Regeneration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Regeneration Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_reverb": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "6.25s",
+    "blocks": [
+     {
+      "text": "Imbue an ability with <b>Lifesteal</b> and to apply <b>slow</b> on a hit target and deal an <b>additional percentage of the damage dealt</b> to enemies around the target after a short delay.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "50%",
+        "label": "Damage",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+22%",
+        "label": "Imbued Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-32%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "16m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3s",
+        "label": "Delay Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_shot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+7",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "8s",
+    "blocks": [
+     {
+      "text": "Your next bullet deals bonus spirit damage.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+40",
+        "label": "Spirit Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_slow": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When the target takes spirit damage, they have their <b>Move Speed</b> reduced.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-24%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-10%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "mystic_vulnerability": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When an enemy takes spirit damage, they have their <span style=\"color:#CE90FF\">spirit resist</span> reduced.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-8%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "opening_rounds": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+60%",
+        "label": "Bullet Velocity",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+7",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your attacks have additional <b>Weapon Damage</b> against <b>enemies above 50% health</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "high_velocity_rounds"
+  ]
+ },
+ "phantom_strike": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+15%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "35s",
+    "blocks": [
+     {
+      "text": "<b>Teleport</b> to an enemy target and pull them to the ground. Dealing <b>damage</b>, <b>Move speed</b> reduction and <b>Disarm</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Disarm",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-40%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "75",
+        "label": "Impact Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "25m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "plated_armor": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+130",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Gain a chance to either deflect incoming bullets, preventing all weapon damage or prevent all <b>on-hit effects</b> from bullets.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "30%",
+        "label": "Deflection Percent",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "50%",
+        "label": "On-Hit Prevention Percent",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "point_blank": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Melee Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When in <b>close range</b> to your target, gain <b>Weapon Damage</b> and your bullets apply a <b>Movement Slow</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+50%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-20%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2s",
+        "label": "Slow Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "15m",
+        "label": "Close Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "close_quarters"
+  ]
+ },
+ "quicksilver_reload": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your imbued ability charges up over time with bonus spirit damage, <span style=\"color:#EC9719\">bonus fire rate</span>, and <b>reloads bullets</b> on use.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "44",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "100%",
+        "label": "Bullets Reloaded",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "18s",
+        "label": "Charge-Up Time",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "radiant_regeneration": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Dealing spirit damage to enemy Heroes grants you Bonus <span style=\"color:#0F9\">regeneration</span>. Stacks when dealing damage to different heroes.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4 HP/s",
+        "label": "Regeneration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "7s",
+        "label": "Regeneration Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "6s",
+    "blocks": [
+     {
+      "text": "<b>Heal</b> and gain bonus <b>Movement Speed</b> for a short duration when you cast an ability.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "65",
+        "label": "Healing on Ability Cast",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1.75 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "3s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_regeneration"
+  ]
+ },
+ "rapid_recharge": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+2",
+        "label": "Bonus Ability Charges",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Faster Time Between Charges",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+14%",
+        "label": "Cooldown Reduction For Charged Abilities",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+14",
+        "label": "Bonus Spirit Power for Charged Abilities",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_charge"
+  ]
+ },
+ "rapid_rounds": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+9%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "reactive_barrier": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "55s",
+    "blocks": [
+     {
+      "text": "Gain a <b>Barrier</b> when you are <b>Stunned, Chained, Immobilized, Slept or Silenced</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "325",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "grit"
+  ]
+ },
+ "rebuttal": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-1.75s",
+        "label": "Parry Cooldown",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Melee Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "On a successful <b>Parry</b> against an enemy Hero, <b>Heal</b> yourself for the damage parried and returns that damage to the target, and temporarily gain increased <b>damage.</b>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+30%",
+        "label": "Bonus Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "recharging_rush": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+20%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "25s",
+    "blocks": [
+     {
+      "text": "Dealing significant weapon damage replenishes a charge for <b>each of your charged abilities</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "200",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "3.5s",
+        "label": "Time Frame",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "refresher": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "300s",
+    "blocks": [
+     {
+      "text": "<b>Reset the cooldown</b> of all your abilities and <b>restore all your charges</b>.",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "rescue_beam": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "60s",
+    "blocks": [
+     {
+      "text": "<b>Heals</b> a target allied hero and yourself for a percentage of <b>Max Health</b>. Once while healing, you can <b>Pull</b> the target towards you. Can be self-cast.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "20%",
+        "label": "Heal Amount",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2.5s",
+        "label": "Channel Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "35m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "healing_rite"
+  ]
+ },
+ "restorative_locket": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "20s",
+    "blocks": [
+     {
+      "text": "When an enemy uses an ability within 32mm range from you, store one <b>Restoration Stack</b>.<br><br>Consume all stacks to <b>heal yourself</b> and replenish <b>up to 3 stamina</b> based on how many stacks you have.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "16",
+        "label": "Heal Per Stack",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "25",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3",
+        "label": "Max Stamina Restore",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "restorative_shot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+6%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "6s",
+    "blocks": [
+     {
+      "text": "Your next bullet will <b>heal</b> you based on what target you hit.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "50",
+        "label": "Healing From Heroes",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "20",
+        "label": "Healing From NPCs / Orbs",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "return_fire": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+10%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "23s",
+    "blocks": [
+     {
+      "text": "Automatically <b>fire a bullet</b> towards any attacker who damages you with their abilities or weapon.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "65%",
+        "label": "Bullet Damage Returned",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "25%",
+        "label": "Spirit Damage Returned",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "ricochet": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+18%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets will <b>ricochet</b> on enemies near your target, <b>applying any bullet procs</b> and <b>dealing a percentage of the original damage.</b>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "65%",
+        "label": "Ricochet Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2",
+        "label": "Ricochet Targets",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "13m",
+        "label": "Ricochet Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "rusted_barrel": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+60",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.5m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "Target an enemy to reduce their <b>Fire Rate</b> and <b>Bullet Resistance</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-32%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-8%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "32m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "scourge": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "35s",
+    "blocks": [
+     {
+      "text": "Apply <b>Spirit Resist</b>, <b>Debuff Resist</b> and an aura on a friendly target that deals <b> damage</b> to enemies proportional to their max health. Existing debuffs on the target are reduced.<br>Can be self cast.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "2.3%",
+        "label": "Max Health per second",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+40%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+20%",
+        "label": "Debuff Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "35m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10m",
+        "label": "Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "shadow_weave": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+2m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Become <b>Stealthed</b>. Whenever you take damage while Stealthed you get briefly revealed.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Invisible",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "13s",
+        "label": "Stealth Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20m",
+        "label": "Spot Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+5m",
+        "label": "Invis Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     },
+     {
+      "text": "<br>Attacking or using an ability will end your stealth and start an <b>ambush</b>, temporarily granting you bonus <b>Fire Rate</b>, <b>Spirit Power</b> and <b>Melee Damage</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Ambush Fire Rate",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+25",
+        "label": "Ambush Spirit Power",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "25%",
+        "label": "Ambush Melee Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "5s",
+        "label": "Ambush Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "sprint_boots"
+  ]
+ },
+ "sharpshooter": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+20%",
+        "label": "Weapon Fall-off Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Weapon Zoom",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+60%",
+        "label": "Bullet Velocity",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+1m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-0.7 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Deal additional <b>Weapon Damage</b> when <b>beyond a minimum distance</b> from your target.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+60%",
+        "label": "Weapon Damage",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "15m",
+        "label": "Min. Distance",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "long_range",
+   "high_velocity_rounds"
+  ]
+ },
+ "silence_wave": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "42s",
+    "blocks": [
+     {
+      "text": "Launch an expanding projectile which <b>Silences</b> enemies for a short duration and deals impact damage.<br><br><i>Silence does not interrupt channeling abilities.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Silenced",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "75",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "40m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3s",
+        "label": "Silence Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "silencer": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+12%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets reduce the target's <b>outgoing spirit damage</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-25%",
+        "label": "Spirit Damage Reduction",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets build up to a <b>Silence</b>. Victims are immune to the build up for <b>10s</b> after silence expires.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Silenced",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "2.5s",
+        "label": "Silence Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "10s",
+        "label": "Immunity Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "1.04%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "siphon_bullets": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+15%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets temporarily <b>steal Max HP</b> from enemies. Enemies regain their stolen health when the debuff expires.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "2.5%",
+        "label": "Max HP Steal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "17s",
+        "label": "Steal Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "1.2s",
+        "label": "Max Frequency",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "slowing_bullets": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets build up a <b>Movement Slow</b> on enemies.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-24%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "-20%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "3.5s",
+        "label": "Slow Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.7%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "slowing_hex": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+0.5m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "29s",
+    "blocks": [
+     {
+      "text": "<b>Slows movement</b> of enemy target. Also <b>Silences</b> their <b>movement-based items and abilities</b>.<br><i>Increases the target's gravity.<br>Does not affect target's stamina usage.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-16%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-26%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "25m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spellbreaker": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+18%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "9s",
+    "blocks": [
+     {
+      "text": "The next instance of high spirit damage you take is significantly reduced.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "65%",
+        "label": "Spirit Damage Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "175",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "debuff_reducer"
+  ]
+ },
+ "spellslinger": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+5%",
+        "label": "Ability Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "While in-combat whenever you cast an ability or item, gain a stacking buff that improves fire rate and reload speed.<br><i>Each stack refreshes the duration.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+11%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-10%",
+        "label": "Reload Time",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "18s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_burn": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+6%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Dealing significant spirit damage to an enemy within 5s causes an explosion dealing damage and a burn to that enemy. While burning, enemies take damage over time and receive reduced healing.<br><i>The cooldown is per enemy, so each target can only be burned once per cooldown. Deals half-damage on non-heroes.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "500",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "50",
+        "label": "Explosion Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "24",
+        "label": "Damage Per Second",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "20s",
+        "label": "Immunity Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-70%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_lifesteal": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+13%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_rend": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets apply a debuff that reduces the <b>Spirit Resist</b> of the target and grants you and your allies <b>Spirit Lifesteal</b> against them.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-8%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Spirit Lifesteal",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Landing <b>headshots</b> against the target reduces their <b>Spirit Resist</b> further.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-7%",
+        "label": "Spirit Resist on Headshot",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "2s",
+        "label": "Max Frequency",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "spirit_shredder_bullets"
+  ]
+ },
+ "spirit_resilience": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+30%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+3",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When below <b>50% health</b>, gain additional Spirit Resist.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+15%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_sap": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "18s",
+    "blocks": [
+     {
+      "text": "Target an enemy to <b>reduce their Spirit Resist</b> and <b>Spirit Power</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-9%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "-30",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "40m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_shielding": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "45s",
+    "blocks": [
+     {
+      "text": "Gain a <b>Barrier</b> whenever you take significant spirit damage from enemy Heroes in a small time frame.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "300",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "225",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3.5s",
+        "label": "Time Frame",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8s",
+        "label": "Barrier Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "grit"
+  ]
+ },
+ "spirit_shredder_bullets": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets apply a debuff that reduces the <b>Spirit Resist</b> of the target and grants you and your allies <b>Spirit Lifesteal</b> against them.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-8%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Spirit Lifesteal",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spirit_snatch": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+7%",
+        "label": "Melee Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+75",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "6s",
+    "blocks": [
+     {
+      "text": "When you perform a <b>Light or Heavy Melee</b> attack against a hero, the attack deals extra spirit damage and steals <b>Spirit Resist</b> and <b>Spirit Power</b>.<i><br><br>Effects are reduced by 30% for Light Melee hits.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "50",
+        "label": "Spirit Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12%",
+        "label": "Spirit Resist Steal",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "25",
+        "label": "Spirit Power Steal",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "10s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "spirit_strike"
+  ]
+ },
+ "spirit_strike": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "8s",
+    "blocks": [
+     {
+      "text": "When you perform a <b>Light or Heavy Melee</b> attack against a hero, deal extra spirit damage with the attack and reduce the target's <b>Spirit Resist</b>.<i><br><br>Cooldown is 2x longer for Light Melee hits.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "40",
+        "label": "Spirit Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-6%",
+        "label": "Spirit Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "spiritual_overflow": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+13%",
+        "label": "Ability Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+13%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+90",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Gain bonus <b>Fire Rate</b>, <b>Spirit Power</b> and <b>Spirit Lifesteal</b> by <b>charging up</b> when shooting enemy heroes.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+25%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+30",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Spirit Lifesteal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "1.08%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "15s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "spirit_lifesteal"
+  ]
+ },
+ "split_shot": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "27s",
+    "blocks": [
+     {
+      "text": "Make your weapon fire <b>multishot</b>.<br><br>Hitting more than one Hero per attack will grant a <b>stacking weapon damage bonus</b>.<br><br><i>Targets can only be hit once per multishot.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "5",
+        "label": "Weapon Multishot",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+8%",
+        "label": "Weapon Damage per Stack",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "5s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "5",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12s",
+        "label": "Stack Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "sprint_boots": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+2m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "stalker": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-50%",
+        "label": "Footstep Sound Distance",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "6s",
+    "blocks": [
+     {
+      "text": "Dealing weapon damage at close range opens a wound and grants you <span style=\"color:#0F9\">bonus move speed</span>.<br><br>Wounded enemies take spirit damage over time, have reduced <span style=\"color:#EC9719\">bullet resist</span>, and are revealed <b>through walls</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "17",
+        "label": "Damage Per Second",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-6%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+1.5 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "5s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8m",
+        "label": "Close Range",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "stamina_mastery": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+2",
+        "label": "Stamina",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Stamina Recovery",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+23%",
+        "label": "Air Jump/Dash Distance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Allows an additional use of <b>Air Jump</b> or <b>Air Dash</b> before landing.",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_stamina"
+  ]
+ },
+ "superior_cooldown": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+4",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces the <b>Cooldown</b> of your abilities.",
+      "elevated": [
+       {
+        "value": "+20%",
+        "label": "Ability Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "compress_cooldown"
+  ]
+ },
+ "superior_duration": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Increases the <b>duration</b> of your abilities and items.",
+      "elevated": [
+       {
+        "value": "+28%",
+        "label": "Ability Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "duration_extender"
+  ]
+ },
+ "suppressor": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+6",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+8%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "When you deal spirit damage to enemies, you also reduce their <b>Fire Rate</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-28%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "surge_of_power": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "14s",
+    "blocks": [
+     {
+      "text": "Imbue an ability with <b>permanent Spirit Power</b>. When that ability is used, gain bonus <b>Move Speed</b> and maintain full speed while attacking.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+28",
+        "label": "Imbued Ability Spirit Power",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "20%",
+        "label": "Fire Rate Bonus",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+1.75 m",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Move Speed Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extra_spirit"
+  ]
+ },
+ "swift_striker": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+20%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "rapid_rounds"
+  ]
+ },
+ "tankbuster": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+50",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Charges up over time with bonus spirit damage, causing abilities dealing more than <b>165</b> damage to deal additional damage. <b>Ignores Spirit Resistance.</b>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "40",
+        "label": "Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "7.5%",
+        "label": "Current Health Bonus Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "14s",
+        "label": "Charge-Up Time",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "mystic_burst"
+  ]
+ },
+ "tesla_bullets": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets have a chance to <b>shock</b> your target. The <b>shock</b> will jump to a nearby enemy.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "33",
+        "label": "Shock Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "15%",
+        "label": "Proc Chance",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "0.2s",
+        "label": "Max Frequency",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4",
+        "label": "Max Jumps",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8m",
+        "label": "Jump Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "titanic_magazine": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+100%",
+        "label": "Max Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+14%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "extended_magazine"
+  ]
+ },
+ "torment_pulse": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Melee Resist",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "1.4s",
+    "blocks": [
+     {
+      "text": "Periodically deals spirit damage to the closest two enemies nearby.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "25",
+        "label": "Pulse Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "9m",
+        "label": "Pulse Radius",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "toxic_bullets": {
+  "sections": [
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets build up a <b>Bleed</b> on enemies, causing them to lose a <b>percentage</b> of their <b>Max Health</b> over time. Also applies <b>Healing Reduction</b> on the bleeding target.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "1.9%/sec",
+        "label": "Bleed Damage",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-35%",
+        "label": "Healing Reduction",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "4s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "1.28%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "transcendent_cooldown": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+4",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Reduces the <b>Cooldown</b> of your abilities and items.",
+      "elevated": [
+       {
+        "value": "+25%",
+        "label": "Ability Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+25%",
+        "label": "Item Cooldown Reduction",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "superior_cooldown"
+  ]
+ },
+ "trophy_collector": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "-15%",
+        "label": "Weapon Damage vs. NPCs",
+        "conditional": true,
+        "negative": true
+       },
+       {
+        "value": "+2m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+2",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Whenever you score an <b>assist or kill</b>, gain extra <b>sprint</b>, <b>ability range</b> and <b>passive soul generation</b>. This effect stacks and persists through death.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "+0.15m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "16",
+        "label": "Souls per Minute",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "16",
+        "label": "Max Stacks",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "sprint_boots"
+  ]
+ },
+ "unstoppable": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+25%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "60s",
+    "blocks": [
+     {
+      "text": "Temporarily suppress <b>negative status effects</b> and become <b>immune</b> to <b>Stun, Silence, Sleep, Root, and Disarm</b>.<br>Cannot be used while <b>Stunned</b> or <b>Slept</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "5.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "debuff_reducer"
+  ]
+ },
+ "vampiric_burst": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+13%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+10%",
+        "label": "Bullet Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+100",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "30s",
+    "blocks": [
+     {
+      "text": "Grants <b>Lifesteal</b>, <b>Fire Rate</b>, and <b>Ammo</b>. This added Ammo is not limited by your max magazine size.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "70%",
+        "label": "Bullet Lifesteal",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "34%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "+75%",
+        "label": "Ammo",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "bullet_lifesteal"
+  ]
+ },
+ "veil_walker": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+125",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+6",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "15s",
+    "blocks": [
+     {
+      "text": "Walking through a <b>cosmic veil</b> grants you <b>Stealth</b>, <b>Heal</b> and increased <b>Move Speed</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "",
+        "label": "Invisible",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "3.5m",
+        "label": "Invis Move Speed",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "85",
+        "label": "Heal",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "8s",
+        "label": "Invisibility Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "vortex_web": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+8%",
+        "label": "Ability Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+0.75m",
+        "label": "Sprint Speed",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "42s",
+    "blocks": [
+     {
+      "text": "Throw a <b>vacuum</b> grenade, pulling all enemies into a small area and applying <b>Slowing Hex</b>. <i><br><br>Alt Cast to Target Unit Directly.</i>",
+      "elevated": [],
+      "important": [
+       {
+        "value": "12m",
+        "label": "Capture Radius",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-28%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "4s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-36%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "slowing_hex"
+  ]
+ },
+ "weakening_headshot": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+60",
+        "label": "Bonus Health",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Landing a <b>Headshot</b> reduces their <b>Bullet Resist</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-12%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "12s",
+        "label": "Debuff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "weapon_shielding": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+2.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "35s",
+    "blocks": [
+     {
+      "text": "Gain a <b>Barrier</b> whenever you take significant weapon damage from enemy Heroes in a small time frame.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "300",
+        "label": "Barrier",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "+18%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "250",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "4s",
+        "label": "Time Frame",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "8s",
+        "label": "Barrier Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "grit"
+  ]
+ },
+ "weighted_shots": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+30%",
+        "label": "Weapon Damage",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+22%",
+        "label": "Debuff Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-14%",
+        "label": "Stamina Recovery",
+        "conditional": false,
+        "negative": true
+       },
+       {
+        "value": "-0.5 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": true
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "Your bullets build up a <b>Movement Slow</b> on enemies.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "-24%",
+        "label": "Move Speed",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "-20%",
+        "label": "Dash Distance",
+        "conditional": true,
+        "negative": false
+       },
+       {
+        "value": "3.5s",
+        "label": "Slow Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.7%",
+        "label": "Buildup Per Shot",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "slowing_bullets"
+  ]
+ },
+ "witchmail": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": [
+       {
+        "value": "+22%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+14",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "kind": "passive",
+    "cooldown": "1s",
+    "blocks": [
+     {
+      "text": "Taking heavy hits of spirit damage from an enemy reduces a <b>random ability cooldown</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4s",
+        "label": "Cooldown Reduction per Hit",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "75",
+        "label": "Damage Threshold",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "focus_lens": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+10%",
+        "label": "Fire Rate",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": []
+     }
+    ]
+   },
+   {
+    "kind": "active",
+    "cooldown": "45s",
+    "blocks": [
+     {
+      "text": "Target an enemy to <b>Silence</b> them. A portion of <b>all damage dealt</b> during the silence gets applied to the target when the silence wears off.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "4.5s",
+        "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "35%",
+        "label": "Damage On Expire",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-9%",
+        "label": "Spirit Resist",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "-30",
+        "label": "Spirit Power",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "25m",
+        "label": "Cast Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "12s",
+        "label": "Resist Reduction Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": [
+   "spirit_sap"
+  ]
+ },
+ "warp_stone": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "<b>Teleport</b> straight ahead, gaining <b>Bullet Resist</b>.",
+      "elevated": [],
+      "important": [
+       {
+        "value": "11m",
+        "label": "Teleport Range",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "+30%",
+        "label": "Bullet Resist",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "6s",
+        "label": "Buff Duration",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ },
+ "extra_regen": {
+  "sections": [
+   {
+    "kind": "innate",
+    "cooldown": "",
+    "blocks": [
+     {
+      "text": "",
+      "elevated": [
+       {
+        "value": "+2.5",
+        "label": "Health Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [],
+      "stats": [
+       {
+        "value": "+1.5",
+        "label": "Out of Combat Regen",
+        "conditional": false,
+        "negative": false
+       }
+      ]
+     }
+    ]
+   }
+  ],
+  "components": []
+ }
+}

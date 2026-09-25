@@ -1,0 +1,600 @@
+{
+ "lines": [
+  "against / full (since patch 09-16): 5928 lifts, reliability 0.59, typical real lift ±0.60 pts",
+  "as / full (since patch 08-22): 5928 lifts, reliability 0.94, typical real lift ±2.02 pts",
+  "as / lane (since patch 08-22): 2508 lifts, reliability 0.95, typical real lift ±2.05 pts"
+ ],
+ "progress": [
+  [
+   0,
+   117,
+   "against/full: all matches"
+  ],
+  [
+   1,
+   117,
+   "against/full: Abrams"
+  ],
+  [
+   2,
+   117,
+   "against/full: Apollo"
+  ],
+  [
+   3,
+   117,
+   "against/full: Bebop"
+  ],
+  [
+   4,
+   117,
+   "against/full: Billy"
+  ],
+  [
+   5,
+   117,
+   "against/full: Calico"
+  ],
+  [
+   6,
+   117,
+   "against/full: Celeste"
+  ],
+  [
+   7,
+   117,
+   "against/full: Doorman"
+  ],
+  [
+   8,
+   117,
+   "against/full: Drifter"
+  ],
+  [
+   9,
+   117,
+   "against/full: Dynamo"
+  ],
+  [
+   10,
+   117,
+   "against/full: Graves"
+  ],
+  [
+   11,
+   117,
+   "against/full: Grey Talon"
+  ],
+  [
+   12,
+   117,
+   "against/full: Haze"
+  ],
+  [
+   13,
+   117,
+   "against/full: Holliday"
+  ],
+  [
+   14,
+   117,
+   "against/full: Infernus"
+  ],
+  [
+   15,
+   117,
+   "against/full: Ivy"
+  ],
+  [
+   16,
+   117,
+   "against/full: Kelvin"
+  ],
+  [
+   17,
+   117,
+   "against/full: Lady Geist"
+  ],
+  [
+   18,
+   117,
+   "against/full: Lash"
+  ],
+  [
+   19,
+   117,
+   "against/full: McGinnis"
+  ],
+  [
+   20,
+   117,
+   "against/full: Mina"
+  ],
+  [
+   21,
+   117,
+   "against/full: Mirage"
+  ],
+  [
+   22,
+   117,
+   "against/full: Mo & Krill"
+  ],
+  [
+   23,
+   117,
+   "against/full: Paige"
+  ],
+  [
+   24,
+   117,
+   "against/full: Paradox"
+  ],
+  [
+   25,
+   117,
+   "against/full: Pocket"
+  ],
+  [
+   26,
+   117,
+   "against/full: Rem"
+  ],
+  [
+   27,
+   117,
+   "against/full: Seven"
+  ],
+  [
+   28,
+   117,
+   "against/full: Shiv"
+  ],
+  [
+   29,
+   117,
+   "against/full: Silver"
+  ],
+  [
+   30,
+   117,
+   "against/full: Sinclair"
+  ],
+  [
+   31,
+   117,
+   "against/full: Venator"
+  ],
+  [
+   32,
+   117,
+   "against/full: Victor"
+  ],
+  [
+   33,
+   117,
+   "against/full: Vindicta"
+  ],
+  [
+   34,
+   117,
+   "against/full: Viscous"
+  ],
+  [
+   35,
+   117,
+   "against/full: Vyper"
+  ],
+  [
+   36,
+   117,
+   "against/full: Warden"
+  ],
+  [
+   37,
+   117,
+   "against/full: Wraith"
+  ],
+  [
+   38,
+   117,
+   "against/full: Yamato"
+  ],
+  [
+   39,
+   117,
+   "as/full: all matches"
+  ],
+  [
+   40,
+   117,
+   "as/full: Abrams"
+  ],
+  [
+   41,
+   117,
+   "as/full: Apollo"
+  ],
+  [
+   42,
+   117,
+   "as/full: Bebop"
+  ],
+  [
+   43,
+   117,
+   "as/full: Billy"
+  ],
+  [
+   44,
+   117,
+   "as/full: Calico"
+  ],
+  [
+   45,
+   117,
+   "as/full: Celeste"
+  ],
+  [
+   46,
+   117,
+   "as/full: Doorman"
+  ],
+  [
+   47,
+   117,
+   "as/full: Drifter"
+  ],
+  [
+   48,
+   117,
+   "as/full: Dynamo"
+  ],
+  [
+   49,
+   117,
+   "as/full: Graves"
+  ],
+  [
+   50,
+   117,
+   "as/full: Grey Talon"
+  ],
+  [
+   51,
+   117,
+   "as/full: Haze"
+  ],
+  [
+   52,
+   117,
+   "as/full: Holliday"
+  ],
+  [
+   53,
+   117,
+   "as/full: Infernus"
+  ],
+  [
+   54,
+   117,
+   "as/full: Ivy"
+  ],
+  [
+   55,
+   117,
+   "as/full: Kelvin"
+  ],
+  [
+   56,
+   117,
+   "as/full: Lady Geist"
+  ],
+  [
+   57,
+   117,
+   "as/full: Lash"
+  ],
+  [
+   58,
+   117,
+   "as/full: McGinnis"
+  ],
+  [
+   59,
+   117,
+   "as/full: Mina"
+  ],
+  [
+   60,
+   117,
+   "as/full: Mirage"
+  ],
+  [
+   61,
+   117,
+   "as/full: Mo & Krill"
+  ],
+  [
+   62,
+   117,
+   "as/full: Paige"
+  ],
+  [
+   63,
+   117,
+   "as/full: Paradox"
+  ],
+  [
+   64,
+   117,
+   "as/full: Pocket"
+  ],
+  [
+   65,
+   117,
+   "as/full: Rem"
+  ],
+  [
+   66,
+   117,
+   "as/full: Seven"
+  ],
+  [
+   67,
+   117,
+   "as/full: Shiv"
+  ],
+  [
+   68,
+   117,
+   "as/full: Silver"
+  ],
+  [
+   69,
+   117,
+   "as/full: Sinclair"
+  ],
+  [
+   70,
+   117,
+   "as/full: Venator"
+  ],
+  [
+   71,
+   117,
+   "as/full: Victor"
+  ],
+  [
+   72,
+   117,
+   "as/full: Vindicta"
+  ],
+  [
+   73,
+   117,
+   "as/full: Viscous"
+  ],
+  [
+   74,
+   117,
+   "as/full: Vyper"
+  ],
+  [
+   75,
+   117,
+   "as/full: Warden"
+  ],
+  [
+   76,
+   117,
+   "as/full: Wraith"
+  ],
+  [
+   77,
+   117,
+   "as/full: Yamato"
+  ],
+  [
+   78,
+   117,
+   "as/lane: all matches"
+  ],
+  [
+   79,
+   117,
+   "as/lane: Abrams"
+  ],
+  [
+   80,
+   117,
+   "as/lane: Apollo"
+  ],
+  [
+   81,
+   117,
+   "as/lane: Bebop"
+  ],
+  [
+   82,
+   117,
+   "as/lane: Billy"
+  ],
+  [
+   83,
+   117,
+   "as/lane: Calico"
+  ],
+  [
+   84,
+   117,
+   "as/lane: Celeste"
+  ],
+  [
+   85,
+   117,
+   "as/lane: Doorman"
+  ],
+  [
+   86,
+   117,
+   "as/lane: Drifter"
+  ],
+  [
+   87,
+   117,
+   "as/lane: Dynamo"
+  ],
+  [
+   88,
+   117,
+   "as/lane: Graves"
+  ],
+  [
+   89,
+   117,
+   "as/lane: Grey Talon"
+  ],
+  [
+   90,
+   117,
+   "as/lane: Haze"
+  ],
+  [
+   91,
+   117,
+   "as/lane: Holliday"
+  ],
+  [
+   92,
+   117,
+   "as/lane: Infernus"
+  ],
+  [
+   93,
+   117,
+   "as/lane: Ivy"
+  ],
+  [
+   94,
+   117,
+   "as/lane: Kelvin"
+  ],
+  [
+   95,
+   117,
+   "as/lane: Lady Geist"
+  ],
+  [
+   96,
+   117,
+   "as/lane: Lash"
+  ],
+  [
+   97,
+   117,
+   "as/lane: McGinnis"
+  ],
+  [
+   98,
+   117,
+   "as/lane: Mina"
+  ],
+  [
+   99,
+   117,
+   "as/lane: Mirage"
+  ],
+  [
+   100,
+   117,
+   "as/lane: Mo & Krill"
+  ],
+  [
+   101,
+   117,
+   "as/lane: Paige"
+  ],
+  [
+   102,
+   117,
+   "as/lane: Paradox"
+  ],
+  [
+   103,
+   117,
+   "as/lane: Pocket"
+  ],
+  [
+   104,
+   117,
+   "as/lane: Rem"
+  ],
+  [
+   105,
+   117,
+   "as/lane: Seven"
+  ],
+  [
+   106,
+   117,
+   "as/lane: Shiv"
+  ],
+  [
+   107,
+   117,
+   "as/lane: Silver"
+  ],
+  [
+   108,
+   117,
+   "as/lane: Sinclair"
+  ],
+  [
+   109,
+   117,
+   "as/lane: Venator"
+  ],
+  [
+   110,
+   117,
+   "as/lane: Victor"
+  ],
+  [
+   111,
+   117,
+   "as/lane: Vindicta"
+  ],
+  [
+   112,
+   117,
+   "as/lane: Viscous"
+  ],
+  [
+   113,
+   117,
+   "as/lane: Vyper"
+  ],
+  [
+   114,
+   117,
+   "as/lane: Warden"
+  ],
+  [
+   115,
+   117,
+   "as/lane: Wraith"
+  ],
+  [
+   116,
+   117,
+   "as/lane: Yamato"
+  ],
+  [
+   117,
+   117,
+   "done"
+  ]
+ ],
+ "lift_count": 14364
+}

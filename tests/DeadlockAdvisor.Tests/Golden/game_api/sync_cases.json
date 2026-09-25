@@ -1,0 +1,149 @@
+{
+ "stale_ops": {
+  "drop_items": [
+   "focus_lens",
+   "extra_regen",
+   "warp_stone"
+  ],
+  "drop_heroes": [
+   "wraith"
+  ],
+  "clear_game_ids": [
+   "haze",
+   "extended_magazine",
+   "spirit_strike"
+  ],
+  "set_tier": [
+   [
+    "headshot_booster",
+    4
+   ],
+   [
+    "torment_pulse",
+    2
+   ]
+  ],
+  "set_cost": [
+   [
+    "monster_rounds",
+    1
+   ]
+  ],
+  "clear_stats": true,
+  "clear_tooltips": true
+ },
+ "cases": {
+  "fresh": {
+   "report": {
+    "lines": [
+     "Everything already matches the game -- nothing changed."
+    ],
+    "added_heroes": [],
+    "added_items": [],
+    "changed": [],
+    "filled": 0,
+    "not_in_game": [],
+    "heroes_changed": false,
+    "items_changed": false,
+    "stats_changed": false,
+    "stat_rows": 297,
+    "tooltips_changed": false,
+    "tooltip_count": 156,
+    "anything_changed": false
+   },
+   "again": {
+    "lines": [
+     "Everything already matches the game -- nothing changed."
+    ],
+    "added_heroes": [],
+    "added_items": [],
+    "changed": [],
+    "filled": 0,
+    "not_in_game": [],
+    "heroes_changed": false,
+    "items_changed": false,
+    "stats_changed": false,
+    "stat_rows": 297,
+    "tooltips_changed": false,
+    "tooltip_count": 156,
+    "anything_changed": false
+   },
+   "coverage": {
+    "heroes_total": 38,
+    "heroes_profiled": 38,
+    "items_total": 156,
+    "items_tagged": 93,
+    "rules": 42,
+    "derived_rules": 100,
+    "scores_filled": 490,
+    "scores_total": 874
+   },
+   "stat_rules": 9
+  },
+  "stale": {
+   "report": {
+    "lines": [
+     "Added 1 hero(es): Wraith",
+     "Added 3 item(s): Focus Lens (T4), Warp Stone (T3), Extra Regen (T1)",
+     "Filled in game ids / costs on 3 hero and item row(s).",
+     "Updated 3 field(s):",
+     "  Monster Rounds: cost 1 -> 800",
+     "  Headshot Booster: tier 4 -> 1",
+     "  Torment Pulse: tier 2 -> 3",
+     "Item stats refreshed: 297 stat row(s).",
+     "Item tooltips refreshed: 156 item(s)."
+    ],
+    "added_heroes": [
+     "Wraith"
+    ],
+    "added_items": [
+     "Focus Lens (T4)",
+     "Warp Stone (T3)",
+     "Extra Regen (T1)"
+    ],
+    "changed": [
+     "Monster Rounds: cost 1 -> 800",
+     "Headshot Booster: tier 4 -> 1",
+     "Torment Pulse: tier 2 -> 3"
+    ],
+    "filled": 3,
+    "not_in_game": [],
+    "heroes_changed": true,
+    "items_changed": true,
+    "stats_changed": true,
+    "stat_rows": 297,
+    "tooltips_changed": true,
+    "tooltip_count": 156,
+    "anything_changed": true
+   },
+   "again": {
+    "lines": [
+     "Everything already matches the game -- nothing changed."
+    ],
+    "added_heroes": [],
+    "added_items": [],
+    "changed": [],
+    "filled": 0,
+    "not_in_game": [],
+    "heroes_changed": false,
+    "items_changed": false,
+    "stats_changed": false,
+    "stat_rows": 297,
+    "tooltips_changed": false,
+    "tooltip_count": 156,
+    "anything_changed": false
+   },
+   "coverage": {
+    "heroes_total": 38,
+    "heroes_profiled": 38,
+    "items_total": 156,
+    "items_tagged": 93,
+    "rules": 42,
+    "derived_rules": 100,
+    "scores_filled": 490,
+    "scores_total": 874
+   },
+   "stat_rules": 9
+  }
+ }
+}
