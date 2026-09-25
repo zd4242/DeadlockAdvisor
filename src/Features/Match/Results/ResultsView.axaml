@@ -1,0 +1,112 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:results="using:DeadlockAdvisor.Features.Match.Results"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
+             xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+             x:Class="DeadlockAdvisor.Features.Match.Results.ResultsView"
+             x:DataType="results:ResultsViewModel">
+
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top"
+                   Classes="faint"
+                   Margin="0,0,0,6"
+                   Text="{Binding Summary}"
+                   IsVisible="{Binding !IsEmpty}"/>
+
+        <Panel>
+            <TextBlock Classes="hint"
+                       Text="{Binding EmptyHint}"
+                       IsVisible="{Binding IsEmpty}"
+                       TextWrapping="Wrap"
+                       TextAlignment="Center"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       MaxWidth="460"/>
+
+            <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
+                <ItemsControl x:Name="List" ItemsSource="{Binding Entries}" Margin="0,0,4,0">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <VirtualizingStackPanel/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.DataTemplates>
+                        <DataTemplate DataType="results:ResultRowViewModel">
+                            <Border Classes="result"
+                                    Classes.selected="{Binding IsSelected}"
+                                    Margin="0,0,0,4"
+                                    Padding="8,7,10,7">
+                                <Grid ColumnDefinitions="Auto,*">
+                                    <art:ArtImage Width="34"
+                                                  Height="34"
+                                                  Kind="Item"
+                                                  ArtId="{Binding ItemId}"
+                                                  ArtName="{Binding Name}"
+                                                  Tint="{Binding ShopColor}"
+                                                  VerticalAlignment="Center"
+                                                  card:ItemCardHover.ItemId="{Binding ItemId}"/>
+                                    <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="Bold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"/>
+                                            <controls:Badge Grid.Column="1"
+                                                            Margin="8,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Text="{Binding TierText}"
+                                                            Color="{Binding TierColor}"
+                                                            IsVisible="{Binding ShowTier}"/>
+                                            <controls:Badge Grid.Column="2"
+                                                            Margin="8,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Text="{Binding ShopText}"
+                                                            Color="{Binding ShopColor}"/>
+                                            <controls:DataText Grid.Column="4"
+                                                               Margin="8,0,8,0"
+                                                               VerticalAlignment="Center"
+                                                               Data="{Binding Data}"
+                                                               IsVisible="{Binding HasData}"
+                                                               ToolTip.Tip="{Binding DataTip}"/>
+                                            <TextBlock Grid.Column="5"
+                                                       Classes="value"
+                                                       VerticalAlignment="Center"
+                                                       Text="{Binding ScoreText}"/>
+                                        </Grid>
+                                        <controls:ScoreBar Fraction="{Binding Fraction}"/>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+
+                        <DataTemplate DataType="results:TierHeaderViewModel">
+                            <Grid ColumnDefinitions="12,Auto,Auto,*"
+                                  Classes="tierHeader"
+                                  Margin="0,10,0,6"
+                                  Background="Transparent"
+                                  Cursor="Hand"
+                                  ToolTip.Tip="{Binding ToolTipText}">
+                                <TextBlock Text="{Binding Chevron}"
+                                           Foreground="{Binding Brush}"
+                                           FontSize="16"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1"
+                                           Classes="section"
+                                           Margin="8,0,0,0"
+                                           Text="{Binding Title}"
+                                           Foreground="{Binding Brush}"
+                                           VerticalAlignment="Center"/>
+                                <controls:Badge Grid.Column="2"
+                                                Margin="8,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding CountText}"
+                                                Color="{Binding Color}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.DataTemplates>
+                </ItemsControl>
+            </ScrollViewer>
+        </Panel>
+    </DockPanel>
+</UserControl>

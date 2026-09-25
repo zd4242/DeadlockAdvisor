@@ -1,153 +1,33 @@
 [
  {
-  "item_id": "dispel_magic",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "spellslinger",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.1375
- },
- {
-  "item_id": "fury_trance",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 6.0
- },
- {
-  "item_id": "cheat_death",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 3.0
- },
- {
-  "item_id": "cold_front",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 1.2000000000000002
- },
- {
-  "item_id": "dispel_magic",
-  "category_id": "countered_by_dispel_magic",
-  "relation": "against",
-  "value": 7.5
- },
- {
-  "item_id": "disarming_hex",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 13.0
- },
- {
-  "item_id": "burst_fire",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.5
- },
- {
-  "item_id": "spirit_lifesteal",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.36
- },
- {
-  "item_id": "leech",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.72
- },
- {
-  "item_id": "witchmail",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.84
- },
- {
-  "item_id": "suppressor",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 5.0
- },
- {
-  "item_id": "counterspell",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.8999999999999999
- },
- {
-  "item_id": "suppressor",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.36
- },
- {
-  "item_id": "berserker",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.6
- },
- {
-  "item_id": "spirit_snatch",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 2.0
- },
- {
   "item_id": "active_reload",
   "category_id": "cares_about_firerate",
   "relation": "as",
   "value": 0.3125
  },
  {
-  "item_id": "spirit_snatch",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 1.0
- },
- {
-  "item_id": "counterspell",
-  "category_id": "countered_by_counterspell",
-  "relation": "against",
-  "value": 20.0
- },
- {
-  "item_id": "scourge",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 6.0
- },
- {
-  "item_id": "metal_skin",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 2.4000000000000004
- },
- {
-  "item_id": "blood_tribute",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 1.6
- },
- {
-  "item_id": "improved_spirit",
+  "item_id": "alchemical_fire",
   "category_id": "scales_with_spirit_power",
   "relation": "as",
-  "value": 1.08
+  "value": 0.6
  },
  {
-  "item_id": "divine_barrier",
-  "category_id": "countered_by_divine_barrier",
-  "relation": "against",
-  "value": 4.0
+  "item_id": "arcane_surge",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.6
  },
  {
-  "item_id": "healbane",
-  "category_id": "has_healing_sustain",
+  "item_id": "arctic_blast",
+  "category_id": "deals_spirit_damage_general",
   "relation": "against",
-  "value": 3.85
+  "value": 2.0
+ },
+ {
+  "item_id": "battle_vest",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.08750000000000001
  },
  {
   "item_id": "battle_vest",
@@ -156,130 +36,10 @@
   "value": 3.6
  },
  {
-  "item_id": "mercurial_magnum",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.42
- },
- {
-  "item_id": "fleetfoot",
-  "category_id": "applies_slows",
-  "relation": "against",
-  "value": 1.7000000000000002
- },
- {
-  "item_id": "escalating_exposure",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 3.4000000000000004
- },
- {
-  "item_id": "healbane",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.42
- },
- {
-  "item_id": "spirit_strike",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 1.0
- },
- {
-  "item_id": "mystic_vulnerability",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 4.0
- },
- {
-  "item_id": "indomitable",
+  "item_id": "berserker",
   "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "hunters_aura",
-  "category_id": "combat_range",
-  "relation": "as",
-  "value": -1.5
- },
- {
-  "item_id": "diviners_kevlar",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 1.2
- },
- {
-  "item_id": "decay",
-  "category_id": "has_healing_sustain",
-  "relation": "against",
-  "value": 5.5
- },
- {
-  "item_id": "spirit_snatch",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 2.0
- },
- {
-  "item_id": "mystic_vulnerability",
-  "category_id": "deals_spirit_damage_general",
   "relation": "against",
   "value": 1.6
- },
- {
-  "item_id": "debuff_reducer",
-  "category_id": "applies_debuffs",
-  "relation": "against",
-  "value": 3.5000000000000004
- },
- {
-  "item_id": "indomitable",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "juggernaut",
-  "category_id": "applies_slows",
-  "relation": "against",
-  "value": 8.5
- },
- {
-  "item_id": "swift_striker",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 1.0
- },
- {
-  "item_id": "rusted_barrel",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "as",
-  "value": 2.0
- },
- {
-  "item_id": "silencer",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.4000000000000004
- },
- {
-  "item_id": "escalating_exposure",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 2.0
- },
- {
-  "item_id": "bullet_resist_shredder",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.8
- },
- {
-  "item_id": "scourge",
-  "category_id": "applies_debuffs",
-  "relation": "against",
-  "value": 2.1
  },
  {
   "item_id": "blood_tribute",
@@ -288,22 +48,382 @@
   "value": 4.795
  },
  {
-  "item_id": "plated_armor",
-  "category_id": "applies_bullet_onhit_effects",
+  "item_id": "blood_tribute",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.4375
+ },
+ {
+  "item_id": "blood_tribute",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 1.6
+ },
+ {
+  "item_id": "boundless_spirit",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 4.05
+ },
+ {
+  "item_id": "bullet_resilience",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 7.5
+ },
+ {
+  "item_id": "bullet_resist_shredder",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 1.8
+ },
+ {
+  "item_id": "burst_fire",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.5
+ },
+ {
+  "item_id": "capacitor",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.25
+ },
+ {
+  "item_id": "cheat_death",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 3.0
+ },
+ {
+  "item_id": "close_quarters",
+  "category_id": "does_melee_damage",
+  "relation": "against",
+  "value": 2.6
+ },
+ {
+  "item_id": "cold_front",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 1.2000000000000002
+ },
+ {
+  "item_id": "counterspell",
+  "category_id": "countered_by_counterspell",
+  "relation": "against",
+  "value": 20.0
+ },
+ {
+  "item_id": "counterspell",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.8999999999999999
+ },
+ {
+  "item_id": "crippling_headshot",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 3.0
+ },
+ {
+  "item_id": "crippling_headshot",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 3.0
+ },
+ {
+  "item_id": "crippling_headshot",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 3.85
+ },
+ {
+  "item_id": "crushing_fists",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 2.4000000000000004
+ },
+ {
+  "item_id": "debuff_reducer",
+  "category_id": "applies_debuffs",
+  "relation": "against",
+  "value": 3.5000000000000004
+ },
+ {
+  "item_id": "decay",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 5.5
+ },
+ {
+  "item_id": "decay",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.48
+ },
+ {
+  "item_id": "disarming_hex",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
+  "value": 13.0
+ },
+ {
+  "item_id": "dispel_magic",
+  "category_id": "countered_by_dispel_magic",
+  "relation": "against",
+  "value": 7.5
+ },
+ {
+  "item_id": "dispel_magic",
+  "category_id": "deals_spirit_damage_general",
   "relation": "against",
   "value": 2.0
  },
  {
-  "item_id": "mystic_vulnerability",
+  "item_id": "divine_barrier",
+  "category_id": "countered_by_divine_barrier",
+  "relation": "against",
+  "value": 4.0
+ },
+ {
+  "item_id": "diviners_kevlar",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 1.2
+ },
+ {
+  "item_id": "echo_shard",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 1.0
+ },
+ {
+  "item_id": "echo_shard",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 1.0
+ },
+ {
+  "item_id": "enchanters_emblem",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 3.6
+ },
+ {
+  "item_id": "enchanters_emblem",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.44999999999999996
+ },
+ {
+  "item_id": "enduring_speed",
+  "category_id": "applies_slows",
+  "relation": "against",
+  "value": 4.25
+ },
+ {
+  "item_id": "escalating_exposure",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 3.4000000000000004
+ },
+ {
+  "item_id": "escalating_exposure",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 13.0
+ },
+ {
+  "item_id": "escalating_exposure",
   "category_id": "deals_spirit_damage_general",
   "relation": "with",
-  "value": 5.0
+  "value": 2.0
+ },
+ {
+  "item_id": "ethereal_shift",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 4.5
+ },
+ {
+  "item_id": "extra_spirit",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.6
+ },
+ {
+  "item_id": "fleetfoot",
+  "category_id": "applies_slows",
+  "relation": "against",
+  "value": 1.7000000000000002
+ },
+ {
+  "item_id": "fleetfoot",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 1.2000000000000002
+ },
+ {
+  "item_id": "focus_lens",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.5
+ },
+ {
+  "item_id": "focus_lens",
+  "category_id": "countered_by_silence",
+  "relation": "against",
+  "value": 5.5
+ },
+ {
+  "item_id": "focus_lens",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "focus_lens",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 1.0
+ },
+ {
+  "item_id": "focus_lens",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 1.0
+ },
+ {
+  "item_id": "frenzy",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.75
+ },
+ {
+  "item_id": "fury_trance",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 6.0
+ },
+ {
+  "item_id": "greater_expansion",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "healbane",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 3.85
+ },
+ {
+  "item_id": "healbane",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.42
+ },
+ {
+  "item_id": "healing_nova",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.48
+ },
+ {
+  "item_id": "healing_tempo",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 1.75
+ },
+ {
+  "item_id": "healing_tempo",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "heroic_aura",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.325
+ },
+ {
+  "item_id": "heroic_aura",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 3.4000000000000004
+ },
+ {
+  "item_id": "hunters_aura",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
+  "value": 3.0
+ },
+ {
+  "item_id": "hunters_aura",
+  "category_id": "combat_range",
+  "relation": "against",
+  "value": -0.5
+ },
+ {
+  "item_id": "hunters_aura",
+  "category_id": "combat_range",
+  "relation": "as",
+  "value": -1.5
+ },
+ {
+  "item_id": "improved_spirit",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 1.08
+ },
+ {
+  "item_id": "indomitable",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "indomitable",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.0
  },
  {
   "item_id": "infuser",
   "category_id": "deals_spirit_damage_general",
   "relation": "against",
   "value": 2.0
+ },
+ {
+  "item_id": "infuser",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.36
+ },
+ {
+  "item_id": "inhibitor",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 4.4
+ },
+ {
+  "item_id": "juggernaut",
+  "category_id": "applies_slows",
+  "relation": "against",
+  "value": 8.5
+ },
+ {
+  "item_id": "juggernaut",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
+  "value": 10.0
+ },
+ {
+  "item_id": "juggernaut",
+  "category_id": "does_melee_damage",
+  "relation": "against",
+  "value": 3.25
  },
  {
   "item_id": "kinetic_dash",
@@ -318,10 +438,148 @@
   "value": 15.0
  },
  {
-  "item_id": "enchanters_emblem",
+  "item_id": "leech",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.72
+ },
+ {
+  "item_id": "magic_carpet",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.84
+ },
+ {
+  "item_id": "melee_charge",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 1.2000000000000002
+ },
+ {
+  "item_id": "mercurial_magnum",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.275
+ },
+ {
+  "item_id": "mercurial_magnum",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.42
+ },
+ {
+  "item_id": "metal_skin",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 2.4000000000000004
+ },
+ {
+  "item_id": "mystic_shot",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.42
+ },
+ {
+  "item_id": "mystic_vulnerability",
   "category_id": "deals_spirit_damage_general",
   "relation": "against",
-  "value": 3.6
+  "value": 1.6
+ },
+ {
+  "item_id": "mystic_vulnerability",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 4.0
+ },
+ {
+  "item_id": "mystic_vulnerability",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 5.0
+ },
+ {
+  "item_id": "opening_rounds",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.42
+ },
+ {
+  "item_id": "phantom_strike",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
+  "value": 7.0
+ },
+ {
+  "item_id": "phantom_strike",
+  "category_id": "countered_by_knockdown",
+  "relation": "against",
+  "value": 10.0
+ },
+ {
+  "item_id": "phantom_strike",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.48
+ },
+ {
+  "item_id": "plated_armor",
+  "category_id": "applies_bullet_onhit_effects",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "point_blank",
+  "category_id": "does_melee_damage",
+  "relation": "against",
+  "value": 3.9000000000000004
+ },
+ {
+  "item_id": "quicksilver_reload",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.125
+ },
+ {
+  "item_id": "rapid_rounds",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.45
+ },
+ {
+  "item_id": "rebuttal",
+  "category_id": "does_melee_damage",
+  "relation": "against",
+  "value": 2.34
+ },
+ {
+  "item_id": "restorative_locket",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 1.6
+ },
+ {
+  "item_id": "return_fire",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "ricochet",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.9
+ },
+ {
+  "item_id": "rusted_barrel",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
+  "value": 5.0
+ },
+ {
+  "item_id": "rusted_barrel",
+  "category_id": "deals_bullet_damage_general",
+  "relation": "as",
+  "value": 2.0
  },
  {
   "item_id": "rusted_barrel",
@@ -330,9 +588,141 @@
   "value": 2.0
  },
  {
-  "item_id": "vampiric_burst",
+  "item_id": "scourge",
+  "category_id": "applies_debuffs",
+  "relation": "against",
+  "value": 2.1
+ },
+ {
+  "item_id": "scourge",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 6.0
+ },
+ {
+  "item_id": "silence_wave",
+  "category_id": "countered_by_silence",
+  "relation": "against",
+  "value": 5.5
+ },
+ {
+  "item_id": "silencer",
+  "category_id": "countered_by_silence",
+  "relation": "against",
+  "value": 7.700000000000001
+ },
+ {
+  "item_id": "silencer",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.4000000000000004
+ },
+ {
+  "item_id": "siphon_bullets",
   "category_id": "deals_bullet_damage_general",
   "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "spellbreaker",
+  "category_id": "applies_debuffs",
+  "relation": "against",
+  "value": 3.5000000000000004
+ },
+ {
+  "item_id": "spellbreaker",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 3.6
+ },
+ {
+  "item_id": "spellslinger",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 0.1375
+ },
+ {
+  "item_id": "spirit_burn",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 7.7
+ },
+ {
+  "item_id": "spirit_lifesteal",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.36
+ },
+ {
+  "item_id": "spirit_rend",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 5.0
+ },
+ {
+  "item_id": "spirit_rend",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 5.0
+ },
+ {
+  "item_id": "spirit_resilience",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 8.25
+ },
+ {
+  "item_id": "spirit_sap",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.0
+ },
+ {
+  "item_id": "spirit_sap",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 3.0
+ },
+ {
+  "item_id": "spirit_sap",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 3.0
+ },
+ {
+  "item_id": "spirit_shielding",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 2.7
+ },
+ {
+  "item_id": "spirit_shredder_bullets",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 3.0
+ },
+ {
+  "item_id": "spirit_shredder_bullets",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
+  "value": 3.0
+ },
+ {
+  "item_id": "spirit_snatch",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "against",
+  "value": 1.0
+ },
+ {
+  "item_id": "spirit_snatch",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "as",
+  "value": 2.0
+ },
+ {
+  "item_id": "spirit_snatch",
+  "category_id": "deals_spirit_damage_general",
+  "relation": "with",
   "value": 2.0
  },
  {
@@ -342,118 +732,52 @@
   "value": 1.0
  },
  {
-  "item_id": "extra_spirit",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.6
- },
- {
-  "item_id": "inhibitor",
-  "category_id": "has_healing_sustain",
-  "relation": "against",
-  "value": 4.4
- },
- {
-  "item_id": "magic_carpet",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.84
- },
- {
-  "item_id": "enduring_speed",
-  "category_id": "applies_slows",
-  "relation": "against",
-  "value": 4.25
- },
- {
-  "item_id": "boundless_spirit",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 4.05
- },
- {
-  "item_id": "weapon_shielding",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.8
- },
- {
-  "item_id": "phantom_strike",
-  "category_id": "countered_by_knockdown",
-  "relation": "against",
-  "value": 10.0
- },
- {
-  "item_id": "escalating_exposure",
+  "item_id": "spirit_strike",
   "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 13.0
- },
- {
-  "item_id": "echo_shard",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
+  "relation": "with",
   "value": 1.0
  },
  {
-  "item_id": "opening_rounds",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.42
- },
- {
-  "item_id": "torment_pulse",
-  "category_id": "does_melee_damage",
-  "relation": "against",
-  "value": 2.34
- },
- {
-  "item_id": "ricochet",
+  "item_id": "spiritual_overflow",
   "category_id": "cares_about_firerate",
   "relation": "as",
-  "value": 0.9
+  "value": 0.3125
  },
  {
-  "item_id": "point_blank",
-  "category_id": "does_melee_damage",
-  "relation": "against",
-  "value": 3.9000000000000004
- },
- {
-  "item_id": "focus_lens",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.5
- },
- {
-  "item_id": "melee_charge",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.2000000000000002
- },
- {
-  "item_id": "enchanters_emblem",
+  "item_id": "spiritual_overflow",
   "category_id": "scales_with_spirit_power",
   "relation": "as",
-  "value": 0.44999999999999996
+  "value": 0.36
  },
  {
-  "item_id": "warp_stone",
+  "item_id": "superior_duration",
   "category_id": "deals_bullet_damage_general",
   "relation": "against",
-  "value": 3.0
+  "value": 1.6
  },
  {
-  "item_id": "spirit_rend",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
+  "item_id": "suppressor",
+  "category_id": "cares_about_firerate",
+  "relation": "against",
   "value": 5.0
  },
  {
-  "item_id": "spirit_shielding",
-  "category_id": "deals_spirit_damage_general",
+  "item_id": "suppressor",
+  "category_id": "deals_bullet_damage_general",
   "relation": "against",
-  "value": 2.7
+  "value": 1.6
+ },
+ {
+  "item_id": "suppressor",
+  "category_id": "scales_with_spirit_power",
+  "relation": "as",
+  "value": 0.36
+ },
+ {
+  "item_id": "swift_striker",
+  "category_id": "cares_about_firerate",
+  "relation": "as",
+  "value": 1.0
  },
  {
   "item_id": "torment_pulse",
@@ -462,49 +786,31 @@
   "value": -1.0
  },
  {
-  "item_id": "crippling_headshot",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 3.0
+  "item_id": "torment_pulse",
+  "category_id": "combat_range",
+  "relation": "as",
+  "value": -2.5
  },
  {
-  "item_id": "rebuttal",
+  "item_id": "torment_pulse",
   "category_id": "does_melee_damage",
   "relation": "against",
   "value": 2.34
  },
  {
-  "item_id": "capacitor",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.25
+  "item_id": "toxic_bullets",
+  "category_id": "has_healing_sustain",
+  "relation": "against",
+  "value": 3.85
  },
  {
-  "item_id": "focus_lens",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 1.0
- },
- {
-  "item_id": "weighted_shots",
+  "item_id": "unstoppable",
   "category_id": "applies_debuffs",
   "relation": "against",
-  "value": 3.08
+  "value": 3.5000000000000004
  },
  {
-  "item_id": "ethereal_shift",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 4.5
- },
- {
-  "item_id": "focus_lens",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "siphon_bullets",
+  "item_id": "vampiric_burst",
   "category_id": "deals_bullet_damage_general",
   "relation": "against",
   "value": 2.0
@@ -516,298 +822,22 @@
   "value": 0.36
  },
  {
-  "item_id": "phantom_strike",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.48
- },
- {
-  "item_id": "bullet_resilience",
+  "item_id": "warp_stone",
   "category_id": "deals_bullet_damage_general",
   "relation": "against",
-  "value": 7.5
+  "value": 3.0
  },
  {
-  "item_id": "suppressor",
+  "item_id": "weapon_shielding",
   "category_id": "deals_bullet_damage_general",
   "relation": "against",
-  "value": 1.6
+  "value": 1.8
  },
  {
-  "item_id": "juggernaut",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 10.0
- },
- {
-  "item_id": "healing_nova",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.48
- },
- {
-  "item_id": "spirit_rend",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 5.0
- },
- {
-  "item_id": "spirit_shredder_bullets",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 3.0
- },
- {
-  "item_id": "spirit_sap",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "juggernaut",
-  "category_id": "does_melee_damage",
-  "relation": "against",
-  "value": 3.25
- },
- {
-  "item_id": "focus_lens",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 1.0
- },
- {
-  "item_id": "close_quarters",
-  "category_id": "does_melee_damage",
-  "relation": "against",
-  "value": 2.6
- },
- {
-  "item_id": "silencer",
-  "category_id": "countered_by_silence",
-  "relation": "against",
-  "value": 7.700000000000001
- },
- {
-  "item_id": "quicksilver_reload",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.125
- },
- {
-  "item_id": "silence_wave",
-  "category_id": "countered_by_silence",
-  "relation": "against",
-  "value": 5.5
- },
- {
-  "item_id": "greater_expansion",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "mercurial_magnum",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.275
- },
- {
-  "item_id": "crippling_headshot",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 3.0
- },
- {
-  "item_id": "spellbreaker",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 3.6
- },
- {
-  "item_id": "focus_lens",
-  "category_id": "countered_by_silence",
-  "relation": "against",
-  "value": 5.5
- },
- {
-  "item_id": "spirit_shredder_bullets",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 3.0
- },
- {
-  "item_id": "echo_shard",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 1.0
- },
- {
-  "item_id": "healing_tempo",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 1.75
- },
- {
-  "item_id": "arcane_surge",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.6
- },
- {
-  "item_id": "infuser",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.36
- },
- {
-  "item_id": "spiritual_overflow",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.36
- },
- {
-  "item_id": "unstoppable",
+  "item_id": "weighted_shots",
   "category_id": "applies_debuffs",
   "relation": "against",
-  "value": 3.5000000000000004
- },
- {
-  "item_id": "restorative_locket",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 1.6
- },
- {
-  "item_id": "mystic_shot",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.42
- },
- {
-  "item_id": "rapid_rounds",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.45
- },
- {
-  "item_id": "torment_pulse",
-  "category_id": "combat_range",
-  "relation": "as",
-  "value": -2.5
- },
- {
-  "item_id": "healing_tempo",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "frenzy",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.75
- },
- {
-  "item_id": "spellbreaker",
-  "category_id": "applies_debuffs",
-  "relation": "against",
-  "value": 3.5000000000000004
- },
- {
-  "item_id": "spirit_resilience",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 8.25
- },
- {
-  "item_id": "crippling_headshot",
-  "category_id": "has_healing_sustain",
-  "relation": "against",
-  "value": 3.85
- },
- {
-  "item_id": "spirit_burn",
-  "category_id": "has_healing_sustain",
-  "relation": "against",
-  "value": 7.7
- },
- {
-  "item_id": "fleetfoot",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.2000000000000002
- },
- {
-  "item_id": "hunters_aura",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 3.0
- },
- {
-  "item_id": "blood_tribute",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.4375
- },
- {
-  "item_id": "phantom_strike",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 7.0
- },
- {
-  "item_id": "spirit_sap",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "as",
-  "value": 3.0
- },
- {
-  "item_id": "superior_duration",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 1.6
- },
- {
-  "item_id": "return_fire",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "alchemical_fire",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.6
- },
- {
-  "item_id": "battle_vest",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.08750000000000001
- },
- {
-  "item_id": "heroic_aura",
-  "category_id": "cares_about_firerate",
-  "relation": "as",
-  "value": 0.325
- },
- {
-  "item_id": "arctic_blast",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "against",
-  "value": 2.0
- },
- {
-  "item_id": "heroic_aura",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 3.4000000000000004
- },
- {
-  "item_id": "decay",
-  "category_id": "scales_with_spirit_power",
-  "relation": "as",
-  "value": 0.48
+  "value": 3.08
  },
  {
   "item_id": "witchmail",
@@ -816,39 +846,9 @@
   "value": 4.4
  },
  {
-  "item_id": "hunters_aura",
-  "category_id": "combat_range",
-  "relation": "against",
-  "value": -0.5
- },
- {
-  "item_id": "rusted_barrel",
-  "category_id": "cares_about_firerate",
-  "relation": "against",
-  "value": 5.0
- },
- {
-  "item_id": "spirit_sap",
-  "category_id": "deals_spirit_damage_general",
-  "relation": "with",
-  "value": 3.0
- },
- {
-  "item_id": "toxic_bullets",
-  "category_id": "has_healing_sustain",
-  "relation": "against",
-  "value": 3.85
- },
- {
-  "item_id": "crushing_fists",
-  "category_id": "deals_bullet_damage_general",
-  "relation": "against",
-  "value": 2.4000000000000004
- },
- {
-  "item_id": "spiritual_overflow",
-  "category_id": "cares_about_firerate",
+  "item_id": "witchmail",
+  "category_id": "scales_with_spirit_power",
   "relation": "as",
-  "value": 0.3125
+  "value": 0.84
  }
 ]

@@ -6,6 +6,7 @@
     <BuiltInComInteropSupport>true</BuiltInComInteropSupport>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
+    <ApplicationIcon>src\Assets\app.ico</ApplicationIcon>
     <!-- The test project lives beneath this one; keep its sources out of the app's default globs. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
   </PropertyGroup>
@@ -15,7 +16,9 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="src\Assets\**" />
+    <AvaloniaResource Include="src\Assets\**" Exclude="src\Assets\SeedData\**" />
+    <!-- A copy of the Python app's data/, written to a fresh data folder on first run. -->
+    <EmbeddedResource Include="src\Assets\SeedData\*" LogicalName="SeedData/%(Filename)%(Extension)" />
   </ItemGroup>
 
   <ItemGroup>

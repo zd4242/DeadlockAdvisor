@@ -1,0 +1,202 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:explain="using:DeadlockAdvisor.Features.Match.Explain"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
+             xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+             x:Class="DeadlockAdvisor.Features.Match.Explain.ExplainView"
+             x:DataType="explain:ExplainViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.faintText">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <DockPanel>
+        <TextBlock DockPanel.Dock="Top" Classes="section" Text="WHY THIS ITEM?"/>
+
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+            <art:ArtImage Width="40"
+                          Height="40"
+                          Margin="0,0,8,0"
+                          Kind="Item"
+                          ArtId="{Binding ItemId}"
+                          ArtName="{Binding ItemName}"
+                          Tint="{Binding ShopColor}"
+                          IsVisible="{Binding HasItem}"
+                          card:ItemCardHover.ItemId="{Binding ItemId}"/>
+            <TextBlock Grid.Column="1"
+                       FontWeight="Bold"
+                       TextWrapping="Wrap"
+                       VerticalAlignment="Center"
+                       Classes.dim="{Binding !HasItem}">
+                <Run Text="{Binding ItemName}"/>
+                <Run Text="  "/>
+                <Run Text="{Binding TotalText}" Foreground="{DynamicResource AccentBrush}"/>
+            </TextBlock>
+        </Grid>
+
+        <Border DockPanel.Dock="Top" Classes="hline" Margin="0,6,0,6"/>
+
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled">
+            <StackPanel Spacing="4" Margin="0,0,4,0" Grid.IsSharedSizeScope="True">
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding NoContributions}"
+                           Text="No hero in this view triggers any of this item's rules."/>
+
+                <ItemsControl ItemsSource="{Binding Contributions}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="explain:ContributionCard">
+                            <Border Classes="inset" Margin="0,0,0,4">
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                        <TextBlock Text="{Binding HeroName}" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <controls:Badge Grid.Column="1"
+                                                        Margin="6,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding RelationText}"
+                                                        Color="{Binding RelationColor}"/>
+                                        <TextBlock Grid.Column="3"
+                                                   Text="{Binding AmountText}"
+                                                   FontWeight="Bold"
+                                                   Foreground="{DynamicResource AccentBrush}"/>
+                                    </Grid>
+                                    <!-- One line per trait: what it is, where the coefficient came from, the
+                                         multiplication, and its share, the last two in right-aligned columns
+                                         so the numbers stack and scan. -->
+                                    <ItemsControl ItemsSource="{Binding Traits}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="explain:TraitLine">
+                                                <Grid Margin="0,0,0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Trait"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Arithmetic"/>
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Share"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Classes="dim" Text="{Binding TraitName}"/>
+                                                    <TextBlock Grid.Column="1"
+                                                               Classes="faintText"
+                                                               Margin="10,0,0,0"
+                                                               TextWrapping="Wrap"
+                                                               Text="{Binding Source}"
+                                                               ToolTip.Tip="{Binding SourceTip}"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Classes="faintText"
+                                                               Margin="10,0,0,0"
+                                                               HorizontalAlignment="Right"
+                                                               Text="{Binding Arithmetic}"/>
+                                                    <TextBlock Grid.Column="3"
+                                                               Margin="10,0,0,0"
+                                                               FontWeight="Bold"
+                                                               HorizontalAlignment="Right"
+                                                               Text="{Binding Share}"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+
+                <ContentControl Content="{Binding MatchData}">
+                    <ContentControl.ContentTemplate>
+                        <DataTemplate x:DataType="explain:MatchDataCard">
+                            <Border Classes="inset">
+                                <StackPanel Spacing="4">
+                                    <Grid ColumnDefinitions="*,Auto">
+                                        <TextBlock Text="Match data" FontWeight="Bold"/>
+                                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Totals}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <StackPanel Orientation="Horizontal" Spacing="12"/>
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="explain:DataTotal">
+                                                    <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}" FontWeight="Bold"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Grid>
+                                    <ItemsControl ItemsSource="{Binding Lines}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="explain:DataLine">
+                                                <Grid Margin="0,0,0,3">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DataHero"/>
+                                                        <ColumnDefinition Width="*"/>
+                                                        <ColumnDefinition Width="Auto"/>
+                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="DataShare"/>
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock Classes="dim" Text="{Binding HeroName}" VerticalAlignment="Center"/>
+                                                    <controls:Badge Grid.Column="1"
+                                                                    Margin="10,0,0,0"
+                                                                    HorizontalAlignment="Left"
+                                                                    VerticalAlignment="Center"
+                                                                    Text="{Binding RelationText}"
+                                                                    Color="{Binding RelationColor}"/>
+                                                    <TextBlock Grid.Column="2"
+                                                               Classes="faintText"
+                                                               Margin="10,0,0,0"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding Detail}"/>
+                                                    <TextBlock Grid.Column="3"
+                                                               Margin="10,0,0,0"
+                                                               FontWeight="Bold"
+                                                               HorizontalAlignment="Right"
+                                                               VerticalAlignment="Center"
+                                                               Text="{Binding Share}"/>
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                    <TextBlock Classes="faintText" TextWrapping="Wrap" Text="{Binding Note}"/>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ContentControl.ContentTemplate>
+                </ContentControl>
+
+                <!-- Items the match data rates that no rule of the hand model does -->
+                <Border Classes="inset" IsVisible="{Binding HasPicks}">
+                    <StackPanel Spacing="5">
+                        <TextBlock Text="The data likes these, the hand model doesn't" FontWeight="Bold"/>
+                        <TextBlock Classes="faintText"
+                                   TextWrapping="Wrap"
+                                   Text="Not recommended above (score 0 or less), but strong in real matches for this line-up. Worth a look for a missing rule."/>
+                        <ItemsControl ItemsSource="{Binding Picks}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="explain:DataPick">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" Margin="0,0,0,5">
+                                        <art:ArtImage Width="24"
+                                                      Height="24"
+                                                      Kind="Item"
+                                                      ArtId="{Binding ItemId}"
+                                                      ArtName="{Binding ItemName}"
+                                                      Tint="{Binding ShopColor}"
+                                                      card:ItemCardHover.ItemId="{Binding ItemId}"/>
+                                        <TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding ItemName}"/>
+                                        <controls:Badge Grid.Column="2"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Text="{Binding TierText}"
+                                                        Color="{Binding TierColor}"/>
+                                        <controls:DataText Grid.Column="4"
+                                                           VerticalAlignment="Center"
+                                                           Data="{Binding Data}"
+                                                           ToolTip.Tip="{Binding DataTip}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+    </DockPanel>
+</UserControl>

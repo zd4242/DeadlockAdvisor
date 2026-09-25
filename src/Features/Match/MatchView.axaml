@@ -1,0 +1,62 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:match="using:DeadlockAdvisor.Features.Match"
+             xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
+             xmlns:results="using:DeadlockAdvisor.Features.Match.Results"
+             xmlns:explain="using:DeadlockAdvisor.Features.Match.Explain"
+             xmlns:enums="using:DeadlockAdvisor.Enums"
+             x:Class="DeadlockAdvisor.Features.Match.MatchView"
+             x:DataType="match:MatchViewModel">
+
+    <UserControl.KeyBindings>
+        <KeyBinding Gesture="Alt+D1" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
+        <KeyBinding Gesture="Alt+D2" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
+        <KeyBinding Gesture="Alt+D3" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
+        <KeyBinding Gesture="F9" Command="{Binding DetectCommand}"/>
+    </UserControl.KeyBindings>
+
+    <Grid ColumnDefinitions="4*,8,5*" Margin="12">
+        <board:MatchBoardView x:Name="BoardView" DataContext="{Binding Board}"/>
+
+        <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+
+        <Grid Grid.Column="2" RowDefinitions="3*,8,2*">
+            <Border Classes="card">
+                <DockPanel>
+                    <!-- Score cutoff and flat/tiered layout, shared by both result tabs -->
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
+                        <ListBox Classes="tabs" SelectedIndex="{Binding ResultsTab}" VerticalAlignment="Center">
+                            <ListBoxItem Content="Lane Phase"/>
+                            <ListBoxItem Content="Full Match"/>
+                        </ListBox>
+                        <ComboBox Grid.Column="2"
+                                  VerticalAlignment="Center"
+                                  ItemsSource="{Binding Cutoffs}"
+                                  SelectedItem="{Binding SelectedCutoff}"
+                                  ToolTip.Tip="Hide items scoring below this share of the top item's score,&#10;so only the real contenders are left"/>
+                        <ToggleButton Grid.Column="3"
+                                      Margin="8,0,0,0"
+                                      VerticalAlignment="Center"
+                                      Content="By tier"
+                                      IsChecked="{Binding ByTier}"
+                                      ToolTip.Tip="Group into collapsible tier sections instead of one ranked list"/>
+                    </Grid>
+                    <Panel>
+                        <Panel IsVisible="{Binding IsLaneTab}">
+                            <results:ResultsView DataContext="{Binding LaneResults}"/>
+                        </Panel>
+                        <Panel IsVisible="{Binding IsFullTab}">
+                            <results:ResultsView DataContext="{Binding FullResults}"/>
+                        </Panel>
+                    </Panel>
+                </DockPanel>
+            </Border>
+
+            <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows"/>
+
+            <Border Grid.Row="2" Classes="card" MinHeight="140">
+                <explain:ExplainView DataContext="{Binding Explain}"/>
+            </Border>
+        </Grid>
+    </Grid>
+</UserControl>

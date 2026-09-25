@@ -1,0 +1,19 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:message="using:DeadlockAdvisor.Features.Shared.Modals.Message"
+             x:Class="DeadlockAdvisor.Features.Shared.Modals.Message.MessageModalView"
+             x:DataType="message:MessageModalViewModel">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <SelectableTextBlock Text="{Binding Body}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+        <Button x:Name="OkButton"
+                Classes="primary"
+                Content="OK"
+                MinWidth="80"
+                HorizontalAlignment="Right"
+                HorizontalContentAlignment="Center"
+                IsDefault="True"
+                IsCancel="True"
+                Command="{Binding CloseCommand}"/>
+    </StackPanel>
+</UserControl>

@@ -1,0 +1,1208 @@
+[
+ {
+  "key": "abrams",
+  "name": "Abrams",
+  "color": "#af865d",
+  "initials": "A"
+ },
+ {
+  "key": "apollo",
+  "name": "Apollo",
+  "color": "#9d5daf",
+  "initials": "A"
+ },
+ {
+  "key": "bebop",
+  "name": "Bebop",
+  "color": "#5daf94",
+  "initials": "B"
+ },
+ {
+  "key": "billy",
+  "name": "Billy",
+  "color": "#af5d86",
+  "initials": "B"
+ },
+ {
+  "key": "calico",
+  "name": "Calico",
+  "color": "#5d95af",
+  "initials": "C"
+ },
+ {
+  "key": "celeste",
+  "name": "Celeste",
+  "color": "#71af5d",
+  "initials": "C"
+ },
+ {
+  "key": "drifter",
+  "name": "Drifter",
+  "color": "#af5d8b",
+  "initials": "D"
+ },
+ {
+  "key": "dynamo",
+  "name": "Dynamo",
+  "color": "#af755d",
+  "initials": "D"
+ },
+ {
+  "key": "graves",
+  "name": "Graves",
+  "color": "#5d96af",
+  "initials": "G"
+ },
+ {
+  "key": "grey_talon",
+  "name": "Grey Talon",
+  "color": "#5d5faf",
+  "initials": "GT"
+ },
+ {
+  "key": "haze",
+  "name": "Haze",
+  "color": "#af625d",
+  "initials": "H"
+ },
+ {
+  "key": "holliday",
+  "name": "Holliday",
+  "color": "#5d86af",
+  "initials": "H"
+ },
+ {
+  "key": "infernus",
+  "name": "Infernus",
+  "color": "#af5d5f",
+  "initials": "I"
+ },
+ {
+  "key": "ivy",
+  "name": "Ivy",
+  "color": "#995daf",
+  "initials": "I"
+ },
+ {
+  "key": "kelvin",
+  "name": "Kelvin",
+  "color": "#5dafa0",
+  "initials": "K"
+ },
+ {
+  "key": "lady_geist",
+  "name": "Lady Geist",
+  "color": "#af5d7f",
+  "initials": "LG"
+ },
+ {
+  "key": "lash",
+  "name": "Lash",
+  "color": "#5daf8b",
+  "initials": "L"
+ },
+ {
+  "key": "mcginnis",
+  "name": "McGinnis",
+  "color": "#5f5daf",
+  "initials": "M"
+ },
+ {
+  "key": "mina",
+  "name": "Mina",
+  "color": "#af875d",
+  "initials": "M"
+ },
+ {
+  "key": "mirage",
+  "name": "Mirage",
+  "color": "#af5d87",
+  "initials": "M"
+ },
+ {
+  "key": "mo_and_krill",
+  "name": "Mo & Krill",
+  "color": "#5d77af",
+  "initials": "MK"
+ },
+ {
+  "key": "paige",
+  "name": "Paige",
+  "color": "#af915d",
+  "initials": "P"
+ },
+ {
+  "key": "paradox",
+  "name": "Paradox",
+  "color": "#a55daf",
+  "initials": "P"
+ },
+ {
+  "key": "pocket",
+  "name": "Pocket",
+  "color": "#5daf9c",
+  "initials": "P"
+ },
+ {
+  "key": "rem",
+  "name": "Rem",
+  "color": "#65af5d",
+  "initials": "R"
+ },
+ {
+  "key": "seven",
+  "name": "Seven",
+  "color": "#645daf",
+  "initials": "S"
+ },
+ {
+  "key": "shiv",
+  "name": "Shiv",
+  "color": "#5d91af",
+  "initials": "S"
+ },
+ {
+  "key": "silver",
+  "name": "Silver",
+  "color": "#af5dae",
+  "initials": "S"
+ },
+ {
+  "key": "doorman",
+  "name": "Doorman",
+  "color": "#5d62af",
+  "initials": "D"
+ },
+ {
+  "key": "sinclair",
+  "name": "Sinclair",
+  "color": "#5dafa0",
+  "initials": "S"
+ },
+ {
+  "key": "venator",
+  "name": "Venator",
+  "color": "#5daf8f",
+  "initials": "V"
+ },
+ {
+  "key": "victor",
+  "name": "Victor",
+  "color": "#af5dab",
+  "initials": "V"
+ },
+ {
+  "key": "vindicta",
+  "name": "Vindicta",
+  "color": "#5d9faf",
+  "initials": "V"
+ },
+ {
+  "key": "viscous",
+  "name": "Viscous",
+  "color": "#5dafa1",
+  "initials": "V"
+ },
+ {
+  "key": "vyper",
+  "name": "Vyper",
+  "color": "#805daf",
+  "initials": "V"
+ },
+ {
+  "key": "warden",
+  "name": "Warden",
+  "color": "#77af5d",
+  "initials": "W"
+ },
+ {
+  "key": "wraith",
+  "name": "Wraith",
+  "color": "#a85daf",
+  "initials": "W"
+ },
+ {
+  "key": "yamato",
+  "name": "Yamato",
+  "color": "#5d69af",
+  "initials": "Y"
+ },
+ {
+  "key": "active_reload",
+  "name": "Active Reload",
+  "color": "#af5da7",
+  "initials": "AR"
+ },
+ {
+  "key": "alchemical_fire",
+  "name": "Alchemical Fire",
+  "color": "#af5d68",
+  "initials": "AF"
+ },
+ {
+  "key": "arcane_surge",
+  "name": "Arcane Surge",
+  "color": "#5daeaf",
+  "initials": "AS"
+ },
+ {
+  "key": "arctic_blast",
+  "name": "Arctic Blast",
+  "color": "#5daf8f",
+  "initials": "AB"
+ },
+ {
+  "key": "armor_piercing_rounds",
+  "name": "Armor Piercing Rounds",
+  "color": "#af5d69",
+  "initials": "AP"
+ },
+ {
+  "key": "ballistic_enchantment",
+  "name": "Ballistic Enchantment",
+  "color": "#a3af5d",
+  "initials": "BE"
+ },
+ {
+  "key": "battle_vest",
+  "name": "Battle Vest",
+  "color": "#af925d",
+  "initials": "BV"
+ },
+ {
+  "key": "berserker",
+  "name": "Berserker",
+  "color": "#abaf5d",
+  "initials": "B"
+ },
+ {
+  "key": "blood_tribute",
+  "name": "Blood Tribute",
+  "color": "#5daf75",
+  "initials": "BT"
+ },
+ {
+  "key": "boundless_spirit",
+  "name": "Boundless Spirit",
+  "color": "#5d92af",
+  "initials": "BS"
+ },
+ {
+  "key": "bullet_lifesteal",
+  "name": "Bullet Lifesteal",
+  "color": "#afa75d",
+  "initials": "BL"
+ },
+ {
+  "key": "bullet_resilience",
+  "name": "Bullet Resilience",
+  "color": "#af5d75",
+  "initials": "BR"
+ },
+ {
+  "key": "bullet_resist_shredder",
+  "name": "Bullet Resist Shredder",
+  "color": "#98af5d",
+  "initials": "BR"
+ },
+ {
+  "key": "burst_fire",
+  "name": "Burst Fire",
+  "color": "#af5d8d",
+  "initials": "BF"
+ },
+ {
+  "key": "capacitor",
+  "name": "Capacitor",
+  "color": "#af805d",
+  "initials": "C"
+ },
+ {
+  "key": "cheat_death",
+  "name": "Cheat Death",
+  "color": "#5daf94",
+  "initials": "CD"
+ },
+ {
+  "key": "close_quarters",
+  "name": "Close Quarters",
+  "color": "#af5d6a",
+  "initials": "CQ"
+ },
+ {
+  "key": "cold_front",
+  "name": "Cold Front",
+  "color": "#75af5d",
+  "initials": "CF"
+ },
+ {
+  "key": "colossus",
+  "name": "Colossus",
+  "color": "#a3af5d",
+  "initials": "C"
+ },
+ {
+  "key": "compress_cooldown",
+  "name": "Compress Cooldown",
+  "color": "#5d5daf",
+  "initials": "CC"
+ },
+ {
+  "key": "counterspell",
+  "name": "Counterspell",
+  "color": "#a4af5d",
+  "initials": "C"
+ },
+ {
+  "key": "crippling_headshot",
+  "name": "Crippling Headshot",
+  "color": "#5dafab",
+  "initials": "CH"
+ },
+ {
+  "key": "crushing_fists",
+  "name": "Crushing Fists",
+  "color": "#af5dab",
+  "initials": "CF"
+ },
+ {
+  "key": "cultist_sacrifice",
+  "name": "Cultist Sacrifice",
+  "color": "#afa15d",
+  "initials": "CS"
+ },
+ {
+  "key": "cursed_relic",
+  "name": "Cursed Relic",
+  "color": "#5d96af",
+  "initials": "CR"
+ },
+ {
+  "key": "debuff_reducer",
+  "name": "Debuff Reducer",
+  "color": "#745daf",
+  "initials": "DR"
+ },
+ {
+  "key": "decay",
+  "name": "Decay",
+  "color": "#5d7baf",
+  "initials": "D"
+ },
+ {
+  "key": "disarming_hex",
+  "name": "Disarming Hex",
+  "color": "#af5d73",
+  "initials": "DH"
+ },
+ {
+  "key": "dispel_magic",
+  "name": "Dispel Magic",
+  "color": "#7faf5d",
+  "initials": "DM"
+ },
+ {
+  "key": "divine_barrier",
+  "name": "Divine Barrier",
+  "color": "#5dafa8",
+  "initials": "DB"
+ },
+ {
+  "key": "diviners_kevlar",
+  "name": "Diviner's Kevlar",
+  "color": "#af5d7e",
+  "initials": "DK"
+ },
+ {
+  "key": "duration_extender",
+  "name": "Duration Extender",
+  "color": "#af965d",
+  "initials": "DE"
+ },
+ {
+  "key": "echo_shard",
+  "name": "Echo Shard",
+  "color": "#af5d78",
+  "initials": "ES"
+ },
+ {
+  "key": "enchanters_emblem",
+  "name": "Enchanter's Emblem",
+  "color": "#62af5d",
+  "initials": "EE"
+ },
+ {
+  "key": "enduring_speed",
+  "name": "Enduring Speed",
+  "color": "#afac5d",
+  "initials": "ES"
+ },
+ {
+  "key": "escalating_exposure",
+  "name": "Escalating Exposure",
+  "color": "#abaf5d",
+  "initials": "EE"
+ },
+ {
+  "key": "escalating_resilience",
+  "name": "Escalating Resilience",
+  "color": "#afab5d",
+  "initials": "ER"
+ },
+ {
+  "key": "ethereal_shift",
+  "name": "Ethereal Shift",
+  "color": "#af5d61",
+  "initials": "ES"
+ },
+ {
+  "key": "express_shot",
+  "name": "Express Shot",
+  "color": "#af5d66",
+  "initials": "ES"
+ },
+ {
+  "key": "extended_magazine",
+  "name": "Extended Magazine",
+  "color": "#5d91af",
+  "initials": "EM"
+ },
+ {
+  "key": "extra_charge",
+  "name": "Extra Charge",
+  "color": "#84af5d",
+  "initials": "EC"
+ },
+ {
+  "key": "extra_health",
+  "name": "Extra Health",
+  "color": "#5daf98",
+  "initials": "EH"
+ },
+ {
+  "key": "extra_regen",
+  "name": "Extra Regen",
+  "color": "#af705d",
+  "initials": "ER"
+ },
+ {
+  "key": "extra_spirit",
+  "name": "Extra Spirit",
+  "color": "#af5d94",
+  "initials": "ES"
+ },
+ {
+  "key": "extra_stamina",
+  "name": "Extra Stamina",
+  "color": "#5daf89",
+  "initials": "ES"
+ },
+ {
+  "key": "fleetfoot",
+  "name": "Fleetfoot",
+  "color": "#5d78af",
+  "initials": "F"
+ },
+ {
+  "key": "focus_lens",
+  "name": "Focus Lens",
+  "color": "#8daf5d",
+  "initials": "FL"
+ },
+ {
+  "key": "fortitude",
+  "name": "Fortitude",
+  "color": "#5daf89",
+  "initials": "F"
+ },
+ {
+  "key": "frenzy",
+  "name": "Frenzy",
+  "color": "#5d78af",
+  "initials": "F"
+ },
+ {
+  "key": "fury_trance",
+  "name": "Fury Trance",
+  "color": "#5d80af",
+  "initials": "FT"
+ },
+ {
+  "key": "glass_cannon",
+  "name": "Glass Cannon",
+  "color": "#5daf5d",
+  "initials": "GC"
+ },
+ {
+  "key": "golden_goose_egg",
+  "name": "Golden Goose Egg",
+  "color": "#5daf74",
+  "initials": "GG"
+ },
+ {
+  "key": "greater_expansion",
+  "name": "Greater Expansion",
+  "color": "#5d65af",
+  "initials": "GE"
+ },
+ {
+  "key": "grit",
+  "name": "Grit",
+  "color": "#96af5d",
+  "initials": "G"
+ },
+ {
+  "key": "guardian_ward",
+  "name": "Guardian Ward",
+  "color": "#af5d9c",
+  "initials": "GW"
+ },
+ {
+  "key": "headhunter",
+  "name": "Headhunter",
+  "color": "#aa5daf",
+  "initials": "H"
+ },
+ {
+  "key": "headshot_booster",
+  "name": "Headshot Booster",
+  "color": "#af5d8f",
+  "initials": "HB"
+ },
+ {
+  "key": "healbane",
+  "name": "Healbane",
+  "color": "#afa75d",
+  "initials": "H"
+ },
+ {
+  "key": "healing_booster",
+  "name": "Healing Booster",
+  "color": "#5daf98",
+  "initials": "HB"
+ },
+ {
+  "key": "healing_nova",
+  "name": "Healing Nova",
+  "color": "#7f5daf",
+  "initials": "HN"
+ },
+ {
+  "key": "healing_rite",
+  "name": "Healing Rite",
+  "color": "#5d8daf",
+  "initials": "HR"
+ },
+ {
+  "key": "healing_tempo",
+  "name": "Healing Tempo",
+  "color": "#af5d96",
+  "initials": "HT"
+ },
+ {
+  "key": "heroic_aura",
+  "name": "Heroic Aura",
+  "color": "#865daf",
+  "initials": "HA"
+ },
+ {
+  "key": "high_velocity_rounds",
+  "name": "High-Velocity Rounds",
+  "color": "#70af5d",
+  "initials": "HV"
+ },
+ {
+  "key": "hollow_point",
+  "name": "Hollow Point",
+  "color": "#af5d5d",
+  "initials": "HP"
+ },
+ {
+  "key": "hunters_aura",
+  "name": "Hunter's Aura",
+  "color": "#5eaf5d",
+  "initials": "HA"
+ },
+ {
+  "key": "improved_spirit",
+  "name": "Improved Spirit",
+  "color": "#99af5d",
+  "initials": "IS"
+ },
+ {
+  "key": "indomitable",
+  "name": "Indomitable",
+  "color": "#5daf96",
+  "initials": "I"
+ },
+ {
+  "key": "infuser",
+  "name": "Infuser",
+  "color": "#afa45d",
+  "initials": "I"
+ },
+ {
+  "key": "inhibitor",
+  "name": "Inhibitor",
+  "color": "#af5d70",
+  "initials": "I"
+ },
+ {
+  "key": "intensifying_magazine",
+  "name": "Intensifying Magazine",
+  "color": "#af5da7",
+  "initials": "IM"
+ },
+ {
+  "key": "juggernaut",
+  "name": "Juggernaut",
+  "color": "#ac5daf",
+  "initials": "J"
+ },
+ {
+  "key": "kinetic_dash",
+  "name": "Kinetic Dash",
+  "color": "#af7e5d",
+  "initials": "KD"
+ },
+ {
+  "key": "knockdown",
+  "name": "Knockdown",
+  "color": "#5d5faf",
+  "initials": "K"
+ },
+ {
+  "key": "leech",
+  "name": "Leech",
+  "color": "#8a5daf",
+  "initials": "L"
+ },
+ {
+  "key": "lifestrike",
+  "name": "Lifestrike",
+  "color": "#5d8baf",
+  "initials": "L"
+ },
+ {
+  "key": "lightning_scroll",
+  "name": "Lightning Scroll",
+  "color": "#5d91af",
+  "initials": "LS"
+ },
+ {
+  "key": "long_range",
+  "name": "Long Range",
+  "color": "#5da7af",
+  "initials": "LR"
+ },
+ {
+  "key": "lucky_shot",
+  "name": "Lucky Shot",
+  "color": "#5da8af",
+  "initials": "LS"
+ },
+ {
+  "key": "magic_carpet",
+  "name": "Magic Carpet",
+  "color": "#5daf6e",
+  "initials": "MC"
+ },
+ {
+  "key": "majestic_leap",
+  "name": "Majestic Leap",
+  "color": "#af5d77",
+  "initials": "ML"
+ },
+ {
+  "key": "melee_charge",
+  "name": "Melee Charge",
+  "color": "#af5d74",
+  "initials": "MC"
+ },
+ {
+  "key": "melee_lifesteal",
+  "name": "Melee Lifesteal",
+  "color": "#5d9faf",
+  "initials": "ML"
+ },
+ {
+  "key": "mercurial_magnum",
+  "name": "Mercurial Magnum",
+  "color": "#af5d6d",
+  "initials": "MM"
+ },
+ {
+  "key": "metal_skin",
+  "name": "Metal Skin",
+  "color": "#5da3af",
+  "initials": "MS"
+ },
+ {
+  "key": "monster_rounds",
+  "name": "Monster Rounds",
+  "color": "#8b5daf",
+  "initials": "MR"
+ },
+ {
+  "key": "mystic_burst",
+  "name": "Mystic Burst",
+  "color": "#5d7eaf",
+  "initials": "MB"
+ },
+ {
+  "key": "mystic_expansion",
+  "name": "Mystic Expansion",
+  "color": "#715daf",
+  "initials": "ME"
+ },
+ {
+  "key": "mystic_regeneration",
+  "name": "Mystic Regeneration",
+  "color": "#af985d",
+  "initials": "MR"
+ },
+ {
+  "key": "mystic_reverb",
+  "name": "Mystic Reverb",
+  "color": "#7baf5d",
+  "initials": "MR"
+ },
+ {
+  "key": "mystic_shot",
+  "name": "Mystic Shot",
+  "color": "#5daf6a",
+  "initials": "MS"
+ },
+ {
+  "key": "mystic_slow",
+  "name": "Mystic Slow",
+  "color": "#af745d",
+  "initials": "MS"
+ },
+ {
+  "key": "mystic_vulnerability",
+  "name": "Mystic Vulnerability",
+  "color": "#6daf5d",
+  "initials": "MV"
+ },
+ {
+  "key": "opening_rounds",
+  "name": "Opening Rounds",
+  "color": "#afaf5d",
+  "initials": "OR"
+ },
+ {
+  "key": "phantom_strike",
+  "name": "Phantom Strike",
+  "color": "#5daf8e",
+  "initials": "PS"
+ },
+ {
+  "key": "plated_armor",
+  "name": "Plated Armor",
+  "color": "#8baf5d",
+  "initials": "PA"
+ },
+ {
+  "key": "point_blank",
+  "name": "Point Blank",
+  "color": "#af9a5d",
+  "initials": "PB"
+ },
+ {
+  "key": "quicksilver_reload",
+  "name": "Quicksilver Reload",
+  "color": "#af5d5f",
+  "initials": "QR"
+ },
+ {
+  "key": "radiant_regeneration",
+  "name": "Radiant Regeneration",
+  "color": "#a85daf",
+  "initials": "RR"
+ },
+ {
+  "key": "rapid_recharge",
+  "name": "Rapid Recharge",
+  "color": "#70af5d",
+  "initials": "RR"
+ },
+ {
+  "key": "rapid_rounds",
+  "name": "Rapid Rounds",
+  "color": "#af5d7e",
+  "initials": "RR"
+ },
+ {
+  "key": "reactive_barrier",
+  "name": "Reactive Barrier",
+  "color": "#8a5daf",
+  "initials": "RB"
+ },
+ {
+  "key": "rebuttal",
+  "name": "Rebuttal",
+  "color": "#af955d",
+  "initials": "R"
+ },
+ {
+  "key": "recharging_rush",
+  "name": "Recharging Rush",
+  "color": "#ae5daf",
+  "initials": "RR"
+ },
+ {
+  "key": "refresher",
+  "name": "Refresher",
+  "color": "#af945d",
+  "initials": "R"
+ },
+ {
+  "key": "rescue_beam",
+  "name": "Rescue Beam",
+  "color": "#af615d",
+  "initials": "RB"
+ },
+ {
+  "key": "restorative_locket",
+  "name": "Restorative Locket",
+  "color": "#5dafa3",
+  "initials": "RL"
+ },
+ {
+  "key": "restorative_shot",
+  "name": "Restorative Shot",
+  "color": "#5dafae",
+  "initials": "RS"
+ },
+ {
+  "key": "return_fire",
+  "name": "Return Fire",
+  "color": "#5d98af",
+  "initials": "RF"
+ },
+ {
+  "key": "ricochet",
+  "name": "Ricochet",
+  "color": "#5daf66",
+  "initials": "R"
+ },
+ {
+  "key": "rusted_barrel",
+  "name": "Rusted Barrel",
+  "color": "#af8b5d",
+  "initials": "RB"
+ },
+ {
+  "key": "scourge",
+  "name": "Scourge",
+  "color": "#5d70af",
+  "initials": "S"
+ },
+ {
+  "key": "shadow_weave",
+  "name": "Shadow Weave",
+  "color": "#84af5d",
+  "initials": "SW"
+ },
+ {
+  "key": "sharpshooter",
+  "name": "Sharpshooter",
+  "color": "#5daf96",
+  "initials": "S"
+ },
+ {
+  "key": "silence_wave",
+  "name": "Silence Wave",
+  "color": "#af5d7f",
+  "initials": "SW"
+ },
+ {
+  "key": "silencer",
+  "name": "Silencer",
+  "color": "#a05daf",
+  "initials": "S"
+ },
+ {
+  "key": "siphon_bullets",
+  "name": "Siphon Bullets",
+  "color": "#74af5d",
+  "initials": "SB"
+ },
+ {
+  "key": "slowing_bullets",
+  "name": "Slowing Bullets",
+  "color": "#8faf5d",
+  "initials": "SB"
+ },
+ {
+  "key": "slowing_hex",
+  "name": "Slowing Hex",
+  "color": "#5d8daf",
+  "initials": "SH"
+ },
+ {
+  "key": "spellbreaker",
+  "name": "Spellbreaker",
+  "color": "#af5d8e",
+  "initials": "S"
+ },
+ {
+  "key": "spellslinger",
+  "name": "Spellslinger",
+  "color": "#865daf",
+  "initials": "S"
+ },
+ {
+  "key": "spirit_burn",
+  "name": "Spirit Burn",
+  "color": "#6caf5d",
+  "initials": "SB"
+ },
+ {
+  "key": "spirit_lifesteal",
+  "name": "Spirit Lifesteal",
+  "color": "#af5d82",
+  "initials": "SL"
+ },
+ {
+  "key": "spirit_rend",
+  "name": "Spirit Rend",
+  "color": "#7faf5d",
+  "initials": "SR"
+ },
+ {
+  "key": "spirit_resilience",
+  "name": "Spirit Resilience",
+  "color": "#5d8aaf",
+  "initials": "SR"
+ },
+ {
+  "key": "spirit_sap",
+  "name": "Spirit Sap",
+  "color": "#af5d8e",
+  "initials": "SS"
+ },
+ {
+  "key": "spirit_shielding",
+  "name": "Spirit Shielding",
+  "color": "#825daf",
+  "initials": "SS"
+ },
+ {
+  "key": "spirit_shredder_bullets",
+  "name": "Spirit Shredder Bullets",
+  "color": "#5daf8f",
+  "initials": "SS"
+ },
+ {
+  "key": "spirit_snatch",
+  "name": "Spirit Snatch",
+  "color": "#5d71af",
+  "initials": "SS"
+ },
+ {
+  "key": "spirit_strike",
+  "name": "Spirit Strike",
+  "color": "#895daf",
+  "initials": "SS"
+ },
+ {
+  "key": "spiritual_overflow",
+  "name": "Spiritual Overflow",
+  "color": "#755daf",
+  "initials": "SO"
+ },
+ {
+  "key": "split_shot",
+  "name": "Split Shot",
+  "color": "#5dabaf",
+  "initials": "SS"
+ },
+ {
+  "key": "sprint_boots",
+  "name": "Sprint Boots",
+  "color": "#af835d",
+  "initials": "SB"
+ },
+ {
+  "key": "stalker",
+  "name": "Stalker",
+  "color": "#5daf99",
+  "initials": "S"
+ },
+ {
+  "key": "stamina_mastery",
+  "name": "Stamina Mastery",
+  "color": "#5eaf5d",
+  "initials": "SM"
+ },
+ {
+  "key": "superior_cooldown",
+  "name": "Superior Cooldown",
+  "color": "#af5da8",
+  "initials": "SC"
+ },
+ {
+  "key": "superior_duration",
+  "name": "Superior Duration",
+  "color": "#afac5d",
+  "initials": "SD"
+ },
+ {
+  "key": "suppressor",
+  "name": "Suppressor",
+  "color": "#5daf89",
+  "initials": "S"
+ },
+ {
+  "key": "surge_of_power",
+  "name": "Surge of Power",
+  "color": "#af5d80",
+  "initials": "SP"
+ },
+ {
+  "key": "swift_striker",
+  "name": "Swift Striker",
+  "color": "#995daf",
+  "initials": "SS"
+ },
+ {
+  "key": "tankbuster",
+  "name": "Tankbuster",
+  "color": "#84af5d",
+  "initials": "T"
+ },
+ {
+  "key": "tesla_bullets",
+  "name": "Tesla Bullets",
+  "color": "#5dafa0",
+  "initials": "TB"
+ },
+ {
+  "key": "titanic_magazine",
+  "name": "Titanic Magazine",
+  "color": "#98af5d",
+  "initials": "TM"
+ },
+ {
+  "key": "torment_pulse",
+  "name": "Torment Pulse",
+  "color": "#74af5d",
+  "initials": "TP"
+ },
+ {
+  "key": "toxic_bullets",
+  "name": "Toxic Bullets",
+  "color": "#af7f5d",
+  "initials": "TB"
+ },
+ {
+  "key": "transcendent_cooldown",
+  "name": "Transcendent Cooldown",
+  "color": "#875daf",
+  "initials": "TC"
+ },
+ {
+  "key": "trophy_collector",
+  "name": "Trophy Collector",
+  "color": "#af5d75",
+  "initials": "TC"
+ },
+ {
+  "key": "unstoppable",
+  "name": "Unstoppable",
+  "color": "#74af5d",
+  "initials": "U"
+ },
+ {
+  "key": "vampiric_burst",
+  "name": "Vampiric Burst",
+  "color": "#86af5d",
+  "initials": "VB"
+ },
+ {
+  "key": "veil_walker",
+  "name": "Veil Walker",
+  "color": "#8faf5d",
+  "initials": "VW"
+ },
+ {
+  "key": "vortex_web",
+  "name": "Vortex Web",
+  "color": "#5daf77",
+  "initials": "VW"
+ },
+ {
+  "key": "warp_stone",
+  "name": "Warp Stone",
+  "color": "#9c5daf",
+  "initials": "WS"
+ },
+ {
+  "key": "weakening_headshot",
+  "name": "Weakening Headshot",
+  "color": "#afaa5d",
+  "initials": "WH"
+ },
+ {
+  "key": "weapon_shielding",
+  "name": "Weapon Shielding",
+  "color": "#5dacaf",
+  "initials": "WS"
+ },
+ {
+  "key": "weighted_shots",
+  "name": "Weighted Shots",
+  "color": "#af745d",
+  "initials": "WS"
+ },
+ {
+  "key": "witchmail",
+  "name": "Witchmail",
+  "color": "#af5d80",
+  "initials": "W"
+ },
+ {
+  "key": "x",
+  "name": "",
+  "color": "#5daf5d",
+  "initials": ""
+ },
+ {
+  "key": "mo_and_krill",
+  "name": "Mo & Krill",
+  "color": "#5d77af",
+  "initials": "MK"
+ },
+ {
+  "key": "doorman",
+  "name": "The Doorman",
+  "color": "#5d62af",
+  "initials": "D"
+ },
+ {
+  "key": "dash_case",
+  "name": "a-b_c",
+  "color": "#af5d8d",
+  "initials": "AB"
+ },
+ {
+  "key": "amp",
+  "name": "&",
+  "color": "#5d6daf",
+  "initials": "&"
+ },
+ {
+  "key": "words",
+  "name": "of the",
+  "color": "#a05daf",
+  "initials": "OF"
+ },
+ {
+  "key": "café",
+  "name": "Café Crème",
+  "color": "#af5d92",
+  "initials": "CC"
+ }
+]

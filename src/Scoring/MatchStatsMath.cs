@@ -454,6 +454,35 @@ public static partial class MatchStatsMath
         return $"patch {latest} · fetched {Age(now - fetched.Value)}";
     }
 
+    /// <summary>
+    /// What the data numbers are and where they came from, for tooltips and the explain panel's
+    /// footnote; "" without data.
+    /// </summary>
+    public static string DataNote(JsonObject meta, double now)
+    {
+        var fetched = Number(meta["fetched_at"]);
+        if (fetched is null or 0)
+            return "";
+
+        var lines = new List<string>
+        {
+            "Second opinion from real matches (deadlock-api.com): how many win-rate points the item gains, "
+            + "with each hero's own strength taken out and small samples pulled toward 0. Not part of the score.",
+        };
+        var against = FamilyMeta(meta, "against", "full");
+        if (IsTrue(against["kept"]))
+            lines.Add($"Enemies: counters, since patch {Text(against["since_patch"]) ?? "?"}. Real effects here are small -- +1 is a standout.");
+        var asFull = FamilyMeta(meta, "as", "full");
+        if (IsTrue(asFull["kept"]))
+            lines.Add($"You: on your hero, since patch {Text(asFull["since_patch"]) ?? "?"}. Partly reflects who builds it on this hero, not only what it does.");
+        lines.Add($"Fetched {Age(now - fetched.Value)} (Data → Fetch Match Stats).");
+        return string.Join("\n", lines);
+    }
+
+    private static bool IsTrue(JsonNode? node) => node is JsonValue value && value.TryGetValue<bool>(out var flag) && flag;
+
+    private static string? Text(JsonNode? node) => node is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
+
     /// <summary>A JSON number whether it was parsed from a file or built in memory as an int or a float.</summary>
     private static double? Number(JsonNode? node)
     {

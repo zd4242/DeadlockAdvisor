@@ -1,49 +1,27 @@
 <ResourceDictionary xmlns="https://github.com/avaloniaui"
-                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:theme="using:DeadlockAdvisor.Theme">
 
-    <!-- Warm charcoal + gold, loosely after Deadlock's own UI (theme.py in the Python app).
-         Teams read as green (ally) / red (enemy) everywhere. -->
-    <Color x:Key="BgColor">#131317</Color>
-    <Color x:Key="SurfaceColor">#1a1a20</Color>
-    <Color x:Key="Surface2Color">#22222a</Color>
-    <Color x:Key="Surface3Color">#2c2c36</Color>
-    <Color x:Key="Surface4Color">#373744</Color>
-    <Color x:Key="BorderColor">#34343f</Color>
-    <Color x:Key="BorderStrongColor">#4a4a5a</Color>
-    <Color x:Key="TextColor">#eceae6</Color>
-    <Color x:Key="TextDimColor">#a2a0a9</Color>
-    <Color x:Key="TextFaintColor">#6d6b77</Color>
-    <Color x:Key="AccentColor">#e0a745</Color>
-    <Color x:Key="AccentDimColor">#a87c31</Color>
-    <Color x:Key="AllyColor">#45b585</Color>
-    <Color x:Key="EnemyColor">#e2564e</Color>
-
-    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
-    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
-    <SolidColorBrush x:Key="Surface2Brush" Color="{StaticResource Surface2Color}"/>
-    <SolidColorBrush x:Key="Surface3Brush" Color="{StaticResource Surface3Color}"/>
-    <SolidColorBrush x:Key="Surface4Brush" Color="{StaticResource Surface4Color}"/>
-    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
-    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}"/>
-    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
-    <SolidColorBrush x:Key="TextDimBrush" Color="{StaticResource TextDimColor}"/>
-    <SolidColorBrush x:Key="TextFaintBrush" Color="{StaticResource TextFaintColor}"/>
-    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
-    <SolidColorBrush x:Key="AccentDimBrush" Color="{StaticResource AccentDimColor}"/>
-    <SolidColorBrush x:Key="AllyBrush" Color="{StaticResource AllyColor}"/>
-    <SolidColorBrush x:Key="EnemyBrush" Color="{StaticResource EnemyColor}"/>
-    <SolidColorBrush x:Key="SelfBrush" Color="{StaticResource AccentColor}"/>
-    <SolidColorBrush x:Key="PositiveBrush" Color="{StaticResource AllyColor}"/>
-    <SolidColorBrush x:Key="NegativeBrush" Color="{StaticResource EnemyColor}"/>
-
-    <!-- Item tiers and shop categories -->
-    <SolidColorBrush x:Key="Tier1Brush" Color="#7d8590"/>
-    <SolidColorBrush x:Key="Tier2Brush" Color="#4a9dd6"/>
-    <SolidColorBrush x:Key="Tier3Brush" Color="#a86fd6"/>
-    <SolidColorBrush x:Key="Tier4Brush" Color="#e0a745"/>
-    <SolidColorBrush x:Key="ShopWeaponBrush" Color="#e2914e"/>
-    <SolidColorBrush x:Key="ShopVitalityBrush" Color="#45b585"/>
-    <SolidColorBrush x:Key="ShopSpiritBrush" Color="#9d7de0"/>
+    <!-- The palette lives in src/Theme/Palette.cs; these are its brushes. -->
+    <SolidColorBrush x:Key="BgBrush" Color="{x:Static theme:Palette.Bg}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{x:Static theme:Palette.Surface}"/>
+    <SolidColorBrush x:Key="Surface2Brush" Color="{x:Static theme:Palette.Surface2}"/>
+    <SolidColorBrush x:Key="Surface3Brush" Color="{x:Static theme:Palette.Surface3}"/>
+    <SolidColorBrush x:Key="Surface4Brush" Color="{x:Static theme:Palette.Surface4}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{x:Static theme:Palette.Border}"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{x:Static theme:Palette.BorderStrong}"/>
+    <SolidColorBrush x:Key="TextBrush" Color="{x:Static theme:Palette.Text}"/>
+    <SolidColorBrush x:Key="TextDimBrush" Color="{x:Static theme:Palette.TextDim}"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="{x:Static theme:Palette.TextFaint}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{x:Static theme:Palette.Accent}"/>
+    <SolidColorBrush x:Key="AccentDimBrush" Color="{x:Static theme:Palette.AccentDim}"/>
+    <SolidColorBrush x:Key="AllyBrush" Color="{x:Static theme:Palette.Ally}"/>
+    <SolidColorBrush x:Key="EnemyBrush" Color="{x:Static theme:Palette.Enemy}"/>
+    <SolidColorBrush x:Key="SelfBrush" Color="{x:Static theme:Palette.Self}"/>
+    <SolidColorBrush x:Key="PositiveBrush" Color="{x:Static theme:Palette.Positive}"/>
+    <SolidColorBrush x:Key="NegativeBrush" Color="{x:Static theme:Palette.Negative}"/>
+    <SolidColorBrush x:Key="CloseHoverBrush" Color="{x:Static theme:Palette.CloseHover}"/>
+    <SolidColorBrush x:Key="ClosePressedBrush" Color="{x:Static theme:Palette.ClosePressed}"/>
 
     <!-- Fluent accent overrides, so stock controls pick up the gold -->
     <Color x:Key="SystemAccentColor">#e0a745</Color>
@@ -54,16 +32,12 @@
     <Color x:Key="SystemAccentColorDark2">#a87c31</Color>
     <Color x:Key="SystemAccentColorDark3">#8c6728</Color>
 
-    <!-- Shared shell roles (modals, notifications, title bar) -->
-    <SolidColorBrush x:Key="TitleBarBackground" Color="{StaticResource SurfaceColor}"/>
-    <SolidColorBrush x:Key="CardBackground" Color="{StaticResource SurfaceColor}"/>
-    <SolidColorBrush x:Key="ModalBackground" Color="{StaticResource Surface2Color}"/>
-    <SolidColorBrush x:Key="InfoBrush" Color="#4a9dd6"/>
-    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource AllyColor}"/>
-    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource AccentColor}"/>
-    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource EnemyColor}"/>
-    <SolidColorBrush x:Key="HoverOverlayBrush" Color="#22FFFFFF"/>
-    <SolidColorBrush x:Key="PressedOverlayBrush" Color="#44FFFFFF"/>
-    <SolidColorBrush x:Key="CloseButtonHoverBrush" Color="#C42B1C"/>
+    <!-- Shared shell roles (modals, notifications) -->
+    <SolidColorBrush x:Key="CardBackground" Color="{x:Static theme:Palette.Surface}"/>
+    <SolidColorBrush x:Key="ModalBackground" Color="{x:Static theme:Palette.Surface2}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="{x:Static theme:Palette.Tier2}"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{x:Static theme:Palette.Ally}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{x:Static theme:Palette.Accent}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{x:Static theme:Palette.Enemy}"/>
 
 </ResourceDictionary>

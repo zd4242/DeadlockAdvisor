@@ -3,6 +3,7 @@ using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -22,18 +23,25 @@ public partial class App : Application
         ConfigureServices();
     }
 
-    private void ConfigureServices()
+    public static void RegisterServices(IServiceCollection services)
     {
-        var services = new ServiceCollection();
-
         services.AddSingleton<ISettingsService, JsonSettingsService>();
         services.AddSingleton<ILoggingService, ConsoleLoggingService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IModalService, ModalService>();
+        services.AddSingleton<IDataService, DataService>();
+        services.AddSingleton<IArtService, ArtService>();
+        services.AddSingleton<IFilePickerService, FilePickerService>();
 
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<MatchViewModel>();
         services.AddSingleton<NotificationOverlayViewModel>();
+    }
 
+    private void ConfigureServices()
+    {
+        var services = new ServiceCollection();
+        RegisterServices(services);
         _serviceProvider = services.BuildServiceProvider();
 
         InstallGlobalExceptionHandlers(
@@ -47,19 +55,24 @@ public partial class App : Application
         {
             try
             {
-                var settingsService = _serviceProvider!.GetRequiredService<ISettingsService>();
+                var services = _serviceProvider!;
+                var settingsService = services.GetRequiredService<ISettingsService>();
                 settingsService.LoadAsync().GetAwaiter().GetResult();
 
-                desktop.MainWindow = new MainWindow(_serviceProvider!.GetRequiredService<IModalService>())
+                var data = services.GetRequiredService<IDataService>();
+                data.Initialize();
+                var art = services.GetRequiredService<IArtService>();
+                art.SetAssetsDir(data.AssetsDir);
+
+                desktop.MainWindow = new MainWindow(services.GetRequiredService<IModalService>(), settingsService, art, data)
                 {
-                    DataContext = _serviceProvider!.GetRequiredService<MainWindowViewModel>(),
+                    DataContext = services.GetRequiredService<MainWindowViewModel>(),
                 };
             }
             catch (Exception ex)
             {
-                var logPath = Path.Combine(JsonSettingsService.AppDataPath, "startup-error.log");
                 Directory.CreateDirectory(JsonSettingsService.AppDataPath);
-                File.WriteAllText(logPath, ex.ToString());
+                File.WriteAllText(Path.Combine(JsonSettingsService.AppDataPath, "startup-error.log"), ex.ToString());
                 throw;
             }
         }

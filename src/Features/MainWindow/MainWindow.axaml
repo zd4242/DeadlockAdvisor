@@ -2,24 +2,243 @@
         x:Class="DeadlockAdvisor.Features.MainWindow.MainWindow"
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:mainWindow="clr-namespace:DeadlockAdvisor.Features.MainWindow"
-        xmlns:notifications="clr-namespace:DeadlockAdvisor.Features.Shared.Notifications"
+        xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+        xmlns:match="using:DeadlockAdvisor.Features.Match"
+        xmlns:shared="using:DeadlockAdvisor.Features.Shared"
+        xmlns:notifications="using:DeadlockAdvisor.Features.Shared.Notifications"
+        xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
         x:DataType="mainWindow:MainWindowViewModel"
         Title="Deadlock Item Advisor"
-        Width="1400"
-        Height="900"
+        Icon="/src/Assets/app.ico"
+        Width="1360"
+        Height="880"
         MinWidth="900"
         MinHeight="600"
         Background="{DynamicResource BgBrush}"
+        ExtendClientAreaToDecorationsHint="True"
+        ExtendClientAreaChromeHints="NoChrome"
+        ExtendClientAreaTitleBarHeightHint="-1"
         WindowStartupLocation="CenterScreen">
 
-    <LayoutTransformControl>
-        <LayoutTransformControl.LayoutTransform>
-            <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
-        </LayoutTransformControl.LayoutTransform>
+    <Window.KeyBindings>
+        <KeyBinding Gesture="Ctrl+OemPlus" Command="{Binding ZoomInCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+OemPlus" Command="{Binding ZoomInCommand}"/>
+        <KeyBinding Gesture="Ctrl+Add" Command="{Binding ZoomInCommand}"/>
+        <KeyBinding Gesture="Ctrl+OemMinus" Command="{Binding ZoomOutCommand}"/>
+        <KeyBinding Gesture="Ctrl+Shift+OemMinus" Command="{Binding ZoomOutCommand}"/>
+        <KeyBinding Gesture="Ctrl+Subtract" Command="{Binding ZoomOutCommand}"/>
+        <KeyBinding Gesture="Ctrl+D0" Command="{Binding ResetZoomCommand}"/>
+        <KeyBinding Gesture="Ctrl+NumPad0" Command="{Binding ResetZoomCommand}"/>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
+        <KeyBinding Gesture="Ctrl+F" Command="{Binding FindCommand}"/>
+        <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
+    </Window.KeyBindings>
 
-        <Panel>
-            <notifications:NotificationOverlay DataContext="{Binding NotificationOverlay}"/>
-        </Panel>
-    </LayoutTransformControl>
+    <Window.Styles>
+        <Style Selector="Border#TitleBar">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,0,0,1"/>
+            <Setter Property="Height" Value="34"/>
+        </Style>
+        <!-- Like any Windows title bar, an inactive window's chrome recedes. -->
+        <Style Selector="Border#TitleBar TextBlock#WindowTitle">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        </Style>
+        <Style Selector="Border#TitleBar.inactive TextBlock#WindowTitle">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="Border#TitleBar.inactive Menu > MenuItem">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+
+        <!-- the menu bar living in the title bar -->
+        <Style Selector="Menu#MainMenu > MenuItem">
+            <Setter Property="Padding" Value="10,4"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Height" Value="28"/>
+        </Style>
+        <Style Selector="Menu#MainMenu > MenuItem:pointerover /template/ Border#PART_LayoutRoot, Menu#MainMenu > MenuItem:selected /template/ Border#PART_LayoutRoot">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        </Style>
+        <Style Selector="Menu#MainMenu > MenuItem:pointerover, Menu#MainMenu > MenuItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+
+        <!-- minimise / maximise-restore / close, drawn Windows-style -->
+        <Style Selector="Button.caption">
+            <Setter Property="Width" Value="46"/>
+            <Setter Property="Height" Value="34"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Cursor" Value="Arrow"/>
+        </Style>
+        <Style Selector="Button.caption Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="StrokeThickness" Value="1"/>
+        </Style>
+        <Style Selector="Border#TitleBar.inactive Button.caption Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="Button.caption:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        </Style>
+        <Style Selector="Button.caption:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface4Brush}"/>
+        </Style>
+        <Style Selector="Button.caption.close:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource CloseHoverBrush}"/>
+        </Style>
+        <Style Selector="Button.caption.close:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource ClosePressedBrush}"/>
+        </Style>
+        <Style Selector="Button.caption.close:pointerover Path, Button.caption.close:pressed Path">
+            <Setter Property="Stroke" Value="White"/>
+        </Style>
+
+        <Style Selector="Border#StatusBar">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+            <Setter Property="Padding" Value="4,3"/>
+        </Style>
+        <Style Selector="Border#StatusBar TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- a newer patch is out than the match data was fetched under -->
+        <Style Selector="Border#StatusBar TextBlock.saving">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Border#StatusBar TextBlock.alert">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+    </Window.Styles>
+
+    <Panel>
+        <!-- The whole window zooms from here: every size is designed in DIPs at 100%. -->
+        <LayoutTransformControl Margin="{Binding #RootWindow.OffScreenMargin}">
+            <LayoutTransformControl.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
+            </LayoutTransformControl.LayoutTransform>
+
+            <DockPanel>
+                <!-- Menus, page tabs, window title and caption buttons on one strip -->
+                <Border x:Name="TitleBar" DockPanel.Dock="Top">
+                    <Panel>
+                        <!-- Centred on the whole window rather than the gap, so it sits where the eye expects;
+                             hidden when the window is too narrow for it to clear the tabs. -->
+                        <TextBlock x:Name="WindowTitle"
+                                   Text="Deadlock Item Advisor"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   IsHitTestVisible="False"/>
+
+                        <Grid x:Name="TitleBarGrid" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                            <Menu x:Name="MainMenu" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <MenuItem Header="_Data">
+                                    <MenuItem Header="Sync New Heroes / Items / Categories"
+                                              Command="{Binding NotYetCommand}"
+                                              CommandParameter="Sync New Heroes / Items / Categories"/>
+                                    <MenuItem Header="Sync from Game API"
+                                              Command="{Binding NotYetCommand}"
+                                              CommandParameter="Sync from Game API"/>
+                                    <MenuItem Header="Fetch Match Stats"
+                                              Command="{Binding NotYetCommand}"
+                                              CommandParameter="Fetch Match Stats"/>
+                                    <MenuItem Header="Reload from Disk" InputGesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
+                                    <Separator/>
+                                    <MenuItem Header="Export Snapshot to Excel"
+                                              Command="{Binding NotYetCommand}"
+                                              CommandParameter="Export Snapshot to Excel"/>
+                                    <MenuItem Header="Open Data Folder" Command="{Binding OpenDataFolderCommand}"/>
+                                    <MenuItem Header="Change Data Folder..." Command="{Binding ChangeDataFolderCommand}"/>
+                                    <MenuItem Header="Download Art..."
+                                              Command="{Binding NotYetCommand}"
+                                              CommandParameter="Download Art"/>
+                                    <Separator/>
+                                    <MenuItem Header="Quit" InputGesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
+                                </MenuItem>
+                                <MenuItem Header="_View">
+                                    <MenuItem Header="Zoom In" InputGesture="Ctrl+OemPlus" Command="{Binding ZoomInCommand}"/>
+                                    <MenuItem Header="Zoom Out" InputGesture="Ctrl+OemMinus" Command="{Binding ZoomOutCommand}"/>
+                                    <MenuItem Header="Reset Zoom" InputGesture="Ctrl+D0" Command="{Binding ResetZoomCommand}"/>
+                                    <Separator/>
+                                    <MenuItem Header="Reload Art" Command="{Binding ReloadArtCommand}"/>
+                                    <MenuItem Header="Find" InputGesture="Ctrl+F" Command="{Binding FindCommand}"/>
+                                </MenuItem>
+                                <MenuItem Header="_Help">
+                                    <MenuItem Header="How Scoring Works" Command="{Binding HelpCommand}"/>
+                                </MenuItem>
+                            </Menu>
+
+                            <!-- The rule between the menus and the page tabs: they look alike, but one is
+                                 commands and the other is where you are. -->
+                            <Border Grid.Column="1" Width="21" Background="Transparent">
+                                <Border Width="1" Height="16" Background="{DynamicResource BorderBrush}"/>
+                            </Border>
+
+                            <!-- Clicking a tab doesn't pull focus out of the page: you usually switch
+                                 pages to start typing into one. -->
+                            <ListBox Grid.Column="2"
+                                     x:Name="PageTabs"
+                                     Classes="tabs slim"
+                                     Focusable="False"
+                                     VerticalAlignment="Center"
+                                     ItemsSource="{Binding PageNames}"
+                                     SelectedIndex="{Binding CurrentPage}"/>
+
+                            <StackPanel x:Name="CaptionButtons" Grid.Column="4" Orientation="Horizontal">
+                                <Button Classes="caption" ToolTip.Tip="Minimize" Click="MinimizeButton_Click">
+                                    <Path Data="M0.5,5.5 L10.5,5.5" Width="11" Height="11"/>
+                                </Button>
+                                <Button Classes="caption" x:Name="MaximizeButton" ToolTip.Tip="Maximize" Click="MaximizeRestoreButton_Click">
+                                    <Path x:Name="MaximizeGlyph" Data="M0.5,0.5 H9.5 V9.5 H0.5 Z" Width="11" Height="11"/>
+                                </Button>
+                                <Button Classes="caption close" ToolTip.Tip="Close" Click="CloseButton_Click">
+                                    <Path Data="M0.5,0.5 L9.5,9.5 M9.5,0.5 L0.5,9.5" Width="11" Height="11"/>
+                                </Button>
+                            </StackPanel>
+                        </Grid>
+                    </Panel>
+                </Border>
+
+                <Border x:Name="StatusBar" DockPanel.Dock="Bottom">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <TextBlock Text="{Binding CoverageText}"/>
+                        <TextBlock Grid.Column="1"
+                                   Text="{Binding DataStatusText}"
+                                   Classes.alert="{Binding DataStatusAlert}"/>
+                        <TextBlock Grid.Column="2"
+                                   Margin="0,0,12,0"
+                                   Classes="saving"
+                                   Text="{Binding SaveText}"/>
+                        <TextBlock Grid.Column="3" Text="{Binding ZoomText}"/>
+                    </Grid>
+                </Border>
+
+                <Panel>
+                    <!-- Every page stays alive, so switching keeps its scroll position and state. -->
+                    <Panel IsVisible="{Binding IsMatchPage}">
+                        <match:MatchView x:Name="MatchPage" DataContext="{Binding Match}"/>
+                    </Panel>
+                    <Panel IsVisible="{Binding IsHeroTraitsPage}">
+                        <shared:PlaceholderPageView DataContext="{Binding HeroTraits}"/>
+                    </Panel>
+                    <Panel IsVisible="{Binding IsItemFormulasPage}">
+                        <shared:PlaceholderPageView DataContext="{Binding ItemFormulas}"/>
+                    </Panel>
+                    <notifications:NotificationOverlay DataContext="{Binding NotificationOverlay}"/>
+                </Panel>
+            </DockPanel>
+        </LayoutTransformControl>
+
+        <card:ItemCardPresenter x:Name="ItemCards" Zoom="{Binding UiScale}"/>
+    </Panel>
 </Window>
