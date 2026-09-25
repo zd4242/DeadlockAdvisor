@@ -1,0 +1,153 @@
+using DeadlockAdvisor.Scoring;
+
+namespace DeadlockAdvisor.Tests;
+
+/// <summary>Ported from the Python app's tests/test_scoring.py (match-data maths).</summary>
+public class MatchStatsMathTests
+{
+    private static Dictionary<long, WinTotals> Totals(params (long Item, long Wins, long Matches)[] rows) =>
+        rows.ToDictionary(row => row.Item, row => new WinTotals(row.Wins, row.Matches));
+
+    [Fact]
+    public void RawLiftComparesEachItemWithItselfThenRemovesTheTierMean()
+    {
+        var tiers = new Dictionary<long, int> { [1] = 1, [2] = 1, [3] = 2 };
+        var baseline = Totals((1, 5000, 10000), (2, 6000, 10000), (3, 4000, 10000)); // 50%, 60%, 40%
+        var query = Totals(
+            (1, 2400, 4000), // 60% vs its own 50% -> +10
+            (2, 3300, 6000), // 55% vs its own 60% -> -5
+            (3, 1000, 2000), // 50% vs its own 40% -> +10, but alone in tier 2
+            (4, 9000, 10000)); // not in scope -> ignored, even in the means
+
+        var lifts = MatchStatsMath.RawLifts(query, baseline, tiers);
+
+        // Tier 1's mean delta, weighted by matches: (4000*10 + 6000*-5) / 10000 = 1.
+        Assert.Equal(9, lifts[1].Lift, 9);
+        Assert.Equal(-6, lifts[2].Lift, 9);
+        Assert.Equal(0, lifts[3].Lift, 9); // a tier of one has nothing to stand out from
+        Assert.False(lifts.ContainsKey(4));
+        Assert.Equal(4000, lifts[1].Matches);
+        // 100 x sqrt(0.6 x 0.4 / 4000): the textbook binomial error, in points
+        Assert.Equal(100 * Math.Sqrt(0.24 / 4000), lifts[1].Se, 9);
+    }
+
+    [Fact]
+    public void SmallSamplesCountTowardTheMeanButGetNoLift()
+    {
+        var tiers = new Dictionary<long, int> { [1] = 1, [2] = 1 };
+        var baseline = Totals((1, 5000, 10000), (2, 5000, 10000));
+        var query = Totals((1, 2400, 4000), (2, 500, 1000)); // +10 over 4000 matches, 0 over 1000
+
+        var lifts = MatchStatsMath.RawLifts(query, baseline, tiers, minN: 2000);
+
+        Assert.Equal([1L], lifts.Keys);
+        Assert.Equal(2, lifts[1].Lift, 9); // mean = 4000*10 / 5000 = 8
+    }
+
+    [Fact]
+    public void Tau2IsSpreadMinusNoiseAndShrinkUsesIt()
+    {
+        RawLift[] lifts = [new(5000, 3.0, 1.0), new(5000, -3.0, 1.0)];
+        var tau2 = MatchStatsMath.EstimateTau2(lifts);
+        Assert.Equal(8, tau2, 9); // spread 9 - noise 1
+        Assert.Equal(3.0 * 8 / 9, MatchStatsMath.Shrink(lifts[0], tau2), 9);
+
+        // Lifts no wider than their noise: no detectable signal, everything -> 0.
+        RawLift[] noiseOnly = [new(5000, 1.0, 2.0), new(5000, -1.0, 2.0)];
+        Assert.Equal(0.0, MatchStatsMath.EstimateTau2(noiseOnly));
+        Assert.Equal(0.0, MatchStatsMath.Shrink(noiseOnly[0], 0.0));
+    }
+
+    [Fact]
+    public void NoiseScaleMeasuresHowFarOffTheStandardErrorsAre()
+    {
+        // Halves that differ by 2 and 2 points, each claiming se 1: expected (a - b)^2 = 1 + 1 = 2,
+        // observed 4 -> errors are sqrt(2) too small.
+        (RawLift, RawLift)[] pairs =
+        [
+            (new(5000, 1.0, 1.0), new(5000, -1.0, 1.0)),
+            (new(5000, 3.0, 1.0), new(5000, 1.0, 1.0)),
+        ];
+
+        Assert.Equal(Math.Sqrt(2), MatchStatsMath.NoiseScale(pairs), 9);
+        Assert.Equal(1.0, MatchStatsMath.NoiseScale([]));
+        var scaled = MatchStatsMath.Rescale(new OrderedDictionary<string, RawLift> { ["x"] = pairs[0].Item1 }, 2.0);
+        Assert.Equal(2.0, scaled["x"].Se);
+        Assert.Equal(1.0, scaled["x"].Lift);
+    }
+
+    [Fact]
+    public void PatchesAreDatedByTitleNotByWhenTheyWerePosted()
+    {
+        var patches = MatchStatsMath.ParsePatches([
+            "09-16-2026 Update", "08-22-2026 Update", "08-12-2026 Update", "Community update", "08-22-2026 Update (hotfix)",
+        ]);
+
+        Assert.Equal(["09-16", "08-22", "08-12"], patches.Select(p => p.Label));
+        Assert.Equal(1789603200, patches[0].Start); // 2026-09-17 00:00 UTC, the day after
+    }
+
+    [Fact]
+    public void TotalsAndMergingHalves()
+    {
+        var first = MatchStatsMath.Totals([(7, 10, 20)]);
+        var second = MatchStatsMath.Totals([(7, 5, 20), (8, 1, 2)]);
+
+        Assert.Equal(new Dictionary<long, WinTotals> { [7] = new(10, 20) }, first);
+        Assert.Equal(new Dictionary<long, WinTotals> { [7] = new(15, 40), [8] = new(1, 2) }, MatchStatsMath.Merge(first, second));
+    }
+
+    [Fact]
+    public void AnalyseFamilyCalibratesNoiseFromTheHalves()
+    {
+        // One hero, two tier-1 items. Item 1 beats its baseline by 10 points in both halves, item 2
+        // by -5 in both: the halves agree exactly, so the measured noise is 0 and nothing needs shrinking.
+        var tiers = new Dictionary<long, int> { [1] = 1, [2] = 1 };
+        var baseHalf = Totals((1, 2500, 5000), (2, 2500, 5000)); // 50% each
+        var heroHalf = Totals((1, 1800, 3000), (2, 1350, 3000)); // 60% and 45%
+
+        var stats = MatchStatsMath.AnalyseFamily(
+            new Halves(baseHalf, baseHalf),
+            new OrderedDictionary<string, Halves> { ["h"] = new Halves(heroHalf, heroHalf) },
+            tiers);
+
+        Assert.Equal(2, stats.Pairs);
+        Assert.Equal(0.0, stats.Scale);
+        // Tier mean of (+10, -5) at equal weight is 2.5 -> lifts +7.5 and -7.5.
+        Assert.Equal(7.5, stats.Full[new HeroItem("h", 1)].Lift, 9);
+        Assert.Equal(0, stats.Full[new HeroItem("h", 1)].Se, 9);
+        Assert.Equal(6000, stats.Full[new HeroItem("h", 1)].Matches);
+    }
+
+    [Fact]
+    public void QueryParamsPerRelationAndScope()
+    {
+        Assert.Equal([new("enemy_hero_ids", "1")], MatchStatsMath.QueryParams("against", "full", 1));
+        Assert.Equal([new("enemy_hero_ids", "1"), new("same_lane_filter", "true"), new("max_bought_at_s", "600")],
+            MatchStatsMath.QueryParams("against", "lane", 1));
+        Assert.Equal([new("hero_id", "13")], MatchStatsMath.QueryParams("as", "full", 13));
+        Assert.Equal([new("max_bought_at_s", "600")], MatchStatsMath.QueryParams("as", "lane")); // lane baseline
+    }
+
+    [Fact]
+    public void FamilyReliabilityStepsSplitHalfUpToTheWholeWindow()
+    {
+        var empty = new OrderedDictionary<HeroItem, RawLift>();
+
+        Assert.Equal(0.8 / 1.4, new FamilyStats(empty, (empty, empty), 0, 1.0, 0.1, 0.4, 0.4).Reliability!.Value, 9);
+        Assert.Equal(0.0, new FamilyStats(empty, (empty, empty), 0, 1.0, 0.1, -0.2, 0.0).Reliability);
+    }
+
+    [Fact]
+    public void AYoungPatchReachesOnePatchFurtherBack()
+    {
+        var patches = MatchStatsMath.ParsePatches(["09-16-2026 Update", "08-22-2026 Update", "08-12-2026 Update"]);
+        var against = new Family("against", "full", 1);
+        var weekLater = patches[0].Start + 7 * 86400;
+
+        Assert.Equal("09-16", MatchStatsMath.WindowStart(patches, against, weekLater).Label);
+        Assert.Equal("08-22", MatchStatsMath.WindowStart(patches, against, patches[0].Start + 86400).Label);
+        var asFull = new Family("as", "full", 2);
+        Assert.Equal("08-12", MatchStatsMath.WindowStart(patches, asFull, patches[0].Start + 86400).Label);
+    }
+}

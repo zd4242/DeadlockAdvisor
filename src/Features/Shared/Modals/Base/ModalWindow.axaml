@@ -1,0 +1,12 @@
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:base="clr-namespace:DeadlockAdvisor.Features.Shared.Modals.Base"
+        x:Class="DeadlockAdvisor.Features.Shared.Modals.Base.ModalWindow"
+        x:DataType="base:ModalViewModel"
+        SystemDecorations="None"
+        Background="Transparent"
+        TransparencyLevelHint="Transparent"
+        CanResize="False"
+        ShowInTaskbar="False">
+    <base:Modal DataContext="{Binding}"/>
+</Window>

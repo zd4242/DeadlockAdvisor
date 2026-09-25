@@ -1,0 +1,10 @@
+stat,category_id,relation,per_unit,conditional_factor,note
+TechResist,deals_spirit_damage_general,against,0.2,0.75,"0.2 per 1% Spirit Resist -- the rate the hand-typed values already used (10% -> 2, 5% -> 1)"
+BulletResist,deals_bullet_damage_general,against,0.2,0.5,Mirror of the Spirit Resist rule
+StatusResistancePercent,applies_debuffs,against,0.14,0.75,
+HealAmpReceivePenaltyPercent,has_healing_sustain,against,0.11,1,
+TechPower,scales_with_spirit_power,as,0.06,0.5,
+TechPowerPercent,scales_with_spirit_power,as,0.15,0,
+SlowResistancePercent,applies_slows,against,0.17,0.25,
+BonusFireRate,cares_about_firerate,as,0.05,0.25,
+MeleeResistPercent,does_melee_damage,against,0.13,0,

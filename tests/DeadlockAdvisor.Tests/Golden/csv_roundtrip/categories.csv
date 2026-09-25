@@ -1,0 +1,24 @@
+category_id,category_name,scale_min,scale_max,description
+deals_spirit_damage_general,Deals Spirit Damage (General),0,100,"How much of this hero's overall damage output is spirit damage, sustained across a fight"
+deals_spirit_damage_burst,Deals Spirit Damage (Burst),0,100,How much of this hero's threat comes from a single high-burst spirit damage combo
+deals_bullet_damage_general,Deals Bullet Damage (General),0,100,"How much of this hero's overall damage output is bullet/weapon damage, sustained across a fight"
+deals_bullet_damage_burst,Deals Bullet Damage (Burst),0,100,How much of this hero's threat comes from a burst bullet damage window
+has_healing_sustain,Has Healing / Sustain,0,100,How much this hero relies on healing or sustain (self or team) to stay in fights
+max_hp,Has High Max HP,-100,100,Where this hero sits on the tanky-to-squishy spectrum; negative values flag notably low-HP heroes
+summons_npcs,Summons NPCs,0,100,How much this hero relies on summoned units/minions
+cares_about_firerate,Cares About Firerate,0,100,How dependent this hero's damage is on attack speed
+does_melee_damage,Does Melee Damage,0,100,How much of this hero's damage or utility comes from melee attacks
+applies_debuffs,Applies Debuffs,0,100,How often/impactfully this hero applies debuffs to enemies
+applies_bullet_onhit_effects,Applies Bullet On-Hit Effects,0,100,How much this hero's bullets carry on-hit effects beyond raw damage
+applies_slows,Applies Slows,0,100,How often/impactfully this hero slows enemies
+countered_by_slowing_hex,Countered by Slowing Hex,0,100,How much this hero's kit depends on movement and mobility abilities that Slowing Hex would shut down
+countered_by_silence,Countered by Silence,0,100,How much this hero's power depends on casting abilities that Silence Glyph would lock out
+countered_by_knockdown,Countered by Knockdown,0,100,How much this hero relies on flight or airborne movement that Knockdown would drop
+countered_by_counterspell,Countered by Counterspell,0,100,How much this hero's power depends on a single interruptible cast
+countered_by_dispel_magic,Countered by Dispel Magic,0,100,How reliant this hero is on buffs/debuffs that Dispel Magic would strip
+countered_by_divine_barrier,Countered by Divine Barrier,0,100,How reliant this hero is on a single burst window Divine Barrier could block
+cares_about_weapon_damage,Cares About Weapon Damage,0,100,How much this hero's build wants raw weapon damage scaling
+combat_range,Fights at Range vs Melee,-100,100,"Negative = fights up close, positive = fights from range"
+applies_stuns,Applies Stuns,0,100,How often/impactfully this hero stuns enemies
+picks_out_teammates,Locks Down / Picks Teammates,0,100,How much this hero threatens to isolate and pick off a single ally
+scales_with_spirit_power,Scales With Spirit Power,0,100,How much this hero's own damage/utility scales with their spirit power stat

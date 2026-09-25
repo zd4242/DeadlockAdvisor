@@ -1,0 +1,10 @@
+stat,category_id,relation,per_unit,conditional_factor,note
+TechResist,trait_a,against,0.25,1,"has ""quotes"", commas"
+BulletResist,trait_a,with,1e-05,0.5,leading and trailing spaces
+BonusHealth,trait_b,as,123456789,1,"line one
+line two"
+TechPower,trait_b,against,0.1,0.75,unicode café – ± ⚡
+SpacedStat,trait_c,as,-2.5,0,values get stripped
+ShortRow,trait_c,with,0,1,
+BaseAttackDamagePercent,trait_c,against,0.333333,1.5,"tricky ""quote in the middle"
+CooldownReduction,trait_c,with,0,2,unreadable per_unit reads as 0

@@ -1,0 +1,25 @@
+<Window x:Name="RootWindow"
+        x:Class="DeadlockAdvisor.Features.MainWindow.MainWindow"
+        xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:mainWindow="clr-namespace:DeadlockAdvisor.Features.MainWindow"
+        xmlns:notifications="clr-namespace:DeadlockAdvisor.Features.Shared.Notifications"
+        x:DataType="mainWindow:MainWindowViewModel"
+        Title="Deadlock Item Advisor"
+        Width="1400"
+        Height="900"
+        MinWidth="900"
+        MinHeight="600"
+        Background="{DynamicResource BgBrush}"
+        WindowStartupLocation="CenterScreen">
+
+    <LayoutTransformControl>
+        <LayoutTransformControl.LayoutTransform>
+            <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
+        </LayoutTransformControl.LayoutTransform>
+
+        <Panel>
+            <notifications:NotificationOverlay DataContext="{Binding NotificationOverlay}"/>
+        </Panel>
+    </LayoutTransformControl>
+</Window>

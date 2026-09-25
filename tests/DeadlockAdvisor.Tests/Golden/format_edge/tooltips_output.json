@@ -1,0 +1,52 @@
+{
+ "café_item": {
+  "sections": [
+   {
+    "kind": "active",
+    "cooldown": "16s",
+    "blocks": [
+     {
+      "text": "Deals <span style=\"color:#CE90FF\">Spirit</span> – café &amp; \"more\"",
+      "elevated": [
+       {
+        "value": "+20%",
+        "label": "Max ⚡ Ammo",
+        "conditional": false,
+        "negative": false
+       }
+      ],
+      "important": [
+       {
+        "value": "",
+        "label": "Silenced",
+        "conditional": true,
+        "negative": false
+       }
+      ],
+      "stats": [
+       {
+        "value": "-0.5 m",
+        "label": "Move Speed",
+        "conditional": false,
+        "negative": true
+       }
+      ]
+     },
+     {
+      "text": "",
+      "elevated": [],
+      "important": [],
+      "stats": []
+     }
+    ]
+   }
+  ],
+  "components": [
+   "base_item"
+  ]
+ },
+ "plain": {
+  "sections": [],
+  "components": []
+ }
+}

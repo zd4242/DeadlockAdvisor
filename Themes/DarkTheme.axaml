@@ -1,0 +1,69 @@
+<ResourceDictionary xmlns="https://github.com/avaloniaui"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <!-- Warm charcoal + gold, loosely after Deadlock's own UI (theme.py in the Python app).
+         Teams read as green (ally) / red (enemy) everywhere. -->
+    <Color x:Key="BgColor">#131317</Color>
+    <Color x:Key="SurfaceColor">#1a1a20</Color>
+    <Color x:Key="Surface2Color">#22222a</Color>
+    <Color x:Key="Surface3Color">#2c2c36</Color>
+    <Color x:Key="Surface4Color">#373744</Color>
+    <Color x:Key="BorderColor">#34343f</Color>
+    <Color x:Key="BorderStrongColor">#4a4a5a</Color>
+    <Color x:Key="TextColor">#eceae6</Color>
+    <Color x:Key="TextDimColor">#a2a0a9</Color>
+    <Color x:Key="TextFaintColor">#6d6b77</Color>
+    <Color x:Key="AccentColor">#e0a745</Color>
+    <Color x:Key="AccentDimColor">#a87c31</Color>
+    <Color x:Key="AllyColor">#45b585</Color>
+    <Color x:Key="EnemyColor">#e2564e</Color>
+
+    <SolidColorBrush x:Key="BgBrush" Color="{StaticResource BgColor}"/>
+    <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="Surface2Brush" Color="{StaticResource Surface2Color}"/>
+    <SolidColorBrush x:Key="Surface3Brush" Color="{StaticResource Surface3Color}"/>
+    <SolidColorBrush x:Key="Surface4Brush" Color="{StaticResource Surface4Color}"/>
+    <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource BorderColor}"/>
+    <SolidColorBrush x:Key="BorderStrongBrush" Color="{StaticResource BorderStrongColor}"/>
+    <SolidColorBrush x:Key="TextBrush" Color="{StaticResource TextColor}"/>
+    <SolidColorBrush x:Key="TextDimBrush" Color="{StaticResource TextDimColor}"/>
+    <SolidColorBrush x:Key="TextFaintBrush" Color="{StaticResource TextFaintColor}"/>
+    <SolidColorBrush x:Key="AccentBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="AccentDimBrush" Color="{StaticResource AccentDimColor}"/>
+    <SolidColorBrush x:Key="AllyBrush" Color="{StaticResource AllyColor}"/>
+    <SolidColorBrush x:Key="EnemyBrush" Color="{StaticResource EnemyColor}"/>
+    <SolidColorBrush x:Key="SelfBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="PositiveBrush" Color="{StaticResource AllyColor}"/>
+    <SolidColorBrush x:Key="NegativeBrush" Color="{StaticResource EnemyColor}"/>
+
+    <!-- Item tiers and shop categories -->
+    <SolidColorBrush x:Key="Tier1Brush" Color="#7d8590"/>
+    <SolidColorBrush x:Key="Tier2Brush" Color="#4a9dd6"/>
+    <SolidColorBrush x:Key="Tier3Brush" Color="#a86fd6"/>
+    <SolidColorBrush x:Key="Tier4Brush" Color="#e0a745"/>
+    <SolidColorBrush x:Key="ShopWeaponBrush" Color="#e2914e"/>
+    <SolidColorBrush x:Key="ShopVitalityBrush" Color="#45b585"/>
+    <SolidColorBrush x:Key="ShopSpiritBrush" Color="#9d7de0"/>
+
+    <!-- Fluent accent overrides, so stock controls pick up the gold -->
+    <Color x:Key="SystemAccentColor">#e0a745</Color>
+    <Color x:Key="SystemAccentColorLight1">#e6b460</Color>
+    <Color x:Key="SystemAccentColorLight2">#ebc07a</Color>
+    <Color x:Key="SystemAccentColorLight3">#f0cd95</Color>
+    <Color x:Key="SystemAccentColorDark1">#c4903a</Color>
+    <Color x:Key="SystemAccentColorDark2">#a87c31</Color>
+    <Color x:Key="SystemAccentColorDark3">#8c6728</Color>
+
+    <!-- Shared shell roles (modals, notifications, title bar) -->
+    <SolidColorBrush x:Key="TitleBarBackground" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="CardBackground" Color="{StaticResource SurfaceColor}"/>
+    <SolidColorBrush x:Key="ModalBackground" Color="{StaticResource Surface2Color}"/>
+    <SolidColorBrush x:Key="InfoBrush" Color="#4a9dd6"/>
+    <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource AllyColor}"/>
+    <SolidColorBrush x:Key="WarningBrush" Color="{StaticResource AccentColor}"/>
+    <SolidColorBrush x:Key="ErrorBrush" Color="{StaticResource EnemyColor}"/>
+    <SolidColorBrush x:Key="HoverOverlayBrush" Color="#22FFFFFF"/>
+    <SolidColorBrush x:Key="PressedOverlayBrush" Color="#44FFFFFF"/>
+    <SolidColorBrush x:Key="CloseButtonHoverBrush" Color="#C42B1C"/>
+
+</ResourceDictionary>

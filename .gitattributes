@@ -1,0 +1,3 @@
+# Golden files are byte-for-byte references from the Python app (CRLF CSVs and JSON, and some
+# inputs that mix line endings on purpose), so git must never convert them.
+tests/DeadlockAdvisor.Tests/Golden/** -text

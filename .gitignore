@@ -1,0 +1,27 @@
+.claude/settings.local.json
+
+# User-specific files
+*.suo
+*.user
+.vs/
+.idea/
+.vscode/*
+!.vscode/launch.json
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+[Bb]in/
+[Oo]bj/
+publish/
+artifacts/
+[Tt]est[Rr]esult*/
+*.log
+*.tmp
+
+FodyWeavers.xsd
+
+# Windows detritus
+Thumbs.db
+Desktop.ini
