@@ -100,8 +100,15 @@
 
                     <!-- Rules above, preview below, with a draggable divider between. Both scrolling
                          lists keep a gutter on the right, so a scroll bar never sits on a card. -->
-                    <Grid x:Name="DetailSplit" RowDefinitions="*,8,*">
-                        <DockPanel Margin="0,0,0,6">
+                    <!-- Each pane keeps room for its heading and a few lines, so the divider
+                         stops before either side is squashed. -->
+                    <Grid x:Name="DetailSplit">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*" MinHeight="140"/>
+                            <RowDefinition Height="8"/>
+                            <RowDefinition Height="*" MinHeight="140"/>
+                        </Grid.RowDefinitions>
+                        <DockPanel Margin="0,0,0,6" ClipToBounds="True">
                             <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,10,8">
                                 <TextBlock Classes="section" Text="RULES" VerticalAlignment="Center"/>
                                 <Button Grid.Column="1" Classes="pill" Content="+ Add rule" Command="{Binding AddRuleCommand}"/>
@@ -233,7 +240,7 @@
 
                         <GridSplitter Grid.Row="1" x:Name="DetailSplitter" Classes="divider" ResizeDirection="Rows"/>
 
-                        <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                        <DockPanel Grid.Row="2" Margin="0,6,0,0" ClipToBounds="True">
                             <TextBlock DockPanel.Dock="Top" Classes="section" Text="WOULD APPLY TO" Margin="0,0,0,8"/>
                             <ScrollViewer MinHeight="60" HorizontalScrollBarVisibility="Disabled">
                                 <byItem:PreviewPanel Margin="0,0,10,0" Groups="{Binding Preview}"/>

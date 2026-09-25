@@ -30,6 +30,33 @@ public class ItemFormulasPageTests
     }
 
     [AvaloniaFact]
+    public void TheDividerStopsBeforeEitherPaneIsSquashed()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        var page = ui.ViewModel.ItemFormulas.ByItem;
+        page.SelectedRow = page.Items.Single(row => row.ItemId == Item);
+        ui.Show();
+        var panel = ui.Window.ItemFormulasPage.ByItemPanel;
+        var split = panel.DetailSplit;
+        var divider = panel.DetailSplitter;
+
+        foreach (var offset in new[] { 2000.0, -2000.0 })
+        {
+            var start = divider.TranslatePoint(new Point(divider.Bounds.Width / 2, 4), ui.Window)!.Value;
+            ui.Window.MouseDown(start, MouseButton.Left);
+            ui.Window.MouseMove(start + new Point(0, offset / 2));
+            ui.Window.MouseMove(start + new Point(0, offset));
+            ui.Window.MouseUp(start + new Point(0, offset), MouseButton.Left);
+            UiHarness.Settle();
+
+            // Dragged all the way, the pane it was pushed into stops at its minimum.
+            var squeezed = offset > 0 ? split.RowDefinitions[2] : split.RowDefinitions[0];
+            Assert.Equal(140, squeezed.ActualHeight, 0.5);
+        }
+        Assert.NotNull(ui.Settings.Current.ByItemSplitterPosition);
+    }
+
+    [AvaloniaFact]
     public void ByTraitPanelRenders()
     {
         using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
