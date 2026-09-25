@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using DeadlockAdvisor.Behaviors;
 using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.ItemCard;
@@ -37,10 +38,15 @@ public partial class MainWindow : Window
 
         AddHandler(KeyDownEvent, OnPreviewKeyDown, RoutingStrategies.Tunnel);
         AddHandler(PointerWheelChangedEvent, OnPreviewWheel, RoutingStrategies.Tunnel);
+        AutoScroll = new MiddleClickAutoScroll(this);
+        Closed += (_, _) => AutoScroll.Dispose();
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
         ItemCardHover.SetPresenter(this, ItemCards);
     }
+
+    /// <summary>Middle-click scrolling for every scroll viewer in the window.</summary>
+    public MiddleClickAutoScroll AutoScroll { get; }
 
     public MainWindow(IModalService modalService, ISettingsService settings, IArtService art, IDataService data) : this()
     {
@@ -127,6 +133,7 @@ public partial class MainWindow : Window
             if (WindowState == WindowState.Normal)
                 _normalPosition = args.Point;
         };
+        (DataContext as MainWindowViewModel)?.OnOpened();
     }
 
     protected override void OnClosing(WindowClosingEventArgs e)

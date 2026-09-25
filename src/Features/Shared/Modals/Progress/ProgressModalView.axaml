@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:progress="using:DeadlockAdvisor.Features.Shared.Modals.Progress"
+             x:Class="DeadlockAdvisor.Features.Shared.Modals.Progress.ProgressModalView"
+             x:DataType="progress:ProgressModalViewModel">
+    <StackPanel Margin="20" Spacing="12" Width="420">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <TextBlock Text="{Binding Text}" TextWrapping="Wrap"/>
+        <ProgressBar Minimum="0"
+                     Maximum="{Binding Total}"
+                     Value="{Binding Done}"
+                     IsIndeterminate="{Binding IsIndeterminate}"
+                     Height="6"
+                     MinHeight="6"
+                     CornerRadius="3"
+                     Foreground="{DynamicResource AccentBrush}"
+                     Background="{DynamicResource Surface3Brush}"/>
+        <TextBlock Classes="faint" Text="{Binding Detail}" TextTrimming="CharacterEllipsis"/>
+        <Button Content="Cancel"
+                MinWidth="80"
+                HorizontalAlignment="Right"
+                HorizontalContentAlignment="Center"
+                IsCancel="True"
+                IsVisible="{Binding CanCancel}"
+                Command="{Binding CancelCommand}"/>
+    </StackPanel>
+</UserControl>

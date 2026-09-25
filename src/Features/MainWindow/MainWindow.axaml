@@ -30,7 +30,7 @@
         <KeyBinding Gesture="Ctrl+Subtract" Command="{Binding ZoomOutCommand}"/>
         <KeyBinding Gesture="Ctrl+D0" Command="{Binding ResetZoomCommand}"/>
         <KeyBinding Gesture="Ctrl+NumPad0" Command="{Binding ResetZoomCommand}"/>
-        <KeyBinding Gesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding DataMenu.ReloadCommand}"/>
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FindCommand}"/>
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
     </Window.KeyBindings>
@@ -145,24 +145,27 @@
                             <Menu x:Name="MainMenu" Margin="6,0,0,0" VerticalAlignment="Center">
                                 <MenuItem Header="_Data">
                                     <MenuItem Header="Sync New Heroes / Items / Categories"
-                                              Command="{Binding NotYetCommand}"
-                                              CommandParameter="Sync New Heroes / Items / Categories"/>
+                                              Command="{Binding DataMenu.SyncNewDataCommand}"
+                                              ToolTip.Tip="Backfill score rows after adding to the CSVs by hand"/>
                                     <MenuItem Header="Sync from Game API"
-                                              Command="{Binding NotYetCommand}"
-                                              CommandParameter="Sync from Game API"/>
+                                              Command="{Binding DataMenu.SyncGameApiCommand}"
+                                              ToolTip.Tip="Pull item stats, costs, ids and new shop items from deadlock-api.com"/>
                                     <MenuItem Header="Fetch Match Stats"
-                                              Command="{Binding NotYetCommand}"
-                                              CommandParameter="Fetch Match Stats"/>
-                                    <MenuItem Header="Reload from Disk" InputGesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
+                                              Command="{Binding DataMenu.FetchMatchStatsCommand}"
+                                              ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (a few minutes)"/>
+                                    <MenuItem Header="Reload from Disk"
+                                              InputGesture="Ctrl+R"
+                                              Command="{Binding DataMenu.ReloadCommand}"
+                                              ToolTip.Tip="Re-read the CSVs, discarding nothing (edits are already saved)"/>
                                     <Separator/>
                                     <MenuItem Header="Export Snapshot to Excel"
-                                              Command="{Binding NotYetCommand}"
-                                              CommandParameter="Export Snapshot to Excel"/>
-                                    <MenuItem Header="Open Data Folder" Command="{Binding OpenDataFolderCommand}"/>
-                                    <MenuItem Header="Change Data Folder..." Command="{Binding ChangeDataFolderCommand}"/>
+                                              Command="{Binding DataMenu.ExportCommand}"
+                                              ToolTip.Tip="Write a read-only .xlsx copy of the CSVs for backup or review"/>
+                                    <MenuItem Header="Open Data Folder" Command="{Binding DataMenu.OpenDataFolderCommand}"/>
+                                    <MenuItem Header="Change Data Folder..." Command="{Binding DataMenu.ChangeDataFolderCommand}"/>
                                     <MenuItem Header="Download Art..."
-                                              Command="{Binding NotYetCommand}"
-                                              CommandParameter="Download Art"/>
+                                              Command="{Binding DataMenu.DownloadArtCommand}"
+                                              ToolTip.Tip="Fetch hero portraits, item icons and top-bar art from deadlock-api.com"/>
                                     <Separator/>
                                     <MenuItem Header="Quit" InputGesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
                                 </MenuItem>

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -23,7 +22,7 @@ namespace DeadlockAdvisor.Features.MainWindow;
 public class MainWindowViewModel : ViewModelBase
 {
     public const string CloseAction = "Close";
-    public const string ArtChangedAction = "ArtChanged";
+    public const string ArtChangedAction = DataMenuViewModel.ArtChangedAction;
 
     public const string HowScoringWorks =
         "Every hero is rated 0-100 on a list of traits (Hero Traits tab).\n"
@@ -50,31 +49,29 @@ public class MainWindowViewModel : ViewModelBase
     private readonly INotificationService _notifications;
     private readonly IModalService _modals;
     private readonly IArtService _art;
-    private readonly IFilePickerService _filePicker;
 
     public MainWindowViewModel(
         NotificationOverlayViewModel notificationOverlay,
         MatchViewModel match,
         HeroTraitsViewModel heroTraits,
         ItemFormulasViewModel itemFormulas,
+        DataMenuViewModel dataMenu,
         IDataService data,
         ISettingsService settings,
         INotificationService notifications,
         IModalService modals,
-        IArtService art,
-        IFilePickerService filePicker)
+        IArtService art)
     {
         NotificationOverlay = notificationOverlay;
         Match = match;
+        HeroTraits = heroTraits;
+        ItemFormulas = itemFormulas;
+        DataMenu = dataMenu;
         _data = data;
         _settings = settings;
         _notifications = notifications;
         _modals = modals;
         _art = art;
-        _filePicker = filePicker;
-
-        HeroTraits = heroTraits;
-        ItemFormulas = itemFormulas;
         Pages = [Match, HeroTraits, ItemFormulas];
 
         CurrentPage = Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1);
@@ -109,6 +106,8 @@ public class MainWindowViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
         data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
+        dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
+        dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
 
         ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1));
         ZoomOutCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex - 1));
@@ -117,15 +116,10 @@ public class MainWindowViewModel : ViewModelBase
         PreviousPageCommand = ReactiveCommand.Create(() => CyclePage(-1));
         ShowPageCommand = ReactiveCommand.Create<int>(page => CurrentPage = page);
 
-        ReloadCommand = ReactiveCommand.Create(Reload);
-        OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
-        ChangeDataFolderCommand = ReactiveCommand.CreateFromTask(ChangeDataFolderAsync);
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => ShowMessage("How scoring works", HowScoringWorks));
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
-        NotYetCommand = ReactiveCommand.Create<string>(name =>
-            _notifications.ShowInformation($"{name} arrives with the Data menu port (phase 4)."));
 
         RefreshStatus();
     }
@@ -135,6 +129,7 @@ public class MainWindowViewModel : ViewModelBase
     public MatchViewModel Match { get; }
     public HeroTraitsViewModel HeroTraits { get; }
     public ItemFormulasViewModel ItemFormulas { get; }
+    public DataMenuViewModel DataMenu { get; }
     public IReadOnlyList<ViewModelBase> Pages { get; }
     public IReadOnlyList<string> PageNames { get; } = ["Match", "Hero Traits", "Item Formulas"];
 
@@ -156,14 +151,13 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> NextPageCommand { get; }
     public ReactiveCommand<Unit, Unit> PreviousPageCommand { get; }
     public ReactiveCommand<int, Unit> ShowPageCommand { get; }
-    public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
-    public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
-    public ReactiveCommand<Unit, Unit> ChangeDataFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadArtCommand { get; }
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
-    public ReactiveCommand<string, Unit> NotYetCommand { get; }
+
+    /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
+    public void OnOpened() => DataMenu.OnStartup();
 
     /// <summary>Write pending edits before the window closes.</summary>
     public void OnClosing() => _data.FlushSaves();
@@ -184,43 +178,6 @@ public class MainWindowViewModel : ViewModelBase
         Match.FocusSearch();
     }
 
-    private void Reload()
-    {
-        try
-        {
-            _data.Reload();
-        }
-        catch (Exception ex)
-        {
-            _notifications.ShowError($"Reload failed: {ex.Message}", ex);
-        }
-    }
-
-    /// <summary>
-    /// Point the app at another folder holding data/ and assets/, e.g. the Python app's repo so both
-    /// apps share one set of files. Nothing locks them, so don't edit in both apps at once.
-    /// </summary>
-    private async Task ChangeDataFolderAsync()
-    {
-        var folder = await _filePicker.PickFolderAsync("Choose the data folder (the one holding data/ and assets/)", _data.DataRoot);
-        if (folder is null)
-            return;
-
-        try
-        {
-            _data.ChangeDataRoot(folder);
-        }
-        catch (Exception ex)
-        {
-            _notifications.ShowError($"Couldn't use {folder}: {ex.Message}", ex);
-            return;
-        }
-
-        _art.SetAssetsDir(_data.AssetsDir);
-        RequestViewAction(ArtChangedAction);
-        _notifications.ShowSuccess($"Now using the data in {_data.DataRoot}.");
-    }
-
     private void ReloadArt()
     {
         _art.Refresh();
@@ -233,18 +190,6 @@ public class MainWindowViewModel : ViewModelBase
     private void ShowMessage(string title, string body) =>
         _modals.ShowModal(new MessageModalViewModel(title, body, ReactiveCommand.Create(_modals.CloseModal)));
 
-    private void OpenFolder(string path)
-    {
-        try
-        {
-            Process.Start(new ProcessStartInfo(path) { UseShellExecute = true });
-        }
-        catch (Exception ex)
-        {
-            _notifications.ShowError($"Couldn't open {path}: {ex.Message}", ex);
-        }
-    }
-
     private void RefreshStatus()
     {
         var coverage = _data.Store.Coverage();
@@ -253,9 +198,20 @@ public class MainWindowViewModel : ViewModelBase
                        + $"   ·   {coverage.Rules} formula rules + {coverage.DerivedRules} from stats";
 
         var summary = MatchStatsMath.Summary(_data.Store.MatchMeta, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0);
-        DataStatusText = summary.Length == 0
-            ? "   ·   no match data (Data → Fetch Match Stats)"
-            : $"   ·   match data: {summary}";
-        DataStatusAlert = false;
+        if (summary.Length == 0)
+        {
+            DataStatusText = "   ·   no match data (Data → Fetch Match Stats)";
+            DataStatusAlert = false;
+        }
+        else if (DataMenu.NewerPatch is { } newer)
+        {
+            DataStatusText = $"   ·   match data: {summary} — patch {newer.Label} is out, refetch";
+            DataStatusAlert = true;
+        }
+        else
+        {
+            DataStatusText = $"   ·   match data: {summary}";
+            DataStatusAlert = false;
+        }
     }
 }

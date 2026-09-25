@@ -31,12 +31,13 @@ public static class CsvReader
 
     public static List<CsvRow> ReadFile(string path) => Read(File.ReadAllText(path, Encoding.UTF8));
 
+    /// <summary>Every record as its list of fields, header and blank lines included, like Python's <c>csv.reader</c>.</summary>
+    public static List<List<string>> ReadRecords(string text) =>
+        ParseRecords(text.Length > 0 && text[0] == _bom ? text[1..] : text);
+
     public static List<CsvRow> Read(string text)
     {
-        if (text.Length > 0 && text[0] == _bom)
-            text = text[1..];
-
-        var records = ParseRecords(text);
+        var records = ReadRecords(text);
         var rows = new List<CsvRow>();
         if (records.Count == 0)
             return rows;

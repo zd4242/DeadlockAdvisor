@@ -1,4 +1,6 @@
+using System.Net.Http;
 using System.Reactive.Subjects;
+using System.Text.Json.Nodes;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services.Contracts;
 
@@ -18,6 +20,30 @@ public sealed class FakeSettingsService : ISettingsService
     }
 
     public Task LoadAsync() => Task.CompletedTask;
+}
+
+/// <summary>deadlock-api.com with canned answers per URL; anything else fails as if the site were down.</summary>
+public sealed class FakeDeadlockApi : IDeadlockApi
+{
+    public Dictionary<string, Func<JsonNode?>> Json { get; } = [];
+    public Dictionary<string, byte[]> Bytes { get; } = [];
+    public List<string> Asked { get; } = [];
+
+    public Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
+    {
+        Asked.Add(url);
+        return Json.TryGetValue(url, out var answer)
+            ? Task.FromResult(answer())
+            : throw new HttpRequestException($"offline (test): {url}");
+    }
+
+    public Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default)
+    {
+        Asked.Add(url);
+        return Bytes.TryGetValue(url, out var bytes)
+            ? Task.FromResult(bytes)
+            : throw new HttpRequestException($"offline (test): {url}");
+    }
 }
 
 public sealed class FakeLoggingService : ILoggingService

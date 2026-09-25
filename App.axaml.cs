@@ -34,8 +34,14 @@ public partial class App : Application
         services.AddSingleton<IDataService, DataService>();
         services.AddSingleton<IArtService, ArtService>();
         services.AddSingleton<IFilePickerService, FilePickerService>();
+        services.AddSingleton<IDeadlockApi, DeadlockApi>();
+        services.AddSingleton<IGameApiService, GameApiService>();
+        services.AddSingleton<IMatchStatsService, MatchStatsService>();
+        services.AddSingleton<IArtDownloadService, ArtDownloadService>();
+        services.AddSingleton<IExcelExportService, ExcelExportService>();
 
         services.AddTransient<MainWindowViewModel>();
+        services.AddTransient<DataMenuViewModel>();
         services.AddTransient<MatchViewModel>();
         services.AddTransient<HeroTraitsViewModel>();
         services.AddTransient<ItemFormulasViewModel>();

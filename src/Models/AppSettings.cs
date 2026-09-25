@@ -8,6 +8,9 @@ public class AppSettings
     // Where data/ and assets/ live. Null means the default folder under %AppData%.
     public string? DataRoot { get; set; }
 
+    // Asked once, on a first run with no art, whether to download it.
+    public bool ArtDownloadOffered { get; set; }
+
     // View
     public int ZoomIndex { get; set; } = ZoomLevels.DefaultIndex;
     public WindowGeometry? WindowGeometry { get; set; }
