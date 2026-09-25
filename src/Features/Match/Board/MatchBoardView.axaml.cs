@@ -62,10 +62,6 @@ public partial class MatchBoardView : ReactiveUserControl<MatchBoardViewModel>
                 ViewModel.MoveHighlight(-1);
                 e.Handled = true;
                 break;
-            case Key.Escape when !string.IsNullOrEmpty(SearchBox.Text):
-                ViewModel.SearchText = "";
-                e.Handled = true;
-                break;
         }
     }
 

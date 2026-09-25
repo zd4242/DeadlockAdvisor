@@ -4,7 +4,8 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
         xmlns:match="using:DeadlockAdvisor.Features.Match"
-        xmlns:shared="using:DeadlockAdvisor.Features.Shared"
+        xmlns:heroTraits="using:DeadlockAdvisor.Features.HeroTraits"
+        xmlns:itemFormulas="using:DeadlockAdvisor.Features.ItemFormulas"
         xmlns:notifications="using:DeadlockAdvisor.Features.Shared.Notifications"
         xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
         x:DataType="mainWindow:MainWindowViewModel"
@@ -229,10 +230,10 @@
                         <match:MatchView x:Name="MatchPage" DataContext="{Binding Match}"/>
                     </Panel>
                     <Panel IsVisible="{Binding IsHeroTraitsPage}">
-                        <shared:PlaceholderPageView DataContext="{Binding HeroTraits}"/>
+                        <heroTraits:HeroTraitsView x:Name="HeroTraitsPage" DataContext="{Binding HeroTraits}"/>
                     </Panel>
                     <Panel IsVisible="{Binding IsItemFormulasPage}">
-                        <shared:PlaceholderPageView DataContext="{Binding ItemFormulas}"/>
+                        <itemFormulas:ItemFormulasView x:Name="ItemFormulasPage" DataContext="{Binding ItemFormulas}"/>
                     </Panel>
                     <notifications:NotificationOverlay DataContext="{Binding NotificationOverlay}"/>
                 </Panel>

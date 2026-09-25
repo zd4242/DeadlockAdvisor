@@ -72,6 +72,25 @@ public sealed class UiHarness : IDisposable
         }
     }
 
+    /// <summary>
+    /// Wait for something on a real-time timer, such as the item card's show delay. The dispatcher
+    /// only fires timers from its own loop, so this awaits (handing the loop back) rather than
+    /// sleeping. False if the condition never held within the timeout.
+    /// </summary>
+    public static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan? timeout = null)
+    {
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(3));
+        while (true)
+        {
+            Settle();
+            if (condition())
+                return true;
+            if (DateTime.UtcNow > deadline)
+                return false;
+            await Task.Delay(20);
+        }
+    }
+
     public string Screenshot(string name)
     {
         Settle();

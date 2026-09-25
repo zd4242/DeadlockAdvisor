@@ -87,11 +87,10 @@
                                       Command="{Binding SetModeCommand}"
                                       CommandParameter="{x:Static enums:Role.Self}"
                                       ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
-                        <TextBox Grid.Column="4"
-                                 x:Name="SearchBox"
-                                 Classes="search clearButton"
-                                 Text="{Binding SearchText}"
-                                 Watermark="{Binding SearchPlaceholder}"/>
+                        <controls:SearchBox Grid.Column="4"
+                                            x:Name="SearchBox"
+                                            Text="{Binding SearchText}"
+                                            Watermark="{Binding SearchPlaceholder}"/>
                     </Grid>
 
                     <ItemsControl x:Name="Palette" ItemsSource="{Binding Tiles}">

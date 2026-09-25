@@ -2,6 +2,8 @@ using System.IO;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using DeadlockAdvisor.Features.HeroTraits;
+using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Shared.Notifications;
@@ -35,6 +37,8 @@ public partial class App : Application
 
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<MatchViewModel>();
+        services.AddTransient<HeroTraitsViewModel>();
+        services.AddTransient<ItemFormulasViewModel>();
         services.AddSingleton<NotificationOverlayViewModel>();
     }
 

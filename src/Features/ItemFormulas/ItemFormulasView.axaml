@@ -1,0 +1,27 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:itemFormulas="using:DeadlockAdvisor.Features.ItemFormulas"
+             xmlns:byItem="using:DeadlockAdvisor.Features.ItemFormulas.ByItem"
+             xmlns:byTrait="using:DeadlockAdvisor.Features.ItemFormulas.ByTrait"
+             x:Class="DeadlockAdvisor.Features.ItemFormulas.ItemFormulasView"
+             x:DataType="itemFormulas:ItemFormulasViewModel">
+
+    <DockPanel>
+        <ListBox DockPanel.Dock="Top"
+                 Classes="tabs"
+                 Margin="0,0,0,4"
+                 SelectedIndex="{Binding SelectedTab}">
+            <ListBoxItem Content="By Item"/>
+            <ListBoxItem Content="By Trait (bulk)"/>
+        </ListBox>
+        <Panel>
+            <!-- Both stay alive, so switching keeps each one's place. -->
+            <Panel IsVisible="{Binding IsByItem}">
+                <byItem:ByItemView x:Name="ByItemPanel" DataContext="{Binding ByItem}"/>
+            </Panel>
+            <Panel IsVisible="{Binding IsByTrait}">
+                <byTrait:ByTraitView x:Name="ByTraitPanel" DataContext="{Binding ByTrait}"/>
+            </Panel>
+        </Panel>
+    </DockPanel>
+</UserControl>

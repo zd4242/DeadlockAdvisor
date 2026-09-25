@@ -9,28 +9,18 @@ namespace DeadlockAdvisor.Tests;
 
 public sealed class DataServiceTests : IDisposable
 {
-    private readonly TempDirectory _root = new();
-    private readonly FakeSettingsService _settings = new();
-    private readonly HistoricalScheduler _clock = new();
+    private readonly DataFixture _fixture = new();
+    private readonly TempDirectory _root;
+    private readonly FakeSettingsService _settings;
+    private readonly HistoricalScheduler _clock;
     private readonly DataService _service;
 
     public DataServiceTests()
     {
-        var data = Path.Combine(_root.Path, "data");
-        Directory.CreateDirectory(data);
-        foreach (var file in Directory.GetFiles(Golden.DataDir))
-            File.Copy(file, Path.Combine(data, Path.GetFileName(file)));
-
-        _settings.Current.DataRoot = _root.Path;
-        _service = new DataService(_settings, new FakeLoggingService(), new NotificationService(new FakeLoggingService()), _clock);
-        _service.Initialize();
+        (_root, _settings, _clock, _service) = (_fixture.Root, _fixture.Settings, _fixture.Clock, _fixture.Data);
     }
 
-    public void Dispose()
-    {
-        _service.Dispose();
-        _root.Dispose();
-    }
+    public void Dispose() => _fixture.Dispose();
 
     [Fact]
     public void SeedingWritesTheBundledDataVerbatim()

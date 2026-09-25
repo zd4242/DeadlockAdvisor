@@ -20,7 +20,7 @@ public sealed record CutoffPreset(string Label, int Percent)
 }
 
 /// <summary>The Match tab: the board on the left, recommendations on the right, and why the selected one scored what it did.</summary>
-public class MatchViewModel : ViewModelBase
+public class MatchViewModel : ViewModelBase, ISearchablePage
 {
     public const int DefaultCutoffPercent = 40;
 

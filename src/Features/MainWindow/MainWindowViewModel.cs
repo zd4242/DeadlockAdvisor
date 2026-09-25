@@ -3,8 +3,9 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.HeroTraits;
+using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
-using DeadlockAdvisor.Features.Shared;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Scoring;
@@ -54,6 +55,8 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         NotificationOverlayViewModel notificationOverlay,
         MatchViewModel match,
+        HeroTraitsViewModel heroTraits,
+        ItemFormulasViewModel itemFormulas,
         IDataService data,
         ISettingsService settings,
         INotificationService notifications,
@@ -70,10 +73,8 @@ public class MainWindowViewModel : ViewModelBase
         _art = art;
         _filePicker = filePicker;
 
-        HeroTraits = new PlaceholderPageViewModel("Hero Traits",
-            "The hero × trait grid, with its keyboard entry, arrives in phase 3 of the port.");
-        ItemFormulas = new PlaceholderPageViewModel("Item Formulas",
-            "The By Item and By Trait editors arrive in phase 3 of the port.");
+        HeroTraits = heroTraits;
+        ItemFormulas = itemFormulas;
         Pages = [Match, HeroTraits, ItemFormulas];
 
         CurrentPage = Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1);
@@ -132,8 +133,8 @@ public class MainWindowViewModel : ViewModelBase
     public NotificationOverlayViewModel NotificationOverlay { get; }
 
     public MatchViewModel Match { get; }
-    public PlaceholderPageViewModel HeroTraits { get; }
-    public PlaceholderPageViewModel ItemFormulas { get; }
+    public HeroTraitsViewModel HeroTraits { get; }
+    public ItemFormulasViewModel ItemFormulas { get; }
     public IReadOnlyList<ViewModelBase> Pages { get; }
     public IReadOnlyList<string> PageNames { get; } = ["Match", "Hero Traits", "Item Formulas"];
 
@@ -174,8 +175,12 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()
     {
-        if (Pages[CurrentPage] is not MatchViewModel)
-            CurrentPage = 0;
+        if (Pages[CurrentPage] is ISearchablePage page)
+        {
+            page.FocusSearch();
+            return;
+        }
+        CurrentPage = 0;
         Match.FocusSearch();
     }
 

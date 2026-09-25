@@ -78,7 +78,7 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
-    public void HoveringAnItemIconShowsItsCardAfterTheDelay()
+    public async Task HoveringAnItemIconShowsItsCardAfterTheDelay()
     {
         using var ui = new UiHarness();
         SetUpMatch(ui);
@@ -94,8 +94,7 @@ public class MatchPageTests
         UiHarness.Settle();
         Assert.Null(ui.Window.ItemCards.ShownItemId);
 
-        Thread.Sleep(Features.Shared.ItemCard.ItemCardPresenter.ShowDelay + TimeSpan.FromMilliseconds(100));
-        UiHarness.Settle();
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Window.ItemCards.ShownItemId is not null));
         Assert.Equal(itemId, ui.Window.ItemCards.ShownItemId);
 
         ui.Window.MouseDown(center, MouseButton.Left);

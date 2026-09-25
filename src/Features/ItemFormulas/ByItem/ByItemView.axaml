@@ -1,0 +1,256 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:byItem="using:DeadlockAdvisor.Features.ItemFormulas.ByItem"
+             xmlns:itemFormulas="using:DeadlockAdvisor.Features.ItemFormulas"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
+             xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+             xmlns:models="using:DeadlockAdvisor.Models"
+             xmlns:enums="using:DeadlockAdvisor.Enums"
+             xmlns:sys="using:System"
+             x:Class="DeadlockAdvisor.Features.ItemFormulas.ByItem.ByItemView"
+             x:DataType="byItem:ByItemViewModel">
+
+    <Grid ColumnDefinitions="2*,8,3*" Margin="8,4,8,8">
+
+        <!-- Item list -->
+        <Border Classes="card" Padding="14">
+            <DockPanel>
+                <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,0,0,8">
+                    <TextBlock Classes="section" Text="ITEMS" VerticalAlignment="Center"/>
+                    <TextBlock Grid.Column="2" Classes="faint" VerticalAlignment="Center" Text="{Binding CoverageText}"/>
+                </Grid>
+                <controls:SearchBox DockPanel.Dock="Top"
+                                    x:Name="SearchBox"
+                                    Margin="0,0,0,8"
+                                    Watermark="Filter items..."
+                                    Text="{Binding SearchText}"/>
+                <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <ToggleButton DockPanel.Dock="Right"
+                                  Classes="pill"
+                                  Content="Untagged only"
+                                  IsChecked="{Binding UntaggedOnly}"
+                                  ToolTip.Tip="Show only items with no rules yet — your to-do list"/>
+                    <ItemsControl ItemsSource="{Binding TierPills}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="4"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="byItem:TierPill">
+                                <ToggleButton Classes="pill"
+                                              Content="{Binding Label}"
+                                              IsChecked="{Binding IsChecked, Mode=OneWay}"
+                                              Command="{Binding $parent[ItemsControl].((byItem:ByItemViewModel)DataContext).SetTierFilterCommand}"
+                                              CommandParameter="{Binding Tier}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </DockPanel>
+
+                <ListBox Classes="flat"
+                         ItemsSource="{Binding Items}"
+                         SelectedItem="{Binding SelectedRow}"
+                         ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="byItem:ItemRowViewModel">
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Height="22">
+                                <art:ArtImage Width="20"
+                                              Height="20"
+                                              Kind="Item"
+                                              ArtId="{Binding ItemId}"
+                                              ArtName="{Binding Name}"
+                                              Tint="{Binding ShopColor}"
+                                              VerticalAlignment="Center"
+                                              card:ItemCardHover.ItemId="{Binding ItemId}"/>
+                                <controls:Badge Grid.Column="1" Margin="6,0,0,0" Text="{Binding TierText}" Color="{Binding TierColor}"/>
+                                <TextBlock Grid.Column="2"
+                                           Margin="6,0,6,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource TextBrush}"
+                                           TextTrimming="CharacterEllipsis"
+                                           Text="{Binding Name}"/>
+                                <controls:Badge Grid.Column="3" Text="{Binding ShopText}" Color="{Binding ShopColor}"/>
+                                <controls:Badge Grid.Column="4" Margin="6,0,0,0" Text="{Binding RulesText}" Color="{Binding RulesColor}"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+
+        <!-- The selected item: its rules, what they'd fire for, and its in-game card -->
+        <Border Grid.Column="2" Classes="card" Padding="14">
+            <Grid ColumnDefinitions="*,18,Auto">
+                <DockPanel>
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,0,14">
+                        <StackPanel Spacing="1" VerticalAlignment="Center">
+                            <TextBlock FontWeight="Bold" Text="{Binding DetailTitle}"/>
+                            <TextBlock Classes="faint" Text="{Binding DetailSub}"/>
+                        </StackPanel>
+                        <Button Grid.Column="1"
+                                VerticalAlignment="Center"
+                                Content="Copy rules from..."
+                                Command="{Binding CopyRulesCommand}"
+                                ToolTip.Tip="Clone another item's whole rule set onto this one"/>
+                    </Grid>
+
+                    <!-- Rules above, preview below, with a draggable divider between. Both scrolling
+                         lists keep a gutter on the right, so a scroll bar never sits on a card. -->
+                    <Grid x:Name="DetailSplit" RowDefinitions="*,8,*">
+                        <DockPanel Margin="0,0,0,6">
+                            <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto" Margin="0,0,10,8">
+                                <TextBlock Classes="section" Text="RULES" VerticalAlignment="Center"/>
+                                <Button Grid.Column="1" Classes="pill" Content="+ Add rule" Command="{Binding AddRuleCommand}"/>
+                            </Grid>
+                            <ScrollViewer MinHeight="60" HorizontalScrollBarVisibility="Disabled">
+                                <StackPanel Spacing="8" Margin="0,0,10,0">
+                                    <TextBlock Classes="hint"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding RulesHint}"
+                                               IsVisible="{Binding RulesHint, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                    <ItemsControl ItemsSource="{Binding Rules}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="8"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="byItem:RuleCardViewModel">
+                                                <Border Classes="inset" Padding="8,7">
+                                                    <StackPanel Spacing="6">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                                                <Ellipse.Fill>
+                                                                    <SolidColorBrush Color="{Binding TraitColor}"/>
+                                                                </Ellipse.Fill>
+                                                            </Ellipse>
+                                                            <controls:NoWheelComboBox Grid.Column="1"
+                                                                                      HorizontalAlignment="Stretch"
+                                                                                      ItemsSource="{Binding Categories}"
+                                                                                      SelectedItem="{Binding SelectedCategory}">
+                                                                <ComboBox.ItemTemplate>
+                                                                    <DataTemplate x:DataType="models:Category">
+                                                                        <TextBlock Text="{Binding CategoryName}"/>
+                                                                    </DataTemplate>
+                                                                </ComboBox.ItemTemplate>
+                                                            </controls:NoWheelComboBox>
+                                                            <NumericUpDown Grid.Column="2"
+                                                                           Width="78"
+                                                                           Minimum="-20"
+                                                                           Maximum="20"
+                                                                           Increment="0.5"
+                                                                           FormatString="0.0"
+                                                                           Value="{Binding Coefficient}"
+                                                                           ToolTip.Tip="{x:Static itemFormulas:FormulaText.CoefficientTip}"/>
+                                                            <Button Grid.Column="3"
+                                                                    Classes="icon"
+                                                                    Width="22"
+                                                                    Content="×"
+                                                                    Command="{Binding RemoveCommand}"
+                                                                    ToolTip.Tip="Delete this rule"/>
+                                                        </Grid>
+                                                        <DockPanel>
+                                                            <StackPanel Orientation="Horizontal" Spacing="3">
+                                                                <ToggleButton Classes="pill"
+                                                                              Content="against"
+                                                                              IsChecked="{Binding IsAgainst, Mode=OneWay}"
+                                                                              Command="{Binding ToggleRelationCommand}"
+                                                                              CommandParameter="{x:Static enums:Relation.Against}"
+                                                                              ToolTip.Tip="Buy this when an ENEMY has this trait."/>
+                                                                <ToggleButton Classes="pill"
+                                                                              Content="with"
+                                                                              IsChecked="{Binding IsWith, Mode=OneWay}"
+                                                                              Command="{Binding ToggleRelationCommand}"
+                                                                              CommandParameter="{x:Static enums:Relation.With}"
+                                                                              ToolTip.Tip="Buy this when an ALLY has this trait."/>
+                                                                <ToggleButton Classes="pill"
+                                                                              Content="as"
+                                                                              IsChecked="{Binding IsAs, Mode=OneWay}"
+                                                                              Command="{Binding ToggleRelationCommand}"
+                                                                              CommandParameter="{x:Static enums:Relation.As}"
+                                                                              ToolTip.Tip="Buy this when YOUR OWN hero has this trait."/>
+                                                            </StackPanel>
+                                                            <controls:RichText Classes="faint"
+                                                                               Margin="8,0,0,0"
+                                                                               HorizontalAlignment="Right"
+                                                                               VerticalAlignment="Center"
+                                                                               TextTrimming="CharacterEllipsis"
+                                                                               Spans="{Binding Explanation}"/>
+                                                        </DockPanel>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock Classes="section"
+                                               Text="FROM ITEM STATS"
+                                               IsVisible="{Binding HasDerivedRules}"
+                                               ToolTip.Tip="Added on top of the rules above, from data/stat_rules.csv and the&#10;item's numbers (Data → Sync from Game API). Edit the stat rule to change these."/>
+                                    <ItemsControl ItemsSource="{Binding DerivedRules}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="8"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="byItem:DerivedRuleEntry">
+                                                <Border Classes="inset" Padding="8,6">
+                                                    <StackPanel Spacing="3">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                            <Ellipse Width="8" Height="8" VerticalAlignment="Center">
+                                                                <Ellipse.Fill>
+                                                                    <SolidColorBrush Color="{Binding TraitColor}"/>
+                                                                </Ellipse.Fill>
+                                                            </Ellipse>
+                                                            <TextBlock Grid.Column="1" Classes="dim" VerticalAlignment="Center" Text="{Binding CategoryName}"/>
+                                                            <controls:Badge Grid.Column="2" VerticalAlignment="Center" Text="{Binding RelationText}" Color="{Binding RelationColor}"/>
+                                                            <TextBlock Grid.Column="3"
+                                                                       VerticalAlignment="Center"
+                                                                       FontWeight="Bold"
+                                                                       Foreground="{DynamicResource TextDimBrush}"
+                                                                       Text="{Binding Value}"/>
+                                                        </Grid>
+                                                        <ItemsControl ItemsSource="{Binding Parts}">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate x:DataType="sys:String">
+                                                                    <TextBlock Classes="faint" Text="{Binding}"/>
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </ScrollViewer>
+                        </DockPanel>
+
+                        <GridSplitter Grid.Row="1" x:Name="DetailSplitter" Classes="divider" ResizeDirection="Rows"/>
+
+                        <DockPanel Grid.Row="2" Margin="0,6,0,0">
+                            <TextBlock DockPanel.Dock="Top" Classes="section" Text="WOULD APPLY TO" Margin="0,0,0,8"/>
+                            <ScrollViewer MinHeight="60" HorizontalScrollBarVisibility="Disabled">
+                                <byItem:PreviewPanel Margin="0,0,10,0" Groups="{Binding Preview}"/>
+                            </ScrollViewer>
+                        </DockPanel>
+                    </Grid>
+                </DockPanel>
+
+                <!-- The selected item's in-game card, the one hovering its icon shows, so what the
+                     rules describe is always in view. -->
+                <ScrollViewer Grid.Column="2"
+                              x:Name="CardScroller"
+                              Width="344"
+                              HorizontalScrollBarVisibility="Disabled">
+                    <ContentControl x:Name="CardHost" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+    </Grid>
+</UserControl>

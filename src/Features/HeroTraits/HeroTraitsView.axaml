@@ -1,0 +1,57 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:heroTraits="using:DeadlockAdvisor.Features.HeroTraits"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.HeroTraits.HeroTraitsView"
+             x:DataType="heroTraits:HeroTraitsViewModel">
+
+    <DockPanel Margin="12">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Margin="0,0,0,8">
+            <TextBlock Classes="section" Text="HERO TRAITS" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <controls:SearchBox Grid.Column="1"
+                                x:Name="SearchBox"
+                                Width="142"
+                                Watermark="Filter heroes..."
+                                Text="{Binding FilterText}"/>
+            <Button Grid.Column="2"
+                    Margin="8,0,0,0"
+                    Content="Copy from..."
+                    Command="{Binding CopyFromCommand}"
+                    ToolTip.Tip="Clone another hero's whole trait profile onto this one"/>
+            <Button Grid.Column="3"
+                    Classes="danger"
+                    Margin="8,0,0,0"
+                    Content="Clear hero"
+                    Command="{Binding ClearHeroCommand}"
+                    ToolTip.Tip="Reset every trait on the selected hero to 0"/>
+            <TextBlock Grid.Column="5" Classes="faint" VerticalAlignment="Center" Text="{Binding ProgressText}"/>
+        </Grid>
+
+        <TextBlock DockPanel.Dock="Top" Classes="hint" Margin="0,0,0,8" Text="{x:Static heroTraits:HeroTraitsViewModel.Hint}"/>
+
+        <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0" Spacing="8">
+            <Border Classes="hline"/>
+            <controls:RichText Classes="dim" MinHeight="36" TextWrapping="Wrap" Spans="{Binding ContextSpans}"/>
+        </StackPanel>
+
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="8"
+                ClipToBounds="True">
+            <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto">
+                <heroTraits:TraitGrid x:Name="Grid"
+                                      HorizontalAlignment="Left"
+                                      VerticalAlignment="Top"
+                                      Heroes="{Binding Heroes}"
+                                      Categories="{Binding Categories}"
+                                      VisibleRows="{Binding VisibleRows}"
+                                      ValueOf="{Binding ValueOf}"
+                                      CurrentRow="{Binding CurrentRow}"
+                                      CurrentColumn="{Binding CurrentColumn}"
+                                      PendingText="{Binding PendingText}"
+                                      Revision="{Binding Revision}"/>
+            </ScrollViewer>
+        </Border>
+    </DockPanel>
+</UserControl>

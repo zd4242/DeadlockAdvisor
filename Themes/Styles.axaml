@@ -274,8 +274,8 @@
         <Setter Property="BorderBrush" Value="{DynamicResource AllyBrush}"/>
     </Style>
 
-    <!-- small pill toggles, e.g. tier filters -->
-    <Style Selector="ToggleButton.pill">
+    <!-- small pills: toggles such as the tier filters, and small actions such as "+ Add rule" -->
+    <Style Selector="Button.pill, ToggleButton.pill">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
         <Setter Property="CornerRadius" Value="8"/>
@@ -285,10 +285,15 @@
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
     </Style>
-    <Style Selector="ToggleButton.pill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+    <Style Selector="Button.pill:pointerover /template/ ContentPresenter#PART_ContentPresenter, ToggleButton.pill:pointerover /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+    </Style>
+    <Style Selector="Button.pill:disabled /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
     </Style>
     <Style Selector="ToggleButton.pill:checked /template/ ContentPresenter#PART_ContentPresenter">
         <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
@@ -327,6 +332,68 @@
         <Setter Property="Padding" Value="10,6,8,6"/>
     </Style>
 
+    <!-- Spin boxes as narrow as Qt's: the number, then small up/down arrows stacked on the right -->
+    <Style Selector="NumericUpDown">
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="8,0,2,0"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="NumericUpDown:focus-within /template/ ButtonSpinner">
+        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+    </Style>
+    <Style Selector="ButtonSpinner">
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        MinHeight="{TemplateBinding MinHeight}"
+                        ClipToBounds="True">
+                    <DockPanel>
+                        <Grid DockPanel.Dock="Right" RowDefinitions="*,*" Width="16" IsVisible="{TemplateBinding ShowButtonSpinner}">
+                            <RepeatButton Name="PART_IncreaseButton" Classes="spin">
+                                <Path Data="M0,4 L4,0 L8,4"/>
+                            </RepeatButton>
+                            <RepeatButton Name="PART_DecreaseButton" Grid.Row="1" Classes="spin">
+                                <Path Data="M0,0 L4,4 L8,0"/>
+                            </RepeatButton>
+                        </Grid>
+                        <ContentPresenter Name="PART_ContentPresenter"
+                                          Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          Padding="{TemplateBinding Padding}"
+                                          HorizontalContentAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalContentAlignment="{TemplateBinding VerticalContentAlignment}"/>
+                    </DockPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="RepeatButton.spin">
+        <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="CornerRadius" Value="0"/>
+        <Setter Property="Padding" Value="0"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="VerticalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="RepeatButton.spin:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface4Brush}"/>
+    </Style>
+    <Style Selector="RepeatButton.spin Path">
+        <Setter Property="Stroke" Value="{DynamicResource TextDimBrush}"/>
+        <Setter Property="StrokeThickness" Value="1.2"/>
+        <Setter Property="StrokeLineCap" Value="Round"/>
+        <Setter Property="StrokeJoin" Value="Round"/>
+    </Style>
+    <Style Selector="NumericUpDown /template/ TextBox">
+        <Setter Property="MinHeight" Value="38"/>
+    </Style>
+
     <!-- Tabs: a ListBox of text items, the selected one filled with the accent -->
     <Style Selector="ListBox.tabs">
         <Setter Property="Background" Value="Transparent"/>
@@ -362,6 +429,52 @@
         <Setter Property="Padding" Value="12,4"/>
         <Setter Property="Margin" Value="2,0"/>
         <Setter Property="Focusable" Value="False"/>
+    </Style>
+
+    <!-- A list that already sits in a card: no frame of its own, rounded rows lit on hover and selection -->
+    <!-- The right padding is a gutter for the scroll bar, which overlays the list. -->
+    <Style Selector="ListBox.flat">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="Padding" Value="0,0,12,0"/>
+    </Style>
+    <Style Selector="ListBox.flat ListBoxItem">
+        <Setter Property="Padding" Value="10,7"/>
+        <Setter Property="CornerRadius" Value="4"/>
+        <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Background" Value="Transparent"/>
+    </Style>
+    <Style Selector="ListBox.flat ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+    </Style>
+    <Style Selector="ListBox.flat ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.flat ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.flat ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface4Brush}"/>
+    </Style>
+
+    <!-- A splitter drawn as the usual hairline with a small grip in the middle, so it reads as draggable -->
+    <Style Selector="GridSplitter.divider">
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="MinHeight" Value="8"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Panel Background="Transparent">
+                    <Border Name="line" Height="1" VerticalAlignment="Center" Background="{DynamicResource BorderBrush}"/>
+                    <Border Name="grip"
+                            Width="36"
+                            Height="5"
+                            CornerRadius="2.5"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center"
+                            Background="{DynamicResource BorderStrongBrush}"/>
+                </Panel>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="GridSplitter.divider:pointerover /template/ Border#line">
+        <Setter Property="Background" Value="{DynamicResource BorderStrongBrush}"/>
+    </Style>
+    <Style Selector="GridSplitter.divider:pointerover /template/ Border#grip">
+        <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
     </Style>
 
 </Styles>
