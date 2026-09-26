@@ -76,6 +76,9 @@ public partial class App : Application
                 data.Initialize();
                 var art = services.GetRequiredService<IArtService>();
                 art.SetAssetsDir(data.AssetsDir);
+                services.GetRequiredService<ILoggingService>().Information(
+                    $"Started: data in {data.DataRoot}, {art.Count(ArtKind.Hero)} hero portrait(s) and {art.Count(ArtKind.Item)} item icon(s), "
+                    + $"log in {Path.Combine(JsonSettingsService.AppDataPath, LoggingService.FileName)}");
 
                 desktop.MainWindow = new MainWindow(services.GetRequiredService<IModalService>(), settingsService, art, data)
                 {

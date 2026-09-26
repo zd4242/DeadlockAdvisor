@@ -29,7 +29,7 @@ public sealed class DetectTests : IDisposable
     public DetectTests()
     {
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
-        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, _capture);
+        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, _capture, new FakeLoggingService());
         _page = new MatchViewModel(_fixture.Data, _fixture.Settings, _detect);
     }
 

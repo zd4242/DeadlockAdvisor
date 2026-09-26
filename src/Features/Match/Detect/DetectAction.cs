@@ -28,13 +28,15 @@ public class DetectAction
     private readonly ISettingsService _settings;
     private readonly IModalService _modals;
     private readonly IScreenCaptureService _capture;
+    private readonly ILoggingService _log;
 
-    public DetectAction(IDataService data, ISettingsService settings, IModalService modals, IScreenCaptureService capture)
+    public DetectAction(IDataService data, ISettingsService settings, IModalService modals, IScreenCaptureService capture, ILoggingService log)
     {
         _data = data;
         _settings = settings;
         _modals = modals;
         _capture = capture;
+        _log = log;
     }
 
     public string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
@@ -50,6 +52,7 @@ public class DetectAction
         var bank = await Task.Run(() => TemplateBank.Load(directory));
         if (bank.IsEmpty)
         {
+            _log.Warning($"Detect: no reference art in {directory}");
             _modals.ShowMessage("No reference art",
                 $"There's no hero art to match against yet.\n\nData → Download Art… fetches it into {directory}.");
             return;
@@ -62,13 +65,21 @@ public class DetectAction
         }
         catch (CaptureException ex)
         {
+            _log.Warning($"Detect: capture failed: {ex.Message}");
             _modals.ShowMessage("Could not capture the screen", ex.Message);
             return;
         }
 
         var screenKey = $"{capture.ScreenWidth}x{capture.ScreenHeight}";
         var cached = _settings.Current.VisionGeometry.TryGetValue(screenKey, out var saved) ? Geometry.FromJson(saved) : null;
+        var clock = System.Diagnostics.Stopwatch.StartNew();
         var detection = await DetectWithProgressAsync(progress => Detect(capture, bank, cached, progress));
+        _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} screen, "
+                         + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
+                         + (detection is null
+                             ? "no strip found"
+                             : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}")
+                         + $", {clock.ElapsedMilliseconds} ms");
         if (detection is null)
         {
             _modals.ShowMessage("Nothing found",

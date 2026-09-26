@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
 using Avalonia.Threading;
+using Avalonia.VisualTree;
 using DeadlockAdvisor.Behaviors;
 using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Core;
@@ -177,16 +178,24 @@ public partial class MainWindow : Window
 
     // -- title bar ----------------------------------------------------------------
 
+    /// <summary>Raised just before the title bar hands a press to the OS to drag the window.</summary>
+    internal event EventHandler? WindowDragStarting;
+
     /// <summary>The bare strip, the divider and the title drag the window; menus, tabs and buttons handle their own clicks.</summary>
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
         if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            return;
+        // A press in a menu's dropdown bubbles up here from its popup. Dragging from it would start the
+        // OS move loop, which swallows the release, so the menu item would never see its click.
+        if (e.Source is not Visual source || (source != TitleBar && !TitleBar.IsVisualAncestorOf(source)))
             return;
         if (e.ClickCount == 2)
         {
             ToggleMaximized();
             return;
         }
+        WindowDragStarting?.Invoke(this, EventArgs.Empty);
         BeginMoveDrag(e);
     }
 
