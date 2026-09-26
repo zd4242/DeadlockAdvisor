@@ -8,6 +8,7 @@
         xmlns:itemFormulas="using:DeadlockAdvisor.Features.ItemFormulas"
         xmlns:notifications="using:DeadlockAdvisor.Features.Shared.Notifications"
         xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+        xmlns:enums="using:DeadlockAdvisor.Enums"
         x:DataType="mainWindow:MainWindowViewModel"
         Title="Deadlock Item Advisor"
         Icon="/src/Assets/app.ico"
@@ -33,6 +34,11 @@
         <KeyBinding Gesture="Ctrl+R" Command="{Binding DataMenu.ReloadCommand}"/>
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FindCommand}"/>
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
+        <!-- The Match page's own shortcuts: live whenever it's showing, wherever focus is. -->
+        <KeyBinding Gesture="Alt+D1" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
+        <KeyBinding Gesture="Alt+D2" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
+        <KeyBinding Gesture="Alt+D3" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
+        <KeyBinding Gesture="F9" Command="{Binding DetectCommand}"/>
     </Window.KeyBindings>
 
     <Window.Styles>

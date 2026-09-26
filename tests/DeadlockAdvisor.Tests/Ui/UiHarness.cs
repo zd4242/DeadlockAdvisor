@@ -55,6 +55,7 @@ public sealed class UiHarness : IDisposable
     }
 
     public FakeSettingsService Settings { get; }
+    public IServiceProvider Services => _services;
 
     /// <summary>No network in tests: every call fails as if the site were down, unless a test says otherwise.</summary>
     public FakeDeadlockApi Api { get; } = new();

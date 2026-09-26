@@ -1,3 +1,4 @@
+using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
@@ -26,6 +27,37 @@ public class HeroTraitsPageTests
 
         ui.Screenshot(file);
         Assert.Equal("Billy", page.Heroes[page.CurrentRow].HeroName);
+    }
+
+    /// <summary>Copy from… end to end with the mouse: the toolbar button, then the pick and OK in the modal's own window.</summary>
+    [AvaloniaFact]
+    public void CopyFromClonesTheProfilePickedInTheModal()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        var page = ui.ViewModel.HeroTraits;
+        var store = ui.Data.Store;
+        var target = page.Heroes.Single(hero => hero.HeroName == "Abrams");
+        page.CurrentRow = page.Heroes.ToList().IndexOf(target);
+        ui.Show();
+
+        static void Click(TopLevel root, Visual target)
+        {
+            var at = target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), root)!.Value;
+            root.MouseDown(at, MouseButton.Left);
+            root.MouseUp(at, MouseButton.Left);
+            UiHarness.Settle();
+        }
+
+        Click(ui.Window, ui.Window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Copy from...")));
+        var modal = ui.Window.OwnedWindows.OfType<Features.Shared.Modals.Base.ModalWindow>().Single();
+        var choice = Assert.IsType<Features.Shared.Modals.Choice.ChoiceModalViewModel>(((Features.Shared.Modals.Base.ModalViewModel)modal.DataContext!).Content);
+        choice.SelectedIndex = choice.Choices.ToList().IndexOf("Billy");
+        UiHarness.Settle();
+        Click(modal, modal.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "OK")));
+
+        var billy = page.Heroes.Single(hero => hero.HeroName == "Billy").HeroId;
+        Assert.All(page.Categories, category =>
+            Assert.Equal(store.HeroScore(billy, category.CategoryId), store.HeroScore(target.HeroId, category.CategoryId)));
     }
 
     [AvaloniaFact]

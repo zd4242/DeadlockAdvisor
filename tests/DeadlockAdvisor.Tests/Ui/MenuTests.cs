@@ -4,6 +4,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 
@@ -38,6 +39,26 @@ public class MenuTests
         Assert.Equal(0, drags);
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
         Assert.Equal("How scoring works", Assert.IsType<MessageModalViewModel>(((ModalViewModel)modal.DataContext!).Content).Title);
+    }
+
+    /// <summary>The role menu's presses bubble up to the tile it was opened on, which mustn't take them as a click of its own.</summary>
+    [AvaloniaFact]
+    public void TheRoleMenuSetsExactlyTheRolePicked()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+        var tile = ui.Window.GetVisualDescendants().OfType<Controls.HeroTile>().First(t => t.HeroId == "haze");
+
+        var at = tile.TranslatePoint(new Point(tile.Bounds.Width / 2, tile.Bounds.Height / 2), ui.Window)!.Value;
+        ui.Window.MouseDown(at, MouseButton.Right);
+        ui.Window.MouseUp(at, MouseButton.Right);
+        UiHarness.Settle();
+        var setAlly = TopLevel.GetTopLevel(tile)!.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "Set as Ally"));
+        Click(TopLevel.GetTopLevel(setAlly)!, setAlly);
+
+        Assert.Equal(Role.Ally, board.RoleOf("haze"));
+        Assert.Equal(["haze"], ui.Settings.Current.LastMatch!.Roles.Keys);
     }
 
     [AvaloniaFact]

@@ -2,6 +2,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
@@ -121,6 +122,10 @@ public class MainWindowViewModel : ViewModelBase
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
+        var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, page => page == 0);
+        SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.SetMode, onMatchPage);
+        DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
+
         RefreshStatus();
     }
 
@@ -155,6 +160,10 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
+
+    /// <summary>Alt+1/2/3 and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
+    public ReactiveCommand<Role, Unit> SetModeCommand { get; }
+    public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 
     /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
     public void OnOpened() => DataMenu.OnStartup();

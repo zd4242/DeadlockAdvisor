@@ -4,16 +4,8 @@
              xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
              xmlns:results="using:DeadlockAdvisor.Features.Match.Results"
              xmlns:explain="using:DeadlockAdvisor.Features.Match.Explain"
-             xmlns:enums="using:DeadlockAdvisor.Enums"
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
-
-    <UserControl.KeyBindings>
-        <KeyBinding Gesture="Alt+D1" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
-        <KeyBinding Gesture="Alt+D2" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
-        <KeyBinding Gesture="Alt+D3" Command="{Binding Board.SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
-        <KeyBinding Gesture="F9" Command="{Binding DetectCommand}"/>
-    </UserControl.KeyBindings>
 
     <Grid ColumnDefinitions="4*,8,5*" Margin="12">
         <board:MatchBoardView x:Name="BoardView" DataContext="{Binding Board}"/>
