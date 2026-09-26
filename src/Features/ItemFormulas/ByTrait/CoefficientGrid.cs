@@ -17,11 +17,6 @@ public class CoefficientEditedEventArgs(RoutedEvent routedEvent, CoefficientRow 
     public double Value { get; } = value;
 }
 
-public class SortRequestedEventArgs(RoutedEvent routedEvent, int column) : RoutedEventArgs(routedEvent)
-{
-    public int Column { get; } = column;
-}
-
 /// <summary>
 /// Every item against one trait + relation, drawn as one control: Item (with icon), Tier, Shop, the
 /// heat-shaded Coefficient, and what the item's stats add. The header sorts; keys go to the view
@@ -44,20 +39,11 @@ public class CoefficientGrid : ScrollingGrid
     public static readonly StyledProperty<CoefficientRow?> CurrentRowProperty =
         AvaloniaProperty.Register<CoefficientGrid, CoefficientRow?>(nameof(CurrentRow), defaultBindingMode: BindingMode.TwoWay);
 
-    public static readonly StyledProperty<int> SortColumnProperty =
-        AvaloniaProperty.Register<CoefficientGrid, int>(nameof(SortColumn), -1);
-
-    public static readonly StyledProperty<bool> SortDescendingProperty =
-        AvaloniaProperty.Register<CoefficientGrid, bool>(nameof(SortDescending));
-
     public static readonly StyledProperty<int> RevisionProperty =
         AvaloniaProperty.Register<CoefficientGrid, int>(nameof(Revision));
 
     public static readonly RoutedEvent<CoefficientEditedEventArgs> CoefficientEditedEvent =
         RoutedEvent.Register<CoefficientGrid, CoefficientEditedEventArgs>("CoefficientEdited", RoutingStrategies.Bubble);
-
-    public static readonly RoutedEvent<SortRequestedEventArgs> SortRequestedEvent =
-        RoutedEvent.Register<CoefficientGrid, SortRequestedEventArgs>("SortRequested", RoutingStrategies.Bubble);
 
     private int _hoverColumn = -1;
     private object? _tipKey;
@@ -66,8 +52,7 @@ public class CoefficientGrid : ScrollingGrid
     static CoefficientGrid()
     {
         AffectsMeasure<CoefficientGrid>(RowsProperty);
-        AffectsRender<CoefficientGrid>(CurrentRowProperty, SortColumnProperty, SortDescendingProperty, RevisionProperty,
-            ArtHost.ServiceProperty, ArtHost.RevisionProperty);
+        AffectsRender<CoefficientGrid>(CurrentRowProperty, RevisionProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
     }
 
     public IReadOnlyList<CoefficientRow> Rows
@@ -80,18 +65,6 @@ public class CoefficientGrid : ScrollingGrid
     {
         get => GetValue(CurrentRowProperty);
         set => SetValue(CurrentRowProperty, value);
-    }
-
-    public int SortColumn
-    {
-        get => GetValue(SortColumnProperty);
-        set => SetValue(SortColumnProperty, value);
-    }
-
-    public bool SortDescending
-    {
-        get => GetValue(SortDescendingProperty);
-        set => SetValue(SortDescendingProperty, value);
     }
 
     /// <summary>Bump to repaint after row values change.</summary>
@@ -350,20 +323,8 @@ public class CoefficientGrid : ScrollingGrid
                 DrawCentered(context, label, rect);
 
             if (column == SortColumn)
-                PaintSortArrow(context, rect, SortDescending);
+                DrawSortArrow(context, new Point(rect.Right - 8 - SortArrowSize / 2, rect.Center.Y), SortDescending);
         }
         context.DrawLine(border, new Point(view.X, top + HeaderHeight - 0.5), new Point(view.Right, top + HeaderHeight - 0.5));
-    }
-
-    private static void PaintSortArrow(DrawingContext context, Rect header, bool descending)
-    {
-        const double size = 7;
-        var x = header.Right - 8 - size;
-        var middle = header.Center.Y;
-        var tipY = descending ? middle + size / 4 : middle - size / 4;
-        var baseY = descending ? middle - size / 4 : middle + size / 4;
-        var pen = new Pen(new SolidColorBrush(Palette.TextDim), 1.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
-        context.DrawGeometry(null, pen, new PolylineGeometry(
-            [new Point(x, baseY), new Point(x + size / 2, tipY), new Point(x + size, baseY)], isFilled: false));
     }
 }

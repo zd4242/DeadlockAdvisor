@@ -113,7 +113,7 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,1,0,0"/>
-            <Setter Property="Padding" Value="4,3"/>
+            <Setter Property="Padding" Value="12,4"/>
         </Style>
         <Style Selector="Border#StatusBar TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
@@ -200,7 +200,7 @@
                                  pages to start typing into one. -->
                             <ListBox Grid.Column="2"
                                      x:Name="PageTabs"
-                                     Classes="tabs slim"
+                                     Classes="tabs"
                                      Focusable="False"
                                      VerticalAlignment="Center"
                                      ItemsSource="{Binding PageNames}"

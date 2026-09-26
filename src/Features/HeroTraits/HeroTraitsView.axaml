@@ -10,7 +10,7 @@
             <TextBlock Classes="section" Text="HERO TRAITS" VerticalAlignment="Center" Margin="0,0,8,0"/>
             <controls:SearchBox Grid.Column="1"
                                 x:Name="SearchBox"
-                                Width="142"
+                                Width="200"
                                 Watermark="Filter heroes..."
                                 Text="{Binding FilterText}"/>
             <Button Grid.Column="2"
@@ -29,12 +29,13 @@
 
         <TextBlock DockPanel.Dock="Top" Classes="hint" Margin="0,0,0,8" Text="{x:Static heroTraits:HeroTraitsViewModel.Hint}"/>
 
-        <StackPanel DockPanel.Dock="Bottom" Margin="0,8,0,0" Spacing="8">
-            <Border Classes="hline"/>
+        <Border DockPanel.Dock="Bottom" Classes="card" Margin="0,12,0,0" Padding="12,8">
             <controls:RichText Classes="dim" MinHeight="36" TextWrapping="Wrap" Spans="{Binding ContextSpans}"/>
-        </StackPanel>
+        </Border>
 
-        <Border Background="{DynamicResource SurfaceBrush}"
+        <!-- Hugs the grid rather than stretching, so a wide window doesn't leave an empty band inside it. -->
+        <Border HorizontalAlignment="Left"
+                Background="{DynamicResource SurfaceBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="1"
                 CornerRadius="8"
@@ -45,7 +46,10 @@
                                       VerticalAlignment="Top"
                                       Heroes="{Binding Heroes}"
                                       Categories="{Binding Categories}"
+                                      RowOrder="{Binding RowOrder}"
                                       VisibleRows="{Binding VisibleRows}"
+                                      SortColumn="{Binding SortColumn}"
+                                      SortDescending="{Binding SortDescending}"
                                       ValueOf="{Binding ValueOf}"
                                       CurrentRow="{Binding CurrentRow}"
                                       CurrentColumn="{Binding CurrentColumn}"

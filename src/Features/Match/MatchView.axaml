@@ -7,17 +7,17 @@
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
-    <Grid ColumnDefinitions="4*,8,5*" Margin="12">
+    <Grid ColumnDefinitions="4*,12,5*" Margin="12">
         <board:MatchBoardView x:Name="BoardView" DataContext="{Binding Board}"/>
 
         <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
 
-        <Grid Grid.Column="2" RowDefinitions="3*,8,2*">
+        <Grid Grid.Column="2" RowDefinitions="3*,12,2*">
             <Border Classes="card">
                 <DockPanel>
                     <!-- Score cutoff and flat/tiered layout, shared by both result tabs -->
                     <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
-                        <ListBox Classes="tabs" SelectedIndex="{Binding ResultsTab}" VerticalAlignment="Center">
+                        <ListBox Classes="segmented" SelectedIndex="{Binding ResultsTab}" VerticalAlignment="Center">
                             <ListBoxItem Content="Lane Phase"/>
                             <ListBoxItem Content="Full Match"/>
                         </ListBox>

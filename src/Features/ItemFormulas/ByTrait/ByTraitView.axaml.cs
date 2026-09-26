@@ -1,5 +1,6 @@
 using System.Reactive.Disposables;
 using Avalonia.ReactiveUI;
+using DeadlockAdvisor.Controls.Grids;
 using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.ItemFormulas.ByTrait;
@@ -22,7 +23,7 @@ public partial class ByTraitView : ReactiveUserControl<ByTraitViewModel>
                 e.Handled = true;
         };
         Grid.AddHandler(CoefficientGrid.CoefficientEditedEvent, (_, e) => ViewModel?.SetCoefficient(e.Row, e.Value));
-        Grid.AddHandler(CoefficientGrid.SortRequestedEvent, (_, e) => ViewModel?.SortCommand.Execute(e.Column).Subscribe());
+        Grid.AddHandler(ScrollingGrid.SortRequestedEvent,(_, e) => ViewModel?.SortCommand.Execute(e.Column).Subscribe());
         Scroller.PropertyChanged += (_, e) =>
         {
             if (e.Property == ScrollViewer.ViewportProperty && ViewModel is not null)

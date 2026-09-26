@@ -8,131 +8,148 @@
              x:DataType="byTrait:ByTraitViewModel">
 
     <DockPanel Margin="12">
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto" Margin="0,0,0,8">
-            <TextBlock Classes="section" Text="TRAIT" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <ComboBox Grid.Column="1"
-                      MinWidth="260"
-                      VerticalAlignment="Center"
-                      ItemsSource="{Binding Categories}"
-                      SelectedItem="{Binding SelectedCategory}">
-                <ComboBox.ItemTemplate>
-                    <DataTemplate x:DataType="models:Category">
-                        <TextBlock Text="{Binding CategoryName}"/>
-                    </DataTemplate>
-                </ComboBox.ItemTemplate>
-            </ComboBox>
-            <!-- against / with / as as three one-click buttons: clearer and faster than a dropdown,
-                 and the relation is the part people get wrong most often -->
-            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="3" Margin="8,0,0,0">
-                <ToggleButton Content="Against enemy"
-                              IsChecked="{Binding IsAgainst, Mode=OneWay}"
-                              Command="{Binding SetRelationCommand}"
-                              CommandParameter="{x:Static enums:Relation.Against}"
-                              ToolTip.Tip="Buy this when an ENEMY has this trait."/>
-                <ToggleButton Content="With ally"
-                              IsChecked="{Binding IsWith, Mode=OneWay}"
-                              Command="{Binding SetRelationCommand}"
-                              CommandParameter="{x:Static enums:Relation.With}"
-                              ToolTip.Tip="Buy this when an ALLY has this trait."/>
-                <ToggleButton Content="As me"
-                              IsChecked="{Binding IsAs, Mode=OneWay}"
-                              Command="{Binding SetRelationCommand}"
-                              CommandParameter="{x:Static enums:Relation.As}"
-                              ToolTip.Tip="Buy this when YOUR OWN hero has this trait."/>
+        <!-- What's being edited: the trait, how it relates, its weight and the stat rules on it -->
+        <Border DockPanel.Dock="Top" Classes="card" Margin="0,0,0,12">
+            <StackPanel Spacing="12">
+                <StackPanel Orientation="Horizontal" Spacing="10">
+                    <TextBlock Classes="section" Text="TRAIT" VerticalAlignment="Center"/>
+                    <ComboBox MinWidth="260"
+                              VerticalAlignment="Center"
+                              ItemsSource="{Binding Categories}"
+                              SelectedItem="{Binding SelectedCategory}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:Category">
+                                <TextBlock Text="{Binding CategoryName}"/>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
+                    <!-- against / with / as as three one-click segments: clearer and faster than a
+                         dropdown, and the relation is the part people get wrong most often -->
+                    <Border Classes="segmented" VerticalAlignment="Center">
+                        <StackPanel>
+                            <ToggleButton Classes="enemy"
+                                          Content="Against enemy"
+                                          IsChecked="{Binding IsAgainst, Mode=OneWay}"
+                                          Command="{Binding SetRelationCommand}"
+                                          CommandParameter="{x:Static enums:Relation.Against}"
+                                          ToolTip.Tip="Buy this when an ENEMY has this trait."/>
+                            <ToggleButton Classes="ally"
+                                          Content="With ally"
+                                          IsChecked="{Binding IsWith, Mode=OneWay}"
+                                          Command="{Binding SetRelationCommand}"
+                                          CommandParameter="{x:Static enums:Relation.With}"
+                                          ToolTip.Tip="Buy this when an ALLY has this trait."/>
+                            <ToggleButton Classes="self"
+                                          Content="As me"
+                                          IsChecked="{Binding IsAs, Mode=OneWay}"
+                                          Command="{Binding SetRelationCommand}"
+                                          CommandParameter="{x:Static enums:Relation.As}"
+                                          ToolTip.Tip="Buy this when YOUR OWN hero has this trait."/>
+                        </StackPanel>
+                    </Border>
+                    <TextBlock Classes="section" Text="WEIGHT ×" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                    <NumericUpDown Width="78"
+                                   VerticalAlignment="Center"
+                                   Minimum="0"
+                                   Maximum="5"
+                                   Increment="0.05"
+                                   FormatString="0.00"
+                                   Value="{Binding Weight}"
+                                   ToolTip.Tip="{x:Static byTrait:ByTraitViewModel.WeightTip}"/>
+                </StackPanel>
+
+                <controls:RichText Classes="dim" TextWrapping="Wrap" Spans="{Binding Description}"/>
+
+                <Border Classes="hline"/>
+
+                <!-- The stat rules on this trait + relation, edited in place -->
+                <StackPanel Spacing="6">
+                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                        <TextBlock Classes="section"
+                                   Text="STAT RULES"
+                                   VerticalAlignment="Center"
+                                   ToolTip.Tip="{x:Static byTrait:ByTraitViewModel.StatRulesTip}"/>
+                        <TextBlock Grid.Column="1"
+                                   Classes="faint"
+                                   Margin="8,0,0,0"
+                                   VerticalAlignment="Center"
+                                   Text="none — everything below is typed by hand"
+                                   IsVisible="{Binding !HasStatRules}"/>
+                        <Button Grid.Column="3"
+                                Classes="pill"
+                                Content="+ Add stat rule"
+                                Command="{Binding AddStatRuleCommand}"
+                                IsEnabled="{Binding CanAddStatRule}"
+                                ToolTip.Tip="{Binding AddStatRuleTip}"
+                                ToolTip.ShowOnDisabled="True"/>
+                    </Grid>
+                    <ItemsControl ItemsSource="{Binding StatRules}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="6"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="byTrait:StatRuleRowViewModel">
+                                <StackPanel Orientation="Horizontal" Spacing="6" Background="Transparent" ToolTip.Tip="{Binding Note}">
+                                    <ComboBox MinWidth="230"
+                                              VerticalAlignment="Center"
+                                              ItemsSource="{Binding Choices}"
+                                              SelectedItem="{Binding SelectedChoice}"/>
+                                    <TextBlock Classes="faint" Text="×" VerticalAlignment="Center"/>
+                                    <NumericUpDown Width="78"
+                                                   VerticalAlignment="Center"
+                                                   Minimum="-10"
+                                                   Maximum="10"
+                                                   Increment="0.01"
+                                                   FormatString="0.000"
+                                                   Value="{Binding PerUnit}"
+                                                   ToolTip.Tip="{x:Static byTrait:StatRuleRowViewModel.PerUnitTip}"/>
+                                    <TextBlock Classes="faint" Text="per point" VerticalAlignment="Center"/>
+                                    <TextBlock Classes="faint" Text="conditional ×" VerticalAlignment="Center" Margin="10,0,0,0"/>
+                                    <NumericUpDown Width="66"
+                                                   VerticalAlignment="Center"
+                                                   Minimum="0"
+                                                   Maximum="1"
+                                                   Increment="0.25"
+                                                   FormatString="0.00"
+                                                   Value="{Binding Conditional}"
+                                                   ToolTip.Tip="{x:Static byTrait:StatRuleRowViewModel.ConditionalTip}"/>
+                                    <Button Classes="icon"
+                                            Width="22"
+                                            VerticalAlignment="Center"
+                                            Content="×"
+                                            Command="{Binding RemoveCommand}"
+                                            ToolTip.Tip="Delete this stat rule"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
             </StackPanel>
-            <TextBlock Grid.Column="3" Classes="section" Text="WEIGHT ×" VerticalAlignment="Center" Margin="16,0,8,0"/>
-            <NumericUpDown Grid.Column="4"
-                           Width="78"
-                           VerticalAlignment="Center"
-                           Minimum="0"
-                           Maximum="5"
-                           Increment="0.05"
-                           FormatString="0.00"
-                           Value="{Binding Weight}"
-                           ToolTip.Tip="{x:Static byTrait:ByTraitViewModel.WeightTip}"/>
-            <controls:SearchBox Grid.Column="6"
+        </Border>
+
+        <!-- The table's own bar: how to type into it, and what it shows -->
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+            <TextBlock Classes="hint"
+                       VerticalAlignment="Center"
+                       TextTrimming="CharacterEllipsis"
+                       Text="{x:Static byTrait:ByTraitViewModel.Hint}"/>
+            <controls:SearchBox Grid.Column="1"
                                 x:Name="SearchBox"
-                                Width="142"
-                                Margin="8,0,0,0"
+                                Width="200"
+                                Margin="12,0,0,0"
                                 VerticalAlignment="Center"
                                 Watermark="Filter items..."
                                 Text="{Binding SearchText}"/>
-            <ToggleButton Grid.Column="7"
+            <ToggleButton Grid.Column="2"
                           Classes="pill"
                           Margin="8,0,0,0"
                           VerticalAlignment="Center"
                           Content="Tagged only"
-                          IsChecked="{Binding TaggedOnly}"/>
+                          IsChecked="{Binding TaggedOnly}"
+                          ToolTip.Tip="Show only items with a number on this trait, typed or from stats"/>
         </Grid>
-
-        <controls:RichText DockPanel.Dock="Top" Classes="dim" TextWrapping="Wrap" Margin="0,0,0,8" Spans="{Binding Description}"/>
-
-        <!-- The stat rules on this trait + relation, edited in place -->
-        <StackPanel DockPanel.Dock="Top" Spacing="4" Margin="0,0,0,8">
-            <Grid ColumnDefinitions="Auto,Auto,*,Auto">
-                <TextBlock Classes="section"
-                           Text="STAT RULES"
-                           VerticalAlignment="Center"
-                           ToolTip.Tip="{x:Static byTrait:ByTraitViewModel.StatRulesTip}"/>
-                <TextBlock Grid.Column="1"
-                           Classes="faint"
-                           Margin="8,0,0,0"
-                           VerticalAlignment="Center"
-                           Text="none — everything below is typed by hand"
-                           IsVisible="{Binding !HasStatRules}"/>
-                <Button Grid.Column="3"
-                        Classes="pill"
-                        Content="+ Add stat rule"
-                        Command="{Binding AddStatRuleCommand}"
-                        IsEnabled="{Binding CanAddStatRule}"
-                        ToolTip.Tip="{Binding AddStatRuleTip}"
-                        ToolTip.ShowOnDisabled="True"/>
-            </Grid>
-            <ItemsControl ItemsSource="{Binding StatRules}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <StackPanel Spacing="4"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="byTrait:StatRuleRowViewModel">
-                        <StackPanel Orientation="Horizontal" Spacing="6" Background="Transparent" ToolTip.Tip="{Binding Note}">
-                            <ComboBox MinWidth="230"
-                                      VerticalAlignment="Center"
-                                      ItemsSource="{Binding Choices}"
-                                      SelectedItem="{Binding SelectedChoice}"/>
-                            <TextBlock Classes="faint" Text="×" VerticalAlignment="Center"/>
-                            <NumericUpDown Width="78"
-                                           VerticalAlignment="Center"
-                                           Minimum="-10"
-                                           Maximum="10"
-                                           Increment="0.01"
-                                           FormatString="0.000"
-                                           Value="{Binding PerUnit}"
-                                           ToolTip.Tip="{x:Static byTrait:StatRuleRowViewModel.PerUnitTip}"/>
-                            <TextBlock Classes="faint" Text="per point" VerticalAlignment="Center"/>
-                            <TextBlock Classes="faint" Text="conditional ×" VerticalAlignment="Center" Margin="10,0,0,0"/>
-                            <NumericUpDown Width="66"
-                                           VerticalAlignment="Center"
-                                           Minimum="0"
-                                           Maximum="1"
-                                           Increment="0.25"
-                                           FormatString="0.00"
-                                           Value="{Binding Conditional}"
-                                           ToolTip.Tip="{x:Static byTrait:StatRuleRowViewModel.ConditionalTip}"/>
-                            <Button Classes="icon"
-                                    Width="22"
-                                    VerticalAlignment="Center"
-                                    Content="×"
-                                    Command="{Binding RemoveCommand}"
-                                    ToolTip.Tip="Delete this stat rule"/>
-                        </StackPanel>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </StackPanel>
-
-        <TextBlock DockPanel.Dock="Top" Classes="hint" Margin="0,0,0,8" Text="{x:Static byTrait:ByTraitViewModel.Hint}"/>
 
         <TextBlock DockPanel.Dock="Bottom" Classes="faint" Margin="0,8,0,0" Text="{Binding Summary}"/>
 

@@ -22,6 +22,7 @@ namespace DeadlockAdvisor.Features.HeroTraits;
 /// <item>Traits run 0..100, or -100..100 for the signed ones; press "-" first for those.</item>
 /// <item>Backspace rubs out the last digit typed, or blanks the cell back to 0 when nothing is pending.</item>
 /// <item>"Copy from..." clones an already-rated hero's whole profile as a starting point.</item>
+/// <item>Clicking a trait's header sorts the heroes by it: highest first, then lowest, then back to by name.</item>
 /// </list>
 /// Every edit writes straight through to the store; the data service debounces the CSV save.
 /// </summary>
@@ -46,6 +47,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
         CopyFromCommand = ReactiveCommand.Create(CopyFrom);
         ClearHeroCommand = ReactiveCommand.Create(ClearHero);
+        SortCommand = ReactiveCommand.Create<int>(CycleSort);
 
         Reload();
         if (Heroes.Count > 0 && Categories.Count > 0)
@@ -62,8 +64,15 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     [Reactive] public IReadOnlyList<Hero> Heroes { get; private set; } = [];
     [Reactive] public IReadOnlyList<Category> Categories { get; private set; } = [];
 
-    /// <summary>Indices into <see cref="Heroes"/> the filter lets through, in order.</summary>
+    /// <summary>Every index into <see cref="Heroes"/> in the sorted order, hidden ones included; the stripes follow it.</summary>
+    [Reactive] public IReadOnlyList<int> RowOrder { get; private set; } = [];
+
+    /// <summary>Indices into <see cref="Heroes"/> the filter lets through, in the sorted order.</summary>
     [Reactive] public IReadOnlyList<int> VisibleRows { get; private set; } = [];
+
+    /// <summary>The trait the heroes are sorted by, or -1 for by name.</summary>
+    [Reactive] public int SortColumn { get; private set; } = -1;
+    [Reactive] public bool SortDescending { get; private set; }
 
     [Reactive] public string FilterText { get; set; } = "";
 
@@ -89,6 +98,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public ReactiveCommand<Unit, Unit> CopyFromCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearHeroCommand { get; }
+    public ReactiveCommand<int, Unit> SortCommand { get; }
 
     public void FocusSearch() => RequestViewAction(FocusSearchAction);
 
@@ -310,41 +320,76 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     // -- rows ---------------------------------------------------------------------
 
-    /// <summary>The first row after <paramref name="row"/> the filter hasn't hidden.</summary>
+    /// <summary>Where <paramref name="row"/> sits on screen, or -1 if the filter hides it.</summary>
+    private int Position(int row)
+    {
+        for (var position = 0; position < VisibleRows.Count; position++)
+        {
+            if (VisibleRows[position] == row)
+                return position;
+        }
+        return -1;
+    }
+
+    /// <summary>The row shown below <paramref name="row"/>, or the top one when the filter hides it.</summary>
     private int? NextVisibleRow(int row)
     {
-        foreach (var candidate in VisibleRows)
-        {
-            if (candidate > row)
-                return candidate;
-        }
-        return null;
+        var below = Position(row) + 1;
+        return below < VisibleRows.Count ? VisibleRows[below] : null;
     }
 
     private int? PreviousVisibleRow(int row)
     {
-        for (var index = VisibleRows.Count - 1; index >= 0; index--)
-        {
-            if (VisibleRows[index] < row)
-                return VisibleRows[index];
-        }
-        return null;
+        var above = Position(row) - 1;
+        return above >= 0 ? VisibleRows[above] : null;
     }
 
     private int StepVisibleRows(int row, int step)
     {
         if (VisibleRows.Count == 0)
             return row;
-        var position = 0;
-        while (position < VisibleRows.Count - 1 && VisibleRows[position] < row)
-            position++;
-        return VisibleRows[Math.Clamp(position + step, 0, VisibleRows.Count - 1)];
+        return VisibleRows[Math.Clamp(Math.Max(0, Position(row)) + step, 0, VisibleRows.Count - 1)];
+    }
+
+    /// <summary>Highest first, then lowest first, then a third click on the same trait clears back to by name.</summary>
+    private void CycleSort(int column)
+    {
+        if (column < 0 || column >= Categories.Count)
+            return;
+        if (column != SortColumn)
+            (SortColumn, SortDescending) = (column, true);
+        else if (SortDescending)
+            SortDescending = false;
+        else
+            (SortColumn, SortDescending) = (-1, false);
+        Reorder();
+        ApplyFilter();
+        // Straight to the top of the sorted trait, ready to read or rate down it.
+        if (VisibleRows.Count > 0)
+            MoveTo(VisibleRows[0], column);
+    }
+
+    /// <summary>
+    /// The order only changes on a header click or a reload. Edits don't re-sort: a hero that jumped
+    /// away mid-pass would break typing down the column. Both directions are stable, so ties stay by name.
+    /// </summary>
+    private void Reorder()
+    {
+        var rows = Enumerable.Range(0, Heroes.Count);
+        if (SortColumn >= 0)
+        {
+            var store = _data.Store;
+            var categoryId = Categories[SortColumn].CategoryId;
+            Func<int, double> score = row => store.HeroScore(Heroes[row].HeroId, categoryId);
+            rows = SortDescending ? rows.OrderByDescending(score) : rows.OrderBy(score);
+        }
+        RowOrder = rows.ToList();
     }
 
     private void ApplyFilter()
     {
         var needle = FilterText.Trim().ToLowerInvariant();
-        VisibleRows = Enumerable.Range(0, Heroes.Count)
+        VisibleRows = RowOrder
             .Where(row => needle.Length == 0
                           || Heroes[row].HeroName.ToLowerInvariant().Contains(needle, StringComparison.Ordinal)
                           || Heroes[row].HeroId.ToLowerInvariant().Contains(needle, StringComparison.Ordinal))
@@ -435,6 +480,9 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         var store = _data.Store;
         Heroes = store.HeroesSorted();
         Categories = store.CategoriesOrdered();
+        if (SortColumn >= Categories.Count)
+            (SortColumn, SortDescending) = (-1, false);
+        Reorder();
         ApplyFilter();
         if (CurrentRow >= Heroes.Count || CurrentColumn >= Categories.Count)
             MoveTo(Math.Min(CurrentRow, Heroes.Count - 1), Math.Min(CurrentColumn, Categories.Count - 1));

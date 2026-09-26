@@ -104,6 +104,32 @@ public class HeroTraitsPageTests
         Assert.Equal(54, DataStore.Load(ui.Data.DataDir).HeroScore(first, category));
     }
 
+    /// <summary>A click high on a slanted label sorts by the column that label leans off, not the one it's drawn over.</summary>
+    [AvaloniaFact]
+    public void ClickingATraitHeaderSortsByIt()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        var page = ui.ViewModel.HeroTraits;
+        ui.Show();
+        var grid = ui.Window.HeroTraitsPage.Grid;
+
+        // On column 2's label, 30px up its slant: by then it's drawn over column 3.
+        const double rise = 30;
+        var foot = TraitGridColumnCenter(2);
+        var at = grid.TranslatePoint(new Point(foot + rise, grid.HeaderHeight - rise), ui.Window)!.Value;
+        ui.Window.MouseDown(at, MouseButton.Left);
+        ui.Window.MouseUp(at, MouseButton.Left);
+        UiHarness.Settle();
+
+        Assert.Equal((2, true), (page.SortColumn, page.SortDescending));
+        Assert.Equal((page.VisibleRows[0], 2), (page.CurrentRow, page.CurrentColumn));
+        Assert.True(grid.IsFocused);
+        ui.Screenshot("hero_traits_sorted.png");
+    }
+
+    private static double TraitGridColumnCenter(int column) =>
+        Features.HeroTraits.TraitGrid.RowHeaderWidth + (column + 0.5) * Features.HeroTraits.TraitGrid.ColumnWidth;
+
     [AvaloniaFact]
     public void F2OpensASpinBoxOverTheCellAndEnterCommitsIt()
     {

@@ -37,11 +37,6 @@
         <Style Selector="TextBlock.detail.corrected">
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         </Style>
-        <Style Selector="ToggleButton.pill.you:checked /template/ ContentPresenter#PART_ContentPresenter">
-            <Setter Property="Background" Value="{DynamicResource SelfBrush}"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
-            <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
-        </Style>
     </UserControl.Styles>
 
     <UserControl.DataTemplates>
@@ -60,7 +55,7 @@
                                        Classes.laneEnemy="{Binding IsLaneEnemy}"
                                        Text="{Binding RoleText}"/>
                             <ToggleButton Grid.Column="1"
-                                          Classes="pill you"
+                                          Classes="pill self"
                                           Content="You"
                                           IsChecked="{Binding IsYou, Mode=OneWay}"
                                           Command="{Binding SetSelfCommand}"

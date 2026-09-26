@@ -89,6 +89,30 @@ public sealed class MatchState
 
     public void ClearLane() => LaneFlags.Clear();
 
+    /// <summary>
+    /// Replace the match with a random full one drawn from <paramref name="heroIds"/>: you, the
+    /// allies and the enemies, with one ally and two enemies in your lane. Fills as many slots as
+    /// there are heroes for.
+    /// </summary>
+    public void Randomize(IEnumerable<string> heroIds, Random random)
+    {
+        Clear();
+        var shuffled = heroIds.ToArray();
+        random.Shuffle(shuffled);
+
+        var allies = shuffled.Skip(1).Take(MaxAllies).ToList();
+        var enemies = shuffled.Skip(1 + MaxAllies).Take(MaxEnemies).ToList();
+
+        foreach (var self in shuffled.Take(1))
+            SetRole(self, Role.Self);
+        foreach (var ally in allies)
+            SetRole(ally, Role.Ally);
+        foreach (var enemy in enemies)
+            SetRole(enemy, Role.Enemy);
+        foreach (var heroId in allies.Take(1).Concat(enemies.Take(2)))
+            SetLane(heroId, true);
+    }
+
     public List<string> Allies => HeroesWith(Role.Ally);
     public List<string> Enemies => HeroesWith(Role.Enemy);
 

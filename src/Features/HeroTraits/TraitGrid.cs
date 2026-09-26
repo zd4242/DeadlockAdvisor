@@ -29,7 +29,8 @@ public class CellEditedEventArgs(RoutedEvent routedEvent, int row, int column, d
 /// click high on a label lands above a column further right, so hit testing slides the point back
 /// down the slope first.
 /// </para>
-/// Keys go to the view model through the view; this control handles the mouse, F2 and drawing.
+/// The header sorts; keys go to the view model through the view, and this control handles the
+/// mouse, F2 and drawing.
 /// </summary>
 public class TraitGrid : ScrollingGrid
 {
@@ -42,6 +43,8 @@ public class TraitGrid : ScrollingGrid
     // text's lower corner clears the bottom edge.
     private const double _textPad = 10;
     private const double _portrait = 18;
+    // Along the slant, between the end of the sorted trait's label and its arrow.
+    private const double _arrowGap = 5;
     private static readonly double _sin45 = Math.Sqrt(0.5);
     private static readonly Color _darkText = Color.Parse("#1a1a20");
 
@@ -50,6 +53,9 @@ public class TraitGrid : ScrollingGrid
 
     public static readonly StyledProperty<IReadOnlyList<Category>> CategoriesProperty =
         AvaloniaProperty.Register<TraitGrid, IReadOnlyList<Category>>(nameof(Categories), []);
+
+    public static readonly StyledProperty<IReadOnlyList<int>> RowOrderProperty =
+        AvaloniaProperty.Register<TraitGrid, IReadOnlyList<int>>(nameof(RowOrder), []);
 
     public static readonly StyledProperty<IReadOnlyList<int>> VisibleRowsProperty =
         AvaloniaProperty.Register<TraitGrid, IReadOnlyList<int>>(nameof(VisibleRows), []);
@@ -73,6 +79,7 @@ public class TraitGrid : ScrollingGrid
         RoutedEvent.Register<TraitGrid, CellEditedEventArgs>("CellEdited", RoutingStrategies.Bubble);
 
     private Dictionary<int, int> _displayIndex = [];
+    private Dictionary<int, int> _orderIndex = [];
     private double _headerHeight = 60;
     private int _hoverColumn = -1;
     private int _hoverRow = -1;
@@ -81,7 +88,7 @@ public class TraitGrid : ScrollingGrid
     static TraitGrid()
     {
         AffectsMeasure<TraitGrid>(HeroesProperty, CategoriesProperty, VisibleRowsProperty);
-        AffectsRender<TraitGrid>(ValueOfProperty, CurrentRowProperty, CurrentColumnProperty, PendingTextProperty,
+        AffectsRender<TraitGrid>(RowOrderProperty, ValueOfProperty, CurrentRowProperty, CurrentColumnProperty, PendingTextProperty,
             RevisionProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
     }
 
@@ -95,6 +102,13 @@ public class TraitGrid : ScrollingGrid
     {
         get => GetValue(CategoriesProperty);
         set => SetValue(CategoriesProperty, value);
+    }
+
+    /// <summary>Every index into <see cref="Heroes"/> in the sorted order, hidden ones included; the stripes follow it.</summary>
+    public IReadOnlyList<int> RowOrder
+    {
+        get => GetValue(RowOrderProperty);
+        set => SetValue(RowOrderProperty, value);
     }
 
     /// <summary>Indices into <see cref="Heroes"/> to show, in order.</summary>
@@ -142,15 +156,15 @@ public class TraitGrid : ScrollingGrid
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
-        if (change.Property == VisibleRowsProperty)
-        {
-            _displayIndex = VisibleRows.Select((row, index) => (row, index)).ToDictionary(pair => pair.row, pair => pair.index);
-        }
+        if (change.Property == RowOrderProperty)
+            _orderIndex = IndexOf(RowOrder);
+        else if (change.Property == VisibleRowsProperty)
+            _displayIndex = IndexOf(VisibleRows);
         else if (change.Property == CategoriesProperty)
-        {
             _headerHeight = FitHeaderHeight();
-        }
-        else if (change.Property == CurrentRowProperty || change.Property == CurrentColumnProperty)
+
+        // A sort or filter moves the current cell as surely as the keys do.
+        if (change.Property == CurrentRowProperty || change.Property == CurrentColumnProperty || change.Property == VisibleRowsProperty)
         {
             ScrollIntoView(() => CellRect(CurrentRow, CurrentColumn) is { } cell
                 // Grown by the pinned headers, so the cell lands clear of them rather than under them.
@@ -159,18 +173,22 @@ public class TraitGrid : ScrollingGrid
         }
     }
 
+    /// <summary>Hero index → its position in <paramref name="rows"/>.</summary>
+    private static Dictionary<int, int> IndexOf(IReadOnlyList<int> rows) =>
+        rows.Select((row, index) => (row, index)).ToDictionary(pair => pair.row, pair => pair.index);
+
     // -- geometry -------------------------------------------------------------------
 
     /// <summary>
-    /// Along the slant: padding, the longest label, half a line for the far top corner, a little air.
-    /// At 45° that run rises by run × sin 45°.
+    /// Along the slant: padding, the longest label and room for a sort arrow after it, half a line
+    /// for the far top corner, a little air. At 45° that run rises by run × sin 45°.
     /// </summary>
     private double FitHeaderHeight()
     {
         var longest = Categories.Select(category => Fonts.Text(Label(category), _headerFontSize, Palette.Text, bold: true).Width)
             .DefaultIfEmpty(80).Max();
         var line = Fonts.Text("Ag", _headerFontSize, Palette.Text, bold: true).Height;
-        var run = _textPad + longest + line / 2 + 6;
+        var run = _textPad + longest + _arrowGap + SortArrowSize + line / 2 + 6;
         return Math.Min(_maxHeaderHeight, Math.Ceiling(run * _sin45));
     }
 
@@ -244,13 +262,12 @@ public class TraitGrid : ScrollingGrid
                     BeginEditCurrent();
                 e.Handled = true;
                 break;
-            // Jump to that trait on the current hero, or to that hero's first trait.
             case Region.ColumnHeader:
-                SetCurrentValue(CurrentRowProperty, Math.Max(0, CurrentRow));
-                SetCurrentValue(CurrentColumnProperty, column);
                 Focus();
+                RaiseEvent(new SortRequestedEventArgs(SortRequestedEvent, column));
                 e.Handled = true;
                 break;
+            // Jump to that hero's first trait.
             case Region.RowHeader when Categories.Count > 0:
                 SetCurrentValue(CurrentRowProperty, row);
                 SetCurrentValue(CurrentColumnProperty, 0);
@@ -396,8 +413,8 @@ public class TraitGrid : ScrollingGrid
         var limit = Math.Max(Math.Abs(category.ScaleMin), Math.Abs(category.ScaleMax));
         var current = row == CurrentRow && column == CurrentColumn;
 
-        // Alternate by the hero's place in the full list, not on screen, as the Python grid does.
-        HeatCell.Paint(context, rect, value, limit, alternate: row % 2 == 1, selected: current);
+        // Alternate by the hero's place in the full sorted list, not on screen, as the Python grid does.
+        HeatCell.Paint(context, rect, value, limit, alternate: _orderIndex.GetValueOrDefault(row) % 2 == 1, selected: current);
 
         var border = new Pen(new SolidColorBrush(Palette.Border), 1);
         context.DrawLine(border, new Point(rect.Right - 0.5, rect.Top), new Point(rect.Right - 0.5, rect.Bottom));
@@ -470,13 +487,19 @@ public class TraitGrid : ScrollingGrid
             var right = x + w - 0.5;
             context.DrawLine(edge, new Point(right, bottom), new Point(right + height, top));
 
+            var sorted = column == SortColumn;
             var text = Fonts.Text(Label(Categories[column]), _headerFontSize,
                 isCurrent ? Palette.Accent : isHover ? Palette.Text : Palette.TextDim, bold: isCurrent);
-            text.MaxTextWidth = Math.Max(1, room);
+            text.MaxTextWidth = Math.Max(1, room - (sorted ? _arrowGap + SortArrowSize : 0));
             text.MaxLineCount = 1;
             text.Trimming = TextTrimming.CharacterEllipsis;
-            using (context.PushTransform(Matrix.CreateRotation(-Math.PI / 4) * Matrix.CreateTranslation(x + w / 2, bottom)))
+            var slant = Matrix.CreateRotation(-Math.PI / 4) * Matrix.CreateTranslation(x + w / 2, bottom);
+            using (context.PushTransform(slant))
                 context.DrawText(text, new Point(_textPad, -text.Height / 2));
+
+            // Follows the label up the slant but stays upright, so up and down still read as up and down.
+            if (sorted)
+                DrawSortArrow(context, new Point(_textPad + text.Width + _arrowGap + SortArrowSize / 2, 0).Transform(slant), SortDescending);
         }
     }
 }

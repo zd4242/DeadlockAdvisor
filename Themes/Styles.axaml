@@ -85,6 +85,9 @@
             <StaticResource x:Key="CheckBoxCheckBackgroundFillCheckedPointerOver" ResourceKey="AccentBrush"/>
             <StaticResource x:Key="CheckBoxCheckBackgroundStrokeChecked" ResourceKey="AccentBrush"/>
             <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="BgBrush"/>
+
+            <!-- Fluent sizes its scroll bars (a minimum, not just the width) from this -->
+            <x:Double x:Key="ScrollBarSize">12</x:Double>
         </ResourceDictionary>
     </Styles.Resources>
 
@@ -111,7 +114,6 @@
         <Setter Property="Background" Value="Transparent"/>
     </Style>
     <Style Selector="ScrollBar:vertical">
-        <Setter Property="Width" Value="12"/>
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}">
@@ -129,7 +131,6 @@
         </Setter>
     </Style>
     <Style Selector="ScrollBar:horizontal">
-        <Setter Property="Height" Value="12"/>
         <Setter Property="Template">
             <ControlTemplate>
                 <Border Background="{TemplateBinding Background}">
@@ -227,7 +228,7 @@
     <Style Selector="Button, ToggleButton">
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="Padding" Value="14,6"/>
-        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="MinHeight" Value="36"/>
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="VerticalContentAlignment" Value="Center"/>
         <Setter Property="Cursor" Value="Hand"/>
@@ -264,16 +265,6 @@
         <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
     </Style>
 
-    <!-- team-coloured segmented buttons on the match board -->
-    <Style Selector="ToggleButton.enemy:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource EnemyBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource EnemyBrush}"/>
-    </Style>
-    <Style Selector="ToggleButton.ally:checked /template/ ContentPresenter#PART_ContentPresenter">
-        <Setter Property="Background" Value="{DynamicResource AllyBrush}"/>
-        <Setter Property="BorderBrush" Value="{DynamicResource AllyBrush}"/>
-    </Style>
-
     <!-- small pills: toggles such as the tier filters, and small actions such as "+ Add rule" -->
     <Style Selector="Button.pill, ToggleButton.pill">
         <Setter Property="Background" Value="Transparent"/>
@@ -301,6 +292,73 @@
         <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
     </Style>
 
+    <!-- A segmented control: a recessed track whose chosen segment is raised. It switches views
+         within a page (a ListBox) or picks one of a few options (ToggleButtons in a Border). -->
+    <Style Selector="Border.segmented">
+        <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="3"/>
+    </Style>
+    <Style Selector="ListBox.segmented">
+        <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="8"/>
+        <Setter Property="Padding" Value="3"/>
+        <Setter Property="ItemsPanel">
+            <ItemsPanelTemplate>
+                <StackPanel Orientation="Horizontal" Spacing="2"/>
+            </ItemsPanelTemplate>
+        </Setter>
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
+    </Style>
+    <Style Selector="Border.segmented > StackPanel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Spacing" Value="2"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem, Border.segmented ToggleButton">
+        <Setter Property="Padding" Value="14,0"/>
+        <Setter Property="MinHeight" Value="28"/>
+        <Setter Property="CornerRadius" Value="5"/>
+        <Setter Property="Background" Value="Transparent"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="BorderThickness" Value="0"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        <Setter Property="VerticalContentAlignment" Value="Center"/>
+        <Setter Property="Cursor" Value="Hand"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter, Border.segmented ToggleButton:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+    </Style>
+    <Style Selector="ListBox.segmented ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, Border.segmented ToggleButton:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource Surface4Brush}"/>
+        <Setter Property="BorderBrush" Value="Transparent"/>
+        <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+    </Style>
+
+    <!-- Team colours for a checked toggle, wherever it sits: red for enemy, green for ally, gold for you -->
+    <Style Selector="ToggleButton.enemy:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource EnemyBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource EnemyBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+    </Style>
+    <Style Selector="ToggleButton.ally:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource AllyBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource AllyBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+    </Style>
+    <Style Selector="ToggleButton.self:checked /template/ ContentPresenter#PART_ContentPresenter">
+        <Setter Property="Background" Value="{DynamicResource SelfBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+    </Style>
+
     <Style Selector="Button.icon">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -318,7 +376,7 @@
     <!-- inputs -->
     <Style Selector="TextBox, ComboBox">
         <Setter Property="CornerRadius" Value="6"/>
-        <Setter Property="MinHeight" Value="40"/>
+        <Setter Property="MinHeight" Value="36"/>
     </Style>
     <Style Selector="TextBox">
         <Setter Property="Padding" Value="8,6"/>
@@ -391,10 +449,10 @@
         <Setter Property="StrokeJoin" Value="Round"/>
     </Style>
     <Style Selector="NumericUpDown /template/ TextBox">
-        <Setter Property="MinHeight" Value="38"/>
+        <Setter Property="MinHeight" Value="34"/>
     </Style>
 
-    <!-- Tabs: a ListBox of text items, the selected one filled with the accent -->
+    <!-- The page tabs in the title bar: a ListBox of text items, the selected one filled with the accent -->
     <Style Selector="ListBox.tabs">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
@@ -408,12 +466,14 @@
         <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Disabled"/>
     </Style>
     <Style Selector="ListBox.tabs ListBoxItem">
-        <Setter Property="Padding" Value="16,8"/>
+        <Setter Property="Padding" Value="12,4"/>
+        <Setter Property="Margin" Value="2,0"/>
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="FontWeight" Value="Bold"/>
         <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="MinHeight" Value="0"/>
+        <Setter Property="Focusable" Value="False"/>
         <Setter Property="Cursor" Value="Hand"/>
     </Style>
     <Style Selector="ListBox.tabs ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
@@ -424,19 +484,12 @@
         <Setter Property="Background" Value="{DynamicResource AccentBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
     </Style>
-    <!-- the page tabs in the title bar are slimmed down to fit inside it -->
-    <Style Selector="ListBox.tabs.slim ListBoxItem">
-        <Setter Property="Padding" Value="12,4"/>
-        <Setter Property="Margin" Value="2,0"/>
-        <Setter Property="Focusable" Value="False"/>
-    </Style>
-
     <!-- A list that already sits in a card: no frame of its own, rounded rows lit on hover and selection -->
-    <!-- The right padding is a gutter for the scroll bar, which overlays the list. -->
+    <!-- The right padding is a gutter for the scroll bar, which overlays the list, plus a little air. -->
     <Style Selector="ListBox.flat">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderThickness" Value="0"/>
-        <Setter Property="Padding" Value="0,0,12,0"/>
+        <Setter Property="Padding" Value="0,0,16,0"/>
     </Style>
     <Style Selector="ListBox.flat ListBoxItem">
         <Setter Property="Padding" Value="10,7"/>

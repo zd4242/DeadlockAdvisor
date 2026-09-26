@@ -8,11 +8,12 @@
 
     <DockPanel>
         <ListBox DockPanel.Dock="Top"
-                 Classes="tabs"
-                 Margin="0,0,0,4"
+                 Classes="segmented"
+                 HorizontalAlignment="Left"
+                 Margin="12,12,12,0"
                  SelectedIndex="{Binding SelectedTab}">
-            <ListBoxItem Content="By Item"/>
-            <ListBoxItem Content="By Trait (bulk)"/>
+            <ListBoxItem Content="By Item" ToolTip.Tip="Edit every rule on one item"/>
+            <ListBoxItem Content="By Trait (bulk)" ToolTip.Tip="Set one trait's coefficient on every item at once"/>
         </ListBox>
         <Panel>
             <!-- Both stay alive, so switching keeps each one's place. -->

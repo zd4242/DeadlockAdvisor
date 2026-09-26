@@ -58,4 +58,33 @@ public class MatchStateTests
         Assert.True(match.ToggleLane("foe"));
         Assert.Equal(["foe", "me"], match.LaneHeroes);
     }
+
+    [Fact]
+    public void RandomizeFillsAFullMatchWithALane()
+    {
+        var heroIds = Enumerable.Range(0, 20).Select(i => $"hero{i}").ToList();
+        var match = new MatchState();
+        match.SetRole("stale", Role.Enemy);
+
+        match.Randomize(heroIds, new Random(1));
+
+        Assert.NotNull(match.SelfHero);
+        Assert.Equal(MatchState.MaxAllies, match.Allies.Count);
+        Assert.Equal(MatchState.MaxEnemies, match.Enemies.Count);
+        Assert.Equal(1 + MatchState.MaxAllies + MatchState.MaxEnemies, match.RoleMap.Count);
+        Assert.All(match.RoleMap.Keys, heroId => Assert.Contains(heroId, heroIds));
+        Assert.Single(match.Allies, match.IsInLane);
+        Assert.Equal(2, match.Enemies.Count(match.IsInLane));
+    }
+
+    [Fact]
+    public void RandomizeFillsWhatItCanFromAShortRoster()
+    {
+        var match = new MatchState();
+        match.Randomize(["a", "b", "c"], new Random(1));
+
+        Assert.NotNull(match.SelfHero);
+        Assert.Equal(2, match.Allies.Count);
+        Assert.Empty(match.Enemies);
+    }
 }

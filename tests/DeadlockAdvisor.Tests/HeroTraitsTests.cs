@@ -167,6 +167,57 @@ public sealed class HeroTraitsTests : IDisposable
         Assert.Equal(_vm.VisibleRows[1], _vm.CurrentRow);
     }
 
+    private List<double> ShownScores(int column) => _vm.VisibleRows.Select(row => Score(row, column)).ToList();
+
+    [Fact]
+    public void SortingCyclesHighestFirstThenLowestFirstThenByName()
+    {
+        _vm.CurrentColumn = 3;
+        var byName = _vm.VisibleRows.ToList();
+
+        _vm.SortCommand.Execute(SignedColumn).Subscribe();
+        var descending = ShownScores(SignedColumn);
+        Assert.Equal(descending.OrderDescending(), descending);
+        Assert.Equal((_vm.VisibleRows[0], SignedColumn), (_vm.CurrentRow, _vm.CurrentColumn));
+        // Ties keep name order.
+        Assert.All(_vm.VisibleRows.Zip(_vm.VisibleRows.Skip(1)), pair =>
+            Assert.True(Score(pair.First, SignedColumn) != Score(pair.Second, SignedColumn) || pair.First < pair.Second));
+
+        _vm.SortCommand.Execute(SignedColumn).Subscribe();
+        var ascending = ShownScores(SignedColumn);
+        Assert.Equal(ascending.Order(), ascending);
+
+        _vm.SortCommand.Execute(SignedColumn).Subscribe();
+        Assert.Equal(-1, _vm.SortColumn);
+        Assert.Equal(byName, _vm.VisibleRows);
+    }
+
+    [Fact]
+    public void EntryFollowsTheSortedOrderAndEditsDoNotReSort()
+    {
+        _vm.SortCommand.Execute(0).Subscribe();
+        var order = _vm.VisibleRows.ToList();
+
+        Type("0");
+        Assert.Equal(order[1], _vm.CurrentRow);
+        Assert.Equal(order, _vm.VisibleRows);
+
+        Press(Key.Up);
+        Assert.Equal(order[0], _vm.CurrentRow);
+        Press(Key.End, KeyModifiers.Control);
+        Assert.Equal(order[^1], _vm.CurrentRow);
+    }
+
+    [Fact]
+    public void TheFilterKeepsTheSortedOrder()
+    {
+        _vm.SortCommand.Execute(0).Subscribe();
+        _vm.FilterText = "a";
+        var shown = ShownScores(0);
+        Assert.NotEmpty(shown);
+        Assert.Equal(shown.OrderDescending(), shown);
+    }
+
     [Fact]
     public void ValuesAreClampedToTheTraitsScaleAndSaved()
     {

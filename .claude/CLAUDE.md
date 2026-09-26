@@ -1,5 +1,12 @@
 # Project Context
-This is a dotnet project using Avalonia and Reactive UI, a C# port of the PyQt6 Deadlock Item Advisor (`D:\Dev\Python\deadlock_advisor`), which recommends in-game items based on the heroes in your match. The port plan is `D:\Dev\Python\deadlock_advisor\docs\csharp_port_plan.md`; the Python code is the source of truth for behaviour.
+This is a dotnet project using Avalonia and Reactive UI, a C# port of the PyQt6 Deadlock Item Advisor (`D:\Dev\Python\deadlock_advisor`), which recommends in-game items based on the heroes in your match. The port plan is `D:\Dev\Python\deadlock_advisor\docs\csharp_port_plan.md`. The Python app is retired: read it to understand the original behaviour, but don't edit or run it. **This repo is now the source of truth, and scoring has diverged from Python on purpose.**
+
+# Scoring model
+Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_rules.csv`, `item_formula_coefficients.csv`, `trait_weights.csv`, `categories.csv`) or `GameSync`. The rules to follow:
+- A hero's trait counts as `(score − roster average over profiled heroes) × coefficient` (`DataStore.TraitBaselines`, `ItemScoring.BuildWeightMatrix`). Don't reintroduce raw-score sums or flat per-item bonuses: they make the same items win every match.
+- Prefer a `stat_rules.csv` line, which follows patches automatically, over a typed coefficient. Type coefficients only for what stats can't express, such as counters or debuffs on enemies.
+- Every property the tooltip shows under a scored stat's label must be an alias in `GameSync.Stats` or listed, with a reason, in `GameSync.Unscored`. `GameApiTests.TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides` enforces this.
+- After a deliberate scoring or sync change, regenerate the goldens with `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter ...` and review the diff. Use Data → Model Health Report (`Scoring/ModelHealth.cs`) to check the effect on the whole model.
 
 # Guidelines
 - Prefer solutions that follow good practices and result in cleaner code, over whatever the simplest solution is.

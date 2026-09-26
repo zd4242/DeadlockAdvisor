@@ -8,19 +8,41 @@ using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Controls.Grids;
 
+public class SortRequestedEventArgs(RoutedEvent routedEvent, int column) : RoutedEventArgs(routedEvent)
+{
+    public int Column { get; } = column;
+}
+
 /// <summary>
 /// Base for the custom-drawn editor grids. The grid sits in a <see cref="ScrollViewer"/> at its full
 /// size and repaints on every scroll, so it can pin its headers to the viewport's edges and only
-/// draw the cells in view. Also hosts the spin box that a double click or F2 floats over one cell.
+/// draw the cells in view. Also hosts the spin box that a double click or F2 floats over one cell,
+/// and the sort state its header clicks ask the view model to change.
 /// </summary>
 public abstract class ScrollingGrid : Control
 {
+    protected const double SortArrowSize = 7;
+
+    public static readonly StyledProperty<int> SortColumnProperty =
+        AvaloniaProperty.Register<ScrollingGrid, int>(nameof(SortColumn), -1);
+
+    public static readonly StyledProperty<bool> SortDescendingProperty =
+        AvaloniaProperty.Register<ScrollingGrid, bool>(nameof(SortDescending));
+
+    public static readonly RoutedEvent<SortRequestedEventArgs> SortRequestedEvent =
+        RoutedEvent.Register<ScrollingGrid, SortRequestedEventArgs>("SortRequested", RoutingStrategies.Bubble);
+
     private readonly NumericUpDown _editor;
     private ScrollViewer? _scroller;
     private IDisposable? _scrollSubscription;
     private Rect _editorRect;
     private Action<double>? _commit;
     private int _editorDecimals;
+
+    static ScrollingGrid()
+    {
+        AffectsRender<ScrollingGrid>(SortColumnProperty, SortDescendingProperty);
+    }
 
     protected ScrollingGrid()
     {
@@ -47,6 +69,19 @@ public abstract class ScrollingGrid : Control
     }
 
     public bool IsEditing => _commit is not null;
+
+    /// <summary>The column the rows are sorted by, or -1 for the natural order.</summary>
+    public int SortColumn
+    {
+        get => GetValue(SortColumnProperty);
+        set => SetValue(SortColumnProperty, value);
+    }
+
+    public bool SortDescending
+    {
+        get => GetValue(SortDescendingProperty);
+        set => SetValue(SortDescendingProperty, value);
+    }
 
     /// <summary>How far the scroll viewer holding us is scrolled.</summary>
     protected Vector Offset => _scroller?.Offset ?? default;
@@ -198,4 +233,15 @@ public abstract class ScrollingGrid : Control
 
     protected static void DrawCentered(DrawingContext context, FormattedText text, Rect rect) =>
         context.DrawText(text, new Point(rect.X + (rect.Width - text.Width) / 2, rect.Y + (rect.Height - text.Height) / 2));
+
+    /// <summary>A chevron centred on <paramref name="center"/>, pointing down for a descending sort.</summary>
+    protected static void DrawSortArrow(DrawingContext context, Point center, bool descending)
+    {
+        const double size = SortArrowSize;
+        var tipY = descending ? center.Y + size / 4 : center.Y - size / 4;
+        var baseY = descending ? center.Y - size / 4 : center.Y + size / 4;
+        var pen = new Pen(new SolidColorBrush(Palette.TextDim), 1.4, lineCap: PenLineCap.Round, lineJoin: PenLineJoin.Round);
+        context.DrawGeometry(null, pen, new PolylineGeometry(
+            [new Point(center.X - size / 2, baseY), new Point(center.X, tipY), new Point(center.X + size / 2, baseY)], isFilled: false));
+    }
 }
