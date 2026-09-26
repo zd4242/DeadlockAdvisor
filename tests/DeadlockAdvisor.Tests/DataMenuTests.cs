@@ -39,7 +39,7 @@ public sealed class DataMenuTests : IDisposable
         var gameApi = new GameApiService(_api);
         _menu = new DataMenuViewModel(_fixture.Data, gameApi, new MatchStatsService(_api), new ExcelExportService(),
             new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
-            _fixture.Settings, new NoFolderPicker());
+            _fixture.Settings, new NoFolderPicker(), new FakeLoggingService());
     }
 
     public void Dispose()

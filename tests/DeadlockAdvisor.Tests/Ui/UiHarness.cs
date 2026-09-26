@@ -35,6 +35,7 @@ public sealed class UiHarness : IDisposable
         var services = new ServiceCollection();
         App.RegisterServices(services);
         services.AddSingleton<ISettingsService>(Settings);
+        services.AddSingleton<ILoggingService>(new FakeLoggingService());
         services.AddSingleton<IDeadlockApi>(Api);
         services.AddSingleton<IScreenCaptureService>(Capture);
         _services = services.BuildServiceProvider();

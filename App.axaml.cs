@@ -29,7 +29,7 @@ public partial class App : Application
     public static void RegisterServices(IServiceCollection services)
     {
         services.AddSingleton<ISettingsService, JsonSettingsService>();
-        services.AddSingleton<ILoggingService, ConsoleLoggingService>();
+        services.AddSingleton<ILoggingService, LoggingService>();
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IModalService, ModalService>();
         services.AddSingleton<IDataService, DataService>();

@@ -35,11 +35,13 @@ public class DataMenuViewModel : ViewModelBase
     private readonly INotificationService _notifications;
     private readonly ISettingsService _settings;
     private readonly IFilePickerService _filePicker;
+    private readonly ILoggingService _log;
 
     public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats,
         IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
-        INotificationService notifications, ISettingsService settings, IFilePickerService filePicker)
+        INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log)
     {
+        _log = log;
         _data = data;
         _gameApi = gameApi;
         _matchStats = matchStats;
@@ -89,7 +91,7 @@ public class DataMenuViewModel : ViewModelBase
         Confirm(
             $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
             + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB, and Data → Download Art… does it any time.",
-            "Download", () => _ = DownloadArtAsync(force: false), cancelText: "Not now");
+            "Download", () => Launch(() => DownloadArtAsync(force: false)), cancelText: "Not now");
     }
 
     /// <summary>One call to /v1/patches. Says nothing unless a newer patch is out: a failed check isn't worth interrupting anyone over.</summary>
@@ -211,6 +213,7 @@ public class DataMenuViewModel : ViewModelBase
     /// </summary>
     private async Task<T?> RunAsync<T>(ProgressModalViewModel progress, Func<Task<T>> job, Action<Exception> failed) where T : class
     {
+        _log.Information($"{progress.Title}: started");
         IsBusy = true;
         _modals.ShowModal(progress);
         T? result = null;
@@ -218,12 +221,15 @@ public class DataMenuViewModel : ViewModelBase
         try
         {
             result = await job();
+            _log.Information($"{progress.Title}: finished");
         }
         catch (OperationCanceledException)
         {
+            _log.Information($"{progress.Title}: cancelled");
         }
         catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException or UnauthorizedAccessException)
         {
+            _log.Warning($"{progress.Title}: failed\n{ex}");
             failure = ex;
         }
         finally
@@ -237,6 +243,19 @@ public class DataMenuViewModel : ViewModelBase
         return result;
     }
 
+    /// <summary>Start a job from a modal's button, reporting anything unexpected rather than losing it with the task.</summary>
+    private async void Launch(Func<Task> job)
+    {
+        try
+        {
+            await job();
+        }
+        catch (Exception ex)
+        {
+            _notifications.ShowError($"Something went wrong: {ex.Message}", ex);
+        }
+    }
+
     /// <summary>What the API calls throw when the site is down, slow or answering nonsense, or the answer has no patch dates.</summary>
     private static bool IsNetworkFailure(Exception ex) =>
         ex is HttpRequestException or TimeoutException or JsonException or InvalidOperationException;
@@ -247,8 +266,8 @@ public class DataMenuViewModel : ViewModelBase
         Confirm(
             $"Fetch hero portraits, item icons and the top-bar art that Detect from screen matches against, from deadlock-api.com into {_data.AssetsDir}?\n\n"
             + "Files already there are kept unless you re-download everything.",
-            "Download missing", () => _ = DownloadArtAsync(force: false),
-            "Re-download all", () => _ = DownloadArtAsync(force: true));
+            "Download missing", () => Launch(() => DownloadArtAsync(force: false)),
+            "Re-download all", () => Launch(() => DownloadArtAsync(force: true)));
 
     private async Task DownloadArtAsync(bool force)
     {
