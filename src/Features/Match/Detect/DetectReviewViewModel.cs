@@ -8,8 +8,10 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Detect;
 
 /// <param name="SlotHeroes">The hero in each of the twelve slots, left to right, or null where none was read.</param>
+/// <param name="LaneSlots">The slots the review marked as in your lane.</param>
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
-public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot, IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections);
+public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot, IReadOnlyList<int> LaneSlots,
+    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections);
 
 /// <summary>
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette
@@ -92,7 +94,8 @@ public class DetectReviewViewModel : ViewModelBase
         var corrections = RememberCorrections
             ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).Select(slot => (slot.HeroId!, slot.Crop!)).ToList()
             : [];
-        return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value, corrections);
+        return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value,
+            (_detection with { SelfSlot = SelfSlot }).LaneSlots, corrections);
     }
 
     protected override void Dispose(bool disposing)

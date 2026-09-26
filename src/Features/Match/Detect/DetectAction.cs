@@ -143,7 +143,7 @@ public class DetectAction
 
     private void Apply(MatchState match, DetectReviewResult result, string directory)
     {
-        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys);
+        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys, laneSlots: result.LaneSlots);
 
         var learned = 0;
         foreach (var (heroId, crop) in result.Corrections)

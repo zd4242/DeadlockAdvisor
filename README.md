@@ -174,7 +174,8 @@ top of the screen, and reads the scoreboard strip: all twelve heroes,
 which one is you (off the coloured backplate behind your slot), and who's
 in your lane. During laning the game marks all four lane players and the
 lane is read from those marks; later it falls back to the layout, where
-each team's pairs face each other in order.
+each team's pairs face each other in order. The lane the review shows is
+the lane that's applied.
 
 **Nothing is applied until you say so.** The review shows each slot's
 crop, what it was read as and how sure that was, with a dropdown to
@@ -184,7 +185,9 @@ for it.
 
 Some slots can't be read: a player who was dead at the moment of capture
 (a black silhouette), a hero in a skin, or one whose reference art has
-gone stale. Correct them and leave *Remember my corrections as reference
+gone stale. The art download already installs alternates for the heroes
+known to have gone stale (Apollo, Seven, Silver and Yamato). Correct the
+rest and leave *Remember my corrections as reference
 art* ticked: the crop is saved to `assets/topbar/<hero_id>/`, and the
 matcher scores those alternates alongside the main image, so the portrait
 is recognised directly from then on.

@@ -82,6 +82,14 @@ public class VisionTests
     }
 
     [Fact]
+    public void ApplyTakesTheLaneItIsGivenOverThePairing()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _heroes, 0, _heroes!, laneSlots: [3, 8, 9]);
+        Assert.Equal(["h0", "h3", "h8", "h9"], match.LaneHeroes.Order());
+    }
+
+    [Fact]
     public void ApplyDropsHeroesThatAreNotInTheCsv()
     {
         var match = new MatchState();

@@ -53,8 +53,12 @@ public static class VisionApply
     /// Write the roster in, returning how many heroes were assigned. Heroes missing from heroes.csv
     /// are dropped rather than invented, as loading a saved match drops them.
     /// </summary>
+    /// <param name="laneSlots">
+    /// The lane as the review showed it (off the game's highlights when it could read them), so what
+    /// lands is what was checked; without it the lane comes from the layout's pairing.
+    /// </param>
     public static int ApplyToMatch(MatchState match, IReadOnlyList<string?> slotHeroes, int? selfSlot,
-        IEnumerable<string>? validHeroIds = null, bool clearFirst = true)
+        IEnumerable<string>? validHeroIds = null, bool clearFirst = true, IReadOnlyList<int>? laneSlots = null)
     {
         var valid = validHeroIds?.ToHashSet();
         var heroes = slotHeroes
@@ -67,7 +71,10 @@ public static class VisionApply
         var roles = RolesFor(heroes, selfSlot);
         foreach (var (heroId, role) in roles)
             match.SetRole(heroId, role);
-        foreach (var heroId in LaneHeroesFor(heroes, selfSlot))
+        var lane = laneSlots is null
+            ? LaneHeroesFor(heroes, selfSlot)
+            : laneSlots.Where(i => i >= 0 && i < heroes.Count && heroes[i] is not null).Select(i => heroes[i]!);
+        foreach (var heroId in lane)
             match.SetLane(heroId, true);
         return roles.Count;
     }

@@ -142,6 +142,24 @@ public sealed class DetectTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task TheLaneAppliedIsTheLaneTheReviewShowed()
+    {
+        var detected = await DetectAsync();
+        await detected.CancelCommand.Execute();
+        // You in slot 0, with the game's marks on 3, 8 and 9 rather than the pairing's 1, 6 and 7.
+        double[] marks = [9.0, 0.2, 0.3, 6.0, 0.2, 0.1, 0.3, 0.2, 5.0, 4.0, 0.2, 0.1];
+        var detection = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)! with { SelfSlot = 0, SelfScores = marks };
+        DetectReviewResult? applied = null;
+        using var review = new DetectReviewViewModel(detection, [], result => applied = result, () => { });
+
+        Assert.Equal([SlotRole.LaneAlly, SlotRole.LaneEnemy, SlotRole.LaneEnemy], new[] { 3, 8, 9 }.Select(i => review.Slots[i].Role));
+        Assert.Equal(SlotRole.Ally, review.Slots[1].Role);
+        await review.ApplyCommand.Execute();
+
+        Assert.Equal([3, 8, 9], applied!.LaneSlots);
+    }
+
+    [AvaloniaFact]
     public async Task NoReferenceArtSaysWhereToGetIt()
     {
         _capture.Next = Capture();
