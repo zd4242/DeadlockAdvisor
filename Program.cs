@@ -1,4 +1,5 @@
 using Avalonia.ReactiveUI;
+using DeadlockAdvisor.Core;
 
 namespace DeadlockAdvisor;
 
@@ -15,6 +16,6 @@ sealed class Program
     public static AppBuilder BuildAvaloniaApp()
         => AppBuilder.Configure<App>()
             .UsePlatformDetect()
-            .LogToTrace()
+            .LogToTraceQuietly()
             .UseReactiveUI();
 }
