@@ -25,6 +25,8 @@
   "lane_source": "highlights",
   "lane_heroes": ["grey_talon", "kelvin", "abrams"],
   "allow_wrong": 0,
+  "net_worth": ["1.1", "1.1", "1.2", "1.2", "1.2", "1.2", "1.2", "1.2", "1.0", "1.0", "1.0", "1.0"],
+  "team_totals": ["7", "6"],
   "heroes": {
     "0": "grey_talon",
     "1": "ivy",

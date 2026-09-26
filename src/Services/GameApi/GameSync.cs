@@ -53,6 +53,8 @@ public static partial class GameSync
             ["BaseAttackDamagePercentBonus"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["CloseRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["LongRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            ["WeaponPowerPerStack"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            ["WeaponDamagePerStack"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["BonusFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
             ["ActiveBonusFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
             ["ActivatedFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
@@ -79,10 +81,12 @@ public static partial class GameSync
             ["ActiveBonusMoveSpeed"] = ("BonusMoveSpeed", "Move Speed", "m/s"),
             ["FervorMovespeed"] = ("BonusMoveSpeed", "Move Speed", "m/s"),
             ["BonusSprintSpeed"] = ("BonusSprintSpeed", "Sprint Speed", "m/s"),
+            ["StackingBonusSprintSpeed"] = ("BonusSprintSpeed", "Sprint Speed", "m/s"),
             ["CooldownReduction"] = ("CooldownReduction", "Cooldown Reduction", "%"),
             ["BonusAbilityDurationPercent"] = ("BonusAbilityDurationPercent", "Ability Duration", "%"),
             ["TechRangeMultiplier"] = ("TechRangeMultiplier", "Ability Range", "%"),
             ["TechRangeMultiplierBuff"] = ("TechRangeMultiplier", "Ability Range", "%"),
+            ["StackingTechRangeMultiplier"] = ("TechRangeMultiplier", "Ability Range", "%"),
         };
 
     /// <summary>
@@ -104,9 +108,20 @@ public static partial class GameSync
         ["GuardianWardCombatBarrier"] = "goes on an ally",
         ["HealAmpRegenPenaltyPercent"] = "the regen half of a healing reduction HealAmpReceivePenaltyPercent already counts",
         ["ProcBaseAttackDamagePercent"] = "one proc shot, not a lasting bonus",
-        ["StackingBonusSprintSpeed"] = "per stack",
-        ["StackingTechRangeMultiplier"] = "per stack",
     };
+
+    /// <summary>
+    /// Properties whose value is per stack of the item's buff. They're counted fully stacked (see
+    /// <see cref="StackCount"/>) and as conditional, since the stacks have to be built up first.
+    /// </summary>
+    private static readonly HashSet<string> _perStack =
+        ["WeaponPowerPerStack", "WeaponDamagePerStack", "StackingBonusSprintSpeed", "StackingTechRangeMultiplier"];
+
+    /// <summary>Per-stack values the API files under a plain name: Spellslinger's Fire Rate is per stack of its buff.</summary>
+    private static readonly HashSet<(string?, string)> _forcePerStack = [("Spellslinger", "BonusFireRate")];
+
+    /// <summary>Stack counts for items the game doesn't cap: Ballistic Enchantment stacks once per unique hero the ability hits.</summary>
+    private static readonly Dictionary<string, int> _assumedStacks = new() { ["Ballistic Enchantment"] = 2 };
 
     /// <summary>Stored negated relative to the game's display: Healbane's "35% Healing Reduction" arrives as -35.</summary>
     private static readonly HashSet<string> _negated = ["HealAmpReceivePenaltyPercent"];
@@ -214,6 +229,7 @@ public static partial class GameSync
         var name = NameOf(record);
         var properties = ShownProperties(record);
         var passiveHasCondition = PassiveHasCondition(properties);
+        var stacks = StackCount(record) ?? 1;
 
         var totals = new OrderedDictionary<(string Stat, bool Conditional), double>();
         var meta = new Dictionary<string, (string Label, string Unit)>();
@@ -225,7 +241,10 @@ public static partial class GameSync
                 continue;
             if (_negated.Contains(key))
                 value = -value;
-            var conditional = IsConditional(property, passiveHasCondition) || _forceConditional.Contains((name, key));
+            var perStack = IsPerStack(name, key);
+            if (perStack)
+                value *= stacks;
+            var conditional = perStack || IsConditional(property, passiveHasCondition) || _forceConditional.Contains((name, key));
             var slot = (stat.Stat, conditional);
             totals[slot] = totals.GetValueOrDefault(slot) + value;
             meta[stat.Stat] = (stat.Label, stat.Unit);
@@ -238,6 +257,17 @@ public static partial class GameSync
             .Select(pair => new ItemStat(itemId, pair.Key.Stat, meta[pair.Key.Stat].Label, NumberFormat.Round(pair.Value, 4),
                 meta[pair.Key.Stat].Unit, pair.Key.Conditional))
             .ToList();
+    }
+
+    private static bool IsPerStack(string? name, string key) => _perStack.Contains(key) || _forcePerStack.Contains((name, key));
+
+    /// <summary>How many stacks a per-stack property counts: the item's MaxStacks, else its <see cref="_assumedStacks"/> entry, else null.</summary>
+    private static double? StackCount(JsonNode record)
+    {
+        var maxStacks = PyJson.Get(PyJson.Get(record, "properties"), "MaxStacks");
+        if (Number(PyJson.Get(maxStacks, "value")) is { } max and > 0)
+            return max;
+        return NameOf(record) is { } name && _assumedStacks.TryGetValue(name, out var assumed) ? assumed : null;
     }
 
     private static string? NameOf(JsonNode record) =>
@@ -303,7 +333,10 @@ public static partial class GameSync
             .ToList();
     }
 
-    /// <summary>Per-item overrides that no longer match the game, or that the game's own flags now make unnecessary.</summary>
+    /// <summary>
+    /// Per-item overrides that no longer match the game, or that the game's own flags now make
+    /// unnecessary; and per-stack stats on items with no stack count, which would count one stack.
+    /// </summary>
     public static List<string> StaleOverrides(IReadOnlyCollection<JsonNode> records)
     {
         var byName = new Dictionary<string, JsonNode>();
@@ -337,6 +370,25 @@ public static partial class GameSync
         {
             if (PropertyOf(name, key) is null)
                 stale.Add($"{name} / {key}: marked self-inflicted, but the item no longer has that property");
+        }
+        foreach (var (name, key) in _forcePerStack)
+        {
+            if (PropertyOf(name, key) is null)
+                stale.Add($"{name} / {key}: forced per stack, but the item no longer has that property");
+        }
+        foreach (var (name, stacks) in _assumedStacks)
+        {
+            if (!byName.TryGetValue(name, out var record) || !ShownProperties(record).Any(p => IsPerStack(name, p.Key)))
+                stale.Add($"{name}: assumed {stacks} stacks, but the item no longer has a per-stack stat");
+            else if (PropertyOf(name, "MaxStacks") is not null)
+                stale.Add($"{name}: assumed {stacks} stacks, but the game now files its MaxStacks");
+        }
+        foreach (var (name, record) in byName)
+        {
+            if (StackCount(record) is not null)
+                continue;
+            foreach (var (key, _) in ShownProperties(record).Where(p => Stats.ContainsKey(p.Key) && IsPerStack(name, p.Key)))
+                stale.Add($"{name} / {key}: counted per stack, but the item has no MaxStacks; add its count to _assumedStacks");
         }
         return stale;
     }

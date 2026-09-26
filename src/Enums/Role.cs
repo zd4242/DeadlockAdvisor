@@ -29,6 +29,9 @@ public static class Roles
         _ => throw new ArgumentOutOfRangeException(nameof(role))
     };
 
+    /// <summary>The side of the match a role plays on: you're on the allies' team.</summary>
+    public static Role Team(this Role role) => role == Role.Self ? Role.Ally : role;
+
     public static bool TryParse(string? key, out Role role)
     {
         switch (key)

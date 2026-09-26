@@ -36,18 +36,21 @@
   "fresh": {
    "report": {
     "lines": [
-     "Item stats refreshed: 333 stat row(s).",
-     "36 item stat(s) changed:",
+     "Item stats refreshed: 338 stat row(s).",
+     "42 item stat(s) changed:",
      "  Opening Rounds: Weapon Damage (conditional) none -> 25%",
      "  Close Quarters: Weapon Damage (conditional) none -> 20%",
      "  Long Range: Weapon Damage (conditional) none -> 40%",
      "  Heroic Aura: Move Speed (conditional) none -> 2.25 m/s",
+     "  Berserker: Weapon Damage (conditional) none -> 70%",
      "  Frenzy: Fire Rate (conditional) none -> 40%",
      "  Frenzy: Move Speed (conditional) none -> 4 m/s",
      "  Frenzy: Debuff Resist (conditional) none -> 40%",
      "  Sharpshooter: Weapon Damage (conditional) none -> 60%",
      "  Point Blank: Weapon Damage (conditional) none -> 50%",
      "  Dispel Magic: Move Speed (conditional) none -> 2 m/s",
+     "  Trophy Collector: Sprint Speed (conditional) none -> 2.4 m/s",
+     "  Trophy Collector: Ability Range (conditional) none -> 12%",
      "  Grit: Barrier (conditional) none -> 200",
      "  Weapon Shielding: Barrier (conditional) none -> 300",
      "  Spirit Shielding: Barrier (conditional) none -> 300",
@@ -73,7 +76,10 @@
      "  Surge of Power: Fire Rate (conditional) none -> 20%",
      "  Escalating Resilience: Bullet Resist (conditional) none -> 30%",
      "  Reactive Barrier: Barrier (conditional) none -> 325",
-     "  Indomitable: Barrier (conditional) none -> 325"
+     "  Indomitable: Barrier (conditional) none -> 325",
+     "  Split Shot: Weapon Damage (conditional) none -> 40%",
+     "  Spellslinger: Fire Rate (conditional) 11% -> 66%",
+     "  Ballistic Enchantment: Weapon Damage (conditional) none -> 40%"
     ],
     "added_heroes": [],
     "added_items": [],
@@ -83,7 +89,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": true,
-    "stat_rows": 333,
+    "stat_rows": 338,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": true
@@ -100,7 +106,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 333,
+    "stat_rows": 338,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -127,7 +133,7 @@
      "  Monster Rounds: cost 1 -> 800",
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
-     "Item stats refreshed: 333 stat row(s).",
+     "Item stats refreshed: 338 stat row(s).",
      "Item tooltips refreshed: 156 item(s)."
     ],
     "added_heroes": [
@@ -148,7 +154,7 @@
     "heroes_changed": true,
     "items_changed": true,
     "stats_changed": true,
-    "stat_rows": 333,
+    "stat_rows": 338,
     "tooltips_changed": true,
     "tooltip_count": 156,
     "anything_changed": true
@@ -165,7 +171,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 333,
+    "stat_rows": 338,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false

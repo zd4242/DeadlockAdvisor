@@ -1,0 +1,31 @@
+{
+  "notes": [
+    "A real 2560x1440 capture at 0:28, the same match as laning_2560x1440_band a",
+    "minute and a bit earlier, so the heroes listed are the ones that fixture",
+    "names. It arrived as a 1756x179 crop; lined up against the laning capture's",
+    "HUD it sits at x=433, y=0 on the screen, and it is pasted back there on a",
+    "black band of the real size, because the grid search expects the clock at",
+    "the middle of the screen and fits an off-centre crop a slot out.",
+    "",
+    "It pins how the game prints net worth under a thousand souls: every hero",
+    "starts on 600, shown as a plain '600' with no 'k', while each total reads",
+    "'3k' for 3,600 -- totals are rounded down to the thousand, not to the",
+    "nearest one."
+  ],
+  "screen_height": 1440,
+  "allow_wrong": 0,
+  "net_worth": ["600", "600", "600", "600", "600", "600", "600", "600", "600", "600", "600", "600"],
+  "team_totals": ["3", "3"],
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "5": "vyper",
+    "6": "kelvin",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

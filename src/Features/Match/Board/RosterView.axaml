@@ -1,0 +1,121 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.Match.Board.RosterView"
+             x:DataType="board:MatchBoardViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.lead">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Foreground" Value="{DynamicResource AllyBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.lead.behind">
+            <Setter Property="Foreground" Value="{DynamicResource EnemyBrush}"/>
+        </Style>
+        <Style Selector="ItemsControl.roster">
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <UniformGrid Rows="1"/>
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="board:RosterSlotViewModel">
+            <controls:RosterSlot HeroId="{Binding HeroId}"
+                                 HeroName="{Binding HeroName}"
+                                 Team="{Binding Team}"
+                                 IsSelf="{Binding IsSelf}"
+                                 InLane="{Binding InLane}"
+                                 NetWorth="{Binding NetWorth}"
+                                 NetWorthChange="{Binding NetWorthChange}"
+                                 ShowsNetWorth="{Binding ShowsNetWorth}"/>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <!-- The match as the game's top bar shows it: your team on the left, the enemy on the right. -->
+    <Border Classes="card">
+        <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
+                <TextBlock Grid.Column="1"
+                           Classes="hint"
+                           Margin="14,0"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Text="{Binding Hint}"
+                           ToolTip.Tip="{Binding Hint}"/>
+                <Button Grid.Column="2"
+                        Content="Detect from screen"
+                        Command="{Binding DetectCommand}"
+                        ToolTip.Tip="Read the whole match off Deadlock's top bar (F9).&#10;You get to check the result before anything is applied."/>
+                <Button Grid.Column="3"
+                        Classes="ghost"
+                        Content="Random"
+                        Margin="6,0,0,0"
+                        Command="{Binding RandomizeCommand}"
+                        ToolTip.Tip="Fill the match with random heroes, one ally and two enemies in your lane (for testing)"/>
+                <Button Grid.Column="4"
+                        Classes="ghost"
+                        Content="Clear"
+                        Margin="6,0,0,0"
+                        Command="{Binding ClearCommand}"
+                        ToolTip.Tip="Remove every hero from the match"/>
+            </Grid>
+
+            <Grid ColumnDefinitions="*,Auto,*">
+                <ItemsControl x:Name="AllyRow"
+                              Classes="roster"
+                              HorizontalAlignment="Right"
+                              ItemsSource="{Binding AllySlots}"/>
+
+                <!-- Counts, and once net worth is read, each team's total and the lead as the game shows them. -->
+                <Grid Grid.Column="1"
+                      ColumnDefinitions="Auto,Auto,Auto"
+                      RowDefinitions="Auto,Auto"
+                      Margin="16,0"
+                      VerticalAlignment="Center">
+                    <StackPanel Spacing="2" HorizontalAlignment="Right">
+                        <TextBlock Classes="section ally" Text="ALLIES" HorizontalAlignment="Right"/>
+                        <TextBlock Classes="value"
+                                   HorizontalAlignment="Right"
+                                   Text="{Binding AllyNetWorth}"
+                                   IsVisible="{Binding AllyNetWorth, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   ToolTip.Tip="Your team's net worth"/>
+                        <TextBlock Classes="faint" Text="{Binding AllyCount}" HorizontalAlignment="Right"/>
+                    </StackPanel>
+                    <Border Grid.Column="1"
+                            Width="1"
+                            Margin="12,2"
+                            Background="{DynamicResource BorderBrush}"/>
+                    <StackPanel Grid.Column="2" Spacing="2">
+                        <TextBlock Classes="section enemy" Text="ENEMIES"/>
+                        <TextBlock Classes="value"
+                                   Text="{Binding EnemyNetWorth}"
+                                   IsVisible="{Binding EnemyNetWorth, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                   ToolTip.Tip="The enemy team's net worth"/>
+                        <TextBlock Classes="faint" Text="{Binding EnemyCount}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Row="1"
+                               Grid.ColumnSpan="3"
+                               Classes="lead"
+                               Classes.behind="{Binding IsBehind}"
+                               Margin="0,4,0,0"
+                               HorizontalAlignment="Center"
+                               Text="{Binding NetWorthLead}"
+                               IsVisible="{Binding NetWorthLead, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                               ToolTip.Tip="How far your team's net worth is ahead of the enemy's"/>
+                </Grid>
+
+                <ItemsControl Grid.Column="2"
+                              x:Name="EnemyRow"
+                              Classes="roster"
+                              HorizontalAlignment="Left"
+                              ItemsSource="{Binding EnemySlots}"/>
+            </Grid>
+        </StackPanel>
+    </Border>
+</UserControl>

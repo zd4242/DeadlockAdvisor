@@ -7,12 +7,14 @@
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
-    <Grid ColumnDefinitions="4*,12,5*" Margin="12">
-        <board:MatchBoardView x:Name="BoardView" DataContext="{Binding Board}"/>
+    <Grid RowDefinitions="Auto,12,*" ColumnDefinitions="4*,12,5*" Margin="12">
+        <board:RosterView Grid.ColumnSpan="3" DataContext="{Binding Board}"/>
 
-        <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+        <board:MatchBoardView Grid.Row="2" x:Name="BoardView" DataContext="{Binding Board}"/>
 
-        <Grid Grid.Column="2" RowDefinitions="3*,12,2*">
+        <GridSplitter Grid.Row="2" Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+
+        <Grid Grid.Row="2" Grid.Column="2" RowDefinitions="3*,12,2*">
             <Border Classes="card">
                 <DockPanel>
                     <!-- Score cutoff and flat/tiered layout, shared by both result tabs -->

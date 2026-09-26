@@ -16,7 +16,7 @@ public static class Format
     public static string SignedFixed(double value, int decimals) =>
         (double.IsNegative(value) ? "" : "+") + NumberFormat.Fixed(value, decimals);
 
-    /// <summary>Match counts: "4.2k", "38k", or the number itself under a thousand.</summary>
+    /// <summary>Match counts and souls, as the game prints net worth: "4.2k", "38k", or the number itself under a thousand.</summary>
     public static string Compact(int count)
     {
         if (count >= 10000)

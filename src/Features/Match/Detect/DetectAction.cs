@@ -1,4 +1,5 @@
 using System.IO;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Models;
@@ -70,15 +71,20 @@ public class DetectAction
             return;
         }
 
+        var capturedAt = DateTimeOffset.UtcNow;
         var screenKey = $"{capture.ScreenWidth}x{capture.ScreenHeight}";
         var cached = _settings.Current.VisionGeometry.TryGetValue(screenKey, out var saved) ? Geometry.FromJson(saved) : null;
         var clock = System.Diagnostics.Stopwatch.StartNew();
         var detection = await DetectWithProgressAsync(progress => Detect(capture, bank, cached, progress));
+        var netWorth = detection is null
+            ? NetWorthReading.Empty
+            : await Task.Run(() => NetWorthReader.Read(capture.Band, detection.Geometry, NetWorthGlyphs.Bundled));
         _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} screen, "
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
                          + (detection is null
                              ? "no strip found"
-                             : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}")
+                             : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, "
+                               + NetWorthLog(netWorth))
                          + $", {clock.ElapsedMilliseconds} ms");
         if (detection is null)
         {
@@ -95,15 +101,29 @@ public class DetectAction
             .OrderBy(choice => choice.Name.ToLowerInvariant(), StringComparer.Ordinal)
             .ToList();
         DetectReviewViewModel? review = null;
-        review = new DetectReviewViewModel(detection, heroes,
+        review = new DetectReviewViewModel(detection, netWorth, heroes,
             result =>
             {
                 Close(review!);
-                Apply(match, result, directory);
+                Apply(match, result, capturedAt, directory);
                 applied();
             },
             () => Close(review!));
         _modals.ShowModal(review);
+    }
+
+    /// <summary>What was read, for the log: each side's pills and total, and whether they added up.</summary>
+    internal static string NetWorthLog(NetWorthReading reading)
+    {
+        string Side(int side)
+        {
+            var pills = reading.Pills.Skip(side * Layout.PerTeam).Take(Layout.PerTeam)
+                .Select(souls => souls is { } value ? Format.Compact(value) : "?");
+            var total = reading.Totals[side] is { } value ? Format.Compact(value) : "?";
+            return $"{string.Join(" ", pills)} = {total}{(reading.Agrees(side) ? "" : " (doesn't add up)")}";
+        }
+
+        return $"net worth {Side(0)} | {Side(1)}";
     }
 
     internal static Detection? Detect(ScreenCapture capture, TemplateBank bank, Geometry? cached, IProgress<double>? progress = null)
@@ -141,9 +161,10 @@ public class DetectAction
         }
     }
 
-    private void Apply(MatchState match, DetectReviewResult result, string directory)
+    private void Apply(MatchState match, DetectReviewResult result, DateTimeOffset capturedAt, string directory)
     {
-        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys, laneSlots: result.LaneSlots);
+        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys, laneSlots: result.LaneSlots,
+            netWorth: (result.SlotSouls, capturedAt));
 
         var learned = 0;
         foreach (var (heroId, crop) in result.Corrections)

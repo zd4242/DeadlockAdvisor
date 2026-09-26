@@ -5,16 +5,24 @@ namespace DeadlockAdvisor.Models;
 /// <summary>
 /// Who's in the current match: which heroes are allies, enemies or you, and which are flagged as
 /// in your lane. Roster sizes (5 allies + you, 6 enemies) are advisory: the UI shows "4/6" counts
-/// and blocks nothing, so an unusual or partly known match still works.
+/// and blocks nothing, so an unusual or partly known match still works. A detected match also
+/// knows where each hero sits on the game's top bar, which is how net worth read off it finds them.
 /// </summary>
 public sealed class MatchState
 {
-    public const int MaxAllies = 5;
-    public const int MaxEnemies = 6;
+    public const int TeamSize = 6;
+    public const int MaxAllies = TeamSize - 1;
+    public const int MaxEnemies = TeamSize;
 
-    // Insertion-ordered, like the Python dicts: the ally and enemy lists come out in this order.
+    // Insertion-ordered, like the Python dicts: each team comes out in this order, which is the
+    // game's top-bar order after a detection and pick order otherwise.
     public OrderedDictionary<string, Role> RoleMap { get; } = [];
     public OrderedDictionary<string, bool> LaneFlags { get; } = [];
+
+    /// <summary>Hero → their slot on the game's top bar (0-11, left to right), for heroes placed by a detection.</summary>
+    public OrderedDictionary<string, int> Slots { get; } = [];
+
+    public NetWorthHistory NetWorth { get; } = new();
 
     public Role RoleOf(string heroId) => RoleMap.GetValueOrDefault(heroId, Role.None);
 
@@ -31,6 +39,7 @@ public sealed class MatchState
                 // removing it; kept for identical saved matches.
                 RoleMap[other] = Role.None;
                 LaneFlags.Remove(other);
+                Slots.Remove(other);
             }
         }
 
@@ -38,9 +47,17 @@ public sealed class MatchState
         {
             RoleMap.Remove(heroId);
             LaneFlags.Remove(heroId);
+            Slots.Remove(heroId);
             return;
         }
 
+        // Changing sides takes the next free place on the new team, as a fresh pick would, and
+        // leaves the top-bar slot the hero was read in.
+        if (RoleMap.TryGetValue(heroId, out var previous) && previous.Team() != role.Team())
+        {
+            RoleMap.Remove(heroId);
+            Slots.Remove(heroId);
+        }
         RoleMap[heroId] = role;
         if (role == Role.Self)
             LaneFlags.Remove(heroId);
@@ -85,7 +102,12 @@ public sealed class MatchState
     {
         RoleMap.Clear();
         LaneFlags.Clear();
+        Slots.Clear();
+        NetWorth.Clear();
     }
+
+    /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
+    public string? HeroInSlot(int slot) => Slots.FirstOrDefault(entry => entry.Value == slot).Key;
 
     public void ClearLane() => LaneFlags.Clear();
 
@@ -115,6 +137,9 @@ public sealed class MatchState
 
     public List<string> Allies => HeroesWith(Role.Ally);
     public List<string> Enemies => HeroesWith(Role.Enemy);
+
+    /// <summary>You and your allies, with you in your own place rather than first.</summary>
+    public List<string> OwnTeam => RoleMap.Where(entry => entry.Value.Team() == Role.Ally).Select(entry => entry.Key).ToList();
 
     public string? SelfHero => RoleMap.FirstOrDefault(entry => entry.Value == Role.Self).Key;
 
@@ -146,6 +171,11 @@ public sealed class MatchState
         foreach (var (heroId, role) in RoleMap)
             saved.Roles[heroId] = role.Key();
         saved.Lane = LaneFlags.Where(entry => entry.Value).Select(entry => entry.Key).ToList();
+        foreach (var (heroId, slot) in Slots)
+            saved.Slots[heroId] = slot;
+        saved.NetWorth = NetWorth.Snapshots
+            .Select(snapshot => new SavedNetWorth { At = snapshot.At, Souls = snapshot.Souls.ToDictionary() })
+            .ToList();
         return saved;
     }
 
@@ -167,5 +197,12 @@ public sealed class MatchState
             if (RoleMap.ContainsKey(heroId))
                 SetLane(heroId, true);
         }
+        foreach (var (heroId, slot) in saved.Slots)
+        {
+            if (RoleOf(heroId) != Role.None)
+                Slots[heroId] = slot;
+        }
+        foreach (var snapshot in saved.NetWorth)
+            NetWorth.Add(new NetWorthSnapshot(snapshot.At, snapshot.Souls.Where(entry => valid.Contains(entry.Key)).ToDictionary()));
     }
 }

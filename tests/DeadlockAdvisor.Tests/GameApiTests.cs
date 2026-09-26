@@ -89,6 +89,29 @@ public class GameApiTests
     }
 
     [Fact]
+    public void PerStackStatsCountFullyStackedAndConditional()
+    {
+        var berserker = FakeItem("Berserker", 1, 3, "weapon", 3200,
+            Prop("BulletResist", "8"), Prop("WeaponPowerPerStack", "7", null), Prop("MaxStacks", "10.0", null));
+        var spellslinger = FakeItem("Spellslinger", 2, 4, "spirit", 6400,
+            Prop("BonusFireRate", "11", "passive"), Prop("MaxStacks", "6", "passive"));
+        var ballistic = FakeItem("Ballistic Enchantment", 3, 3, "spirit", 3200,
+            Prop("WeaponPowerPerStack", "20", "passive", "ConditionallyApplied"), Prop("NonHeroStackLimit", "8", "passive"));
+        var uncapped = FakeItem("Uncapped", 4, 3, "weapon", 3200, Prop("WeaponDamagePerStack", "8", "active"));
+
+        Assert.Equal(new Dictionary<(string, bool), double>
+        {
+            [("BaseAttackDamagePercent", true)] = 70.0,
+            [("BulletResist", false)] = 8.0,
+        }, StatsOf(berserker));
+        Assert.Equal(new Dictionary<(string, bool), double> { [("BonusFireRate", true)] = 66.0 }, StatsOf(spellslinger));
+        Assert.Equal(new Dictionary<(string, bool), double> { [("BaseAttackDamagePercent", true)] = 40.0 }, StatsOf(ballistic));
+        Assert.Equal(new Dictionary<(string, bool), double> { [("BaseAttackDamagePercent", true)] = 8.0 }, StatsOf(uncapped));
+        Assert.Contains("Uncapped / WeaponDamagePerStack: counted per stack, but the item has no MaxStacks; add its count to _assumedStacks",
+            GameSync.StaleOverrides([uncapped]));
+    }
+
+    [Fact]
     public void SelfBarriersFoldIntoBarrierButAllyBarriersDoNot()
     {
         var shielding = FakeItem("Weapon Shielding", 1, 2, "vitality", 1600,
@@ -212,13 +235,17 @@ public class GameApiTests
         var quicksilver = FakeItem("Quicksilver Reload", 2, 2, "spirit", 1600, Prop("TechPower", "10"));
         var crippling = FakeItem("Crippling Headshot", 3, 4, "weapon", 6400, Prop("HealAmpReceivePenaltyPercent", "-35", null));
         crippling["tooltip_sections"] = JsonNode.Parse("""[{"section_type": "passive", "section_attributes": []}]""");
+        var ballistic = FakeItem("Ballistic Enchantment", 4, 3, "spirit", 3200,
+            Prop("WeaponPowerPerStack", "20", "passive"), Prop("MaxStacks", "3", "passive"));
 
         Assert.Equal(
         [
+            "Ballistic Enchantment: assumed 2 stacks, but the game now files its MaxStacks",
             "Cheat Death / HealAmpReceivePenaltyPercent: marked self-inflicted, but the item no longer has that property",
             "Mercurial Magnum / BonusFireRate: forced conditional, but the game now flags it conditional itself",
             "Quicksilver Reload / BonusFireRate: forced conditional, but the item no longer has that property",
-        ], GameSync.StaleOverrides([magnum, quicksilver, crippling]).Order(StringComparer.Ordinal));
+            "Spellslinger / BonusFireRate: forced per stack, but the item no longer has that property",
+        ], GameSync.StaleOverrides([magnum, quicksilver, crippling, ballistic]).Order(StringComparer.Ordinal));
     }
 
     [Fact]

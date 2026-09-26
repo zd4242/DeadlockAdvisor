@@ -10,8 +10,9 @@ namespace DeadlockAdvisor.Features.Match.Detect;
 /// <param name="SlotHeroes">The hero in each of the twelve slots, left to right, or null where none was read.</param>
 /// <param name="LaneSlots">The slots the review marked as in your lane.</param>
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
+/// <param name="SlotSouls">Each slot's net worth, where it was read and its side added up.</param>
 public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot, IReadOnlyList<int> LaneSlots,
-    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections);
+    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls);
 
 /// <summary>
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette
@@ -23,13 +24,18 @@ public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int S
 public class DetectReviewViewModel : ViewModelBase
 {
     private readonly Detection _detection;
+    private readonly NetWorthReading _netWorth;
 
-    public DetectReviewViewModel(Detection detection, IReadOnlyList<HeroChoice> heroes, Action<DetectReviewResult> apply, Action cancel)
+    public DetectReviewViewModel(Detection detection, NetWorthReading netWorth, IReadOnlyList<HeroChoice> heroes,
+        Action<DetectReviewResult> apply, Action cancel)
     {
         _detection = detection;
+        _netWorth = netWorth;
         IReadOnlyList<HeroChoice> choices = [HeroChoice.Unknown, .. heroes];
+        var souls = netWorth.Souls;
         Slots = detection.Slots
-            .Select(reading => new SlotReviewViewModel(reading, detection.Image is { } image ? Layout.Crop(image, reading.Box) : null, choices, ToggleSelf))
+            .Select(reading => new SlotReviewViewModel(reading, detection.Image is { } image ? Layout.Crop(image, reading.Box) : null, choices, ToggleSelf,
+                reading.Index < souls.Count ? souls[reading.Index] : null))
             .ToList();
         SelfSlot = detection.SelfSlot;
         Relabel();
@@ -82,11 +88,12 @@ public class DetectReviewViewModel : ViewModelBase
         this.RaisePropertyChanged(nameof(HasSelf));
 
         var confident = _detection.ConfidentCount;
-        Summary = SelfSlot is null
+        Summary = (SelfSlot is null
             ? $"Read {confident} of 12 heroes, but couldn't tell which one is you, so the teams can't be split. "
               + "Press You on your own slot to apply."
             : $"Read {confident} of 12 heroes confidently. Check anything marked uncertain before applying — "
-              + "a slot whose player was dead at the moment of capture can't be identified from the portrait.";
+              + "a slot whose player was dead at the moment of capture can't be identified from the portrait.")
+            + $" Net worth read for {_netWorth.ReadCount} of 12.";
     }
 
     private DetectReviewResult Result()
@@ -95,7 +102,7 @@ public class DetectReviewViewModel : ViewModelBase
             ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).Select(slot => (slot.HeroId!, slot.Crop!)).ToList()
             : [];
         return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value,
-            (_detection with { SelfSlot = SelfSlot }).LaneSlots, corrections);
+            (_detection with { SelfSlot = SelfSlot }).LaneSlots, corrections, _netWorth.Souls);
     }
 
     protected override void Dispose(bool disposing)

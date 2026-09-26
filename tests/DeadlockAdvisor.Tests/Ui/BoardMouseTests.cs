@@ -28,15 +28,12 @@ public class BoardMouseTests
     private static HeroTile Tile(UiHarness ui, string heroId) =>
         ui.Window.GetVisualDescendants().OfType<HeroTile>().First(tile => tile.HeroId == heroId);
 
-    /// <summary>A roster slot's portrait (or its ×), placed as SlotStrip lays them out.</summary>
-    private static Point Slot(UiHarness ui, string strip, int index, bool remove = false)
+    /// <summary>A match bar slot (or its ×) on one team's row.</summary>
+    private static Point Slot(UiHarness ui, string row, int index, bool remove = false)
     {
-        var control = ui.Window.GetVisualDescendants().OfType<SlotStrip>().Single(s => s.Name == strip);
-        var fit = Math.Floor((control.Bounds.Width - 2 - 8 * 5) / 6);
-        var portrait = Math.Clamp(fit - fit % 2, 36, 80);
-        var left = 1 + index * (portrait + 8);
-        var local = remove ? new Point(left + portrait - 12, 12) : new Point(left + portrait / 2, portrait / 2);
-        return control.TranslatePoint(local, ui.Window)!.Value;
+        var items = ui.Window.GetVisualDescendants().OfType<ItemsControl>().Single(control => control.Name == row);
+        var slot = items.GetVisualDescendants().OfType<RosterSlot>().ElementAt(index);
+        return remove ? slot.TranslatePoint(slot.RemoveBounds.Center, ui.Window)!.Value : Center(slot, ui.Window);
     }
 
     [AvaloniaFact]
@@ -48,7 +45,7 @@ public class BoardMouseTests
         var board = match.Board;
 
         // An empty ally slot picks "You" while you're unset.
-        Click(ui.Window, Slot(ui, "AllyStrip", 0));
+        Click(ui.Window, Slot(ui, "AllyRow", 0));
         Assert.Equal(Role.Self, board.Mode);
 
         // Double-clicking a tile sets you, whatever the mode.
@@ -65,11 +62,14 @@ public class BoardMouseTests
         Click(ui.Window, Center(Tile(ui, "infernus"), ui.Window));
         Assert.Equal(Role.None, board.RoleOf("infernus"));
 
-        // Clicking a roster portrait toggles lane; its × removes.
-        Click(ui.Window, Slot(ui, "EnemyStrip", 0));
+        // Clicking a match bar portrait toggles lane; its × removes. An empty enemy slot picks Enemy.
+        Click(ui.Window, Slot(ui, "EnemyRow", 0));
         Assert.True(board.IsInLane("haze"));
-        Click(ui.Window, Slot(ui, "EnemyStrip", 0, remove: true));
+        Click(ui.Window, Slot(ui, "EnemyRow", 0, remove: true));
         Assert.Equal(Role.None, board.RoleOf("haze"));
+        board.SetMode(Role.Ally);
+        Click(ui.Window, Slot(ui, "EnemyRow", 0));
+        Assert.Equal(Role.Enemy, board.Mode);
 
         // Clicking a recommendation explains it.
         Click(ui.Window, Center(Tile(ui, "haze"), ui.Window));

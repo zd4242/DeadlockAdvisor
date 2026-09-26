@@ -60,9 +60,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         Board = new MatchBoardViewModel(Match, () => _data.Store);
         LaneResults = new ResultsViewModel(
             "Lane Phase scores only the heroes you've marked as being in your lane.\n\n"
-            + "Set your own hero, then hit LANE on the ally and the two enemies you're laning against.",
+            + "Set your own hero, then click the ally and the two enemies you're laning against in the match bar.",
             _laneTierLabels);
         FullResults = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
+        FormulaRequested = LaneResults.FormulaRequested.Merge(FullResults.FormulaRequested);
 
         var savedPercent = settings.Current.ResultsMinPercent;
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
@@ -119,6 +120,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public ResultsViewModel LaneResults { get; }
     public ResultsViewModel FullResults { get; }
     public ExplainViewModel Explain { get; } = new();
+
+    /// <summary>An item whose rules a recommendation's context menu asked to open, from either tab.</summary>
+    public IObservable<string> FormulaRequested { get; }
 
     /// <summary>0: Lane Phase, 1: Full Match.</summary>
     [Reactive] public int ResultsTab { get; set; }

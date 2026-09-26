@@ -189,6 +189,22 @@ public sealed class ItemFormulasTests : IDisposable
     }
 
     [Fact]
+    public void AFilterDownToOneItemSelectsIt()
+    {
+        var page = _vm.ByItem;
+        page.SearchText = "silence";
+        Assert.True(page.Items.Count > 1);
+        var selected = page.SelectedRow;
+
+        page.SearchText = "focus lens";
+
+        Assert.Equal(FocusLens, Assert.Single(page.Items).ItemId);
+        Assert.NotSame(selected, page.SelectedRow);
+        Assert.Equal(FocusLens, page.SelectedRow!.ItemId);
+        Assert.Equal("Focus Lens", page.DetailTitle);
+    }
+
+    [Fact]
     public void ThePreviewSplitsSumsByTraitOnlyWhenThereIsMoreThanOne()
     {
         var page = Select(FocusLens);

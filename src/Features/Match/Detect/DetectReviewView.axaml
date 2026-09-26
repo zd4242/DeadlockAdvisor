@@ -48,13 +48,18 @@
                         <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
                     </Border>
                     <StackPanel Grid.Column="1" Spacing="4" Margin="10,0,0,0">
-                        <Grid ColumnDefinitions="*,Auto">
+                        <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock Classes="role"
                                        Classes.you="{Binding IsYou}"
                                        Classes.laneAlly="{Binding IsLaneAlly}"
                                        Classes.laneEnemy="{Binding IsLaneEnemy}"
                                        Text="{Binding RoleText}"/>
-                            <ToggleButton Grid.Column="1"
+                            <TextBlock Grid.Column="1"
+                                       Classes="role"
+                                       Margin="0,0,8,0"
+                                       Text="{Binding NetWorth}"
+                                       ToolTip.Tip="Net worth, as read under the portrait"/>
+                            <ToggleButton Grid.Column="2"
                                           Classes="pill self"
                                           Content="You"
                                           IsChecked="{Binding IsYou, Mode=OneWay}"

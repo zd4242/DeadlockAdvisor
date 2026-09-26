@@ -5,6 +5,7 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Results;
+using DeadlockAdvisor.Models;
 
 namespace DeadlockAdvisor.Tests.Ui;
 
@@ -22,6 +23,16 @@ public class MatchPageTests
         board.ToggleLane("kelvin");
         board.ToggleLane("haze");
         board.ToggleLane("infernus");
+
+        var souls = new Dictionary<string, int>
+        {
+            ["haze"] = 25_000, ["infernus"] = 19_000, ["vindicta"] = 21_000, ["abrams"] = 17_000, ["lash"] = 22_000, ["seven"] = 16_000,
+            ["dynamo"] = 15_000, ["kelvin"] = 14_000, ["paradox"] = 18_000, ["shiv"] = 16_000, ["yamato"] = 20_000, ["wraith"] = 19_000,
+        };
+        var at = new DateTimeOffset(2026, 9, 26, 20, 0, 0, TimeSpan.Zero);
+        ui.ViewModel.Match.Match.NetWorth.Add(new NetWorthSnapshot(at, souls.ToDictionary(entry => entry.Key, entry => entry.Value - 3_000)));
+        ui.ViewModel.Match.Match.NetWorth.Add(new NetWorthSnapshot(at.AddMinutes(2), souls));
+        board.Refresh();
     }
 
     [AvaloniaTheory]

@@ -59,7 +59,7 @@ public class ByItemViewModel : ViewModelBase
         TierPills[0].Set(true);
 
         // Filtering never rebuilds the rows, and edits don't re-filter: an item you just tagged stays
-        // put under "Untagged only" until the filter itself changes.
+        // put under "Untagged only" until the filter itself changes. A filter down to one item opens it.
         var filter = this.WhenAnyValue(vm => vm.SearchText, vm => vm.TierFilter, vm => vm.UntaggedOnly)
             .Select(_ => BuildFilter());
         _rows.Connect()
@@ -69,7 +69,8 @@ public class ByItemViewModel : ViewModelBase
                 var byTier = a.Tier.CompareTo(b.Tier);
                 return byTier != 0 ? byTier : string.CompareOrdinal(a.Name, b.Name);
             }))
-            .Subscribe()
+            .Where(_ => _items.Count == 1)
+            .Subscribe(_ => SelectedRow = _items[0])
             .DisposeWith(Disposables);
 
         SetTierFilterCommand = ReactiveCommand.Create<int>(SetTierFilter);
@@ -130,6 +131,22 @@ public class ByItemViewModel : ViewModelBase
     }
 
     public void FocusSearch() => RequestViewAction(FocusSearchAction);
+
+    /// <summary>Select an item from outside the list, first clearing the filters if they're hiding it.</summary>
+    public void OpenItem(string itemId)
+    {
+        if (_rows.Lookup(itemId) is not { HasValue: true } row)
+            return;
+        // The shown list rather than the filter itself: edits don't re-filter, so a row the filter
+        // would now reject can still be showing.
+        if (!_items.Contains(row.Value))
+        {
+            SearchText = "";
+            SetTierFilter(0);
+            UntaggedOnly = false;
+        }
+        SelectedRow = row.Value;
+    }
 
     private Func<ItemRowViewModel, bool> BuildFilter()
     {

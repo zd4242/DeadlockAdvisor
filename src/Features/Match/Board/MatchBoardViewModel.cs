@@ -3,7 +3,6 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
@@ -73,11 +72,23 @@ public class MatchBoardViewModel : ViewModelBase
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";
 
-    [Reactive] public IReadOnlyList<SlotEntry> AllySlots { get; private set; } = [];
-    [Reactive] public IReadOnlyList<SlotEntry> EnemySlots { get; private set; } = [];
+    /// <summary>Your team's side of the match bar, in the game's top-bar order after a detection.</summary>
+    public IReadOnlyList<RosterSlotViewModel> AllySlots { get; } = TeamSlots(Role.Ally);
+    public IReadOnlyList<RosterSlotViewModel> EnemySlots { get; } = TeamSlots(Role.Enemy);
     [Reactive] public string AllyCount { get; private set; } = "";
     [Reactive] public string EnemyCount { get; private set; } = "";
     [Reactive] public string Hint { get; private set; } = NoSelfHint;
+
+    /// <summary>Whether any net worth has been read this match, which makes room for it on the bar.</summary>
+    [Reactive] public bool HasNetWorth { get; private set; }
+
+    /// <summary>A team's summed net worth, once every hero on it has been read; empty until then.</summary>
+    [Reactive] public string AllyNetWorth { get; private set; } = "";
+    [Reactive] public string EnemyNetWorth { get; private set; } = "";
+
+    /// <summary>How far your team is ahead ("+8.3%") or behind, as the game shows it under the totals.</summary>
+    [Reactive] public string NetWorthLead { get; private set; } = "";
+    [Reactive] public bool IsBehind { get; private set; }
 
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearCommand { get; }
@@ -146,15 +157,13 @@ public class MatchBoardViewModel : ViewModelBase
     public bool IsInLane(string heroId) => _match.IsInLane(heroId);
     public bool HasHero(string heroId) => _store().Heroes.ContainsKey(heroId);
 
-    /// <summary>An empty ally slot means "You" until you're set.</summary>
-    public void AllySlotClicked() => StartFilling(_match.SelfHero is null ? Role.Self : Role.Ally);
-
-    public void EnemySlotClicked() => StartFilling(Role.Enemy);
-
-    /// <summary>An empty roster slot was clicked: aim the palette at that team.</summary>
-    private void StartFilling(Role role)
+    /// <summary>
+    /// An empty slot on the match bar was clicked: aim the palette at that team. An empty ally slot
+    /// means "You" until you're set.
+    /// </summary>
+    public void EmptySlotClicked(Role team)
     {
-        SetMode(role);
+        SetMode(team == Role.Ally && _match.SelfHero is null ? Role.Self : team);
         RequestViewAction(FocusSearchAction);
     }
 
@@ -230,23 +239,82 @@ public class MatchBoardViewModel : ViewModelBase
 
     private void RefreshRosters()
     {
-        var self = _match.SelfHero;
-        var allies = (self is null ? [] : new List<string> { self }).Concat(_match.Allies).ToList();
+        var allies = _match.OwnTeam;
         var enemies = _match.Enemies;
 
-        AllyCount = $"{allies.Count}/{MatchState.MaxAllies + 1}";
-        EnemyCount = $"{enemies.Count}/{MatchState.MaxEnemies}";
-        AllySlots = SlotEntries(allies);
-        EnemySlots = SlotEntries(enemies);
-        Hint = self is null ? NoSelfHint : RosterHint;
+        AllyCount = $"{allies.Count}/{MatchState.TeamSize}";
+        EnemyCount = $"{enemies.Count}/{MatchState.TeamSize}";
+        HasNetWorth = !_match.NetWorth.IsEmpty;
+        FillSlots(AllySlots, allies);
+        FillSlots(EnemySlots, enemies);
+        Hint = _match.SelfHero is null ? NoSelfHint : RosterHint;
+        RefreshTotals(allies, enemies);
     }
 
-    private List<SlotEntry> SlotEntries(IEnumerable<string> heroIds)
+    /// <summary>The team in order from the first slot, any past the sixth left off the bar.</summary>
+    private void FillSlots(IReadOnlyList<RosterSlotViewModel> slots, IEnumerable<string> heroIds)
     {
         var heroes = _store().Heroes;
-        return heroIds
-            .Where(heroes.ContainsKey)
-            .Select(heroId => new SlotEntry(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero, _match.IsInLane(heroId)))
-            .ToList();
+        var shown = heroIds.Where(heroes.ContainsKey).ToList();
+        for (var index = 0; index < slots.Count; index++)
+        {
+            if (index < shown.Count)
+            {
+                var heroId = shown[index];
+                slots[index].Fill(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero, _match.IsInLane(heroId),
+                    _match.NetWorth.Latest(heroId), ChangeText(_match.NetWorth.Change(heroId)));
+            }
+            else
+            {
+                slots[index].Clear();
+            }
+            slots[index].ShowsNetWorth = HasNetWorth;
+        }
     }
+
+    private void RefreshTotals(IReadOnlyList<string> allies, IReadOnlyList<string> enemies)
+    {
+        var ours = TeamTotal(allies);
+        var theirs = TeamTotal(enemies);
+        AllyNetWorth = ours is { } a ? Format.Compact(a) : "";
+        EnemyNetWorth = theirs is { } e ? Format.Compact(e) : "";
+        if (ours is { } own && theirs is { } other && other > 0)
+        {
+            var lead = (own - other) * 100.0 / other;
+            NetWorthLead = FormattableString.Invariant($"{lead:+0.0;-0.0;0.0}%");
+            IsBehind = lead < 0;
+        }
+        else
+        {
+            NetWorthLead = "";
+            IsBehind = false;
+        }
+    }
+
+    /// <summary>A full team's summed net worth; null while anyone on it is unread or the team isn't full.</summary>
+    private int? TeamTotal(IReadOnlyList<string> heroIds)
+    {
+        if (heroIds.Count != MatchState.TeamSize)
+            return null;
+        var total = 0;
+        foreach (var heroId in heroIds)
+        {
+            if (_match.NetWorth.Latest(heroId) is not { } souls)
+                return null;
+            total += souls;
+        }
+        return total;
+    }
+
+    private static string? ChangeText((int Souls, TimeSpan Over)? change)
+    {
+        if (change is not { } moved)
+            return null;
+        var (souls, over) = moved;
+        var minutes = Math.Max(1, (int)Math.Round(over.TotalMinutes));
+        return $"{(souls < 0 ? "−" : "+")}{Format.Compact(Math.Abs(souls))} in {minutes} min";
+    }
+
+    private static List<RosterSlotViewModel> TeamSlots(Role team) =>
+        Enumerable.Range(0, MatchState.TeamSize).Select(_ => new RosterSlotViewModel(team)).ToList();
 }

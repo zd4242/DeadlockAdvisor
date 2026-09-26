@@ -31,11 +31,13 @@ public enum SlotRole
 /// <summary>One slot of the review: its crop, what it was read as, and a way to say otherwise.</summary>
 public class SlotReviewViewModel : ViewModelBase
 {
-    public SlotReviewViewModel(SlotReading reading, RgbImage? crop, IReadOnlyList<HeroChoice> choices, Action<int> setSelf)
+    public SlotReviewViewModel(SlotReading reading, RgbImage? crop, IReadOnlyList<HeroChoice> choices, Action<int> setSelf,
+        int? souls = null)
     {
         Reading = reading;
         Crop = crop;
         Choices = choices;
+        NetWorth = souls is { } value ? Format.Compact(value) : "";
         Thumbnail = crop is null ? null : RgbImageBitmap.ToBitmap(crop);
         var detected = choices.FirstOrDefault(choice => choice.HeroId is not null && choice.HeroId == reading.HeroId);
         SelectedHero = detected ?? HeroChoice.Unknown;
@@ -61,6 +63,9 @@ public class SlotReviewViewModel : ViewModelBase
 
     public Bitmap? Thumbnail { get; }
     public IReadOnlyList<HeroChoice> Choices { get; }
+
+    /// <summary>The net worth read under the portrait, as the game prints it; empty when it wasn't read.</summary>
+    public string NetWorth { get; }
     [Reactive] public HeroChoice SelectedHero { get; set; }
     [Reactive] public string Detail { get; private set; } = "";
 

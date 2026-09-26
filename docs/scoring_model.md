@@ -86,6 +86,20 @@ top 3 in some match.
 3. **Trait weights (`trait_weights.csv`)** scale a whole (trait, relation) at once.
    Use them for global tuning, not per-item fixes.
 
+### Hero scores measured from match data
+
+Most hero trait scores are hand-rated, but `deals_bullet_damage_general`,
+`deals_spirit_damage_general` and `does_melee_damage` are measured. Each is the hero's
+share of player-vs-player damage of that type (StatLocker's "Damage identity by hero",
+Eternus lobbies, Jun 26 – Jul 7 2026, built from Valve's per-match `damage_matrix`),
+multiplied by a mild volume factor: `sqrt(hero's player damage per match ÷ roster
+average)` from `/v1/analytics/hero-stats` (Phantom+, Aug 27 – Sep 26 2026). That factor
+ranges from about 0.75 to 1.10, so low-damage supports score a little lower. Melee
+shares top out near 30%, so they're multiplied by 3 to keep Melee Resist's signal about
+as strong as the old hand values. Re-measure after a hero rework rather than tweaking
+single values by hand; `/v1/matches/{id}/metadata` has the damage matrix if the chart
+goes stale.
+
 ## How item stats are extracted (`Services/GameApi/GameSync.cs`)
 
 `item_stats.csv` and `item_tooltips.json` are **generated** by Data → Sync from
@@ -96,8 +110,11 @@ Game API. Never hand-edit them; fix the extraction instead.
   `AmbushBonusTechPower` all become `TechPower`), so a single stat rule covers
   every item that has any of them.
 - **`GameSync.Unscored`** lists properties that are left out on purpose, each with
-  a reason: debuffs on enemies, per-stack values, one-shot procs, and effects on
-  allies.
+  a reason: debuffs on enemies, one-shot procs, and effects on allies.
+- **Per-stack values** (`_perStack`, plus `_forcePerStack` for ones filed under a
+  plain name, like Spellslinger's Fire Rate) are counted fully stacked: value ×
+  the item's `MaxStacks`, filed as conditional. `_assumedStacks` gives a count
+  for items the game doesn't cap (Ballistic Enchantment stacks per hero hit).
 - **Conditional detection** (`IsConditional`) uses the API's `ConditionallyApplied`
   flag, whether the property is on an active or a passive, and whether its
   sibling properties are flagged. Three per-item override sets handle the known
@@ -126,7 +143,8 @@ afterwards (see "Tests and goldens" below).
    - **Shown under a scored stat's label but not mapped**: add each property to
      `GameSync.Stats` or to `GameSync.Unscored`.
    - **Overrides that no longer match the game**: remove or fix the entry in
-     `_forceConditional`, `_forceShown` or `_selfInflicted`.
+     `_forceConditional`, `_forceShown`, `_selfInflicted`, `_forcePerStack` or
+     `_assumedStacks`, or give an uncapped per-stack item a count.
 2. **Data → Fetch Match Stats** to refresh the real-match lifts.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 

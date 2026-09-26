@@ -42,6 +42,13 @@ public class ItemFormulasViewModel : ViewModelBase, ISearchablePage
     public bool IsByItem => SelectedTab == 0;
     public bool IsByTrait => SelectedTab == 1;
 
+    /// <summary>Show one item's rules on the By Item panel.</summary>
+    public void OpenItem(string itemId)
+    {
+        SelectedTab = 0;
+        ByItem.OpenItem(itemId);
+    }
+
     public void FocusSearch()
     {
         if (IsByItem)

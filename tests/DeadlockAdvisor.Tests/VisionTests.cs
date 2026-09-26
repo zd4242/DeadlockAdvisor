@@ -273,11 +273,8 @@ public class VisionTests
 
     private static void AssertFixtureReadCorrectly(string name)
     {
-        var spec = JsonNode.Parse(File.ReadAllText(Golden.PathOf("vision", "fixtures", name + ".json")))!;
-        var result = Detector.Detect(Image($"fixtures/{name}.png"), Bank,
-            pitchRange: spec["pitch_range"] is JsonArray pitch ? ((double)pitch[0]!, (double)pitch[1]!) : null,
-            topRange: spec["top_range"] is JsonArray top ? ((double)top[0]!, (double)top[1]!) : null,
-            screenHeight: (int?)spec["screen_height"]);
+        var spec = FixtureSpec(name);
+        var result = DetectFixture(name);
         Assert.NotNull(result);
 
         if ((int?)spec["self_slot"] is { } expectedSelf)

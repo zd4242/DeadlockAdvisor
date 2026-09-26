@@ -7,6 +7,7 @@ does_melee_damage,Does Melee Damage,0,100,How much of this hero's damage or util
 combat_range,Fights at Range vs Melee,-100,100,"Negative = fights up close, positive = fights from range"
 summons_npcs,Summons NPCs,0,100,How much this hero relies on summoned units/minions
 applies_bullet_onhit_effects,Applies Bullet On-Hit Effects,0,100,How much this hero's bullets carry on-hit effects beyond raw damage
+applies_spirit_damage_easily,Easily Applies Spirit Damage,-100,100,"How consistently and quickly this hero deals spirit damage (damage over time, frequent ticks, spirit damage on bullets), for items that apply effects when dealing spirit damage; negative = barely deals spirit damage at all"
 cares_about_firerate,Cares About Firerate,0,100,How dependent this hero's damage is on attack speed
 cares_about_weapon_damage,Cares About Weapon Damage,0,100,How much this hero's build wants raw weapon damage scaling
 scales_with_spirit_power,Scales With Spirit Power,0,100,How much this hero's own damage/utility scales with their spirit power stat

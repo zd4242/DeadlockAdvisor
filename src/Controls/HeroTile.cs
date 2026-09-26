@@ -112,17 +112,10 @@ public class HeroTile : Control
             context.DrawRectangle(null, pen, new RoundedRect(rect, _radius));
         }
 
-        ArtPainter.Draw(context, this, ArtKind.Hero, HeroId, HeroName, new Rect(_pad, _pad, _portrait, _portrait),
-            opacity: assigned || hovered ? 1.0 : 0.82);
-
-        // Lane marker: a short bar under the portrait, only for laners.
+        var portrait = new Rect(_pad, _pad, _portrait, _portrait);
+        ArtPainter.Draw(context, this, ArtKind.Hero, HeroId, HeroName, portrait, opacity: assigned || hovered ? 1.0 : 0.82);
         if (InLane)
-        {
-            const double barHeight = 3;
-            var barWidth = _portrait * 0.55;
-            var bar = new Rect(_pad + (_portrait - barWidth) / 2, _pad + _portrait - barHeight - 3, barWidth, barHeight);
-            context.DrawRectangle(new SolidColorBrush(Palette.Accent), null, new RoundedRect(bar, barHeight / 2));
-        }
+            LaneBar.Paint(context, portrait);
 
         var nameWidth = Bounds.Width - 4;
         var name = Fonts.Centered(HeroName, 11, assigned || hovered ? Palette.Text : Palette.TextDim, nameWidth, bold: assigned);

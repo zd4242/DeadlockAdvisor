@@ -50,32 +50,62 @@ public static class VisionApply
     }
 
     /// <summary>
-    /// Write the roster in, returning how many heroes were assigned. Heroes missing from heroes.csv
-    /// are dropped rather than invented, as loading a saved match drops them.
+    /// Write the roster in, in place of whatever was there, returning how many heroes were assigned.
+    /// Heroes missing from heroes.csv are dropped rather than invented, as loading a saved match
+    /// drops them. The net worth history survives a detection of the same twelve heroes, so
+    /// detecting again mid-match adds to it rather than starting over.
     /// </summary>
     /// <param name="laneSlots">
     /// The lane as the review showed it (off the game's highlights when it could read them), so what
     /// lands is what was checked; without it the lane comes from the layout's pairing.
     /// </param>
+    /// <param name="netWorth">Souls per slot read off the same capture, and when it was taken.</param>
     public static int ApplyToMatch(MatchState match, IReadOnlyList<string?> slotHeroes, int? selfSlot,
-        IEnumerable<string>? validHeroIds = null, bool clearFirst = true, IReadOnlyList<int>? laneSlots = null)
+        IEnumerable<string>? validHeroIds = null, IReadOnlyList<int>? laneSlots = null,
+        (IReadOnlyList<int?> Souls, DateTimeOffset At)? netWorth = null)
     {
         var valid = validHeroIds?.ToHashSet();
         var heroes = slotHeroes
             .Select(hero => !string.IsNullOrEmpty(hero) && (valid is null || valid.Contains(hero)) ? hero : null)
             .ToList();
 
-        if (clearFirst)
-            match.Clear();
+        var previous = match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => entry.Key).ToHashSet();
+        var history = match.NetWorth.Snapshots.ToList();
+        match.Clear();
 
         var roles = RolesFor(heroes, selfSlot);
         foreach (var (heroId, role) in roles)
             match.SetRole(heroId, role);
+        for (var slot = 0; slot < heroes.Count; slot++)
+        {
+            if (heroes[slot] is { } heroId && match.RoleOf(heroId) != Role.None)
+                match.Slots[heroId] = slot;
+        }
         var lane = laneSlots is null
             ? LaneHeroesFor(heroes, selfSlot)
             : laneSlots.Where(i => i >= 0 && i < heroes.Count && heroes[i] is not null).Select(i => heroes[i]!);
         foreach (var heroId in lane)
             match.SetLane(heroId, true);
+
+        if (roles.Count > 0 && previous.SetEquals(roles.Keys))
+        {
+            foreach (var snapshot in history)
+                match.NetWorth.Add(snapshot);
+        }
+        if (netWorth is { } reading)
+            match.NetWorth.Add(SnapshotFor(match, reading.Souls, reading.At));
         return roles.Count;
+    }
+
+    /// <summary>Souls per top-bar slot, as souls per hero in the match.</summary>
+    public static NetWorthSnapshot SnapshotFor(MatchState match, IReadOnlyList<int?> slotSouls, DateTimeOffset at)
+    {
+        var souls = new Dictionary<string, int>();
+        for (var slot = 0; slot < slotSouls.Count; slot++)
+        {
+            if (slotSouls[slot] is { } value && match.HeroInSlot(slot) is { } heroId)
+                souls[heroId] = value;
+        }
+        return new NetWorthSnapshot(at, souls);
     }
 }

@@ -114,6 +114,7 @@ public class MainWindowViewModel : ViewModelBase
         data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
         dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
+        match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
         ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1));
         ZoomOutCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex - 1));
@@ -179,6 +180,12 @@ public class MainWindowViewModel : ViewModelBase
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 
     private void CyclePage(int step) => CurrentPage = ((CurrentPage + step) % Pages.Count + Pages.Count) % Pages.Count;
+
+    private void ShowFormula(string itemId)
+    {
+        CurrentPage = 2;
+        ItemFormulas.OpenItem(itemId);
+    }
 
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()

@@ -1,0 +1,30 @@
+{
+  "notes": [
+    "The same match as laning_2560x1440_band, at 1:25, off a paused video of it",
+    "(so softer than a live capture). It arrived as a screenshot with this app",
+    "below the game; the top 180 rows line up with the laning capture's HUD at",
+    "x=310, y=0 and are pasted there on a black band of the real size.",
+    "",
+    "One team is past 1k and printed in thousands to a decimal ('1.0'), the",
+    "other still under it and printed as plain souls ('873'), which is the mix",
+    "the reader has to tell apart. The pills sit on a blue-lit scene close to",
+    "the sapphire pill colour. Its bright 8s are the first the reference digits",
+    "had: before it, 872 went unread and 815 read as 816."
+  ],
+  "screen_height": 1440,
+  "allow_wrong": 0,
+  "net_worth": ["1.0", "1.0", "1.0", "1.0", "1.1", "1.1", "873", "872", "820", "815", "908", "901"],
+  "team_totals": ["6", "5"],
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "5": "vyper",
+    "6": "kelvin",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

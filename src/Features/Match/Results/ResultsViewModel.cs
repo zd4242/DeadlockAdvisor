@@ -1,6 +1,8 @@
+using System.Reactive;
 using System.Reactive.Subjects;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Scoring;
+using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Results;
@@ -34,6 +36,7 @@ public class ResultsViewModel : ViewModelBase
     {
         _tierLabels = tierLabels ?? DefaultTierLabels;
         EmptyHint = emptyHint;
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext);
     }
 
     /// <summary>Tier headers and rows, in display order.</summary>
@@ -50,6 +53,12 @@ public class ResultsViewModel : ViewModelBase
     /// <summary>A click picked a row: the explanation follows it. Not raised when a refresh drops the selection.</summary>
     public IObservable<string> RowClicked => _rowClicked;
     private readonly Subject<string> _rowClicked = new();
+
+    /// <summary>A row's context menu asked to open that item's rules on the Item Formulas page.</summary>
+    public IObservable<string> FormulaRequested => _formulaRequested;
+    private readonly Subject<string> _formulaRequested = new();
+
+    public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
 
     public void SetResults(OrderedDictionary<int, List<ScoredItem>> grouped, string dataTip)
     {

@@ -42,4 +42,15 @@ public class SavedMatch
 {
     public OrderedDictionary<string, string> Roles { get; set; } = [];
     public List<string> Lane { get; set; } = [];
+
+    /// <summary>Hero → top-bar slot, for heroes a detection placed.</summary>
+    public Dictionary<string, int> Slots { get; set; } = [];
+
+    public List<SavedNetWorth> NetWorth { get; set; } = [];
+}
+
+public class SavedNetWorth
+{
+    public DateTimeOffset At { get; set; }
+    public Dictionary<string, int> Souls { get; set; } = [];
 }

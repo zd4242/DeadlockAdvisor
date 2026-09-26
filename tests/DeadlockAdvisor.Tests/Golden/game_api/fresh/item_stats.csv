@@ -9,11 +9,13 @@ arcane_surge,TechPower,Spirit Power,20,,1
 arcane_surge,TechRangeMultiplier,Ability Range,12,%,1
 arctic_blast,TechResist,Spirit Resist,10,%,0
 armor_piercing_rounds,BaseAttackDamagePercent,Weapon Damage,8,%,0
+ballistic_enchantment,BaseAttackDamagePercent,Weapon Damage,40,%,1
 ballistic_enchantment,TechRangeMultiplier,Ability Range,22,%,1
 battle_vest,BaseAttackDamagePercent,Weapon Damage,18,%,1
 battle_vest,BonusFireRate,Fire Rate,7,%,1
 battle_vest,BulletResist,Bullet Resist,18,%,0
 battle_vest,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
+berserker,BaseAttackDamagePercent,Weapon Damage,70,%,1
 berserker,BulletResist,Bullet Resist,8,%,0
 blood_tribute,BonusFireRate,Fire Rate,35,%,1
 blood_tribute,BonusMoveSpeed,Move Speed,2,m/s,1
@@ -259,7 +261,7 @@ slowing_hex,BonusSprintSpeed,Sprint Speed,0.5,m/s,0
 spellbreaker,BonusHealth,Bonus Health,90,,0
 spellbreaker,StatusResistancePercent,Debuff Resist,25,%,0
 spellbreaker,TechResist,Spirit Resist,18,%,0
-spellslinger,BonusFireRate,Fire Rate,11,%,1
+spellslinger,BonusFireRate,Fire Rate,66,%,1
 spellslinger,CooldownReduction,Cooldown Reduction,5,%,0
 spirit_burn,HealAmpReceivePenaltyPercent,Healing Reduction,70,%,1
 spirit_burn,TechRangeMultiplier,Ability Range,6,%,0
@@ -285,6 +287,7 @@ spiritual_overflow,BonusFireRate,Fire Rate,25,%,1
 spiritual_overflow,BonusHealth,Bonus Health,90,,0
 spiritual_overflow,TechPower,Spirit Power,6,,0
 spiritual_overflow,TechPower,Spirit Power,30,,1
+split_shot,BaseAttackDamagePercent,Weapon Damage,40,%,1
 sprint_boots,BonusSprintSpeed,Sprint Speed,2,m/s,0
 sprint_boots,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
 stalker,BonusHealth,Bonus Health,50,,0
@@ -308,7 +311,9 @@ toxic_bullets,HealAmpReceivePenaltyPercent,Healing Reduction,35,%,1
 transcendent_cooldown,CooldownReduction,Cooldown Reduction,25,%,0
 transcendent_cooldown,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
 trophy_collector,BonusSprintSpeed,Sprint Speed,2,m/s,0
+trophy_collector,BonusSprintSpeed,Sprint Speed,2.4,m/s,1
 trophy_collector,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+trophy_collector,TechRangeMultiplier,Ability Range,12,%,1
 unstoppable,BonusHealth,Bonus Health,125,,0
 unstoppable,StatusResistancePercent,Debuff Resist,25,%,0
 vampiric_burst,BaseAttackDamagePercent,Weapon Damage,6,%,0

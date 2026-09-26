@@ -3,126 +3,67 @@
              xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
              xmlns:controls="using:DeadlockAdvisor.Controls"
              xmlns:enums="using:DeadlockAdvisor.Enums"
-             xmlns:theme="using:DeadlockAdvisor.Theme"
              x:Class="DeadlockAdvisor.Features.Match.Board.MatchBoardView"
              x:DataType="board:MatchBoardViewModel">
 
-    <!-- One scrolling column holding both cards: the palette is 38 tiles tall and won't fit
-         beside the roster on a short window, so neither card is ever clipped. -->
+    <!-- The palette is 38 tiles tall and won't fit on a short window, so it scrolls. -->
     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <StackPanel Spacing="12" Margin="0,0,4,0">
-
-            <!-- Current match -->
-            <Border Classes="card">
-                <StackPanel Spacing="10">
-                    <Grid ColumnDefinitions="*,Auto,Auto,Auto">
-                        <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
-                        <Button Grid.Column="1"
-                                Content="Detect from screen"
-                                Command="{Binding DetectCommand}"
-                                ToolTip.Tip="Read the whole match off Deadlock's top bar (F9).&#10;You get to check the result before anything is applied."/>
-                        <Button Grid.Column="2"
-                                Classes="ghost"
-                                Content="Random"
-                                Margin="6,0,0,0"
-                                Command="{Binding RandomizeCommand}"
-                                ToolTip.Tip="Fill the match with random heroes, one ally and two enemies in your lane (for testing)"/>
-                        <Button Grid.Column="3"
-                                Classes="ghost"
-                                Content="Clear"
-                                Margin="6,0,0,0"
-                                Command="{Binding ClearCommand}"
-                                ToolTip.Tip="Remove every hero from the match"/>
-                    </Grid>
-
-                    <Grid ColumnDefinitions="84,*">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="section ally" Text="ALLIES"/>
-                            <TextBlock Classes="faint" Text="{Binding AllyCount}"/>
+        <Border Classes="card" Margin="0,0,4,0">
+            <StackPanel Spacing="8">
+                <Grid ColumnDefinitions="Auto,Auto,*">
+                    <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                    <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
+                        <StackPanel>
+                            <ToggleButton Classes="enemy"
+                                          Content="Enemy"
+                                          IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
+                                          Command="{Binding SetModeCommand}"
+                                          CommandParameter="{x:Static enums:Role.Enemy}"
+                                          ToolTip.Tip="Click heroes to mark them as Enemy (Alt+1)"/>
+                            <ToggleButton Classes="ally"
+                                          Content="Ally"
+                                          IsChecked="{Binding IsAllyMode, Mode=OneWay}"
+                                          Command="{Binding SetModeCommand}"
+                                          CommandParameter="{x:Static enums:Role.Ally}"
+                                          ToolTip.Tip="Click heroes to mark them as Ally (Alt+2)"/>
+                            <ToggleButton Classes="self"
+                                          Content="You"
+                                          IsChecked="{Binding IsSelfMode, Mode=OneWay}"
+                                          Command="{Binding SetModeCommand}"
+                                          CommandParameter="{x:Static enums:Role.Self}"
+                                          ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
                         </StackPanel>
-                        <controls:SlotStrip Grid.Column="1"
-                                            x:Name="AllyStrip"
-                                            Margin="10,0,0,0"
-                                            Entries="{Binding AllySlots}"
-                                            TeamColor="{x:Static theme:Palette.Ally}"
-                                            Noun="ally"/>
-                    </Grid>
+                    </Border>
+                    <controls:SearchBox Grid.Column="2"
+                                        x:Name="SearchBox"
+                                        Text="{Binding SearchText}"
+                                        Watermark="{Binding SearchPlaceholder}"/>
+                </Grid>
 
-                    <Grid ColumnDefinitions="84,*">
-                        <StackPanel Spacing="2">
-                            <TextBlock Classes="section enemy" Text="ENEMIES"/>
-                            <TextBlock Classes="faint" Text="{Binding EnemyCount}"/>
-                        </StackPanel>
-                        <controls:SlotStrip Grid.Column="1"
-                                            x:Name="EnemyStrip"
-                                            Margin="10,0,0,0"
-                                            Entries="{Binding EnemySlots}"
-                                            TeamColor="{x:Static theme:Palette.Enemy}"
-                                            Noun="enemy"/>
-                    </Grid>
+                <ItemsControl x:Name="Palette" ItemsSource="{Binding Tiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="board:HeroTileViewModel">
+                            <controls:HeroTile HeroId="{Binding HeroId}"
+                                               HeroName="{Binding HeroName}"
+                                               Role="{Binding Role}"
+                                               InLane="{Binding InLane}"
+                                               IsHighlighted="{Binding IsHighlighted}"
+                                               IsVisible="{Binding IsShown}"
+                                               ToolTip.Tip="{Binding HeroName}"
+                                               Margin="0,0,6,6"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
 
-                    <TextBlock Classes="hint" TextWrapping="Wrap" Text="{Binding Hint}"/>
-                </StackPanel>
-            </Border>
-
-            <!-- Palette -->
-            <Border Classes="card">
-                <StackPanel Spacing="8">
-                    <Grid ColumnDefinitions="Auto,Auto,*">
-                        <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                        <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
-                            <StackPanel>
-                                <ToggleButton Classes="enemy"
-                                              Content="Enemy"
-                                              IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
-                                              Command="{Binding SetModeCommand}"
-                                              CommandParameter="{x:Static enums:Role.Enemy}"
-                                              ToolTip.Tip="Click heroes to mark them as Enemy (Alt+1)"/>
-                                <ToggleButton Classes="ally"
-                                              Content="Ally"
-                                              IsChecked="{Binding IsAllyMode, Mode=OneWay}"
-                                              Command="{Binding SetModeCommand}"
-                                              CommandParameter="{x:Static enums:Role.Ally}"
-                                              ToolTip.Tip="Click heroes to mark them as Ally (Alt+2)"/>
-                                <ToggleButton Classes="self"
-                                              Content="You"
-                                              IsChecked="{Binding IsSelfMode, Mode=OneWay}"
-                                              Command="{Binding SetModeCommand}"
-                                              CommandParameter="{x:Static enums:Role.Self}"
-                                              ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
-                            </StackPanel>
-                        </Border>
-                        <controls:SearchBox Grid.Column="2"
-                                            x:Name="SearchBox"
-                                            Text="{Binding SearchText}"
-                                            Watermark="{Binding SearchPlaceholder}"/>
-                    </Grid>
-
-                    <ItemsControl x:Name="Palette" ItemsSource="{Binding Tiles}">
-                        <ItemsControl.ItemsPanel>
-                            <ItemsPanelTemplate>
-                                <WrapPanel Orientation="Horizontal"/>
-                            </ItemsPanelTemplate>
-                        </ItemsControl.ItemsPanel>
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="board:HeroTileViewModel">
-                                <controls:HeroTile HeroId="{Binding HeroId}"
-                                                   HeroName="{Binding HeroName}"
-                                                   Role="{Binding Role}"
-                                                   InLane="{Binding InLane}"
-                                                   IsHighlighted="{Binding IsHighlighted}"
-                                                   IsVisible="{Binding IsShown}"
-                                                   ToolTip.Tip="{Binding HeroName}"
-                                                   Margin="0,0,6,6"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-
-                    <TextBlock Classes="hint"
-                               TextWrapping="Wrap"
-                               Text="Left click assigns · right click picks a role · double click sets You"/>
-                </StackPanel>
-            </Border>
-        </StackPanel>
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           Text="Left click assigns · right click picks a role · double click sets You"/>
+            </StackPanel>
+        </Border>
     </ScrollViewer>
 </UserControl>

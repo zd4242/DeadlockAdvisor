@@ -37,6 +37,13 @@
                                     Classes.selected="{Binding IsSelected}"
                                     Margin="0,0,0,4"
                                     Padding="8,7,10,7">
+                                <Border.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="Go to Item Formula"
+                                                  Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
+                                                  CommandParameter="{Binding ItemId}"/>
+                                    </ContextMenu>
+                                </Border.ContextMenu>
                                 <Grid ColumnDefinitions="Auto,*">
                                     <art:ArtImage Width="34"
                                                   Height="34"

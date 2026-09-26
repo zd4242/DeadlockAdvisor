@@ -69,9 +69,49 @@ public sealed class DetectTests : IDisposable
         Assert.Equal(_band2Heroes[1..6], match.Allies);
         Assert.Equal(_band2Heroes[6..], match.Enemies);
         Assert.Equal(["ivy", "celeste", "lash", "apollo"], match.LaneHeroes);
-        Assert.Equal(6, _page.Board.AllySlots.Count);
+        // The match bar keeps the game's order, you in your own place included.
+        Assert.Equal(_band2Heroes[..6], _page.Board.AllySlots.Select(slot => slot.HeroId));
+        Assert.Equal(_band2Heroes[6..], _page.Board.EnemySlots.Select(slot => slot.HeroId));
+        Assert.True(_page.Board.AllySlots[0].IsSelf);
         Assert.Equal("self", _fixture.Settings.Current.LastMatch!.Roles["apollo"]);
         Assert.False(_page.FullResults.IsEmpty);
+    }
+
+    [AvaloniaFact]
+    public async Task NetWorthIsReadWithTheMatchAndShownOnTheBar()
+    {
+        int[] souls = [16_000, 13_000, 20_000, 12_000, 18_000, 12_000, 17_000, 13_000, 14_000, 15_000, 19_000, 15_000];
+        var review = await DetectAsync();
+
+        Assert.Equal(["16k", "13k", "20k", "12k", "18k", "12k", "17k", "13k", "14k", "15k", "19k", "15k"], review.Slots.Select(slot => slot.NetWorth));
+        Assert.Contains("Net worth read for 12 of 12", review.Summary);
+        await review.ApplyCommand.Execute();
+
+        var match = _page.Match;
+        Assert.Equal(souls, _band2Heroes.Select(hero => match.NetWorth.Latest(hero) ?? 0));
+        Assert.Equal(Enumerable.Range(0, 12), _band2Heroes.Select(hero => match.Slots[hero]));
+        var board = _page.Board;
+        Assert.True(board.HasNetWorth);
+        Assert.Equal(souls[..6], board.AllySlots.Select(slot => slot.NetWorth ?? 0));
+        Assert.All(board.EnemySlots, slot => Assert.True(slot.ShowsNetWorth));
+        Assert.Equal(("91k", "93k", "-2.2%", true), (board.AllyNetWorth, board.EnemyNetWorth, board.NetWorthLead, board.IsBehind));
+
+        // Saved with the match, so reopening keeps it.
+        Assert.Equal(souls, _band2Heroes.Select(hero => _fixture.Settings.Current.LastMatch!.NetWorth.Single().Souls[hero]));
+    }
+
+    [AvaloniaFact]
+    public async Task DetectingTheSameMatchAgainAddsToTheHistory()
+    {
+        await (await DetectAsync()).ApplyCommand.Execute();
+        await (await DetectAsync()).ApplyCommand.Execute();
+
+        Assert.Equal(2, _page.Match.NetWorth.Snapshots.Count);
+        Assert.Equal(0, _page.Match.NetWorth.Change("apollo")?.Souls);
+
+        _page.Board.ClearCommand.Execute().Subscribe();
+        Assert.True(_page.Match.NetWorth.IsEmpty);
+        Assert.False(_page.Board.HasNetWorth);
     }
 
     [AvaloniaFact]
@@ -124,7 +164,7 @@ public sealed class DetectTests : IDisposable
         var detected = await DetectAsync();
         await detected.CancelCommand.Execute();
         var detection = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)! with { SelfSlot = null };
-        using var review = new DetectReviewViewModel(detection, [], _ => { }, () => { });
+        using var review = new DetectReviewViewModel(detection, NetWorthReading.Empty, [], _ => { }, () => { });
 
         Assert.False(await review.ApplyCommand.CanExecute.FirstAsync());
         Assert.Equal("LEFT SIDE", review.OwnHeading);
@@ -150,7 +190,7 @@ public sealed class DetectTests : IDisposable
         double[] marks = [9.0, 0.2, 0.3, 6.0, 0.2, 0.1, 0.3, 0.2, 5.0, 4.0, 0.2, 0.1];
         var detection = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)! with { SelfSlot = 0, SelfScores = marks };
         DetectReviewResult? applied = null;
-        using var review = new DetectReviewViewModel(detection, [], result => applied = result, () => { });
+        using var review = new DetectReviewViewModel(detection, NetWorthReading.Empty, [], result => applied = result, () => { });
 
         Assert.Equal([SlotRole.LaneAlly, SlotRole.LaneEnemy, SlotRole.LaneEnemy], new[] { 3, 8, 9 }.Select(i => review.Slots[i].Role));
         Assert.Equal(SlotRole.Ally, review.Slots[1].Role);
