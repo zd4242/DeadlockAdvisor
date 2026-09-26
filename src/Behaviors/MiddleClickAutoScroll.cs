@@ -1,9 +1,7 @@
-using System.Diagnostics;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
-using Avalonia.Threading;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Theme;
 
@@ -24,11 +22,10 @@ public sealed class MiddleClickAutoScroll : IDisposable
     /// <summary>Screen DIPs around the anchor that don't scroll at all, at 100% zoom.</summary>
     public const double DeadZone = 12;
     private const double _markerSize = 30;
-    private static readonly TimeSpan _tick = TimeSpan.FromMilliseconds(16);
 
     private readonly Window _window;
-    private readonly DispatcherTimer _timer;
-    private readonly Stopwatch _clock = new();
+    private bool _frameRequested;
+    private TimeSpan? _lastFrame;
     private ScrollViewer? _area;
     private (bool Horizontal, bool Vertical) _axes;
     private Point _anchor;
@@ -42,7 +39,6 @@ public sealed class MiddleClickAutoScroll : IDisposable
     public MiddleClickAutoScroll(Window window)
     {
         _window = window;
-        _timer = new DispatcherTimer(_tick, DispatcherPriority.Render, (_, _) => Tick());
         window.AddHandler(InputElement.PointerPressedEvent, OnPressed, RoutingStrategies.Tunnel, handledEventsToo: true);
         window.AddHandler(InputElement.PointerReleasedEvent, OnReleased, RoutingStrategies.Tunnel, handledEventsToo: true);
         window.AddHandler(InputElement.PointerMovedEvent, OnMoved, RoutingStrategies.Tunnel, handledEventsToo: true);
@@ -170,32 +166,52 @@ public sealed class MiddleClickAutoScroll : IDisposable
         };
         OverlayLayer.GetOverlayLayer(_window)?.Children.Add(_overlay);
 
-        _clock.Restart();
-        _timer.Start();
+        _lastFrame = null;
+        RequestFrame();
     }
 
     private void Stop()
     {
         if (_area is null)
             return;
-        _timer.Stop();
         _area = null;
         if (_overlay is not null)
             OverlayLayer.GetOverlayLayer(_window)?.Children.Remove(_overlay);
         _overlay = null;
     }
 
-    private void Tick()
+    /// <summary>
+    /// Steps once per rendered frame rather than on a timer: Windows timers only fire on its ~15.6 ms
+    /// tick, which halves the rate and lands the steps unevenly between frames. At most one request
+    /// is ever pending, so a quick stop and restart can't leave two loops scrolling at once.
+    /// </summary>
+    private void RequestFrame()
     {
+        if (_frameRequested)
+            return;
+        _frameRequested = true;
+        _window.RequestAnimationFrame(OnFrame);
+    }
+
+    private void OnFrame(TimeSpan now)
+    {
+        _frameRequested = false;
         var area = _area;
-        if (area is null || !area.IsEffectivelyVisible || !area.IsAttachedToVisualTree())
+        if (area is null)
+            return;
+        if (!area.IsEffectivelyVisible || !area.IsAttachedToVisualTree())
         {
             Stop();
             return;
         }
-        // Real elapsed time, so the speed holds even when a tick runs late.
-        var elapsed = Math.Min(_clock.Elapsed.TotalSeconds, 0.05);
-        _clock.Restart();
+        RequestFrame();
+        var previous = _lastFrame;
+        _lastFrame = now;
+        if (previous is null)
+            return;
+
+        // Real elapsed time, so the speed holds when a frame is dropped.
+        var elapsed = Math.Min((now - previous.Value).TotalSeconds, 0.05);
         var offset = _pointer - _anchor;
         var dead = DeadZone * _zoom;
         if (Math.Max(Math.Abs(offset.X), Math.Abs(offset.Y)) > dead)

@@ -33,6 +33,7 @@ bullet_resilience,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
 bullet_resist_shredder,BaseAttackDamagePercent,Weapon Damage,9,%,0
 bullet_resist_shredder,BulletResist,Bullet Resist,9,%,0
 burst_fire,BonusFireRate,Fire Rate,10,%,0
+burst_fire,BonusFireRate,Fire Rate,32,%,1
 burst_fire,BonusMoveSpeed,Move Speed,1.25,m/s,1
 capacitor,BonusFireRate,Fire Rate,5,%,0
 cheat_death,BonusHealth,Bonus Health,200,,0
@@ -42,6 +43,8 @@ cold_front,TechResist,Spirit Resist,6,%,0
 colossus,BaseAttackDamagePercent,Weapon Damage,15,%,0
 colossus,BonusBaseHealth,Base Health,25,%,0
 colossus,BonusMeleeDamagePercent,Melee Damage,30,%,1
+colossus,BulletResist,Bullet Resist,35,%,1
+colossus,TechResist,Spirit Resist,35,%,1
 compress_cooldown,CooldownReduction,Cooldown Reduction,18,%,0
 counterspell,BonusHealth,Bonus Health,50,,0
 counterspell,BonusMoveSpeed,Move Speed,1.75,m/s,1
@@ -63,9 +66,11 @@ decay,TechPower,Spirit Power,8,,0
 disarming_hex,BonusHealth,Bonus Health,75,,0
 disarming_hex,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
 dispel_magic,TechResist,Spirit Resist,10,%,0
+divine_barrier,Barrier,Barrier,600,,1
 divine_barrier,BonusMoveSpeed,Move Speed,2.75,m/s,1
 divine_barrier,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
 divine_barrier,TechRangeMultiplier,Ability Range,10,%,0
+diviners_kevlar,Barrier,Barrier,1000,,1
 diviners_kevlar,BonusAbilityDurationPercent,Ability Duration,15,%,0
 diviners_kevlar,TechPower,Spirit Power,40,,1
 duration_extender,BonusAbilityDurationPercent,Ability Duration,22,%,0
@@ -82,6 +87,7 @@ escalating_exposure,TechResist,Spirit Resist,17,%,0
 escalating_resilience,BaseAttackDamagePercent,Weapon Damage,18,%,0
 escalating_resilience,BonusClipSizePercent,Max Ammo,35,%,0
 escalating_resilience,BonusHealth,Bonus Health,75,,0
+escalating_resilience,BulletResist,Bullet Resist,30,%,1
 ethereal_shift,BonusMoveSpeed,Move Speed,3,m/s,1
 ethereal_shift,TechResist,Spirit Resist,30,%,1
 express_shot,BaseAttackDamagePercent,Weapon Damage,8,%,0
@@ -98,9 +104,12 @@ focus_lens,BonusFireRate,Fire Rate,10,%,0
 fortitude,BonusHealth,Bonus Health,375,,0
 fortitude,BonusMoveSpeed,Move Speed,1.5,m/s,1
 frenzy,BonusFireRate,Fire Rate,15,%,0
+frenzy,BonusFireRate,Fire Rate,40,%,1
 frenzy,BonusHealth,Bonus Health,160,,0
 frenzy,BulletLifestealPercent,Bullet Lifesteal,10,%,0
+frenzy,StatusResistancePercent,Debuff Resist,40,%,1
 fury_trance,BaseAttackDamagePercent,Weapon Damage,6,%,0
+fury_trance,BonusFireRate,Fire Rate,32,%,1
 fury_trance,BonusHealth,Bonus Health,100,,0
 fury_trance,BulletLifestealPercent,Bullet Lifesteal,14,%,0
 fury_trance,TechResist,Spirit Resist,40,%,1
@@ -109,6 +118,7 @@ golden_goose_egg,BonusSprintSpeed,Sprint Speed,1,m/s,0
 golden_goose_egg,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
 greater_expansion,TechRangeMultiplier,Ability Range,30,%,0
 greater_expansion,TechResist,Spirit Resist,10,%,0
+grit,Barrier,Barrier,200,,1
 grit,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
 guardian_ward,BonusMoveSpeed,Move Speed,2.75,m/s,1
 guardian_ward,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
@@ -142,6 +152,7 @@ hunters_aura,BonusHealth,Bonus Health,100,,0
 hunters_aura,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
 improved_spirit,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
 improved_spirit,TechPower,Spirit Power,18,,0
+indomitable,Barrier,Barrier,325,,1
 indomitable,BulletResist,Bullet Resist,10,%,0
 indomitable,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
 indomitable,TechResist,Spirit Resist,10,%,0
@@ -175,6 +186,7 @@ lucky_shot,BonusClipSizePercent,Max Ammo,30,%,0
 magic_carpet,BonusAbilityDurationPercent,Ability Duration,15,%,0
 magic_carpet,BonusHealth,Bonus Health,125,,0
 magic_carpet,TechPower,Spirit Power,14,,0
+majestic_leap,Barrier,Barrier,200,,1
 melee_charge,BonusMeleeDamagePercent,Melee Damage,10,%,0
 melee_charge,BulletResist,Bullet Resist,6,%,0
 melee_lifesteal,BonusMeleeDamagePercent,Melee Damage,12,%,0
@@ -201,6 +213,7 @@ quicksilver_reload,BonusFireRate,Fire Rate,10,%,1
 radiant_regeneration,BonusHealth,Bonus Health,90,,0
 radiant_regeneration,BonusMoveSpeed,Move Speed,1.75,m/s,0
 rapid_rounds,BonusFireRate,Fire Rate,9,%,0
+reactive_barrier,Barrier,Barrier,325,,1
 reactive_barrier,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
 rebuttal,BonusHealth,Bonus Health,75,,0
 rebuttal,MeleeResistPercent,Melee Resist,18,%,0
@@ -217,8 +230,11 @@ rusted_barrel,BonusSprintSpeed,Sprint Speed,0.5,m/s,0
 scourge,BonusHealth,Bonus Health,100,,0
 scourge,StatusResistancePercent,Debuff Resist,20,%,1
 scourge,TechResist,Spirit Resist,40,%,1
+shadow_weave,BonusFireRate,Fire Rate,25,%,1
+shadow_weave,BonusMeleeDamagePercent,Melee Damage,25,%,1
 shadow_weave,BonusSprintSpeed,Sprint Speed,2,m/s,0
 shadow_weave,OutOfCombatHealthRegen,Out of Combat Regen,5,,0
+shadow_weave,TechPower,Spirit Power,25,,1
 sharpshooter,BaseAttackDamagePercent,Weapon Damage,10,%,0
 sharpshooter,BonusMoveSpeed,Move Speed,-0.7,m/s,0
 sharpshooter,BonusSprintSpeed,Sprint Speed,1,m/s,0
@@ -243,6 +259,7 @@ spirit_resilience,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
 spirit_resilience,TechResist,Spirit Resist,30,%,0
 spirit_resilience,TechResist,Spirit Resist,15,%,1
 spirit_sap,BonusHealth,Bonus Health,50,,0
+spirit_shielding,Barrier,Barrier,300,,1
 spirit_shielding,OutOfCombatHealthRegen,Out of Combat Regen,2.5,,0
 spirit_shielding,TechResist,Spirit Resist,18,%,1
 spirit_shredder_bullets,AbilityLifestealPercentHero,Spirit Lifesteal,10,%,1
@@ -263,6 +280,7 @@ superior_duration,BonusAbilityDurationPercent,Ability Duration,28,%,0
 superior_duration,BulletResist,Bullet Resist,8,%,0
 suppressor,BulletResist,Bullet Resist,8,%,0
 suppressor,TechPower,Spirit Power,6,,0
+surge_of_power,BonusFireRate,Fire Rate,20,%,1
 surge_of_power,BonusMoveSpeed,Move Speed,1.75,m/s,1
 swift_striker,BonusFireRate,Fire Rate,20,%,0
 swift_striker,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
@@ -279,8 +297,10 @@ trophy_collector,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
 unstoppable,BonusHealth,Bonus Health,125,,0
 unstoppable,StatusResistancePercent,Debuff Resist,25,%,0
 vampiric_burst,BaseAttackDamagePercent,Weapon Damage,6,%,0
+vampiric_burst,BonusFireRate,Fire Rate,34,%,1
 vampiric_burst,BonusHealth,Bonus Health,100,,0
 vampiric_burst,BulletLifestealPercent,Bullet Lifesteal,13,%,0
+vampiric_burst,BulletLifestealPercent,Bullet Lifesteal,70,%,1
 vampiric_burst,BulletResist,Bullet Resist,10,%,0
 veil_walker,BonusHealth,Bonus Health,125,,0
 veil_walker,BonusMoveSpeed,Move Speed,3.5,m/s,1
@@ -289,6 +309,7 @@ vortex_web,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
 vortex_web,TechRangeMultiplier,Ability Range,8,%,0
 warp_stone,BulletResist,Bullet Resist,30,%,1
 weakening_headshot,BonusHealth,Bonus Health,60,,0
+weapon_shielding,Barrier,Barrier,300,,1
 weapon_shielding,BulletResist,Bullet Resist,18,%,1
 weapon_shielding,OutOfCombatHealthRegen,Out of Combat Regen,2.5,,0
 weighted_shots,BaseAttackDamagePercent,Weapon Damage,30,%,0

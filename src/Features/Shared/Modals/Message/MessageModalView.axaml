@@ -5,7 +5,9 @@
              x:DataType="message:MessageModalViewModel">
     <StackPanel Margin="20" Spacing="12">
         <TextBlock Classes="h2" Text="{Binding Title}"/>
-        <SelectableTextBlock Text="{Binding Body}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+        <ScrollViewer MaxHeight="520" HorizontalScrollBarVisibility="Disabled">
+            <SelectableTextBlock Text="{Binding Body}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+        </ScrollViewer>
         <Button x:Name="OkButton"
                 Classes="primary"
                 Content="OK"

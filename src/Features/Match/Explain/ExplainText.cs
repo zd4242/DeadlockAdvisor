@@ -53,9 +53,19 @@ public static class ExplainText
         return string.Join("\n", lines);
     }
 
-    /// <summary>"80 × 3": the hero's score times the effective coefficient.</summary>
+    /// <summary>"(80 − 61 avg) × 3": how far the hero sits from the roster's average, times the effective coefficient.</summary>
     public static string Arithmetic(TraitPart part) =>
-        $"{Format.Num(part.HeroScore)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}";
+        $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}";
+
+    /// <summary>"(80 − 61 avg)", or just "80" when the roster averages 0 on the trait.</summary>
+    public static string Deviation(TraitPart part)
+    {
+        if (part.Baseline == 0)
+            return Format.Num(part.HeroScore);
+        var baseline = NumberFormat.Round(part.Baseline, 1);
+        var sign = baseline < 0 ? "+" : "−";
+        return $"({Format.Num(part.HeroScore)} {sign} {Format.Num(Math.Abs(baseline))} avg)";
+    }
 
     public static string Share(TraitPart part) => Format.Signed(NumberFormat.Round(part.Amount, 2));
 }

@@ -1,15 +1,54 @@
+using System.Text;
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Tests.Support;
 
 /// <summary>
-/// Reference outputs from the Python app (its scripts/export_golden.py), copied next to the tests.
-/// Regenerate with: python scripts/export_golden.py &lt;this repo&gt;/tests/DeadlockAdvisor.Tests/Golden
+/// Reference outputs, copied next to the tests. They started as the Python app's export; now that it's
+/// retired, a deliberate behaviour change regenerates the affected ones from this app: run the tests
+/// with DEADLOCK_UPDATE_GOLDENS=1, review the diff under tests/DeadlockAdvisor.Tests/Golden, and commit.
 /// </summary>
 public static class Golden
 {
     public static string Root => Path.Combine(AppContext.BaseDirectory, "Golden");
+
+    /// <summary>Tests that support it rewrite their golden files from the current output instead of comparing.</summary>
+    public static bool Updating => Environment.GetEnvironmentVariable("DEADLOCK_UPDATE_GOLDENS") == "1";
+
+    /// <summary>A golden file in the source tree: <see cref="Root"/> is only the build's copy.</summary>
+    public static string SourcePathOf(params string[] parts)
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "DeadlockAdvisor.Tests.csproj")))
+            dir = dir.Parent;
+        if (dir is null)
+            throw new DirectoryNotFoundException("Couldn't find the test project above " + AppContext.BaseDirectory);
+        return Path.Combine([dir.FullName, "Golden", .. parts]);
+    }
+
+    /// <summary>
+    /// Rewrite a golden JSON file, in the source tree and the build's copy, in the shape the Python
+    /// export used, keeping the file's line endings so the diff shows only real changes.
+    /// </summary>
+    public static void WriteJson(string name, JsonNode node)
+    {
+        var source = SourcePathOf(name);
+        var text = Encoding.UTF8.GetString(PythonJson.ToFileBytes(node, ensureAscii: false));
+        if (File.Exists(source) && !File.ReadAllText(source).Contains("\r\n", StringComparison.Ordinal))
+            text = text.Replace("\r\n", "\n", StringComparison.Ordinal);
+        var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(text);
+        File.WriteAllBytes(source, bytes);
+        File.WriteAllBytes(PathOf(name), bytes);
+    }
+
+    /// <summary>Replace a golden file with one a test produced, in the source tree and the build's copy.</summary>
+    public static void CopyFile(string actualPath, params string[] parts)
+    {
+        File.Copy(actualPath, SourcePathOf(parts), overwrite: true);
+        File.Copy(actualPath, PathOf(parts), overwrite: true);
+    }
 
     public static string PathOf(params string[] parts) => Path.Combine([Root, .. parts]);
 

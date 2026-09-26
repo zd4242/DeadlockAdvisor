@@ -31,35 +31,82 @@ public static partial class GameSync
         {
             ["TechResist"] = ("TechResist", "Spirit Resist", "%"),
             ["TechResistBelowThreshold"] = ("TechResist", "Spirit Resist", "%"),
+            ["BuffTechResist"] = ("TechResist", "Spirit Resist", "%"),
             ["BulletResist"] = ("BulletResist", "Bullet Resist", "%"),
             ["BulletResistBelowThreshold"] = ("BulletResist", "Bullet Resist", "%"),
+            ["BuffBulletResist"] = ("BulletResist", "Bullet Resist", "%"),
+            // Escalating Resilience's fully stacked resist, labelled "Max Bullet Resist".
+            ["MaxArmorStacks"] = ("BulletResist", "Bullet Resist", "%"),
             ["MeleeResistPercent"] = ("MeleeResistPercent", "Melee Resist", "%"),
             ["BonusHealth"] = ("BonusHealth", "Bonus Health", ""),
             ["BonusBaseHealth"] = ("BonusBaseHealth", "Base Health", "%"),
+            // Barriers on yourself only: Guardian Ward's goes on an ally.
+            ["CombatBarrier"] = ("Barrier", "Barrier", ""),
+            ["VexBarrierCombatBarrier"] = ("Barrier", "Barrier", ""),
             ["TechPower"] = ("TechPower", "Spirit Power", ""),
             ["SpiritPower"] = ("TechPower", "Spirit Power", ""),
             ["SpiritPowerInnate"] = ("TechPower", "Spirit Power", ""),
+            ["AmbushBonusTechPower"] = ("TechPower", "Spirit Power", ""),
+            ["BonusSpirit"] = ("TechPower", "Spirit Power", ""),
             ["TechPowerPercent"] = ("TechPowerPercent", "Spirit Power", "%"),
             ["BaseAttackDamagePercent"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            ["BaseAttackDamagePercentBonus"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            ["CloseRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            ["LongRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["BonusFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
+            ["ActiveBonusFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
+            ["ActivatedFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
+            ["AmbushBonusFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
+            ["FervorFireRate"] = ("BonusFireRate", "Fire Rate", "%"),
+            ["FireRateBonus"] = ("BonusFireRate", "Fire Rate", "%"),
             ["BonusClipSizePercent"] = ("BonusClipSizePercent", "Max Ammo", "%"),
             ["BonusMeleeDamagePercent"] = ("BonusMeleeDamagePercent", "Melee Damage", "%"),
+            ["AmbushBonusMeleeDamage"] = ("BonusMeleeDamagePercent", "Melee Damage", "%"),
             ["BulletLifestealPercent"] = ("BulletLifestealPercent", "Bullet Lifesteal", "%"),
+            ["ActiveBonusLifesteal"] = ("BulletLifestealPercent", "Bullet Lifesteal", "%"),
             ["AbilityLifestealPercentHero"] = ("AbilityLifestealPercentHero", "Spirit Lifesteal", "%"),
             ["AbilityLifestealPercentHeroPassive"] = ("AbilityLifestealPercentHero", "Spirit Lifesteal", "%"),
+            ["BonusSpiritLifesteal"] = ("AbilityLifestealPercentHero", "Spirit Lifesteal", "%"),
             ["BonusHealthRegen"] = ("BonusHealthRegen", "Health Regen", ""),
             ["OutOfCombatHealthRegen"] = ("OutOfCombatHealthRegen", "Out of Combat Regen", ""),
             ["HealAmpCastPercent"] = ("HealAmpCastPercent", "Healing Effectiveness", "%"),
             ["HealAmpReceivePenaltyPercent"] = ("HealAmpReceivePenaltyPercent", "Healing Reduction", "%"),
             ["StatusResistancePercent"] = ("StatusResistancePercent", "Debuff Resist", "%"),
             ["InnateStatusResistancePercent"] = ("StatusResistancePercent", "Debuff Resist", "%"),
+            ["FervorStatusResistancePercent"] = ("StatusResistancePercent", "Debuff Resist", "%"),
             ["SlowResistancePercent"] = ("SlowResistancePercent", "Slow Resist", "%"),
             ["BonusMoveSpeed"] = ("BonusMoveSpeed", "Move Speed", "m/s"),
+            ["ActiveBonusMoveSpeed"] = ("BonusMoveSpeed", "Move Speed", "m/s"),
+            ["FervorMovespeed"] = ("BonusMoveSpeed", "Move Speed", "m/s"),
             ["BonusSprintSpeed"] = ("BonusSprintSpeed", "Sprint Speed", "m/s"),
             ["CooldownReduction"] = ("CooldownReduction", "Cooldown Reduction", "%"),
             ["BonusAbilityDurationPercent"] = ("BonusAbilityDurationPercent", "Ability Duration", "%"),
             ["TechRangeMultiplier"] = ("TechRangeMultiplier", "Ability Range", "%"),
+            ["TechRangeMultiplierBuff"] = ("TechRangeMultiplier", "Ability Range", "%"),
         };
+
+    /// <summary>
+    /// Properties the tooltip shows under a scored stat's label that are left out on purpose, and why.
+    /// Any other property sharing such a label is reported by the sync (<see cref="UnmappedStats"/>),
+    /// so a patch's new or renamed property gets sorted into <see cref="Stats"/> or here instead of
+    /// being silently dropped.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> Unscored = new Dictionary<string, string>
+    {
+        ["BulletArmorReduction"] = "a debuff on enemies",
+        ["BulletResistReduction"] = "a debuff on enemies",
+        ["MagicResistReduction"] = "a debuff on enemies",
+        ["TechArmorDamageReduction"] = "a debuff on enemies",
+        ["TechPowerReduction"] = "a debuff on enemies",
+        ["FireRateSlow"] = "a debuff on enemies",
+        ["SlowPercent"] = "a debuff on enemies",
+        ["MovementSpeedSlow"] = "a debuff on enemies",
+        ["GuardianWardCombatBarrier"] = "goes on an ally",
+        ["HealAmpRegenPenaltyPercent"] = "the regen half of a healing reduction HealAmpReceivePenaltyPercent already counts",
+        ["ProcBaseAttackDamagePercent"] = "one proc shot, not a lasting bonus",
+        ["StackingBonusSprintSpeed"] = "per stack",
+        ["StackingTechRangeMultiplier"] = "per stack",
+    };
 
     /// <summary>Stored negated relative to the game's display: Healbane's "35% Healing Reduction" arrives as -35.</summary>
     private static readonly HashSet<string> _negated = ["HealAmpReceivePenaltyPercent"];
@@ -164,15 +211,9 @@ public static partial class GameSync
     /// </summary>
     public static List<ItemStat> ExtractStats(string itemId, JsonNode record)
     {
-        var shown = DisplayedProperties(record);
-        var name = PyJson.Get(record, "name") is JsonValue nameValue && nameValue.TryGetValue<string>(out var n) ? n : null;
-        var properties = (PyJson.Get(record, "properties") as JsonObject ?? [])
-            .Where(pair => pair.Value is JsonObject && (shown is null || shown.Contains(pair.Key) || _forceShown.Contains((name, pair.Key))))
-            .Select(pair => (Key: pair.Key, Property: pair.Value!))
-            .ToList();
-        var passiveHasCondition = properties.Any(p =>
-            PyJson.Get(p.Property, "tooltip_section") is JsonValue section && section.TryGetValue<string>(out var s) && s == "passive"
-            && PyJson.Contains(p.Property, "usage_flags", "ConditionallyApplied"));
+        var name = NameOf(record);
+        var properties = ShownProperties(record);
+        var passiveHasCondition = PassiveHasCondition(properties);
 
         var totals = new OrderedDictionary<(string Stat, bool Conditional), double>();
         var meta = new Dictionary<string, (string Label, string Unit)>();
@@ -197,6 +238,107 @@ public static partial class GameSync
             .Select(pair => new ItemStat(itemId, pair.Key.Stat, meta[pair.Key.Stat].Label, NumberFormat.Round(pair.Value, 4),
                 meta[pair.Key.Stat].Unit, pair.Key.Conditional))
             .ToList();
+    }
+
+    private static string? NameOf(JsonNode record) =>
+        PyJson.Get(record, "name") is JsonValue value && value.TryGetValue<string>(out var name) ? name : null;
+
+    /// <summary>The item's properties its tooltip shows, plus the ones <see cref="_forceShown"/> adds; every property without a tooltip layout.</summary>
+    private static List<(string Key, JsonNode Property)> ShownProperties(JsonNode record)
+    {
+        var shown = DisplayedProperties(record);
+        var name = NameOf(record);
+        return (PyJson.Get(record, "properties") as JsonObject ?? [])
+            .Where(pair => pair.Value is JsonObject && (shown is null || shown.Contains(pair.Key) || _forceShown.Contains((name, pair.Key))))
+            .Select(pair => (pair.Key, pair.Value!))
+            .ToList();
+    }
+
+    private static bool PassiveHasCondition(IEnumerable<(string Key, JsonNode Property)> properties) =>
+        properties.Any(p => PyJson.Text(p.Property, "tooltip_section") == "passive"
+                            && PyJson.Contains(p.Property, "usage_flags", "ConditionallyApplied"));
+
+    // -- drift: what a patch changed that the mapping above doesn't cover ------------------
+
+    /// <summary>
+    /// "Key ("Label"): Item, Item" for every shown, nonzero property that isn't in <see cref="Stats"/> or
+    /// <see cref="Unscored"/> but carries a label a scored stat uses: most likely a new or renamed
+    /// alias the stat rules are missing. Labels unrelated to any scored stat (Duration, Cast Range…)
+    /// aren't reported.
+    /// </summary>
+    public static List<string> UnmappedStats(IReadOnlyCollection<JsonNode> records)
+    {
+        var shownByRecord = records.Select(record => (Name: NameOf(record) ?? "?", Properties: ShownProperties(record))).ToList();
+        var scoredLabels = Stats.Values.Select(stat => stat.Label).ToHashSet(StringComparer.Ordinal);
+        foreach (var (_, properties) in shownByRecord)
+        {
+            foreach (var (key, property) in properties)
+            {
+                if (Stats.ContainsKey(key) && PyJson.Text(property, "label") is { Length: > 0 } label)
+                    scoredLabels.Add(label);
+            }
+        }
+
+        var found = new OrderedDictionary<string, (string Label, List<string> Items)>();
+        foreach (var (name, properties) in shownByRecord)
+        {
+            foreach (var (key, property) in properties)
+            {
+                if (Stats.ContainsKey(key) || Unscored.ContainsKey(key))
+                    continue;
+                var label = PyJson.Text(property, "label");
+                if (!scoredLabels.Contains(label) || Number(PyJson.Get(property, "value")) is not { } value || value == 0)
+                    continue;
+                if (!found.TryGetValue(key, out var entry))
+                {
+                    entry = (label, []);
+                    found[key] = entry;
+                }
+                entry.Items.Add(name);
+            }
+        }
+        return found
+            .OrderBy(pair => pair.Key, StringComparer.Ordinal)
+            .Select(pair => $"{pair.Key} (\"{pair.Value.Label}\"): {string.Join(", ", pair.Value.Items)}")
+            .ToList();
+    }
+
+    /// <summary>Per-item overrides that no longer match the game, or that the game's own flags now make unnecessary.</summary>
+    public static List<string> StaleOverrides(IReadOnlyCollection<JsonNode> records)
+    {
+        var byName = new Dictionary<string, JsonNode>();
+        foreach (var record in records)
+        {
+            if (NameOf(record) is { } name)
+                byName.TryAdd(name, record);
+        }
+
+        JsonNode? PropertyOf(string? name, string key) =>
+            name is not null && byName.TryGetValue(name, out var record) && PyJson.Get(PyJson.Get(record, "properties"), key) is JsonObject property
+                ? property
+                : null;
+
+        var stale = new List<string>();
+        foreach (var (name, key) in _forceConditional)
+        {
+            if (PropertyOf(name, key) is not { } property)
+                stale.Add($"{name} / {key}: forced conditional, but the item no longer has that property");
+            else if (IsConditional(property, PassiveHasCondition(ShownProperties(byName[name!]))))
+                stale.Add($"{name} / {key}: forced conditional, but the game now flags it conditional itself");
+        }
+        foreach (var (name, key) in _forceShown)
+        {
+            if (PropertyOf(name, key) is null)
+                stale.Add($"{name} / {key}: forced shown, but the item no longer has that property");
+            else if (DisplayedProperties(byName[name!])?.Contains(key) == true)
+                stale.Add($"{name} / {key}: forced shown, but the tooltip shows it now");
+        }
+        foreach (var (name, key) in _selfInflicted)
+        {
+            if (PropertyOf(name, key) is null)
+                stale.Add($"{name} / {key}: marked self-inflicted, but the item no longer has that property");
+        }
+        return stale;
     }
 
     // -- tooltips ---------------------------------------------------------------------
@@ -285,10 +427,14 @@ public static partial class GameSync
     public static SyncReport Apply(DataStore store, IEnumerable<JsonNode?> heroRecords, IEnumerable<JsonNode?> itemRecords)
     {
         var report = new SyncReport();
+        var knownItems = store.Items.Keys.ToHashSet();
         ApplyHeroes(store, heroRecords.OfType<JsonNode>().ToList(), report);
         var recordsByItem = ApplyItems(store, itemRecords.OfType<JsonNode>().ToList(), report);
-        ApplyStats(store, recordsByItem, report);
+        ApplyStats(store, recordsByItem, knownItems, report);
         ApplyTooltips(store, recordsByItem, report);
+        var records = recordsByItem.Values.ToList();
+        report.UnmappedStats.AddRange(UnmappedStats(records));
+        report.StaleOverrides.AddRange(StaleOverrides(records));
         if (report.AddedHeroes.Count > 0)
             store.SyncCategories();
         return report;
@@ -380,7 +526,9 @@ public static partial class GameSync
         return matched;
     }
 
-    private static void ApplyStats(DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, SyncReport report)
+    /// <param name="knownItems">The items before this sync: a new item's stats are news, not changes.</param>
+    private static void ApplyStats(
+        DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, IReadOnlySet<string> knownItems, SyncReport report)
     {
         var fresh = new OrderedDictionary<string, List<ItemStat>>();
         foreach (var (itemId, record) in recordsByItem)
@@ -394,10 +542,41 @@ public static partial class GameSync
                    && fresh.All(pair => store.ItemStats.TryGetValue(pair.Key, out var old) && old.SequenceEqual(pair.Value));
         if (same)
             return;
+        // With no stats on file there's nothing to compare against: every row would read as new.
+        if (store.ItemStats.Count > 0)
+        {
+            foreach (var itemId in recordsByItem.Keys.Where(knownItems.Contains))
+                report.StatChanges.AddRange(StatChanges(store.Items[itemId].ItemName, store.ItemStats.GetValueOrDefault(itemId), fresh.GetValueOrDefault(itemId)));
+        }
         store.ItemStats = fresh;
         store.RebuildDerived();
         report.StatsChanged = true;
     }
+
+    /// <summary>"Long Range: Weapon Damage (conditional) none -> 40%", one line per stat that moved.</summary>
+    private static IEnumerable<string> StatChanges(string itemName, IReadOnlyList<ItemStat>? before, IReadOnlyList<ItemStat>? after)
+    {
+        var old = (before ?? []).ToDictionary(stat => (stat.Stat, stat.Conditional));
+        var now = (after ?? []).ToDictionary(stat => (stat.Stat, stat.Conditional));
+        foreach (var key in old.Keys.Concat(now.Keys).Distinct().OrderBy(key => key.Stat, StringComparer.Ordinal).ThenBy(key => key.Conditional))
+        {
+            old.TryGetValue(key, out var was);
+            now.TryGetValue(key, out var becomes);
+            if (was?.Value == becomes?.Value)
+                continue;
+            var stat = becomes ?? was!;
+            var name = stat.Label + (stat.Conditional ? " (conditional)" : "");
+            yield return $"{itemName}: {name} {StatValue(was)} -> {StatValue(becomes)}";
+        }
+    }
+
+    private static string StatValue(ItemStat? stat) => stat switch
+    {
+        null => "none",
+        { Unit: "" } => Format.Num(stat.Value),
+        { Unit: "%" } => Format.Num(stat.Value) + "%",
+        _ => $"{Format.Num(stat.Value)} {stat.Unit}",
+    };
 
     private static void ApplyTooltips(DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, SyncReport report)
     {
@@ -416,6 +595,12 @@ public static partial class GameSync
                    && fresh.All(pair => store.ItemTooltips.TryGetValue(pair.Key, out var old) && old == pair.Value);
         if (same)
             return;
+        // Hand-typed rules encode what the tooltip says, so a changed tooltip is the cue to recheck them.
+        foreach (var (itemId, tooltip) in fresh)
+        {
+            if (store.ItemTooltips.TryGetValue(itemId, out var old) && old != tooltip && store.RuleCount(itemId) > 0)
+                report.ReviewRules.Add(store.Items[itemId].ItemName);
+        }
         store.ItemTooltips = fresh;
         report.TooltipsChanged = true;
     }

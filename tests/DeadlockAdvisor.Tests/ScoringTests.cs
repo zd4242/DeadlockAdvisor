@@ -5,7 +5,11 @@ using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Ported from the Python app's tests/test_scoring.py (scoring and match-data scores).</summary>
+/// <summary>
+/// Ported from the Python app's tests/test_scoring.py (scoring and match-data scores), then moved to
+/// scores measured from the roster average. In <see cref="TestStore"/> the three heroes average 2 on
+/// spirit damage (5, 0, 1) and -4/3 on max HP (0, -4, 0).
+/// </summary>
 public class ScoringTests
 {
     private static MatrixKey Key(string item, string hero, Relation relation) => new(item, hero, relation);
@@ -15,11 +19,44 @@ public class ScoringTests
     {
         var matrix = ItemScoring.BuildWeightMatrix(TestStore.Make());
 
-        Assert.Equal(10.0, matrix[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]); // 5 * 2
-        Assert.Equal(2.0, matrix[Key("spirit_resist_t1", "generic", Relation.Against)]); // 1 * 2
-        Assert.False(matrix.ContainsKey(Key("spirit_resist_t1", "low_hp", Relation.Against))); // score 0 -> not stored
-        Assert.Equal(-4.0, matrix[Key("pct_dmg_t3", "low_hp", Relation.Against)]); // negative HP score discourages it
+        Assert.Equal(6.0, matrix[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]); // (5 - 2) * 2
+        Assert.Equal(-2.0, matrix[Key("spirit_resist_t1", "generic", Relation.Against)]); // (1 - 2) * 2
+        Assert.Equal(-4.0, matrix[Key("spirit_resist_t1", "low_hp", Relation.Against)]); // (0 - 2) * 2
+        AssertEx.Close(-8.0 / 3, matrix[Key("pct_dmg_t3", "low_hp", Relation.Against)]); // (-4 + 4/3) * 1: lower HP than most discourages it
         Assert.False(matrix.ContainsKey(Key("irrelevant_t1", "heavy_spirit", Relation.Against)));
+    }
+
+    [Fact]
+    public void AverageHeroesLeaveNoMark()
+    {
+        var store = TestStore.Make();
+        // (5 + 0 + 2.5) / 3 = 2.5: generic now sits exactly on the spirit average.
+        store.HeroScores[new ScoreKey("generic", "deals_spirit_damage_general")] = 2.5;
+        // All zeros: left out of the average, and scores nothing rather than "below average at everything".
+        store.Heroes["unprofiled"] = new Hero("unprofiled", "Unprofiled");
+
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+
+        Assert.Equal(2.5, store.TraitBaselines()["deals_spirit_damage_general"]);
+        Assert.False(matrix.ContainsKey(Key("spirit_resist_t1", "generic", Relation.Against)));
+        Assert.False(matrix.ContainsKey(Key("spirit_resist_t1", "unprofiled", Relation.Against)));
+        var match = new MatchState();
+        match.SetRole("generic", Role.Enemy);
+        match.SetRole("unprofiled", Role.Enemy);
+        Assert.Empty(ItemScoring.ExplainItem(store, match, "spirit_resist_t1"));
+    }
+
+    [Fact]
+    public void TheWholeRosterAsEnemiesScoresNothing()
+    {
+        var store = TestStore.Make();
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("generic", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+
+        // An average line-up wants no item more than usual: every total is 0, and nothing is listed.
+        Assert.Empty(ItemScoring.FullMatchResults(store, ItemScoring.BuildWeightMatrix(store), match));
     }
 
     [Fact]
@@ -28,15 +65,14 @@ public class ScoringTests
         var store = TestStore.Make();
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
-        match.SetRole("generic", Role.Enemy);
         match.SetRole("low_hp", Role.Enemy);
 
         var results = ItemScoring.FullMatchResults(store, ItemScoring.BuildWeightMatrix(store), match);
 
-        // pct_dmg_t3 summed across all three enemies is -4, so it's filtered out entirely.
+        // pct_dmg_t3 sums to 4/3 - 8/3 = -4/3 over these enemies, so it's filtered out entirely.
         var tier1 = results[1];
         Assert.Equal(["spirit_resist_t1"], tier1.Select(s => s.ItemId));
-        Assert.Equal(12.0, tier1[0].Score);
+        Assert.Equal(2.0, tier1[0].Score); // 6 - 4
         Assert.Equal("vitality", tier1[0].ShopCategory);
         Assert.False(results.ContainsKey(3));
     }
@@ -53,7 +89,7 @@ public class ScoringTests
         var results = ItemScoring.LanePhaseResults(store, ItemScoring.BuildWeightMatrix(store), match);
 
         Assert.Equal(["spirit_resist_t1"], results[1].Select(s => s.ItemId));
-        Assert.Equal(10.0, results[1][0].Score); // only heavy_spirit counted, not generic
+        Assert.Equal(6.0, results[1][0].Score); // only heavy_spirit counted, not generic
         Assert.False(results.ContainsKey(3)); // tier 3 never appears in the lane view
     }
 
@@ -82,13 +118,15 @@ public class ScoringTests
         var contributions = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
 
         Assert.Equal(["heavy_spirit", "generic"], contributions.Select(c => c.HeroId));
-        Assert.Equal(10.0, contributions[0].Amount);
+        Assert.Equal(6.0, contributions[0].Amount);
         Assert.Equal(Relation.Against, contributions[0].Relation);
-        Assert.Equal("Deals Spirit Damage", contributions[0].Parts[0].CategoryName);
-        Assert.Equal(5, contributions[0].Parts[0].HeroScore);
-        Assert.Equal(2.0, contributions[0].Parts[0].Coefficient);
+        var part = contributions[0].Parts[0];
+        Assert.Equal("Deals Spirit Damage", part.CategoryName);
+        Assert.Equal((5.0, 2.0, 3.0), (part.HeroScore, part.Baseline, part.Deviation));
+        Assert.Equal(2.0, part.Coefficient);
         Assert.Equal(contributions[0].Amount, contributions[0].Parts.Sum(p => p.Amount));
-        Assert.Equal(12.0, contributions.Sum(c => c.Amount));
+        Assert.Equal(-2.0, contributions[1].Amount); // generic is below average on spirit damage
+        Assert.Equal(4.0, contributions.Sum(c => c.Amount));
     }
 
     [Fact]
@@ -112,7 +150,7 @@ public class ScoringTests
 
         var top = ItemScoring.TopHeroesForItem(store, ItemScoring.BuildWeightMatrix(store), "spirit_resist_t1", Relation.Against);
 
-        Assert.Equal([("Heavy Spirit", 10.0), ("Generic", 2.0)], top);
+        Assert.Equal([("Heavy Spirit", 6.0), ("Generic", -2.0), ("Low HP", -4.0)], top);
     }
 
     [Fact]
@@ -123,7 +161,7 @@ public class ScoringTests
         Assert.True(store.SetTraitWeight("deals_spirit_damage_general", Relation.Against, 0.5));
         Assert.False(store.SetTraitWeight("deals_spirit_damage_general", Relation.Against, 0.5));
 
-        Assert.Equal(5.0, ItemScoring.BuildWeightMatrix(store)[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]);
+        Assert.Equal(3.0, ItemScoring.BuildWeightMatrix(store)[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]);
         // a different relation on the same trait is untouched
         Assert.Equal(1.0, store.TraitWeight("deals_spirit_damage_general", Relation.With));
 
@@ -132,7 +170,7 @@ public class ScoringTests
         var part = ItemScoring.ExplainItem(store, match, "spirit_resist_t1")[0].Parts[0];
         Assert.Equal(2.0, part.Coefficient); // the hand-typed value, unscaled
         Assert.Equal(0.5, part.Weight);
-        Assert.Equal(5.0, part.Amount);
+        Assert.Equal(3.0, part.Amount);
 
         // back to 1 drops the row rather than storing a no-op
         store.SetTraitWeight("deals_spirit_damage_general", Relation.Against, 1.0);
@@ -156,7 +194,7 @@ public class ScoringTests
         // 20% * 0.25 = 5, no hand-typed rule needed
         Assert.Equal(5.0, store.DerivedCoefficient("irrelevant_t1", "deals_spirit_damage_general", Relation.Against));
         Assert.Equal(5.0, store.EffectiveCoefficient("irrelevant_t1", "deals_spirit_damage_general", Relation.Against));
-        Assert.Equal(25.0, ItemScoring.BuildWeightMatrix(store)[Key("irrelevant_t1", "heavy_spirit", Relation.Against)]);
+        Assert.Equal(15.0, ItemScoring.BuildWeightMatrix(store)[Key("irrelevant_t1", "heavy_spirit", Relation.Against)]); // (5 - 2) * 5
         // nothing on a relation the rule doesn't name
         Assert.Equal(0, store.DerivedCoefficient("irrelevant_t1", "deals_spirit_damage_general", Relation.With));
     }
@@ -175,8 +213,8 @@ public class ScoringTests
         var part = ItemScoring.ExplainItem(store, match, "spirit_resist_t1")[0].Parts[0];
         Assert.Equal(2.0, part.Coefficient);
         Assert.Equal(2.5, part.FromStats);
-        Assert.Equal(45.0, part.Amount); // 5 * (2 + 2.5) * 2
-        Assert.Equal(45.0, ItemScoring.BuildWeightMatrix(store)[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]);
+        Assert.Equal(27.0, part.Amount); // (5 - 2) * (2 + 2.5) * 2
+        Assert.Equal(27.0, ItemScoring.BuildWeightMatrix(store)[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]);
     }
 
     [Fact]

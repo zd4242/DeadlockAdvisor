@@ -67,10 +67,23 @@ public sealed class DataMenuTests : IDisposable
         Assert.IsType<ProgressModalViewModel>(_shown[0]);
         var report = LastMessage();
         Assert.Equal("Synced from game API", report.Title);
-        Assert.Contains("Everything already matches the game -- nothing changed.", report.Body);
+        Assert.Contains("Item stats refreshed: 333 stat row(s).", report.Body);
+        Assert.Contains("Long Range: Weapon Damage (conditional) none -> 40%", report.Body);
         Assert.Contains("coefficient(s) now come from item stats, via 9 line(s) in stat_rules.csv.", report.Body);
         Assert.Equal(1, _replaced);
         Assert.False(_fixture.Modals.IsModalOpen && _shown[^1] is ProgressModalViewModel);
+    }
+
+    [Fact]
+    public async Task ModelHealthReportSimulatesMatchesAndComparesWithTheData()
+    {
+        await _menu.ModelHealthCommand.Execute();
+
+        var report = LastMessage();
+        Assert.Equal("Model health", report.Title);
+        Assert.StartsWith("Simulated 2,000 random full matches", report.Body);
+        Assert.Contains("Match data disagrees", report.Body);
+        Assert.False(_menu.IsBusy);
     }
 
     [Fact]

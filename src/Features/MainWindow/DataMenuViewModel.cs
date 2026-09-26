@@ -57,6 +57,7 @@ public class DataMenuViewModel : ViewModelBase
         SyncNewDataCommand = ReactiveCommand.Create(SyncNewData);
         SyncGameApiCommand = ReactiveCommand.CreateFromTask(SyncGameApiAsync, idle);
         FetchMatchStatsCommand = ReactiveCommand.CreateFromTask(FetchMatchStatsAsync, idle);
+        ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
         OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
@@ -73,6 +74,7 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> SyncNewDataCommand { get; }
     public ReactiveCommand<Unit, Unit> SyncGameApiCommand { get; }
     public ReactiveCommand<Unit, Unit> FetchMatchStatsCommand { get; }
+    public ReactiveCommand<Unit, Unit> ModelHealthCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
@@ -205,6 +207,25 @@ public class DataMenuViewModel : ViewModelBase
         var lines = result.Lines();
         lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
         ShowMessage("Match stats fetched", lines);
+    }
+
+    // -- model health ---------------------------------------------------------------
+
+    /// <summary>The simulation takes a moment, so it runs off the UI thread; busy meanwhile so no sync swaps the data under it.</summary>
+    private async Task ShowModelHealthAsync()
+    {
+        IsBusy = true;
+        ModelHealthReport report;
+        try
+        {
+            var (store, matrix) = (_data.Store, _data.Matrix);
+            report = await Task.Run(() => ModelHealth.Build(store, matrix));
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+        ShowMessage("Model health", report.Lines());
     }
 
     /// <summary>

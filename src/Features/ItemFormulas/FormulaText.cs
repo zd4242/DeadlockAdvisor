@@ -2,6 +2,7 @@ using Avalonia.Media;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
@@ -66,7 +67,7 @@ public static class FormulaText
         return signed && shown > 0 ? "+" + text : text;
     }
 
-    /// <summary>"Slows: 80 × 2.5 = +200.0".</summary>
+    /// <summary>"Slows: (80 − 27.1 avg) × 2.5 = +132.3".</summary>
     public static string Arithmetic(TraitPart part) =>
-        $"{part.CategoryName}: {Format.Num(part.HeroScore)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))} = {Format.SignedFixed(part.Amount, 1)}";
+        $"{part.CategoryName}: {ExplainText.Arithmetic(part)} = {Format.SignedFixed(part.Amount, 1)}";
 }

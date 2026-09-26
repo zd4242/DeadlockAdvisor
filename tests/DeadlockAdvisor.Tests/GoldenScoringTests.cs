@@ -31,11 +31,26 @@ public class GoldenScoringTests
     [Fact]
     public void WeightMatrixMatches()
     {
+        var actual = ItemScoring.BuildWeightMatrix(LoadStore());
+        if (Updating)
+        {
+            WriteJson("weight_matrix.json", new JsonArray(actual
+                .OrderBy(entry => entry.Key.ItemId, StringComparer.Ordinal)
+                .ThenBy(entry => entry.Key.HeroId, StringComparer.Ordinal)
+                .ThenBy(entry => entry.Key.Relation.Key(), StringComparer.Ordinal)
+                .Select(entry => (JsonNode)new JsonObject
+                {
+                    ["item_id"] = entry.Key.ItemId,
+                    ["hero_id"] = entry.Key.HeroId,
+                    ["relation"] = entry.Key.Relation.Key(),
+                    ["weight"] = entry.Value,
+                })
+                .ToArray()));
+        }
+
         var expected = Items(Json("weight_matrix.json")).ToDictionary(
             row => new MatrixKey(Text(row["item_id"]), Text(row["hero_id"]), ParseRelation(row["relation"])),
             row => Number(row["weight"]));
-
-        var actual = ItemScoring.BuildWeightMatrix(LoadStore());
 
         Assert.Equal(expected.Keys.ToHashSet(), actual.Keys.ToHashSet());
         foreach (var (key, value) in expected)
@@ -49,13 +64,27 @@ public class GoldenScoringTests
     [MemberData(nameof(Cases))]
     public void ScoringCaseMatches(string name)
     {
-        var expected = Items(Json("scoring_cases.json")).Single(row => Text(row["name"]) == name);
+        var cases = Json("scoring_cases.json");
+        var expected = Items(cases).Single(row => Text(row["name"]) == name);
         var store = LoadStore();
         if (expected["drop_match_data"]!.GetValue<bool>())
             store.MatchLift = [];
         var match = Replay(expected["ops"]);
         var matrix = ItemScoring.BuildWeightMatrix(store);
         var laneHeroes = match.LaneHeroes;
+
+        if (Updating)
+        {
+            expected["lane_phase_results"] = Grouped(ItemScoring.LanePhaseResults(store, matrix, match));
+            expected["full_match_results"] = Grouped(ItemScoring.FullMatchResults(store, matrix, match));
+            foreach (var explained in Items(expected["explain_lane"]))
+                explained["contributions"] = Contributions(ItemScoring.ExplainItem(store, match, Text(explained["item_id"]), laneHeroes));
+            foreach (var explained in Items(expected["explain_full"]))
+                explained["contributions"] = Contributions(ItemScoring.ExplainItem(store, match, Text(explained["item_id"])));
+            expected["data_only_picks_lane"] = ScoredList(ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.LaneTiers, laneHeroes));
+            expected["data_only_picks_full"] = ScoredList(ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.FullTiers));
+            WriteJson("scoring_cases.json", cases);
+        }
 
         Assert.Equal(Strings(expected["allies"]), match.Allies);
         Assert.Equal(Strings(expected["enemies"]), match.Enemies);
@@ -87,6 +116,12 @@ public class GoldenScoringTests
     {
         var expected = Json("store_queries.json");
         var store = LoadStore();
+        if (Updating)
+        {
+            foreach (var row in Items(expected["item_contributions"]))
+                row[2] = Contributions(ItemScoring.ItemContributions(store, Text(row[0]), ParseRelation(row[1])));
+            WriteJson("store_queries.json", expected);
+        }
 
         var coverage = expected["coverage"]!;
         Assert.Equal(new Coverage(
@@ -234,6 +269,7 @@ public class GoldenScoringTests
                 var part = contribution.Parts[j];
                 Assert.Equal(Text(parts[j]["category_name"]), part.CategoryName);
                 AssertEx.Close(Number(parts[j]["hero_score"]), part.HeroScore);
+                AssertEx.Close(Number(parts[j]["baseline"]), part.Baseline);
                 AssertEx.Close(Number(parts[j]["coefficient"]), part.Coefficient);
                 AssertEx.Close(Number(parts[j]["weight"]), part.Weight);
                 AssertEx.Close(Number(parts[j]["from_stats"]), part.FromStats);
@@ -243,4 +279,42 @@ public class GoldenScoringTests
             }
         }
     }
+
+    // -- writing goldens back (DEADLOCK_UPDATE_GOLDENS=1), in the shapes the asserts above read ---------
+
+    private static JsonArray Grouped(OrderedDictionary<int, List<ScoredItem>> grouped) =>
+        new(grouped.Select(pair => (JsonNode)new JsonObject { ["tier"] = pair.Key, ["items"] = ScoredList(pair.Value) }).ToArray());
+
+    private static JsonArray ScoredList(IEnumerable<ScoredItem> items) =>
+        new(items.Select(item => (JsonNode)new JsonObject
+        {
+            ["item_id"] = item.ItemId,
+            ["item_name"] = item.ItemName,
+            ["tier"] = item.Tier,
+            ["score"] = item.Score,
+            ["shop_category"] = item.ShopCategory,
+            ["data"] = new JsonArray(item.Data.Select(pair => (JsonNode)new JsonArray(pair.Key, pair.Value)).ToArray()),
+        }).ToArray());
+
+    private static JsonArray Contributions(IEnumerable<HeroContribution> contributions) =>
+        new(contributions.Select(contribution => (JsonNode)new JsonObject
+        {
+            ["hero_id"] = contribution.HeroId,
+            ["hero_name"] = contribution.HeroName,
+            ["relation"] = contribution.Relation.Key(),
+            ["amount"] = contribution.Amount,
+            ["parts"] = new JsonArray(contribution.Parts.Select(part => (JsonNode)new JsonObject
+            {
+                ["category_id"] = part.CategoryId,
+                ["category_name"] = part.CategoryName,
+                ["hero_score"] = part.HeroScore,
+                ["baseline"] = part.Baseline,
+                ["coefficient"] = part.Coefficient,
+                ["weight"] = part.Weight,
+                ["from_stats"] = part.FromStats,
+                ["effective_coefficient"] = part.EffectiveCoefficient,
+                ["amount"] = part.Amount,
+                ["stat_parts"] = new JsonArray(part.StatParts.Select(stat => (JsonNode)stat.Describe()).ToArray()),
+            }).ToArray()),
+        }).ToArray());
 }

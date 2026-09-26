@@ -8,3 +8,11 @@ TechPowerPercent,scales_with_spirit_power,as,0.15,0,
 SlowResistancePercent,applies_slows,against,0.17,0.25,
 BonusFireRate,cares_about_firerate,as,0.05,0.25,
 MeleeResistPercent,does_melee_damage,against,0.13,0,
+TechRangeMultiplier,scales_with_ability_range,as,0.12,0.5,
+BonusAbilityDurationPercent,scales_with_ability_duration,as,0.12,0.5,
+BaseAttackDamagePercent,cares_about_weapon_damage,as,0.06,0.5,
+BonusBaseHealth,max_hp,as,0.015,0.5,"A % of base health is worth more to a high-HP hero; 1% ~ 15 flat HP at median HP, so 15x the flat rule"
+BonusHealth,max_hp,as,-0.001,0.5,Flat health is a bigger share of a low-HP hero's pool
+Barrier,max_hp,as,-0.001,0.5,"A barrier is temporary flat health, so it leans towards low-HP heroes like Bonus Health does"
+TechResist,max_hp,as,0.01,0.75,"Resist scales with the pool it protects, like % base health; spirit is ~2/3 of the roster's damage, so 2/3 of that rule"
+BulletResist,max_hp,as,0.005,0.5,"Resist scales with the pool it protects, like % base health; bullets are ~1/3 of the roster's damage, so 1/3 of that rule"

@@ -21,17 +21,20 @@ public sealed record ScoredItem(
 
 /// <summary>One trait's share of one hero's contribution to an item's score.</summary>
 /// <param name="Coefficient">The hand-typed part only.</param>
+/// <param name="Baseline">The roster's average on the trait: only how far the hero sits from it counts.</param>
 public sealed record TraitPart(
     string CategoryId,
     string CategoryName,
     double HeroScore,
     double Coefficient,
     IReadOnlyList<StatPart> StatParts,
-    double Weight = 1.0)
+    double Weight = 1.0,
+    double Baseline = 0.0)
 {
     public double FromStats => DataStore.SumAmounts(StatParts);
     public double EffectiveCoefficient => Weight * (Coefficient + FromStats);
-    public double Amount => HeroScore * EffectiveCoefficient;
+    public double Deviation => HeroScore - Baseline;
+    public double Amount => Deviation * EffectiveCoefficient;
 }
 
 /// <summary>One hero's share of an item's score, trait by trait.</summary>

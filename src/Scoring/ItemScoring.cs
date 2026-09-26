@@ -6,10 +6,12 @@ namespace DeadlockAdvisor.Scoring;
 
 /// <summary>
 /// Turns the trait-based formulas into item scores for the heroes in a match:
-/// <c>weight(item, hero, relation) = Σ over traits of hero_score[hero, trait] × effective_coefficient[item, trait, relation]</c>,
-/// summed over everyone in the match. <see cref="ExplainItem"/> walks the same arithmetic one item at
-/// a time; <see cref="DataScores"/> is the second opinion from real matches, reported beside the
-/// hand model's score and never mixed into it.
+/// <c>weight(item, hero, relation) = Σ over traits of (hero_score[hero, trait] − roster_average[trait]) × effective_coefficient[item, trait, relation]</c>,
+/// summed over everyone in the match. Measuring each hero against the roster average makes a score
+/// mean "this match wants the item more than a typical one does": a trait every hero has would
+/// otherwise give its items the same bonus in every match. <see cref="ExplainItem"/> walks the same
+/// arithmetic one item at a time; <see cref="DataScores"/> is the second opinion from real matches,
+/// reported beside the hand model's score and never mixed into it.
 /// </summary>
 public static class ItemScoring
 {
@@ -26,16 +28,19 @@ public static class ItemScoring
     /// </summary>
     public static Dictionary<MatrixKey, double> BuildWeightMatrix(DataStore store)
     {
+        var baselines = store.TraitBaselines();
+        var profiled = store.Heroes.Keys.Where(store.IsProfiled).ToList();
         var matrix = new Dictionary<MatrixKey, double>();
         foreach (var (key, coefficient) in store.EffectiveCoefficients())
         {
-            foreach (var heroId in store.Heroes.Keys)
+            var baseline = baselines.GetValueOrDefault(key.CategoryId);
+            foreach (var heroId in profiled)
             {
-                var heroScore = store.HeroScores.GetValueOrDefault(new ScoreKey(heroId, key.CategoryId));
-                if (heroScore == 0)
+                var deviation = store.HeroScore(heroId, key.CategoryId) - baseline;
+                if (deviation == 0)
                     continue;
                 var cell = new MatrixKey(key.ItemId, heroId, key.Relation);
-                matrix[cell] = matrix.GetValueOrDefault(cell) + heroScore * coefficient;
+                matrix[cell] = matrix.GetValueOrDefault(cell) + deviation * coefficient;
             }
         }
         return matrix;
@@ -80,13 +85,7 @@ public static class ItemScoring
         {
             if (!tiers.Contains(item.Tier))
                 continue;
-            var total = 0.0;
-            foreach (var heroId in enemies)
-                total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.Against));
-            foreach (var heroId in allies)
-                total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.With));
-            if (self is not null)
-                total += matrix.GetValueOrDefault(new MatrixKey(itemId, self, Relation.As));
+            var total = Total(matrix, itemId, allies, enemies, self);
 
             // Only items actually worth buying.
             if (!(total > 0))
@@ -110,6 +109,21 @@ public static class ItemScoring
         return grouped;
     }
 
+    /// <summary>One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for you.</summary>
+    public static double Total(
+        IReadOnlyDictionary<MatrixKey, double> matrix, string itemId,
+        IEnumerable<string> allies, IEnumerable<string> enemies, string? self)
+    {
+        var total = 0.0;
+        foreach (var heroId in enemies)
+            total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.Against));
+        foreach (var heroId in allies)
+            total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.With));
+        if (self is not null)
+            total += matrix.GetValueOrDefault(new MatrixKey(itemId, self, Relation.As));
+        return total;
+    }
+
     // -- "why is this recommended?" -------------------------------------------
 
     /// <summary>
@@ -126,8 +140,9 @@ public static class ItemScoring
         if (self is not null)
             targets.Add((self, Relation.As));
 
+        var baselines = store.TraitBaselines();
         return targets
-            .Select(target => Contribution(store, itemId, target.hero, target.Item2))
+            .Select(target => Contribution(store, baselines, itemId, target.hero, target.Item2))
             .OfType<HeroContribution>()
             .OrderBy(contribution => -contribution.Amount)
             .ToList();
@@ -137,31 +152,42 @@ public static class ItemScoring
     /// Every hero this item's rules respond to on one relation, strongest first, with the per-trait
     /// pieces: the formula editor's live preview.
     /// </summary>
-    public static List<HeroContribution> ItemContributions(DataStore store, string itemId, Relation relation, int limit = 8) =>
-        store.Heroes.Keys
-            .Select(heroId => Contribution(store, itemId, heroId, relation))
+    public static List<HeroContribution> ItemContributions(DataStore store, string itemId, Relation relation, int limit = 8)
+    {
+        var baselines = store.TraitBaselines();
+        return store.Heroes.Keys
+            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation))
             .OfType<HeroContribution>()
             .Where(contribution => contribution.Amount != 0)
             .OrderBy(contribution => -contribution.Amount)
             .Take(limit)
             .ToList();
+    }
 
-    /// <summary>One hero's share of one item's score, biggest trait first; null when no trait of the item touches the hero.</summary>
-    private static HeroContribution? Contribution(DataStore store, string itemId, string heroId, Relation relation)
+    /// <summary>
+    /// One hero's share of one item's score, biggest trait first; null when no trait of the item
+    /// touches the hero, or the hero isn't profiled yet.
+    /// </summary>
+    private static HeroContribution? Contribution(
+        DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation)
     {
+        if (!store.IsProfiled(heroId))
+            return null;
         var parts = new List<TraitPart>();
         foreach (var (categoryId, category) in store.Categories)
         {
             if (store.EffectiveCoefficient(itemId, categoryId, relation) == 0)
                 continue;
             var heroScore = store.HeroScore(heroId, categoryId);
-            if (heroScore == 0)
+            var baseline = baselines.GetValueOrDefault(categoryId);
+            if (heroScore == baseline)
                 continue;
             parts.Add(new TraitPart(
                 categoryId, category.CategoryName, heroScore,
                 store.Coefficient(itemId, categoryId, relation),
                 store.DerivedParts(itemId, categoryId, relation).ToList(),
-                store.TraitWeight(categoryId, relation)));
+                store.TraitWeight(categoryId, relation),
+                baseline));
         }
         if (parts.Count == 0)
             return null;
@@ -238,26 +264,13 @@ public static class ItemScoring
             var margin = Math.Max(data.GetValueOrDefault("against") / PickMinAgainst, data.GetValueOrDefault("as") / PickMinAs);
             if (margin < 1)
                 continue;
-            var score = 0.0;
-            foreach (var (_, weight) in ItemWeights(matrix, match, itemId, restrictTo))
-                score += weight;
+            var (allies, enemies, self) = RelevantHeroes(match, restrictTo);
+            var score = Total(matrix, itemId, allies, enemies, self);
             if (score > 0)
                 continue;
             picks.Add((margin, new ScoredItem(itemId, item.ItemName, item.Tier, score, item.Category, data)));
         }
         return picks.OrderBy(pick => -pick.Margin).Take(limit).Select(pick => pick.Item).ToList();
-    }
-
-    private static List<(string HeroId, double Weight)> ItemWeights(
-        IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo)
-    {
-        var (allies, enemies, self) = RelevantHeroes(match, restrictTo);
-        var weights = enemies.Select(hero => (hero, matrix.GetValueOrDefault(new MatrixKey(itemId, hero, Relation.Against))))
-            .Concat(allies.Select(hero => (hero, matrix.GetValueOrDefault(new MatrixKey(itemId, hero, Relation.With)))))
-            .ToList();
-        if (self is not null)
-            weights.Add((self, matrix.GetValueOrDefault(new MatrixKey(itemId, self, Relation.As))));
-        return weights;
     }
 
     /// <summary>

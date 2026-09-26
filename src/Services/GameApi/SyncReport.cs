@@ -15,6 +15,18 @@ public sealed class SyncReport
     /// <summary>Our items the API doesn't sell.</summary>
     public List<string> NotInGame { get; } = [];
 
+    /// <summary>"Long Range: Weapon Damage (conditional) none -> 40%": each stat a patch moved.</summary>
+    public List<string> StatChanges { get; } = [];
+
+    /// <summary>Items with hand-typed rules whose tooltip changed: the rules may no longer describe the item.</summary>
+    public List<string> ReviewRules { get; } = [];
+
+    /// <summary>Properties sharing a scored stat's label that nothing maps; see <see cref="GameSync.UnmappedStats"/>.</summary>
+    public List<string> UnmappedStats { get; } = [];
+
+    /// <summary>Per-item overrides in <see cref="GameSync"/> that no longer match the game.</summary>
+    public List<string> StaleOverrides { get; } = [];
+
     public bool HeroesChanged { get; set; }
     public bool ItemsChanged { get; set; }
     public bool StatsChanged { get; set; }
@@ -42,6 +54,11 @@ public sealed class SyncReport
             lines.Add($"Item stats refreshed: {StatRows} stat row(s).");
         if (TooltipsChanged)
             lines.Add($"Item tooltips refreshed: {TooltipCount} item(s).");
+        if (StatChanges.Count > 0)
+        {
+            lines.Add($"{StatChanges.Count} item stat(s) changed:");
+            lines.AddRange(StatChanges.Select(line => $"  {line}"));
+        }
         if (NotInGame.Count > 0)
         {
             lines.Add($"{NotInGame.Count} item(s) in items.csv aren't in the game's shop "
@@ -50,6 +67,19 @@ public sealed class SyncReport
         }
         if (!AnythingChanged)
             lines.Add("Everything already matches the game -- nothing changed.");
+
+        Section(lines, "Tooltip changed on items with hand-typed rules -- check the rules still fit:", ReviewRules);
+        Section(lines, "Shown under a scored stat's label but not mapped -- add each to GameSync.Stats or GameSync.Unscored:", UnmappedStats);
+        Section(lines, "Overrides in GameSync that no longer match the game:", StaleOverrides);
         return lines;
+    }
+
+    private static void Section(List<string> lines, string heading, IReadOnlyList<string> entries)
+    {
+        if (entries.Count == 0)
+            return;
+        lines.Add("");
+        lines.Add(heading);
+        lines.AddRange(entries.Select(entry => $"  {entry}"));
     }
 }

@@ -159,6 +159,8 @@
                                     <MenuItem Header="Fetch Match Stats"
                                               Command="{Binding DataMenu.FetchMatchStatsCommand}"
                                               ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (a few minutes)"/>
+                                    <MenuItem Header="Model Health Report"
+                                              Command="{Binding DataMenu.ModelHealthCommand}"/>
                                     <MenuItem Header="Reload from Disk"
                                               InputGesture="Ctrl+R"
                                               Command="{Binding DataMenu.ReloadCommand}"

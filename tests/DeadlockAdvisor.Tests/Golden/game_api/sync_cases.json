@@ -36,7 +36,44 @@
   "fresh": {
    "report": {
     "lines": [
-     "Everything already matches the game -- nothing changed."
+     "Item stats refreshed: 333 stat row(s).",
+     "36 item stat(s) changed:",
+     "  Opening Rounds: Weapon Damage (conditional) none -> 25%",
+     "  Close Quarters: Weapon Damage (conditional) none -> 20%",
+     "  Long Range: Weapon Damage (conditional) none -> 40%",
+     "  Heroic Aura: Move Speed (conditional) none -> 2.25 m/s",
+     "  Frenzy: Fire Rate (conditional) none -> 40%",
+     "  Frenzy: Move Speed (conditional) none -> 4 m/s",
+     "  Frenzy: Debuff Resist (conditional) none -> 40%",
+     "  Sharpshooter: Weapon Damage (conditional) none -> 60%",
+     "  Point Blank: Weapon Damage (conditional) none -> 50%",
+     "  Dispel Magic: Move Speed (conditional) none -> 2 m/s",
+     "  Grit: Barrier (conditional) none -> 200",
+     "  Weapon Shielding: Barrier (conditional) none -> 300",
+     "  Spirit Shielding: Barrier (conditional) none -> 300",
+     "  Spiritual Overflow: Spirit Lifesteal (conditional) none -> 10%",
+     "  Spiritual Overflow: Spirit Power (conditional) none -> 30",
+     "  Shadow Weave: Fire Rate (conditional) none -> 25%",
+     "  Shadow Weave: Melee Damage (conditional) none -> 25%",
+     "  Shadow Weave: Spirit Power (conditional) none -> 25",
+     "  Majestic Leap: Barrier (conditional) none -> 200",
+     "  Infuser: Spirit Power (conditional) none -> 30",
+     "  Divine Barrier: Barrier (conditional) none -> 600",
+     "  Fleetfoot: Move Speed (conditional) none -> 3 m/s",
+     "  Arcane Surge: Ability Range (conditional) none -> 12%",
+     "  Colossus: Bullet Resist (conditional) none -> 35%",
+     "  Colossus: Spirit Resist (conditional) none -> 35%",
+     "  Ethereal Shift: Spirit Power (conditional) none -> 20",
+     "  Fury Trance: Fire Rate (conditional) none -> 32%",
+     "  Fury Trance: Move Speed (conditional) none -> 1 m/s",
+     "  Vampiric Burst: Fire Rate (conditional) none -> 34%",
+     "  Vampiric Burst: Bullet Lifesteal (conditional) none -> 70%",
+     "  Diviner's Kevlar: Barrier (conditional) none -> 1000",
+     "  Burst Fire: Fire Rate (conditional) none -> 32%",
+     "  Surge of Power: Fire Rate (conditional) none -> 20%",
+     "  Escalating Resilience: Bullet Resist (conditional) none -> 30%",
+     "  Reactive Barrier: Barrier (conditional) none -> 325",
+     "  Indomitable: Barrier (conditional) none -> 325"
     ],
     "added_heroes": [],
     "added_items": [],
@@ -45,11 +82,11 @@
     "not_in_game": [],
     "heroes_changed": false,
     "items_changed": false,
-    "stats_changed": false,
-    "stat_rows": 297,
+    "stats_changed": true,
+    "stat_rows": 333,
     "tooltips_changed": false,
     "tooltip_count": 156,
-    "anything_changed": false
+    "anything_changed": true
    },
    "again": {
     "lines": [
@@ -63,7 +100,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 297,
+    "stat_rows": 333,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -72,9 +109,9 @@
     "heroes_total": 38,
     "heroes_profiled": 38,
     "items_total": 156,
-    "items_tagged": 93,
+    "items_tagged": 97,
     "rules": 42,
-    "derived_rules": 100,
+    "derived_rules": 110,
     "scores_filled": 490,
     "scores_total": 874
    },
@@ -90,7 +127,7 @@
      "  Monster Rounds: cost 1 -> 800",
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
-     "Item stats refreshed: 297 stat row(s).",
+     "Item stats refreshed: 333 stat row(s).",
      "Item tooltips refreshed: 156 item(s)."
     ],
     "added_heroes": [
@@ -111,7 +148,7 @@
     "heroes_changed": true,
     "items_changed": true,
     "stats_changed": true,
-    "stat_rows": 297,
+    "stat_rows": 333,
     "tooltips_changed": true,
     "tooltip_count": 156,
     "anything_changed": true
@@ -128,7 +165,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 297,
+    "stat_rows": 333,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -137,9 +174,9 @@
     "heroes_total": 38,
     "heroes_profiled": 38,
     "items_total": 156,
-    "items_tagged": 93,
+    "items_tagged": 97,
     "rules": 42,
-    "derived_rules": 100,
+    "derived_rules": 110,
     "scores_filled": 490,
     "scores_total": 874
    },

@@ -326,6 +326,27 @@ public sealed class DataStore
     public double HeroScore(string heroId, string categoryId) =>
         HeroScores.GetValueOrDefault(new ScoreKey(heroId, categoryId));
 
+    public bool IsProfiled(string heroId) => Categories.Keys.Any(categoryId => HeroScore(heroId, categoryId) != 0);
+
+    /// <summary>
+    /// Each trait's average over the profiled heroes. Scoring counts a hero's trait relative to it, so a
+    /// trait the whole roster shares doesn't hand its items the same bonus in every match. Unprofiled
+    /// heroes are left out: all zeros would read as "below average at everything".
+    /// </summary>
+    public Dictionary<string, double> TraitBaselines()
+    {
+        var profiled = Heroes.Keys.Where(IsProfiled).ToList();
+        var baselines = new Dictionary<string, double>();
+        foreach (var categoryId in Categories.Keys)
+        {
+            var total = 0.0;
+            foreach (var heroId in profiled)
+                total += HeroScore(heroId, categoryId);
+            baselines[categoryId] = profiled.Count == 0 ? 0.0 : total / profiled.Count;
+        }
+        return baselines;
+    }
+
     /// <summary>The hand-typed coefficient only; see <see cref="EffectiveCoefficient"/>.</summary>
     public double Coefficient(string itemId, string categoryId, Relation relation) =>
         ItemCoefficients.GetValueOrDefault(new CoefficientKey(itemId, categoryId, relation));
@@ -785,8 +806,7 @@ public sealed class DataStore
     }
 
     /// <summary>Heroes whose trait scores are still all zero: they contribute nothing to any recommendation yet.</summary>
-    public List<string> UnprofiledHeroes() =>
-        Heroes.Keys.Where(heroId => !Categories.Keys.Any(categoryId => HeroScore(heroId, categoryId) != 0)).ToList();
+    public List<string> UnprofiledHeroes() => Heroes.Keys.Where(heroId => !IsProfiled(heroId)).ToList();
 
     public int HeroFilledCount(string heroId) =>
         Categories.Keys.Count(categoryId => HeroScore(heroId, categoryId) != 0);

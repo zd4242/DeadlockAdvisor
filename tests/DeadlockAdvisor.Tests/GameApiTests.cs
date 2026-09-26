@@ -58,6 +58,52 @@ public class GameApiTests
     }
 
     [Fact]
+    public void BuffActiveAndStackedPropertiesFoldIntoTheirStats()
+    {
+        var colossus = FakeItem("Colossus", 1, 4, "vitality", 6400,
+            Prop("BuffBulletResist", "35", "active", "ConditionallyApplied"));
+        var vampiricBurst = FakeItem("Vampiric Burst", 2, 4, "weapon", 6400,
+            Prop("BulletResist", "10", "innate", "IntrinsicallyProvidedInAbility"),
+            Prop("ActiveBonusFireRate", "34", "active"));
+        var escalatingResilience = FakeItem("Escalating Resilience", 3, 4, "weapon", 6400,
+            Prop("BulletResistPerStack", "2", "passive", "ConditionallyApplied"),
+            Prop("MaxArmorStacks", "30", "passive"));
+        var shadowWeave = FakeItem("Shadow Weave", 4, 3, "weapon", 3200,
+            Prop("AmbushBonusFireRate", "25", "active", "ConditionallyApplied"),
+            Prop("AmbushBonusTechPower", "25", "active", "ConditionallyApplied"),
+            Prop("AmbushBonusMeleeDamage", "25", "active", "ConditionallyApplied"));
+
+        Assert.Equal(new Dictionary<(string, bool), double> { [("BulletResist", true)] = 35.0 }, StatsOf(colossus));
+        Assert.Equal(new Dictionary<(string, bool), double>
+        {
+            [("BonusFireRate", true)] = 34.0,
+            [("BulletResist", false)] = 10.0,
+        }, StatsOf(vampiricBurst));
+        Assert.Equal(new Dictionary<(string, bool), double> { [("BulletResist", true)] = 30.0 }, StatsOf(escalatingResilience));
+        Assert.Equal(new Dictionary<(string, bool), double>
+        {
+            [("BonusFireRate", true)] = 25.0,
+            [("TechPower", true)] = 25.0,
+            [("BonusMeleeDamagePercent", true)] = 25.0,
+        }, StatsOf(shadowWeave));
+    }
+
+    [Fact]
+    public void SelfBarriersFoldIntoBarrierButAllyBarriersDoNot()
+    {
+        var shielding = FakeItem("Weapon Shielding", 1, 2, "vitality", 1600,
+            Prop("CombatBarrier", "300", "passive", "ConditionallyApplied"));
+        var reactive = FakeItem("Reactive Barrier", 2, 2, "vitality", 1600,
+            Prop("VexBarrierCombatBarrier", "325", "passive", "ConditionallyApplied"));
+        var ward = FakeItem("Guardian Ward", 3, 2, "vitality", 1600,
+            Prop("GuardianWardCombatBarrier", "250", "active"));
+
+        Assert.Equal(new Dictionary<(string, bool), double> { [("Barrier", true)] = 300.0 }, StatsOf(shielding));
+        Assert.Equal(new Dictionary<(string, bool), double> { [("Barrier", true)] = 325.0 }, StatsOf(reactive));
+        Assert.Empty(StatsOf(ward));
+    }
+
+    [Fact]
     public void ConditionallyAppliedInnateStatIsConditional()
     {
         var record = FakeItem("X", 1, 2, "vitality", 1600, Prop("TechResist", "18", "innate", "ConditionallyApplied"));
@@ -141,6 +187,80 @@ public class GameApiTests
         var stat = Assert.Single(GameSync.ExtractStats("x", record));
         Assert.Equal(35.0, stat.Value);
         Assert.Equal("Healing Reduction", stat.Label);
+    }
+
+    private static (string, JsonObject) Labelled(string key, string value, string label) =>
+        (key, new JsonObject { ["value"] = value, ["label"] = label, ["tooltip_section"] = "passive" });
+
+    [Fact]
+    public void UnmappedStatsFlagsUnknownPropertiesUnderAScoredLabel()
+    {
+        var record = FakeItem("Long Range", 1, 2, "weapon", 1600,
+            Labelled("RenamedWeaponPower", "40", "Weapon Damage"),
+            Labelled("BaseAttackDamagePercent", "10", "Weapon Damage"),
+            Labelled("SlowPercent", "24", "Move Speed"),
+            Labelled("AbilityDuration", "3", "Duration"),
+            Labelled("OtherWeaponPower", "0", "Weapon Damage"));
+
+        Assert.Equal(["RenamedWeaponPower (\"Weapon Damage\"): Long Range"], GameSync.UnmappedStats([record]));
+    }
+
+    [Fact]
+    public void StaleOverridesAreReported()
+    {
+        var magnum = FakeItem("Mercurial Magnum", 1, 4, "spirit", 6400, Prop("BonusFireRate", "22", "passive", "ConditionallyApplied"));
+        var quicksilver = FakeItem("Quicksilver Reload", 2, 2, "spirit", 1600, Prop("TechPower", "10"));
+        var crippling = FakeItem("Crippling Headshot", 3, 4, "weapon", 6400, Prop("HealAmpReceivePenaltyPercent", "-35", null));
+        crippling["tooltip_sections"] = JsonNode.Parse("""[{"section_type": "passive", "section_attributes": []}]""");
+
+        Assert.Equal(
+        [
+            "Cheat Death / HealAmpReceivePenaltyPercent: marked self-inflicted, but the item no longer has that property",
+            "Mercurial Magnum / BonusFireRate: forced conditional, but the game now flags it conditional itself",
+            "Quicksilver Reload / BonusFireRate: forced conditional, but the item no longer has that property",
+        ], GameSync.StaleOverrides([magnum, quicksilver, crippling]).Order(StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void ResyncReportsMovedStatsAndChangedTooltipsOnHandRuledItems()
+    {
+        JsonObject Trinket(string resist, string text)
+        {
+            var record = FakeItem("Spirit Resist Trinket", 101, 1, "vitality", 800,
+                Labelled("TechResist", resist, "Spirit Resist"), Labelled("BonusFireRate", "5", "Fire Rate"));
+            record["tooltip_sections"] = new JsonArray(new JsonObject
+            {
+                ["section_type"] = "innate",
+                ["section_attributes"] = new JsonArray(new JsonObject
+                {
+                    ["loc_string"] = text,
+                    ["properties"] = new JsonArray("TechResist", "BonusFireRate"),
+                }),
+            });
+            return record;
+        }
+        var other = FakeItem("Irrelevant Item", 103, 1, "weapon", 800, Prop("BonusFireRate", "9"));
+        var store = TestStore.Make();
+        GameSync.Apply(store, [], [Trinket("8", "Resists spirit."), other]);
+
+        var report = GameSync.Apply(store, [], [Trinket("10", "Resists more spirit."), FakeItem("Irrelevant Item", 103, 1, "weapon", 800)]);
+
+        Assert.Equal(
+        [
+            "Spirit Resist Trinket: Spirit Resist 8% -> 10%",
+            "Irrelevant Item: Fire Rate 9% -> none",
+        ], report.StatChanges);
+        Assert.Equal(["Spirit Resist Trinket"], report.ReviewRules);
+    }
+
+    [Fact]
+    public void TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides()
+    {
+        var items = Json("game_api/shop_items.json").AsArray().OfType<JsonNode>()
+            .Where(record => GameSync.ShopTiers.Contains(record["item_tier"]!.GetValue<long>()))
+            .ToList();
+        Assert.Empty(GameSync.UnmappedStats(items));
+        Assert.Empty(GameSync.StaleOverrides(items));
     }
 
     [Fact]
@@ -273,15 +393,41 @@ public class GameApiTests
 
         var report = GameSync.Apply(store, heroes, items);
         GameSync.SaveSynced(store, report);
+        string[] files = ["heroes.csv", "items.csv", "item_stats.csv", "item_tooltips.json", "hero_category_scores.csv"];
+
+        if (Updating)
+        {
+            WriteReport(expected["report"]!, report);
+            foreach (var file in files)
+                CopyFile(data.File(file), "game_api", name, file);
+            WriteReport(expected["again"]!, GameSync.Apply(store, heroes, items));
+            expected["coverage"]!["derived_rules"] = store.Coverage().DerivedRules;
+            expected["stat_rules"] = store.StatRules.Count;
+            WriteJson("game_api/sync_cases.json", cases);
+            return;
+        }
 
         AssertReport(expected["report"]!, report);
-        foreach (var file in new[] { "heroes.csv", "items.csv", "item_stats.csv", "item_tooltips.json", "hero_category_scores.csv" })
+        foreach (var file in files)
             AssertEx.BytesEqual(PathOf("game_api", name, file), data.File(file));
 
         AssertReport(expected["again"]!, GameSync.Apply(store, heroes, items));
         var coverage = store.Coverage();
         Assert.Equal(expected["coverage"]!["derived_rules"]!.GetValue<int>(), coverage.DerivedRules);
         Assert.Equal(expected["stat_rules"]!.GetValue<int>(), store.StatRules.Count);
+    }
+
+    private static void WriteReport(JsonNode expected, SyncReport actual)
+    {
+        expected["lines"] = new JsonArray(actual.Lines().Select(line => (JsonNode)line).ToArray());
+        expected["filled"] = actual.Filled;
+        expected["stat_rows"] = actual.StatRows;
+        expected["tooltip_count"] = actual.TooltipCount;
+        expected["heroes_changed"] = actual.HeroesChanged;
+        expected["items_changed"] = actual.ItemsChanged;
+        expected["stats_changed"] = actual.StatsChanged;
+        expected["tooltips_changed"] = actual.TooltipsChanged;
+        expected["anything_changed"] = actual.AnythingChanged;
     }
 
     private static void AssertReport(JsonNode expected, SyncReport actual)
