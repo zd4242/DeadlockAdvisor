@@ -147,6 +147,13 @@ public sealed class TemplateBank
             index++;
         var path = Path.Combine(folder, $"{label}_{index:00}.png");
         Png.Save(image, path);
+        InvalidatePythonCache(directory);
+        return path;
+    }
+
+    /// <summary>Drop the Python app's descriptor cache after adding art, so it rebuilds from what's on disk.</summary>
+    public static void InvalidatePythonCache(string directory)
+    {
         var cache = Path.Combine(directory, PythonCacheName);
         try
         {
@@ -156,6 +163,5 @@ public sealed class TemplateBank
         catch (IOException)
         {
         }
-        return path;
     }
 }

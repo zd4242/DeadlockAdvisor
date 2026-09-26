@@ -10,7 +10,8 @@ namespace DeadlockAdvisor.Services;
 /// <param name="Unmatched">"haze (Haze) -- download failed: ...": what wasn't fetched, and why.</param>
 public sealed record ArtGroupReport(string Label, int Wanted, int Offered, int Downloaded, int Skipped, IReadOnlyList<string> Unmatched);
 
-public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups)
+/// <param name="VariantsInstalled">Bundled alternate top-bar portraits written, for heroes whose API art the game no longer matches.</param>
+public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups, int VariantsInstalled = 0)
 {
     public int Downloaded => Groups.Sum(group => group.Downloaded);
 
@@ -20,6 +21,8 @@ public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups)
             .Select(group => $"{group.Label}: {group.Downloaded} downloaded, {group.Skipped} already present "
                              + $"({group.Wanted} wanted, {group.Offered} offered by the API)")
             .ToList();
+        if (VariantsInstalled > 0)
+            lines.Add($"Top-bar alternates: {VariantsInstalled} installed, for heroes the game draws differently from their API art");
         var unmatched = Groups.SelectMany(group => group.Unmatched.Select(line => $"  - {group.Label}: {line}")).ToList();
         if (unmatched.Count > 0)
         {
@@ -94,8 +97,12 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
                 progress?.Report(new FetchProgress(done++, total, text));
             }, cancellationToken));
         }
+        var topbarDir = Path.Combine(assetsDir, "topbar");
+        var variants = BundledTopbarVariants.Install(topbarDir, heroes.Keys);
+        if (variants > 0)
+            Vision.TemplateBank.InvalidatePythonCache(topbarDir);
         progress?.Report(new FetchProgress(total, total, "done"));
-        return new ArtDownloadReport(reports);
+        return new ArtDownloadReport(reports, variants);
     }
 
     private async Task<ArtGroupReport> RunGroupAsync(Group group, bool force, Action<string> step, CancellationToken cancellationToken)

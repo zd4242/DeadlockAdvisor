@@ -16,9 +16,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <AvaloniaResource Include="src\Assets\**" Exclude="src\Assets\SeedData\**" />
+    <AvaloniaResource Include="src\Assets\**" Exclude="src\Assets\SeedData\**;src\Assets\TopbarVariants\**" />
     <!-- A copy of the Python app's data/, written to a fresh data folder on first run. -->
     <EmbeddedResource Include="src\Assets\SeedData\*" LogicalName="SeedData/%(Filename)%(Extension)" />
+    <!-- In-game portraits the API's top-bar art doesn't match, learned in the Python app; installed with the art download. -->
+    <EmbeddedResource Include="src\Assets\TopbarVariants\*\*.png" LogicalName="TopbarVariants/%(RecursiveDir)%(Filename)%(Extension)" />
     <!-- html.unescape's tables, generated from Python, for tooltip text identical to the Python sync's. -->
     <EmbeddedResource Include="src\Services\GameApi\html5_entities.json" LogicalName="GameApi/html5_entities.json" />
   </ItemGroup>
