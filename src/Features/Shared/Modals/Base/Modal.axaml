@@ -64,9 +64,9 @@
                 BoxShadow="0 4 8 0 #40000000"
                 VerticalAlignment="Center"
                 HorizontalAlignment="Center"
+                Margin="24"
                 MinWidth="400"
-                MaxWidth="800"
-                MaxHeight="600">
+                MaxWidth="800">
             <Border.RenderTransform>
                 <ScaleTransform/>
             </Border.RenderTransform>

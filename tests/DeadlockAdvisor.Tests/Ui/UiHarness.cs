@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Threading;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
@@ -35,6 +36,7 @@ public sealed class UiHarness : IDisposable
         App.RegisterServices(services);
         services.AddSingleton<ISettingsService>(Settings);
         services.AddSingleton<IDeadlockApi>(Api);
+        services.AddSingleton<IScreenCaptureService>(Capture);
         _services = services.BuildServiceProvider();
 
         Data = _services.GetRequiredService<IDataService>();
@@ -55,6 +57,8 @@ public sealed class UiHarness : IDisposable
 
     /// <summary>No network in tests: every call fails as if the site were down, unless a test says otherwise.</summary>
     public FakeDeadlockApi Api { get; } = new();
+
+    public FakeScreenCapture Capture { get; } = new();
     public IDataService Data { get; }
     public IArtService Art { get; }
     public MainWindowViewModel ViewModel { get; }
@@ -95,10 +99,16 @@ public sealed class UiHarness : IDisposable
         }
     }
 
-    public string Screenshot(string name)
+    public string Screenshot(string name) => Save(Window, name);
+
+    /// <summary>The open modal, which lives in a window of its own over the main one.</summary>
+    public string ScreenshotModal(string name) =>
+        Save(Window.OwnedWindows.OfType<ModalWindow>().Single(), name);
+
+    private static string Save(Window window, string name)
     {
         Settle();
-        var frame = Window.CaptureRenderedFrame() ?? throw new InvalidOperationException("Nothing was rendered");
+        var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("Nothing was rendered");
         var path = Path.Combine(RepoRoot(), "mockups", name);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         frame.Save(path);

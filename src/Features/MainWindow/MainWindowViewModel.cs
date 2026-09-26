@@ -118,7 +118,7 @@ public class MainWindowViewModel : ViewModelBase
 
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
         FindCommand = ReactiveCommand.Create(Find);
-        HelpCommand = ReactiveCommand.Create(() => ShowMessage("How scoring works", HowScoringWorks));
+        HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
         RefreshStatus();
@@ -186,9 +186,6 @@ public class MainWindowViewModel : ViewModelBase
             $"Found {_art.Count(ArtKind.Hero)} portrait file(s) in {_art.FolderOf(ArtKind.Hero)}. Heroes without one keep their initials tile.",
             TimeSpan.FromSeconds(5));
     }
-
-    private void ShowMessage(string title, string body) =>
-        _modals.ShowModal(new MessageModalViewModel(title, body, ReactiveCommand.Create(_modals.CloseModal)));
 
     private void RefreshStatus()
     {

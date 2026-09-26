@@ -6,6 +6,7 @@ using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -39,6 +40,8 @@ public partial class App : Application
         services.AddSingleton<IMatchStatsService, MatchStatsService>();
         services.AddSingleton<IArtDownloadService, ArtDownloadService>();
         services.AddSingleton<IExcelExportService, ExcelExportService>();
+        services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
+        services.AddTransient<DetectAction>();
 
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DataMenuViewModel>();

@@ -1,0 +1,41 @@
+{
+  "notes": [
+    "A second real 2560x1440 capture, all twelve heroes named by the player.",
+    "",
+    "This is the fixture that pins the grid search. Before it existed the",
+    "search chose pitch 101 where the truth is 117, which still put ten of",
+    "twelve boxes over a real portrait -- just the wrong one each time, so",
+    "the whole roster came out shifted by a slot and every score still looked",
+    "healthy. Ranking candidate pitches by a cheap pass over nominal boxes put",
+    "the correct one eleventh of nineteen; only refining the slots before",
+    "comparing pitches puts it first.",
+    "",
+    "It also cross-validates the learned variants. Apollo and Silver have",
+    "reference art that does not match what the game draws, and their",
+    "variants were taken from the other 2560x1440 fixture -- a different",
+    "match, different framing. They are expected to read correctly here off",
+    "art learned there, which is the whole point of the variant mechanism.",
+    "",
+    "The background behind this strip is a flat tan wall, close in colour to",
+    "the amber backplate, which is what broke the self-slot probe until it",
+    "started comparing chroma rather than RGB."
+  ],
+  "screen_height": 1440,
+  "self_slot": 0,
+  "lane_heroes": ["ivy", "celeste", "lash"],
+  "allow_wrong": 0,
+  "heroes": {
+    "0": "apollo",
+    "1": "ivy",
+    "2": "wraith",
+    "3": "bebop",
+    "4": "silver",
+    "5": "doorman",
+    "6": "celeste",
+    "7": "lash",
+    "8": "venator",
+    "9": "paige",
+    "10": "mirage",
+    "11": "mo_and_krill"
+  }
+}

@@ -1,0 +1,40 @@
+{
+  "notes": [
+    "The laning phase, 1:45 into a match -- which is when detection is most",
+    "likely to be run, and a different UI state from the other fixtures.",
+    "",
+    "Deadlock marks all four players in the lane here, not just you: your",
+    "team's colour behind two slots and the enemy's behind the other two.",
+    "That broke self-detection, which had been comparing the best slot with",
+    "the runner-up. With four slots lit the runner-up is a lane-mate sitting",
+    "close behind (8.9 against 6.6 here), so the test threw out a correct",
+    "answer. Comparing against the median slot instead holds in both phases.",
+    "",
+    "It also means the lane can be read off the screen rather than inferred",
+    "from slot pairing, which is what this fixture pins: lane_source must be",
+    "'highlights' here and 'pairing' on the later-game captures.",
+    "",
+    "Only Ivy is player-confirmed -- they named it as the hero they were",
+    "playing. The other heroes listed are the detector's own reading at 0.53",
+    "or better and were spot-checked by eye, but they are not independent",
+    "ground truth. Victor and Dynamo are deliberately left out: both came in",
+    "around 0.32, which the matcher itself reports as uncertain."
+  ],
+  "screen_height": 1440,
+  "self_slot": 1,
+  "lane_source": "highlights",
+  "lane_heroes": ["grey_talon", "kelvin", "abrams"],
+  "allow_wrong": 0,
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "5": "vyper",
+    "6": "kelvin",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

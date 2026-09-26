@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Match.Board;
+using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
@@ -42,19 +43,17 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
-    private readonly INotificationService _notifications;
     private readonly Func<double> _now;
 
-    public MatchViewModel(IDataService data, ISettingsService settings, INotificationService notifications)
-        : this(data, settings, notifications, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
+    public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect)
+        : this(data, settings, detect, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
     {
     }
 
-    internal MatchViewModel(IDataService data, ISettingsService settings, INotificationService notifications, Func<double> now)
+    internal MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, Func<double> now)
     {
         _data = data;
         _settings = settings;
-        _notifications = notifications;
         _now = now;
 
         Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
@@ -71,17 +70,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ByTier = settings.Current.ResultsByTier;
         ApplyDisplay();
 
-        DetectCommand = ReactiveCommand.Create(() =>
-            _notifications.ShowInformation("Detect from screen arrives with the screen detection port (phase 5)."));
+        DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, () =>
+        {
+            Board.Refresh();
+            OnMatchChanged();
+        }));
         Board.DetectCommand = DetectCommand;
 
-        Board.MatchChanged
-            .Subscribe(_ =>
-            {
-                Refresh();
-                _settings.Update(s => s.LastMatch = Match.ToSaved());
-            })
-            .DisposeWith(Disposables);
+        Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
 
         // Each view explains with its own hero restriction rather than the active tab's, so an
         // explanation can never describe a different scoping than the list the row was clicked in.
@@ -145,6 +141,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         LaneResults.SetResults(ItemScoring.LanePhaseResults(store, _data.Matrix, Match), note);
         FullResults.SetResults(ItemScoring.FullMatchResults(store, _data.Matrix, Match), note);
         RefreshExplain();
+    }
+
+    private void OnMatchChanged()
+    {
+        Refresh();
+        _settings.Update(s => s.LastMatch = Match.ToSaved());
     }
 
     /// <summary>Adopt a reloaded store: heroes and items may have changed.</summary>

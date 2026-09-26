@@ -1,0 +1,41 @@
+{
+  "notes": [
+    "The band that capture.grab_top_band() hands to detection, taken off a",
+    "real 2560x1440 screen. This is the fixture that exercises the production",
+    "path: no pitch_range or top_range, just screen_height, exactly as",
+    "detect_action passes it.",
+    "",
+    "It exists because that path was broken and nothing caught it. The search",
+    "sized its pitch range off image.height, but the image is only the top 22%",
+    "of the screen, so on this capture it hunted for pitches between 22 and 54",
+    "when the truth is 117. Every test passed because every test handed it",
+    "explicit ranges.",
+    "",
+    "Seven, Apollo and Silver (slots 7, 8, 10) are here but they are not an",
+    "honest test on this image: none of them matched the API's reference art,",
+    "and the variants that fix them were cut from this very capture. They are",
+    "listed so the roster is complete and so a regression in variant loading",
+    "shows up, but the real check on that art is the other 2560x1440 fixture,",
+    "which is a different match entirely.",
+    "",
+    "All twelve heroes and the lane were confirmed by the player."
+  ],
+  "screen_height": 1440,
+  "self_slot": 1,
+  "lane_heroes": ["abrams", "vindicta", "seven"],
+  "allow_wrong": 0,
+  "heroes": {
+    "0": "abrams",
+    "1": "holliday",
+    "2": "mina",
+    "3": "venator",
+    "4": "celeste",
+    "5": "kelvin",
+    "6": "vindicta",
+    "7": "seven",
+    "8": "apollo",
+    "9": "mo_and_krill",
+    "10": "silver",
+    "11": "sinclair"
+  }
+}

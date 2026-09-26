@@ -344,8 +344,7 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- modals ---------------------------------------------------------------------
 
-    private void ShowMessage(string title, IEnumerable<string> lines) =>
-        _modals.ShowModal(new MessageModalViewModel(title, string.Join("\n", lines), ReactiveCommand.Create(_modals.CloseModal)));
+    private void ShowMessage(string title, IEnumerable<string> lines) => _modals.ShowMessage(title, string.Join("\n", lines));
 
     private void Confirm(string prompt, string confirmText, Action confirmed, string? secondaryText = null, Action? secondary = null,
         string cancelText = "Cancel")

@@ -1,0 +1,129 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:detect="using:DeadlockAdvisor.Features.Match.Detect"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.Match.Detect.DetectReviewView"
+             x:DataType="detect:DetectReviewViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.slot">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="6"/>
+        </Style>
+        <Style Selector="Border.slot.you">
+            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role.you">
+            <Setter Property="Foreground" Value="{DynamicResource SelfBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role.laneAlly">
+            <Setter Property="Foreground" Value="{DynamicResource AllyBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role.laneEnemy">
+            <Setter Property="Foreground" Value="{DynamicResource EnemyBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.detail.uncertain">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.detail.corrected">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.pill.you:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource SelfBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="detect:SlotReviewViewModel">
+            <Border Classes="slot" Classes.you="{Binding IsYou}">
+                <Grid ColumnDefinitions="Auto,*">
+                    <Border Width="44" Height="73" CornerRadius="4" ClipToBounds="True"
+                            Background="{DynamicResource BgBrush}" VerticalAlignment="Top">
+                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                    </Border>
+                    <StackPanel Grid.Column="1" Spacing="4" Margin="10,0,0,0">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <TextBlock Classes="role"
+                                       Classes.you="{Binding IsYou}"
+                                       Classes.laneAlly="{Binding IsLaneAlly}"
+                                       Classes.laneEnemy="{Binding IsLaneEnemy}"
+                                       Text="{Binding RoleText}"/>
+                            <ToggleButton Grid.Column="1"
+                                          Classes="pill you"
+                                          Content="You"
+                                          IsChecked="{Binding IsYou, Mode=OneWay}"
+                                          Command="{Binding SetSelfCommand}"
+                                          ToolTip.Tip="This slot is you: the teams and your lane follow from it"/>
+                        </Grid>
+                        <controls:NoWheelComboBox HorizontalAlignment="Stretch"
+                                                  ItemsSource="{Binding Choices}"
+                                                  SelectedItem="{Binding SelectedHero}"/>
+                        <TextBlock Classes="hint detail"
+                                   Classes.uncertain="{Binding IsUncertain}"
+                                   Classes.corrected="{Binding WasCorrected}"
+                                   TextWrapping="Wrap"
+                                   Text="{Binding Detail}"/>
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <StackPanel Margin="20" Spacing="12" Width="700">
+        <TextBlock Classes="h2" Text="Detected match"/>
+        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+
+        <Grid ColumnDefinitions="*,14,*">
+            <StackPanel Spacing="6">
+                <TextBlock Classes="section" Classes.ally="{Binding HasSelf}" Text="{Binding OwnHeading}"/>
+                <ItemsControl x:Name="OwnRows" ItemsSource="{Binding OwnRows}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="6"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Spacing="6">
+                <TextBlock Classes="section" Classes.enemy="{Binding HasSelf}" Text="{Binding FoeHeading}"/>
+                <ItemsControl x:Name="FoeRows" ItemsSource="{Binding FoeRows}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Spacing="6"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                </ItemsControl>
+            </StackPanel>
+        </Grid>
+
+        <CheckBox Content="Remember my corrections as reference art"
+                  IsChecked="{Binding RememberCorrections}"
+                  ToolTip.Tip="Saves each corrected crop into assets/topbar/&lt;hero&gt;/ so the same portrait is recognised next time"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button x:Name="ApplyButton"
+                    Classes="primary"
+                    Content="Apply to match"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    Command="{Binding ApplyCommand}"/>
+            <Button Content="Cancel"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsCancel="True"
+                    Command="{Binding CancelCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

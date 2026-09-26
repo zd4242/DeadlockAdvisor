@@ -1,0 +1,32 @@
+{
+  "notes": [
+    "A hand-made crop of the top bar rather than a full screenshot, so the",
+    "search bounds have to be given explicitly -- they are normally derived",
+    "from the screen height, which this image does not have.",
+    "",
+    "A deliberately awkward case: the image has been rescaled and softened,",
+    "and four of the twelve players (slots 4, 7, 8, 11) were dead at the",
+    "moment of capture. Deadlock draws a dead player as a flat black",
+    "silhouette with a respawn timer over it, which carries no trace of who",
+    "they are, so those slots are not listed here at all.",
+    "",
+    "Of the eight living slots, mina (3) and apollo (5) peak at about 0.27",
+    "even at their best-fitting box and are not currently read. allow_wrong",
+    "covers exactly those two: if a change breaks any of the other six, the",
+    "count goes over and this fails."
+  ],
+  "self_slot": 2,
+  "pitch_range": [95.0, 145.0],
+  "top_range": [0.0, 30.0],
+  "allow_wrong": 2,
+  "heroes": {
+    "0": "abrams",
+    "1": "victor",
+    "2": "paige",
+    "3": "mina",
+    "5": "apollo",
+    "6": "shiv",
+    "9": "haze",
+    "10": "bebop"
+  }
+}
