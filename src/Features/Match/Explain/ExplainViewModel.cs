@@ -29,7 +29,8 @@ public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
     public IBrush Brush => new SolidColorBrush(Color);
 }
 
-public sealed record MatchDataCard(IReadOnlyList<DataTotal> Totals, IReadOnlyList<DataLine> Lines, string Note);
+/// <param name="Relevance">Why the enemy lifts count for less, when your hero rarely builds the item.</param>
+public sealed record MatchDataCard(IReadOnlyList<DataTotal> Totals, IReadOnlyList<DataLine> Lines, string Note, string? Relevance = null);
 
 /// <summary>
 /// "Why this item?": the same arithmetic scoring did, spelled out one hero and one trait at a time,
@@ -74,7 +75,8 @@ public class ExplainViewModel : ViewModelBase
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(Card).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId, restrictTo);
-        MatchData = parts.Count > 0 ? DataCard(store, parts, now) : null;
+        var self = ItemScoring.RelevantHeroes(match, restrictTo).Self;
+        MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
     }
 
     private void ShowIdle()
@@ -102,9 +104,13 @@ public class ExplainViewModel : ViewModelBase
         ExplainText.NetWorth(contribution.NetWorth),
         contribution.NetWorth is { Factor: not 1.0 } standing ? ExplainText.NetWorthTooltip(standing) : null);
 
-    /// <summary>One line per hero with match data for this item, then where the numbers come from.</summary>
-    private static MatchDataCard DataCard(DataStore store, IReadOnlyList<MatchLift> parts, double now)
+    /// <summary>
+    /// One line per hero with match data for this item, then where the numbers come from. The enemies
+    /// total counts for less when your hero rarely builds the item, as it does in the list.
+    /// </summary>
+    private static MatchDataCard DataCard(DataStore store, IReadOnlyList<MatchLift> parts, double now, string? self, double? buildRatio)
     {
+        var relevance = ItemScoring.Relevance(buildRatio);
         var totals = new List<DataTotal>();
         foreach (var relation in new[] { Relation.Against, Relation.As })
         {
@@ -114,8 +120,13 @@ public class ExplainViewModel : ViewModelBase
             var sum = 0.0;
             foreach (var part in parts.Where(part => part.Relation == key))
                 sum += part.LiftShrunk;
+            if (relation == Relation.Against)
+                sum *= relevance;
             totals.Add(new DataTotal(ExplainText.DataWord(key), Palette.RelationColor(relation), new DisplayAmount(sum)));
         }
+        string? relevanceNote = null;
+        if (buildRatio is { } ratio && relevance < 1 && parts.Any(part => part.Relation == Relation.Against.Key()))
+            relevanceNote = ExplainText.RarelyBuilt(self is not null && store.Heroes.TryGetValue(self, out var selfHero) ? selfHero.HeroName : "Your hero", ratio);
 
         var lines = parts.OrderBy(part => -part.LiftShrunk).Select(part =>
         {
@@ -129,6 +140,6 @@ public class ExplainViewModel : ViewModelBase
                 new DisplayAmount(part.LiftShrunk));
         }).ToList();
 
-        return new MatchDataCard(totals, lines, MatchStatsMath.DataNote(store.MatchMeta, now));
+        return new MatchDataCard(totals, lines, MatchStatsMath.DataNote(store.MatchMeta, now), relevanceNote);
     }
 }

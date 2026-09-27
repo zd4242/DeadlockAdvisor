@@ -81,13 +81,39 @@ public sealed class DataStore
     public OrderedDictionary<MatchLiftKey, MatchLift> MatchLift { get; set; } = [];
 
     /// <summary>The sidecar: fetched_at, the rank range, per-family windows and reliability.</summary>
-    public JsonObject MatchMeta { get; set; } = [];
+    public JsonObject MatchMeta
+    {
+        get => _matchMeta;
+        set
+        {
+            _matchMeta = value;
+            _buildRatios = null;
+        }
+    }
+    private JsonObject _matchMeta = [];
 
     /// <summary>
     /// What Fetch Match Stats downloaded, split by rank, that <see cref="MatchLift"/> was worked out from.
     /// Null when the lifts predate rank splits (or there are none), so they can't be refiltered.
     /// </summary>
-    public MatchCounts? MatchCounts { get; set; }
+    public MatchCounts? MatchCounts
+    {
+        get => _matchCounts;
+        set
+        {
+            _matchCounts = value;
+            _buildRatios = null;
+        }
+    }
+    private MatchCounts? _matchCounts;
+
+    /// <summary>
+    /// How often each hero builds each item next to the average player (<see cref="MatchStatsMath.BuildRatios"/>),
+    /// over the lifts' rank range; empty without <see cref="MatchCounts"/>. Worked out when first asked for.
+    /// </summary>
+    public IReadOnlyDictionary<(string ItemId, string HeroId), double> BuildRatios =>
+        _buildRatios ??= MatchCounts is null ? [] : MatchStatsMath.BuildRatios(MatchCounts, MatchStatsMath.RankOf(MatchMeta), Items.Values);
+    private Dictionary<(string ItemId, string HeroId), double>? _buildRatios;
 
     /// <summary>The stat parts making up each stat-derived coefficient. Computed by <see cref="RebuildDerived"/>, never saved.</summary>
     public OrderedDictionary<CoefficientKey, List<StatPart>> Derived { get; set; } = [];
@@ -304,9 +330,13 @@ public sealed class DataStore
         }
     }
 
-    /// <summary>Recompute every stat-derived coefficient from the item stats and stat rules. Cheap: call it after either changes.</summary>
+    /// <summary>
+    /// Recompute every stat-derived coefficient from the item stats and stat rules. Cheap: call it after
+    /// either changes. The game sync calls it after changing items too, so the build ratios start over.
+    /// </summary>
     public void RebuildDerived()
     {
+        _buildRatios = null;
         var rulesByStat = new Dictionary<string, List<StatRule>>();
         foreach (var rule in StatRules.Values)
         {

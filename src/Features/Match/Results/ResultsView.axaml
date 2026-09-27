@@ -92,6 +92,7 @@
                                                                Margin="8,0,10,0"
                                                                VerticalAlignment="Center"
                                                                Data="{Binding Data}"
+                                                               IsRarelyBuilt="{Binding IsRarelyBuilt}"
                                                                IsVisible="{Binding HasData}"
                                                                ToolTip.Tip="{Binding DataTip}"/>
                                             <Border Grid.Column="6"

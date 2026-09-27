@@ -159,6 +159,10 @@
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
                                     </Grid>
+                                    <TextBlock Classes="dim"
+                                               TextWrapping="Wrap"
+                                               Text="{Binding Relevance}"
+                                               IsVisible="{Binding Relevance, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                     <ItemsControl ItemsSource="{Binding Lines}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="explain:DataLine">

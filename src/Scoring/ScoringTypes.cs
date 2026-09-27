@@ -11,16 +11,21 @@ public readonly record struct MatrixKey(string ItemId, string HeroId, Relation R
 /// Relation key ("against" / "as") → summed match-data lift; see <see cref="ItemScoring.DataScores"/>.
 /// Shown beside the score, never folded into it.
 /// </param>
+/// <param name="BuildRatio">How often your hero builds it next to the average player; see <see cref="ItemScoring.BuildRatio"/>.</param>
 public sealed record ScoredItem(
     string ItemId,
     string ItemName,
     int Tier,
     double Score,
     string ShopCategory,
-    OrderedDictionary<string, double> Data)
+    OrderedDictionary<string, double> Data,
+    double? BuildRatio = null)
 {
     /// <summary>See <see cref="ItemScoring.DataStrength"/>.</summary>
     public double DataStrength { get; } = ItemScoring.DataStrength(Data);
+
+    /// <summary>Your hero builds it so rarely that its enemy lifts count for less (<see cref="ItemScoring.Relevance"/>).</summary>
+    public bool RarelyBuilt => ItemScoring.Relevance(BuildRatio) < 1;
 }
 
 /// <summary>One trait's share of one hero's contribution to an item's score.</summary>

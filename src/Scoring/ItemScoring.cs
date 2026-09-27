@@ -24,6 +24,12 @@ public static class ItemScoring
     public const double PickMinAs = 3.0;
 
     /// <summary>
+    /// Your hero building an item less than this share of what the average player does, and its enemy
+    /// lifts start to count for less: they measure the players who do build it (<see cref="Relevance"/>).
+    /// </summary>
+    public const double RareBuildRatio = 0.25;
+
+    /// <summary>
     /// Precompute weight(item, hero, relation) for every combination reachable from a nonzero
     /// coefficient. Rebuild whenever the data changes.
     /// </summary>
@@ -92,7 +98,7 @@ public static class ItemScoring
         return store.Items
             .Where(entry => tiers.Contains(entry.Value.Tier))
             .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
-                entry.Value.Category, DataScores(store, match, entry.Key, restrictTo)))
+                entry.Value.Category, DataScores(store, match, entry.Key, restrictTo), BuildRatio(store, entry.Key, lineUp.Self)))
             .OrderByDescending(scored => scored.Score)
             .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
             .ToList();
@@ -227,7 +233,7 @@ public static class ItemScoring
     /// <summary>
     /// Relation → summed lift_shrunk, only for relations with data. Kept apart rather than added up:
     /// "against" is a small counter effect, "as" a much bigger one that also reflects who plays the
-    /// hero, so one sum would drown the counters.
+    /// hero, so one sum would drown the counters. The "against" sum is counted by <see cref="Relevance"/>.
     /// </summary>
     public static OrderedDictionary<string, double> DataScores(
         DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null)
@@ -235,8 +241,23 @@ public static class ItemScoring
         var result = new OrderedDictionary<string, double>();
         foreach (var lift in DataParts(store, match, itemId, restrictTo))
             result[lift.Relation] = result.GetValueOrDefault(lift.Relation) + lift.LiftShrunk;
+        if (result.TryGetValue(Relation.Against.Key(), out var against))
+            result[Relation.Against.Key()] = against * Relevance(BuildRatio(store, itemId, RelevantHeroes(match, restrictTo).Self));
         return result;
     }
+
+    /// <summary>How often your hero builds the item next to the average player; null without a hero or download counts.</summary>
+    public static double? BuildRatio(DataStore store, string itemId, string? heroId) =>
+        heroId is not null && store.BuildRatios.TryGetValue((itemId, heroId), out var ratio) ? ratio : null;
+
+    /// <summary>
+    /// How much the enemy lifts count: in full once your hero builds the item at least
+    /// <see cref="RareBuildRatio"/> as often as the average player, in proportion below that, not at all
+    /// when it never does. The lifts average over the players who build it, and a hero that doesn't is
+    /// unlike them. In full when the ratio is unknown.
+    /// </summary>
+    public static double Relevance(double? buildRatio) =>
+        buildRatio is { } ratio ? Math.Clamp(ratio / RareBuildRatio, 0.0, 1.0) : 1.0;
 
     /// <summary>
     /// The data's net verdict on an item, in bars: the enemies lift over <see cref="PickMinAgainst"/>

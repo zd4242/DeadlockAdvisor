@@ -570,6 +570,54 @@ public static partial class MatchStatsMath
         return mine?.Heroes.ToDictionary(pair => pair.Key, pair => pair.Value.For(counts.Ranks, range));
     }
 
+    /// <summary>
+    /// How often each hero builds each item next to the average player, from the "as/full" download over
+    /// one rank range: the item's share of the hero's purchases in its tier ÷ its share of everyone's.
+    /// 1 is typical and 0 never bought. A hero with no purchases in a tier gets no ratio for its items.
+    /// </summary>
+    public static Dictionary<(string ItemId, string HeroId), double> BuildRatios(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
+    {
+        var ratios = new Dictionary<(string ItemId, string HeroId), double>();
+        var family = counts.Families.FirstOrDefault(family => family.Family is { Relation: "as", Scope: "full" });
+        if (family is null)
+            return ratios;
+
+        var byGameId = new Dictionary<long, Item>();
+        foreach (var item in items.Where(item => item.GameId != 0))
+            byGameId[item.GameId] = item;
+        var (everyone, _) = TierShares(family.Baseline.For(counts.Ranks, range), byGameId);
+        foreach (var (heroId, halves) in family.Heroes)
+        {
+            var (mine, tierTotals) = TierShares(halves.For(counts.Ranks, range), byGameId);
+            foreach (var (itemId, (tier, share)) in everyone)
+            {
+                if (share > 0 && tierTotals.GetValueOrDefault(tier) > 0)
+                    ratios[(itemId, heroId)] = mine.GetValueOrDefault(itemId).Share / share;
+            }
+        }
+        return ratios;
+    }
+
+    /// <summary>Each item's share of the purchases in its tier over both halves, and each tier's purchases.</summary>
+    private static (Dictionary<string, (int Tier, double Share)> Shares, Dictionary<int, long> TierTotals) TierShares(
+        Halves halves, IReadOnlyDictionary<long, Item> byGameId)
+    {
+        var totals = Merge(halves.First, halves.Second);
+        var tierTotals = new Dictionary<int, long>();
+        foreach (var (gameId, (_, matches)) in totals)
+        {
+            if (byGameId.TryGetValue(gameId, out var item))
+                tierTotals[item.Tier] = tierTotals.GetValueOrDefault(item.Tier) + matches;
+        }
+        var shares = new Dictionary<string, (int Tier, double Share)>();
+        foreach (var (gameId, (_, matches)) in totals)
+        {
+            if (byGameId.TryGetValue(gameId, out var item) && tierTotals[item.Tier] > 0)
+                shares[item.ItemId] = (item.Tier, (double)matches / tierTotals[item.Tier]);
+        }
+        return (shares, tierTotals);
+    }
+
     // -- describing it ----------------------------------------------------------
 
     /// <summary>"just now", "5h ago", "3d ago".</summary>

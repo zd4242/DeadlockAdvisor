@@ -288,6 +288,54 @@ public class ScoringTests
     }
 
     [Fact]
+    public void EnemyLiftsCountLessWhenYourHeroRarelyBuildsTheItem()
+    {
+        var store = TestStore.Make();
+        TestStore.AddLifts(store);
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { GameId = 1 };
+        store.Items["irrelevant_t1"] = store.Items["irrelevant_t1"] with { GameId = 2 };
+        store.Items["pct_dmg_t3"] = store.Items["pct_dmg_t3"] with { GameId = 3 };
+
+        // Everyone splits tier 1 evenly between the two items. low_hp puts 1 in 20 of its tier-1 buys
+        // into the trinket, a tenth of the average share; heavy_spirit never buys it; generic buys
+        // nothing in tier 1, so there's no telling.
+        static RankedHalves Bought(params (long Item, long Wins, long Matches)[] rows) =>
+            new(new RankedTotals(MatchStatsMath.Totals(rows), []), new RankedTotals([], []));
+        var patch = new Patch("09-16-2026 Update", 0);
+        store.MatchCounts = new MatchCounts(1, patch, [],
+        [
+            new(new Family("as", "full", 2), patch, Bought((1, 500, 1000), (2, 500, 1000)), new()
+            {
+                ["low_hp"] = Bought((1, 25, 50), (2, 475, 950)),
+                ["heavy_spirit"] = Bought((2, 500, 1000)),
+                ["generic"] = Bought((3, 10, 20)),
+            }),
+        ]);
+
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("generic", Role.Enemy);
+        match.SetRole("low_hp", Role.Self);
+
+        // 0.1 of the average share, under the 0.25 bar: the enemies' 1.25 counts × 0.4. "as" is untouched.
+        Assert.Equal(0.1, ItemScoring.BuildRatio(store, "spirit_resist_t1", "low_hp")!.Value, 9);
+        var data = ItemScoring.DataScores(store, match, "spirit_resist_t1");
+        Assert.Equal(0.5, data["against"], 9);
+        Assert.Equal(3.0, data["as"]);
+        var scored = ItemScoring.ScoreAll(store, ItemScoring.BuildWeightMatrix(store), match, ItemScoring.FullTiers)
+            .Single(item => item.ItemId == "spirit_resist_t1");
+        Assert.True(scored.RarelyBuilt);
+        Assert.Equal(0.5 + 3.0 / 3, scored.DataStrength, 9);
+
+        // Never bought: the enemy lifts don't count. No purchases in the tier at all: they count in full.
+        Assert.Equal(0, ItemScoring.Relevance(ItemScoring.BuildRatio(store, "spirit_resist_t1", "heavy_spirit")));
+        Assert.Null(ItemScoring.BuildRatio(store, "spirit_resist_t1", "generic"));
+        Assert.Equal(1, ItemScoring.Relevance(null));
+        // irrelevant_t1 is built 1.9x as often as average by low_hp: in full.
+        Assert.Equal(1, ItemScoring.Relevance(ItemScoring.BuildRatio(store, "irrelevant_t1", "low_hp")));
+    }
+
+    [Fact]
     public void LaneDataUsesTheLaneScopeAndOnlyLaneHeroes()
     {
         var store = TestStore.Make();

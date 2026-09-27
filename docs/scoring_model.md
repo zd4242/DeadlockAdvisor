@@ -108,6 +108,27 @@ start means the same halves and rank groups. Counts downloaded before the window
 matched can't be corrected: the family meta has `own_excluded: false`, and the
 report and the **Data:** flyout say to fetch again.
 
+### Items your hero rarely builds
+
+An enemy lift averages over the players who build the item. If your hero hardly
+ever builds it, those players aren't like you. For example, Refresher's enemy lifts
+come from the ult-heavy heroes who build it, and Vindicta rarely does. So
+`DataScores` multiplies the "against" sum by `ItemScoring.Relevance`:
+
+```
+build ratio = (item's share of your hero's purchases in its tier)
+            ÷ (item's share of everyone's purchases in that tier)
+relevance   = clamp(build ratio ÷ RareBuildRatio, 0, 1)      RareBuildRatio = 0.25
+```
+
+Build ratios come from the `as/full` download over the lifts' rank range
+(`MatchStatsMath.BuildRatios`). `DataStore.BuildRatios` caches them and clears the
+cache whenever the counts, the meta or the items change. Relevance is 1 when there's
+no self hero, no counts file, or no purchases by your hero in that tier at all. It is
+0 when your hero never buys the item. The row shows "you rarely built" and its tip
+and the explain panel say how much the enemy lifts count. `DataStrength` and DATA ★
+use the reduced sum.
+
 ### Which ranks the data comes from
 
 Fetch Match Stats keeps the raw win and match totals in `match_item_counts.json`

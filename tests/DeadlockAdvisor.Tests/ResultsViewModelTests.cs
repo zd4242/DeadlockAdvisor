@@ -117,6 +117,21 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void ARarelyBuiltItemSaysWhyItsEnemyLiftsCountLess()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults([Scored("a", 10, against: 0.4) with { BuildRatio = 0.1 }, Scored("b", 5, against: 1.0) with { BuildRatio = 0.1 }, Scored("c", 1) with { BuildRatio = 0.1 }], "note");
+        results.SetDisplay(RankBy.Formula, false, null);
+
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
+        Assert.True(rows[0].IsRarelyBuilt);
+        Assert.Equal("Your hero builds this 1/10 as often as the average player, so the enemy lifts count ×0.40.\n\nnote", rows[0].DataTip);
+        // Without data there's nothing that counts for less.
+        Assert.False(rows[2].IsRarelyBuilt);
+        Assert.Equal("note", rows[2].DataTip);
+    }
+
+    [Fact]
     public void NoHeroesPickedShowsTheHintEvenForEveryItem()
     {
         var results = new ResultsViewModel("hint");

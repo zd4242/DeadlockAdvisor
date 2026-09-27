@@ -1,5 +1,6 @@
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Theme;
 using ReactiveUI.Fody.Helpers;
@@ -61,6 +62,9 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public bool IsStandout { get; private set; }
     [Reactive] public OrderedDictionary<string, double>? Data { get; private set; }
     [Reactive] public bool HasData { get; private set; }
+
+    /// <summary>Your hero rarely builds the item, so its enemy lifts count for less.</summary>
+    [Reactive] public bool IsRarelyBuilt { get; private set; }
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
@@ -78,7 +82,13 @@ public class ResultRowViewModel : ViewModelBase
         if (Data is null || !Data.SequenceEqual(scored.Data))
             Data = scored.Data;
         HasData = scored.Data.Count > 0;
-        DataTip = string.IsNullOrEmpty(dataTip) ? null : dataTip;
+        IsRarelyBuilt = HasData && scored.RarelyBuilt;
+        var tips = new List<string>();
+        if (IsRarelyBuilt)
+            tips.Add(ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value));
+        if (!string.IsNullOrEmpty(dataTip))
+            tips.Add(dataTip);
+        DataTip = tips.Count > 0 ? string.Join("\n\n", tips) : null;
     }
 }
 

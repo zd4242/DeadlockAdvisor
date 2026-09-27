@@ -18,6 +18,13 @@ public static class ExplainText
     /// <summary>How the data numbers name each relation: "enemies" for the counters, "you" for your hero.</summary>
     public static string DataWord(string relation) => relation == "against" ? "enemies" : "you";
 
+    /// <summary>"Vindicta builds this 1/12 as often as the average player, so the enemy lifts count ×0.33."</summary>
+    public static string RarelyBuilt(string who, double ratio) =>
+        ratio <= 0
+            ? $"{who} never builds this in real matches, so the enemy lifts don't count."
+            : $"{who} builds this 1/{Format.Num(Math.Round(1 / ratio))} as often as the average player, "
+              + $"so the enemy lifts count ×{NumberFormat.Fixed(ItemScoring.Relevance(ratio), 2)}.";
+
     /// <summary>
     /// Where a coefficient came from, when it isn't just the typed number. The multiplied-out value is
     /// already beside it, so a lone stat just names itself: "from Spirit Resist 30%", otherwise
