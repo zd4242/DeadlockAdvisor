@@ -143,6 +143,11 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.ByNetWorth, vm => vm.Board.HasNetWorth,
+                vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter)
+            .Select(_ => ChangedFilterCount())
+            .Subscribe(changed => FiltersLabel = changed > 0 ? $"Filters · {changed}" : "Filters")
+            .DisposeWith(Disposables);
 
         _data.ScoresChanged.Subscribe(_ => Refresh()).DisposeWith(Disposables);
         _data.StoreReplaced.Subscribe(_ => Rebind()).DisposeWith(Disposables);
@@ -174,6 +179,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }
 
+    /// <summary>The filters button, counting the options changed from their defaults since they're out of sight.</summary>
+    [Reactive] public string FiltersLabel { get; private set; } = "Filters";
+
     public IReadOnlyList<CutoffPreset> Cutoffs => CutoffPresets;
     public IReadOnlyList<RankPreset> Ranks => RankPresets;
 
@@ -194,6 +202,15 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             () => ScaleFor(laneScoped: false));
         RefreshExplain();
     }
+
+    private int ChangedFilterCount() =>
+        new[]
+        {
+            SelectedCutoff.Percent != DefaultCutoffPercent,
+            ByTier,
+            ByNetWorth && Board.HasNetWorth,
+            DataRanks.RankedOnly && DataRanks.CanFilter,
+        }.Count(changed => changed);
 
     private NetWorthWeights NetWorth() => ByNetWorth ? NetWorthWeights.For(Match) : NetWorthWeights.None;
 

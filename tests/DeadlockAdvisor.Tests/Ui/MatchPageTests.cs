@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
@@ -243,34 +244,56 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
-    public async Task TheDataButtonFiltersTheMatchDataByRank()
+    public async Task TheFiltersMenuFiltersTheMatchDataByRank()
     {
         using var ui = new UiHarness();
         ui.Show();
-        var button = ui.Window.GetVisualDescendants().OfType<DropDownButton>().Single();
-        Assert.False(button.IsEnabled); // the golden data predates rank splits
-        Assert.Equal("Data: every match", button.Content);
+        var button = ui.Window.MatchPage.GetVisualDescendants().OfType<DropDownButton>().Single(b => b.Name == "FiltersButton");
+        Assert.Equal("Filters", button.Content);
+
+        button.Flyout!.ShowAt(button);
+        UiHarness.Settle();
+        var content = (Control)((Flyout)button.Flyout).Content!;
+        var radios = content.GetLogicalDescendants().OfType<RadioButton>().ToList();
+        Assert.All(radios, radio => Assert.False(radio.IsEffectivelyEnabled)); // the golden data predates rank splits
+        button.Flyout.Hide();
 
         ui.Services.GetRequiredService<IMatchStatsService>().Apply(ui.Data.Store, await MatchStatsServiceTests.ReplayedCountsAsync());
         ui.Data.NotifyReplaced();
         UiHarness.Settle();
-        Assert.True(button.IsEnabled);
 
-        button.Flyout!.ShowAt(button);
+        button.Flyout.ShowAt(button);
         UiHarness.Settle();
-        var panel = Assert.IsType<StackPanel>(((Flyout)button.Flyout).Content);
-        var radios = panel.Children.OfType<RadioButton>().ToList();
-        var combos = panel.Children.OfType<Grid>().Single().Children.OfType<ComboBox>().ToList();
+        Assert.All(radios, radio => Assert.True(radio.IsEffectivelyEnabled));
+        var from = content.GetLogicalDescendants().OfType<ComboBox>().First(combo => combo.DataContext is DataRanksViewModel);
         Assert.True(radios[0].IsChecked);
-        Assert.Equal("Initiate", combos[0].SelectedItem?.ToString());
+        Assert.Equal("Initiate", from.SelectedItem?.ToString());
 
         radios[1].IsChecked = true;
-        combos[0].SelectedIndex = 4;
+        from.SelectedIndex = 4;
         UiHarness.Settle();
 
         Assert.False(radios[0].IsChecked);
-        Assert.Equal("Data: Mystic+", button.Content);
+        Assert.Equal("Filters · 1", button.Content);
         Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
+    }
+
+    [AvaloniaFact]
+    public void TheFiltersButtonCountsTheOptionsChangedFromTheirDefaults()
+    {
+        using var ui = new UiHarness();
+        var match = ui.ViewModel.Match;
+        Assert.Equal("Filters", match.FiltersLabel);
+
+        match.ByTier = true;
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+        Assert.Equal("Filters · 2", match.FiltersLabel);
+
+        // Leaning on net worth only counts once there's a reading to lean on.
+        match.ByNetWorth = true;
+        Assert.Equal("Filters · 2", match.FiltersLabel);
+        SetUpMatch(ui);
+        Assert.Equal("Filters · 3", match.FiltersLabel);
     }
 }
