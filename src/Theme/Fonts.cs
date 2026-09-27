@@ -24,4 +24,14 @@ public static class Fonts
         formatted.TextAlignment = TextAlignment.Center;
         return formatted;
     }
+
+    /// <summary>
+    /// Where to draw <paramref name="text"/> so its glyphs sit centred in <paramref name="box"/>. Centring the
+    /// line box instead leaves text without descenders, like numbers, riding high.
+    /// </summary>
+    public static Point InkCentered(FormattedText text, Rect box)
+    {
+        var ink = text.BuildGeometry(default)?.Bounds ?? new Rect(0, 0, text.Width, text.Height);
+        return new Point(box.X + (box.Width - ink.Width) / 2 - ink.X, box.Y + (box.Height - ink.Height) / 2 - ink.Y);
+    }
 }

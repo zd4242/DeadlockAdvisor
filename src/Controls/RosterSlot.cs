@@ -306,6 +306,6 @@ public class RosterSlot : Control
         var pill = new Rect(portrait.X + (portrait.Width - width) / 2, portrait.Bottom + 3, width, _pillHeight);
         context.DrawRectangle(new SolidColorBrush(Palette.WithAlpha(team, 70)), new Pen(new SolidColorBrush(team), 1),
             new RoundedRect(pill, 4));
-        context.DrawText(text, new Point(pill.X + (pill.Width - text.Width) / 2, pill.Y + (pill.Height - text.Height) / 2));
+        context.DrawText(text, Fonts.InkCentered(text, pill));
     }
 }
