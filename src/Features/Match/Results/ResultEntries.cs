@@ -41,8 +41,9 @@ public class ResultRowViewModel : ViewModelBase
     public Color ShopColor => Palette.ShopColor(ShopCategory);
 
     /// <summary>The formula score, whatever the list is ranked by.</summary>
-    [Reactive] public double Score { get; private set; }
-    [Reactive] public string ScoreText { get; private set; } = "";
+    [Reactive] public DisplayAmount Score { get; private set; }
+
+    /// <summary>As printed, so a score that rounds to 0.0 reads as zero rather than a red ▼0.0.</summary>
     [Reactive] public bool IsNegative { get; private set; }
     [Reactive] public bool IsZero { get; private set; }
 
@@ -65,10 +66,9 @@ public class ResultRowViewModel : ViewModelBase
 
     public void SetValues(ScoredItem scored, Bars bars, bool showTier, string dataTip)
     {
-        Score = scored.Score;
-        IsNegative = scored.Score < 0;
-        IsZero = scored.Score == 0;
-        ScoreText = IsNegative ? Format.Num(-scored.Score) : Format.Num(scored.Score);
+        Score = new DisplayAmount(scored.Score);
+        IsNegative = Score.Shown < 0;
+        IsZero = Score.Shown == 0;
         Fraction = bars.Fraction;
         DataFraction = bars.Data ?? 0;
         HasDataBar = bars.Data is not null;

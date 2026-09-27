@@ -223,6 +223,10 @@
         <Setter Property="Height" Value="1"/>
         <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
     </Style>
+    <Style Selector="Border.vline">
+        <Setter Property="Width" Value="1"/>
+        <Setter Property="Background" Value="{DynamicResource BorderBrush}"/>
+    </Style>
 
     <!-- buttons -->
     <Style Selector="Button, ToggleButton">

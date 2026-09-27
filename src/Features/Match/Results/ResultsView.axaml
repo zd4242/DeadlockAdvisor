@@ -65,7 +65,7 @@
                                                   VerticalAlignment="Center"
                                                   card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                     <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
                                             <TextBlock Text="{Binding Name}"
                                                        FontWeight="Bold"
                                                        TextTrimming="CharacterEllipsis"
@@ -89,23 +89,34 @@
                                                             IsVisible="{Binding IsStandout}"
                                                             ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>
                                             <controls:DataText Grid.Column="5"
-                                                               Margin="8,0,8,0"
+                                                               Margin="8,0,10,0"
                                                                VerticalAlignment="Center"
                                                                Data="{Binding Data}"
                                                                IsVisible="{Binding HasData}"
                                                                ToolTip.Tip="{Binding DataTip}"/>
-                                            <Panel Grid.Column="6" VerticalAlignment="Center">
+                                            <Border Grid.Column="6"
+                                                    Classes="vline"
+                                                    Height="18"
+                                                    VerticalAlignment="Center"
+                                                    IsVisible="{Binding HasData}"/>
+                                            <!-- A fixed width, so the scores line up down the list whatever their length. -->
+                                            <Panel Grid.Column="7"
+                                                   MinWidth="58"
+                                                   Margin="10,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Background="Transparent"
+                                                   ToolTip.Tip="{Binding Score.Tip}">
                                                 <TextBlock Classes="value"
                                                            Classes.zero="{Binding IsZero}"
                                                            HorizontalAlignment="Right"
-                                                           Text="{Binding ScoreText}"
+                                                           Text="{Binding Score.Text}"
                                                            IsVisible="{Binding !IsNegative}"/>
                                                 <controls:SignedAmount HorizontalAlignment="Right"
                                                                        VerticalAlignment="Center"
                                                                        FontSize="15"
                                                                        IsBold="True"
-                                                                       Value="{Binding Score}"
-                                                                       Text="{Binding ScoreText}"
+                                                                       Value="{Binding Score.Shown}"
+                                                                       Text="{Binding Score.Text}"
                                                                        IsVisible="{Binding IsNegative}"/>
                                             </Panel>
                                         </Grid>

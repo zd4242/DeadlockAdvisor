@@ -64,7 +64,7 @@ public class ResultsViewModelTests
         var c = results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "c");
         Assert.Equal(-0.3, c.Fraction, 9);
         Assert.True(c.IsNegative);
-        Assert.Equal("3", c.ScoreText);
+        Assert.Equal("3.0", c.Score.Text);
         Assert.True(c.IsStandout);
         Assert.Equal("All 5 items  ·  2 scoring above 0", results.Summary);
     }

@@ -67,9 +67,6 @@ public static class ExplainText
         return $"({Format.Num(part.HeroScore)} {sign} {Format.Num(Math.Abs(baseline))} avg)";
     }
 
-    /// <summary>A share without its sign, for beside a ▲/▼ that carries it.</summary>
-    public static string Magnitude(double amount) => Format.Num(NumberFormat.Round(Math.Abs(amount), 2));
-
     /// <summary>"×1.18 · 25k vs 19k avg": how much the hero's net worth scaled their share, or null when it didn't.</summary>
     public static string? NetWorth(NetWorthStanding? standing) =>
         standing is { Factor: not 1.0 }

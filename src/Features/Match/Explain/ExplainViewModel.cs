@@ -10,23 +10,21 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
-/// <param name="ShareText">The share without its sign: a ▲/▼ beside it carries that.</param>
-public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, double Share, string ShareText);
+public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share);
 
 public sealed record ContributionCard(
     string HeroName,
     string RelationText,
     Color RelationColor,
-    double Amount,
-    string AmountText,
+    DisplayAmount Amount,
     IReadOnlyList<TraitLine> Traits,
     string? NetWorthText = null,
     string? NetWorthTip = null);
 
-public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, double Share, string ShareText);
+public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
 
-/// <summary>"enemies ▲1.25": one relation's summed lift.</summary>
-public sealed record DataTotal(string Word, Color Color, double Value, string ValueText)
+/// <summary>"enemies ▲1.3": one relation's summed lift.</summary>
+public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
 {
     public IBrush Brush => new SolidColorBrush(Color);
 }
@@ -49,8 +47,7 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public string? ItemId { get; private set; }
     [Reactive] public string ItemName { get; private set; } = IdleTitle;
     [Reactive] public Color ShopColor { get; private set; }
-    [Reactive] public double Total { get; private set; }
-    [Reactive] public string TotalText { get; private set; } = "";
+    [Reactive] public DisplayAmount Total { get; private set; }
     [Reactive] public bool NoContributions { get; private set; }
     [Reactive] public IReadOnlyList<ContributionCard> Contributions { get; private set; } = [];
     [Reactive] public MatchDataCard? MatchData { get; private set; }
@@ -73,8 +70,7 @@ public class ExplainViewModel : ViewModelBase
         ItemId = itemId;
         ItemName = item.ItemName;
         ShopColor = Palette.ShopColor(item.Category);
-        Total = total;
-        TotalText = Format.Num(Math.Abs(total));
+        Total = new DisplayAmount(total);
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(Card).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId, restrictTo);
@@ -86,8 +82,7 @@ public class ExplainViewModel : ViewModelBase
         HasItem = false;
         ItemId = null;
         ItemName = IdleTitle;
-        Total = 0;
-        TotalText = "";
+        Total = default;
         NoContributions = false;
         Contributions = [];
         MatchData = null;
@@ -97,15 +92,13 @@ public class ExplainViewModel : ViewModelBase
         contribution.HeroName,
         ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
         Palette.RelationColor(contribution.Relation),
-        NumberFormat.Round(contribution.Amount, 2),
-        ExplainText.Magnitude(contribution.Amount),
+        new DisplayAmount(contribution.Amount),
         contribution.Parts.Select(part => new TraitLine(
             part.CategoryName,
             ExplainText.CoefficientSource(part),
             ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
             ExplainText.Arithmetic(part),
-            NumberFormat.Round(part.Amount, 2),
-            ExplainText.Magnitude(part.Amount))).ToList(),
+            new DisplayAmount(part.Amount))).ToList(),
         ExplainText.NetWorth(contribution.NetWorth),
         contribution.NetWorth is { Factor: not 1.0 } standing ? ExplainText.NetWorthTooltip(standing) : null);
 
@@ -121,7 +114,7 @@ public class ExplainViewModel : ViewModelBase
             var sum = 0.0;
             foreach (var part in parts.Where(part => part.Relation == key))
                 sum += part.LiftShrunk;
-            totals.Add(new DataTotal(ExplainText.DataWord(key), Palette.RelationColor(relation), NumberFormat.Round(sum, 2), NumberFormat.Fixed(Math.Abs(sum), 2)));
+            totals.Add(new DataTotal(ExplainText.DataWord(key), Palette.RelationColor(relation), new DisplayAmount(sum)));
         }
 
         var lines = parts.OrderBy(part => -part.LiftShrunk).Select(part =>
@@ -133,8 +126,7 @@ public class ExplainViewModel : ViewModelBase
                 ExplainText.RelationWord(relation).ToUpperInvariant(),
                 Palette.RelationColor(relation),
                 $"raw {Format.SignedFixed(part.Lift, 2)} ± {NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches",
-                NumberFormat.Round(part.LiftShrunk, 2),
-                $"{NumberFormat.Fixed(Math.Abs(part.LiftShrunk), 2)} pts");
+                new DisplayAmount(part.LiftShrunk));
         }).ToList();
 
         return new MatchDataCard(totals, lines, MatchStatsMath.DataNote(store.MatchMeta, now));

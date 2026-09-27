@@ -3,7 +3,6 @@ using Avalonia.Media;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Explain;
-using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Controls;
@@ -55,11 +54,11 @@ public class DataText : StackPanel
                 Children.Add(Label("·", _faint, new Thickness(5, 0)));
             first = false;
             Children.Add(Label(ExplainText.DataWord(relation.Key()), new SolidColorBrush(Palette.RelationColor(relation)), new Thickness(0, 0, 3, 0)));
+            var lift = new DisplayAmount(value);
             Children.Add(new SignedAmount
             {
-                // As printed, so a lift that rounds to 0.0 gets no triangle.
-                Value = NumberFormat.Round(value, 1),
-                Text = NumberFormat.Fixed(Math.Abs(value), 1),
+                Value = lift.Shown,
+                Text = lift.Text,
                 VerticalAlignment = VerticalAlignment.Center,
             });
         }

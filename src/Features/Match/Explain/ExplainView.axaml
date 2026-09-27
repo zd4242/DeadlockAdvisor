@@ -38,8 +38,9 @@
                                    VerticalAlignment="Center"
                                    FontSize="15"
                                    IsBold="True"
-                                   Value="{Binding Total}"
-                                   Text="{Binding TotalText}"
+                                   Value="{Binding Total.Shown}"
+                                   Text="{Binding Total.Text}"
+                                   ToolTip.Tip="{Binding Total.Tip}"
                                    IsVisible="{Binding HasItem}"/>
         </Grid>
 
@@ -79,8 +80,9 @@
                                         <controls:SignedAmount Grid.Column="3"
                                                                VerticalAlignment="Center"
                                                                IsBold="True"
-                                                               Value="{Binding Amount}"
-                                                               Text="{Binding AmountText}"/>
+                                                               Value="{Binding Amount.Shown}"
+                                                               Text="{Binding Amount.Text}"
+                                                               ToolTip.Tip="{Binding Amount.Tip}"/>
                                     </Grid>
                                     <!-- One line per trait with the multiplication and its share in right-aligned
                                          columns so the numbers stack and scan, then where the coefficient came from
@@ -104,8 +106,9 @@
                                                     <controls:SignedAmount Grid.Column="2"
                                                                            Margin="10,0,0,0"
                                                                            HorizontalAlignment="Right"
-                                                                           Value="{Binding Share}"
-                                                                           Text="{Binding ShareText}"
+                                                                           Value="{Binding Share.Shown}"
+                                                                           Text="{Binding Share.Text}"
+                                                                           ToolTip.Tip="{Binding Share.Tip}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
                                                     <TextBlock Grid.Row="1"
                                                                Grid.ColumnSpan="2"
@@ -148,8 +151,9 @@
                                                                    VerticalAlignment="Center"/>
                                                         <controls:SignedAmount VerticalAlignment="Center"
                                                                                IsBold="True"
-                                                                               Value="{Binding Value}"
-                                                                               Text="{Binding ValueText}"/>
+                                                                               Value="{Binding Value.Shown}"
+                                                                               Text="{Binding Value.Text}"
+                                                                               ToolTip.Tip="{Binding Value.Tip}"/>
                                                     </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
@@ -181,8 +185,9 @@
                                                                            Margin="10,0,0,0"
                                                                            HorizontalAlignment="Right"
                                                                            VerticalAlignment="Center"
-                                                                           Value="{Binding Share}"
-                                                                           Text="{Binding ShareText}"
+                                                                           Value="{Binding Share.Shown}"
+                                                                           Text="{Binding Share.Text, StringFormat='{}{0} pts'}"
+                                                                           ToolTip.Tip="{Binding Share.Tip}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
                                                 </Grid>
                                             </DataTemplate>

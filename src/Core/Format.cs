@@ -16,6 +16,12 @@ public static class Format
     public static string SignedFixed(double value, int decimals) =>
         (double.IsNegative(value) ? "" : "+") + NumberFormat.Fixed(value, decimals);
 
+    /// <summary>
+    /// A score or share as the results print it: to a tenth, so a column of them reads evenly, and without its
+    /// sign, which a ▲/▼ or colour beside it carries.
+    /// </summary>
+    public static string Tenths(double value) => NumberFormat.Fixed(Math.Abs(value), 1);
+
     /// <summary>Match counts and souls, as the game prints net worth: "4.2k", "38k", or the number itself under a thousand.</summary>
     public static string Compact(int count)
     {
