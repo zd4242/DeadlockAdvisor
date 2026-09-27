@@ -106,6 +106,12 @@ public class MatchPageTests
         ui.Show();
         ui.Screenshot("match_rank_data_every.png");
 
+        match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Both);
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.Percent == 0);
+        ui.Screenshot("match_rank_agree.png");
+        Assert.All(match.FullResults.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);
         ScrollResultsToEnd(ui);
         ui.Screenshot("match_every_item_negatives.png");

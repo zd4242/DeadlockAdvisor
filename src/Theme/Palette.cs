@@ -28,6 +28,9 @@ public static class Palette
     public static readonly Color Positive = Ally;
     public static readonly Color Negative = Enemy;
 
+    /// <summary>Real-match data, where it's drawn beside the formula's gold.</summary>
+    public static readonly Color Data = Color.Parse("#5bbfc7");
+
     public static readonly Color Tier1 = Color.Parse("#7d8590");
     public static readonly Color Tier2 = Color.Parse("#4a9dd6");
     public static readonly Color Tier3 = Color.Parse("#a86fd6");

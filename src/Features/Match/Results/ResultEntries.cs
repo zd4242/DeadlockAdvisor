@@ -6,6 +6,11 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Results;
 
+/// <summary>A row's bars: fractions of a full bar, below 0 for a negative one.</summary>
+/// <param name="Data">A second bar, the data's share, when the ranking weighs both opinions.</param>
+/// <param name="Tip">How the bars were worked out, when that isn't just the score.</param>
+public readonly record struct Bars(double Fraction, double? Data = null, string? Tip = null);
+
 /// <summary>
 /// One recommendation. Built once per item and updated in place: the list is re-sorted and
 /// re-filtered on every change to the match, and rebuilding rows each time is what made the
@@ -44,6 +49,11 @@ public class ResultRowViewModel : ViewModelBase
     /// <summary>The bar: the ranking's measure over the largest one on screen, below 0 for a negative one.</summary>
     [Reactive] public double Fraction { get; private set; }
 
+    /// <summary>A second bar under it, the data's share, when ranking by agreement.</summary>
+    [Reactive] public double DataFraction { get; private set; }
+    [Reactive] public bool HasDataBar { get; private set; }
+    [Reactive] public string? BarTip { get; private set; }
+
     /// <summary>Only in the flat list, where no section header says which tier the item is from.</summary>
     [Reactive] public bool ShowTier { get; private set; }
 
@@ -53,13 +63,16 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
-    public void SetValues(ScoredItem scored, double fraction, bool showTier, string dataTip)
+    public void SetValues(ScoredItem scored, Bars bars, bool showTier, string dataTip)
     {
         Score = scored.Score;
         IsNegative = scored.Score < 0;
         IsZero = scored.Score == 0;
         ScoreText = IsNegative ? Format.Num(-scored.Score) : Format.Num(scored.Score);
-        Fraction = fraction;
+        Fraction = bars.Fraction;
+        DataFraction = bars.Data ?? 0;
+        HasDataBar = bars.Data is not null;
+        BarTip = bars.Tip;
         ShowTier = showTier;
         IsStandout = scored.DataStrength >= 1;
         if (Data is null || !Data.SequenceEqual(scored.Data))

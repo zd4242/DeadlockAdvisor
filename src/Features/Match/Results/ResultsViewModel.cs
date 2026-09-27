@@ -124,7 +124,8 @@ public class ResultsViewModel : ViewModelBase
     private void Render()
     {
         var everyItem = _minFraction is null;
-        var ranked = Ranked();
+        var bests = AgreeingBests();
+        var ranked = Ranked(bests);
         var positive = ranked.Count(entry => entry.Measure > 0);
         var best = ranked.Count > 0 ? ranked[0].Measure : 0.0;
         var cutoff = best > 0 ? best * (_minFraction ?? 0) : 0.0;
@@ -153,12 +154,12 @@ public class ResultsViewModel : ViewModelBase
             {
                 var header = Header($"tier{tierGroup.Key}", _tierLabels.GetValueOrDefault(tierGroup.Key, $"Tier {tierGroup.Key}"),
                     Palette.TierColor(tierGroup.Key));
-                AddSection(placed, header, tierGroup.Select(entry => Row(entry.Item, Share(entry.Measure, scale), showTier: false)).ToList());
+                AddSection(placed, header, tierGroup.Select(entry => Row(entry.Item, BarsFor(entry.Item, entry.Measure, scale, bests), showTier: false)).ToList());
             }
         }
         else
         {
-            placed.AddRange(shown.Select(entry => Row(entry.Item, Share(entry.Measure, scale), showTier: true)));
+            placed.AddRange(shown.Select(entry => Row(entry.Item, BarsFor(entry.Item, entry.Measure, scale, bests), showTier: true)));
         }
 
         if (picks.Count > 0)
@@ -166,31 +167,70 @@ public class ResultsViewModel : ViewModelBase
             // Their bars are on the same scale as the list's, so a deep negative reads as one.
             var pickScale = Math.Max(scale, picks.Max(item => Math.Abs(item.Score)));
             var header = Header(DataPicksKey, DataPicksTitle, Palette.Accent, DataPicksNote);
-            AddSection(placed, header, picks.Select(item => Row(item, Share(item.Score, pickScale), showTier: true)).ToList());
+            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)), showTier: true)).ToList());
         }
 
         Entries.ReplaceAll(placed);
     }
 
-    /// <summary>Every item with the measure the list is ranked by, best first.</summary>
-    private List<(ScoredItem Item, double Measure)> Ranked()
+    /// <summary>
+    /// The best score and the best data strength among the items both rate above 0, which the agree
+    /// ranking measures each item's shares against; 1 when no item qualifies. Only those items count,
+    /// so an item the data loves and the formula doesn't can't shrink everyone's data share.
+    /// </summary>
+    private (double Score, double Data) AgreeingBests()
     {
-        var bestScore = _scored.Select(item => item.Score).DefaultIfEmpty(0).Max();
-        var bestData = _scored.Select(item => item.DataStrength).DefaultIfEmpty(0).Max();
-        return _scored
+        var agreeing = _scored.Where(item => item.Score > 0 && item.DataStrength > 0).ToList();
+        return agreeing.Count == 0 ? (1, 1) : (agreeing.Max(item => item.Score), agreeing.Max(item => item.DataStrength));
+    }
+
+    /// <summary>Every item with the measure the list is ranked by, best first.</summary>
+    private List<(ScoredItem Item, double Measure)> Ranked((double Score, double Data) bests) =>
+        _scored
             .Select(item => (Item: item, Measure: _rankBy switch
             {
                 RankBy.MatchData => item.DataStrength,
-                RankBy.Both => Math.Min(item.Score / (bestScore > 0 ? bestScore : 1), item.DataStrength / (bestData > 0 ? bestData : 1)),
+                RankBy.Both => Math.Min(item.Score / bests.Score, item.DataStrength / bests.Data),
                 _ => item.Score,
             }))
             .OrderByDescending(entry => entry.Measure)
             .ThenByDescending(entry => entry.Item.Score)
             .ThenBy(entry => entry.Item.ItemName, StringComparer.Ordinal)
             .ToList();
-    }
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
+
+    /// <summary>
+    /// A row's bars: the ranking's measure against the largest on screen, or when ranking by
+    /// agreement, the formula share over the data share, so it shows which one holds the item back.
+    /// </summary>
+    private Bars BarsFor(ScoredItem item, double measure, double scale, (double Score, double Data) bests)
+    {
+        switch (_rankBy)
+        {
+            case RankBy.MatchData:
+                return new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}");
+            case RankBy.Both:
+                var formula = item.Score / bests.Score;
+                var data = item.DataStrength / bests.Data;
+                return new Bars(formula, data,
+                    $"Formula {Percent(formula)} of the best agreeing item's score\n"
+                    + $"Data {Percent(data)} of the best agreeing item's data strength ({DataWorking(item)})\n"
+                    + $"Ranked by the lower: {Percent(measure)}");
+            default:
+                return new Bars(Share(measure, scale));
+        }
+    }
+
+    /// <summary>"enemies 0.4 + you 1.0 ÷ 3".</summary>
+    private static string DataWorking(ScoredItem item)
+    {
+        var enemies = NumberFormat.Fixed(item.Data.GetValueOrDefault("against"), 2);
+        var mine = NumberFormat.Fixed(item.Data.GetValueOrDefault("as"), 2);
+        return $"enemies {enemies} + you {mine} ÷ {Format.Num(ItemScoring.PickMinAs / ItemScoring.PickMinAgainst)}";
+    }
+
+    private static string Percent(double share) => $"{Math.Round(share * 100)}%";
 
     private void AddSection(List<ViewModelBase> placed, SectionHeaderViewModel header, IReadOnlyList<ResultRowViewModel> rows)
     {
@@ -221,7 +261,7 @@ public class ResultsViewModel : ViewModelBase
     private string MeasureText(double measure) => _rankBy switch
     {
         RankBy.MatchData => NumberFormat.Fixed(measure, 2),
-        RankBy.Both => $"{Math.Round(measure * 100)}%",
+        RankBy.Both => Percent(measure),
         _ => Format.Num(Math.Round(measure)),
     };
 
@@ -231,8 +271,9 @@ public class ResultsViewModel : ViewModelBase
             "Ranked by the match data: the enemies lift plus a third of your lift (your hero's lifts run\n"
             + "about three times bigger). The bar shows that; the number on the right is still the formula score.",
         RankBy.Both =>
-            "Only items the formula and the match data both rate above 0, each measured as a share of\n"
-            + "its best item; an item ranks as high as the less keen of the two.",
+            "Only items the formula and the match data both rate above 0. Each row's top bar is its share of\n"
+            + "the best of these items' scores, the lower bar its share of their best data strength; an item\n"
+            + "ranks by the shorter of the two.",
         _ => "Ranked by the formula score. The data numbers are a second opinion from real matches.",
     };
 
@@ -255,14 +296,14 @@ public class ResultsViewModel : ViewModelBase
         SelectedItemId = itemId;
     }
 
-    private ResultRowViewModel Row(ScoredItem scored, double fraction, bool showTier)
+    private ResultRowViewModel Row(ScoredItem scored, Bars bars, bool showTier)
     {
         if (!_rows.TryGetValue(scored.ItemId, out var row))
         {
             row = new ResultRowViewModel(scored.ItemId, scored.ItemName, scored.ShopCategory, scored.Tier);
             _rows[scored.ItemId] = row;
         }
-        row.SetValues(scored, fraction, showTier, _dataTip);
+        row.SetValues(scored, bars, showTier, _dataTip);
         row.IsSelected = scored.ItemId == SelectedItemId;
         return row;
     }

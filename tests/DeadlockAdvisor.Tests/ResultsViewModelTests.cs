@@ -86,6 +86,34 @@ public class ResultsViewModelTests
 
         // a: min(10/10, 1/1.8) = 0.56; b: min(5/10, 1.8/1.8) = 0.5. c has data but a negative score.
         Assert.Equal(["a", "b"], Rows(results));
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
+        Assert.All(rows, row => Assert.True(row.HasDataBar));
+        Assert.Equal((1.0, 1 / 1.8), (rows[0].Fraction, rows[0].DataFraction));
+        Assert.Equal((0.5, 1.0), (rows[1].Fraction, rows[1].DataFraction));
+    }
+
+    [Fact]
+    public void AgreementSharesOnlyMeasureAgainstItemsBothLike()
+    {
+        var results = new ResultsViewModel("hint");
+        // x is the data's darling but the formula's reject: it mustn't shrink a and b's data shares.
+        results.SetResults([Scored("a", 10, mine: 3.0), Scored("b", 5, against: 2.0), Scored("x", -4, against: 6.0)], "");
+        results.SetDisplay(RankBy.Both, false, 0);
+
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
+        Assert.Equal(["a", "b"], rows.Select(row => row.ItemId));
+        Assert.Equal(0.5, rows[0].DataFraction);
+        Assert.Equal(1.0, rows[1].DataFraction);
+    }
+
+    [Fact]
+    public void OnlyTheAgreementRankingDrawsADataBar()
+    {
+        var results = Show(RankBy.Formula, 0);
+        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.HasDataBar);
+        results.SetDisplay(RankBy.MatchData, false, 0);
+        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.HasDataBar);
+        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.StartsWith("Data strength", row.BarTip));
     }
 
     [Fact]

@@ -18,6 +18,7 @@ public class DataText : StackPanel
         AvaloniaProperty.Register<DataText, OrderedDictionary<string, double>?>(nameof(Data));
 
     private static readonly IBrush _faint = new SolidColorBrush(Palette.TextFaint);
+    private static readonly IBrush _dataLabel = new SolidColorBrush(Palette.WithAlpha(Palette.Data, 170));
 
     public DataText()
     {
@@ -44,7 +45,7 @@ public class DataText : StackPanel
     private void Rebuild()
     {
         Children.Clear();
-        Children.Add(Label("data", _faint, new Thickness(0, 0, 8, 0)));
+        Children.Add(Label("data", _dataLabel, new Thickness(0, 0, 8, 0)));
         var first = true;
         foreach (var relation in new[] { Relation.Against, Relation.As })
         {
