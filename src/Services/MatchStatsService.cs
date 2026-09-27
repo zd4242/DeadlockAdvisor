@@ -103,13 +103,13 @@ public sealed class MatchStatsService : IMatchStatsService
             // groups don't add up to every match.
             async Task<RankedHalves> FetchRankedAsync(string subject, long? heroGameId)
             {
-                var parameters = MatchStatsMath.QueryParams(family.Relation, family.Scope, heroGameId);
-                Step($"{family.Key}: {subject}");
+                var parameters = MatchStatsMath.QueryParams(family.Relation, heroGameId);
+                Step($"{family.Relation}: {subject}");
                 var all = await FetchHalvesAsync(parameters, since.Start, mid, cancellationToken);
                 var byRank = new List<Halves>();
                 foreach (var rank in ranks)
                 {
-                    Step($"{family.Key}: {subject} · {rank.Name}");
+                    Step($"{family.Relation}: {subject} · {rank.Name}");
                     byRank.Add(await FetchHalvesAsync(MatchStatsMath.RankParams(parameters, rank), since.Start, mid, cancellationToken));
                 }
                 return new RankedHalves(

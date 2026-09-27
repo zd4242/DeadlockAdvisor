@@ -60,7 +60,7 @@ public sealed class DetectTests : IDisposable
         Assert.Equal(0, review.SelfSlot);
         Assert.Equal(_band2Heroes, review.Slots.Select(slot => slot.HeroId));
         Assert.Equal("YOU", review.Slots[0].RoleText);
-        Assert.Equal([SlotRole.LaneAlly, SlotRole.LaneEnemy, SlotRole.LaneEnemy], new[] { 1, 6, 7 }.Select(i => review.Slots[i].Role));
+        Assert.Equal([SlotRole.Ally, SlotRole.Enemy], new[] { 1, 6 }.Select(i => review.Slots[i].Role));
         Assert.Equal(Enumerable.Range(0, 6), review.OwnRows.Select(slot => slot.Index));
         Assert.All(review.Slots, slot => Assert.NotNull(slot.Thumbnail));
         Assert.Contains("2560x1440", _fixture.Settings.Current.VisionGeometry.Keys);
@@ -72,13 +72,12 @@ public sealed class DetectTests : IDisposable
         Assert.Equal("apollo", match.SelfHero);
         Assert.Equal(_band2Heroes[1..6], match.Allies);
         Assert.Equal(_band2Heroes[6..], match.Enemies);
-        Assert.Equal(["ivy", "celeste", "lash", "apollo"], match.LaneHeroes);
         // The match bar keeps the game's order, you in your own place included.
         Assert.Equal(_band2Heroes[..6], _page.Board.AllySlots.Select(slot => slot.HeroId));
         Assert.Equal(_band2Heroes[6..], _page.Board.EnemySlots.Select(slot => slot.HeroId));
         Assert.True(_page.Board.AllySlots[0].IsSelf);
         Assert.Equal("self", _fixture.Settings.Current.LastMatch!.Roles["apollo"]);
-        Assert.False(_page.FullResults.IsEmpty);
+        Assert.False(_page.Results.IsEmpty);
     }
 
     [AvaloniaFact]
@@ -108,8 +107,7 @@ public sealed class DetectTests : IDisposable
     public async Task ScoresLeanOnTheNetWorthReadUnlessToggledOff()
     {
         await (await DetectAsync()).ApplyCommand.Execute();
-        _page.ResultsTab = 1;
-        _page.FullResults.Select(_page.FullResults.Entries.OfType<ResultRowViewModel>().First());
+        _page.Results.Select(_page.Results.Entries.OfType<ResultRowViewModel>().First());
 
         // 184k over twelve heroes averages 15.3k. A single-target item's rank comes first.
         static bool NetWorthNote(ContributionCard card) => card.Note?.EndsWith(" avg", StringComparison.Ordinal) == true;
@@ -214,26 +212,8 @@ public sealed class DetectTests : IDisposable
         Assert.Equal(8, review.SelfSlot);
         Assert.Equal("YOUR TEAM", review.OwnHeading);
         Assert.Equal(Enumerable.Range(6, 6), review.OwnRows.Select(slot => slot.Index));
-        Assert.Equal(SlotRole.LaneAlly, review.Slots[9].Role);
+        Assert.Equal(SlotRole.Ally, review.Slots[9].Role);
         Assert.Equal(SlotRole.Enemy, review.Slots[0].Role);
-    }
-
-    [AvaloniaFact]
-    public async Task TheLaneAppliedIsTheLaneTheReviewShowed()
-    {
-        var detected = await DetectAsync();
-        await detected.CancelCommand.Execute();
-        // You in slot 0, with the game's marks on 3, 8 and 9 rather than the pairing's 1, 6 and 7.
-        double[] marks = [9.0, 0.2, 0.3, 6.0, 0.2, 0.1, 0.3, 0.2, 5.0, 4.0, 0.2, 0.1];
-        var detection = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)! with { SelfSlot = 0, SelfScores = marks };
-        DetectReviewResult? applied = null;
-        using var review = new DetectReviewViewModel(detection, NetWorthReading.Empty, [], result => applied = result, () => { });
-
-        Assert.Equal([SlotRole.LaneAlly, SlotRole.LaneEnemy, SlotRole.LaneEnemy], new[] { 3, 8, 9 }.Select(i => review.Slots[i].Role));
-        Assert.Equal(SlotRole.Ally, review.Slots[1].Role);
-        await review.ApplyCommand.Execute();
-
-        Assert.Equal([3, 8, 9], applied!.LaneSlots);
     }
 
     [AvaloniaFact]

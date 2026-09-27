@@ -57,12 +57,6 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         new("Formula + data", RankBy.Both),
     ];
 
-    private static readonly IReadOnlyDictionary<int, string> _laneTierLabels = new Dictionary<int, string>
-    {
-        [1] = "Tier 1 · 800",
-        [2] = "Tier 2 · 1600",
-    };
-
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
     private readonly Func<double> _now;
@@ -81,12 +75,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
         Board = new MatchBoardViewModel(Match, () => _data.Store);
-        LaneResults = new ResultsViewModel(
-            "Lane Phase scores only the heroes you've marked as being in your lane.\n\n"
-            + "Set your own hero, then click the ally and the two enemies you're laning against in the match bar.",
-            _laneTierLabels);
-        FullResults = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
-        FormulaRequested = LaneResults.FormulaRequested.Merge(FullResults.FormulaRequested);
+        Results = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
 
         var savedPercent = settings.Current.ResultsMinPercent;
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
@@ -106,20 +95,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
 
-        // Each view explains with its own hero restriction rather than the active tab's, so an
-        // explanation can never describe a different scoping than the list the row was clicked in.
-        LaneResults.RowClicked.Subscribe(itemId => ShowExplain(itemId, laneScoped: true)).DisposeWith(Disposables);
-        FullResults.RowClicked.Subscribe(itemId => ShowExplain(itemId, laneScoped: false)).DisposeWith(Disposables);
+        Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
 
-        this.WhenAnyValue(vm => vm.ResultsTab)
-            .Skip(1)
-            .Subscribe(_ =>
-            {
-                this.RaisePropertyChanged(nameof(IsLaneTab));
-                this.RaisePropertyChanged(nameof(IsFullTab));
-                RefreshExplain();
-            })
-            .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData)
             .Skip(1)
             .Subscribe(_ =>
@@ -157,18 +134,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public MatchState Match { get; } = new();
     public MatchBoardViewModel Board { get; }
-    public ResultsViewModel LaneResults { get; }
-    public ResultsViewModel FullResults { get; }
+    public ResultsViewModel Results { get; }
     public ExplainViewModel Explain { get; } = new();
     public DataRanksViewModel DataRanks { get; }
 
-    /// <summary>An item whose rules a recommendation's context menu asked to open, from either tab.</summary>
-    public IObservable<string> FormulaRequested { get; }
+    /// <summary>An item whose rules a recommendation's context menu asked to open.</summary>
+    public IObservable<string> FormulaRequested => Results.FormulaRequested;
 
-    /// <summary>0: Lane Phase, 1: Full Match.</summary>
-    [Reactive] public int ResultsTab { get; set; } = 1;
-    public bool IsLaneTab => ResultsTab == 0;
-    public bool IsFullTab => ResultsTab == 1;
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
     [Reactive] public RankPreset SelectedRank { get; set; }
 
@@ -189,17 +161,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public void FocusSearch() => Board.OpenPicker();
 
-    /// <summary>Rescore both views and the explanation from the current data and match.</summary>
+    /// <summary>Rescore the recommendations and the explanation from the current data and match.</summary>
     public void Refresh()
     {
         var store = _data.Store;
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
         var netWorth = NetWorth();
         HasMatchData = store.MatchLift.Count > 0;
-        LaneResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.LaneTiers, Match.LaneHeroes, netWorth), note,
-            () => ScaleFor(laneScoped: true));
-        FullResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.FullTiers, null, netWorth), note,
-            () => ScaleFor(laneScoped: false));
+        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale);
         RefreshExplain();
     }
 
@@ -217,9 +186,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>What the lists rank by: without match data, ranking by it would empty them.</summary>
     private RankBy EffectiveRankBy => HasMatchData ? SelectedRank.RankBy : RankBy.Formula;
 
-    /// <summary>The formula-and-data ranking's units for one view's current line-up.</summary>
-    private BlendScale ScaleFor(bool laneScoped) =>
-        _data.Scales.For(LineUpShape.Of(ItemScoring.RelevantHeroes(Match, laneScoped ? Match.LaneHeroes : null)), laneScoped);
+    /// <summary>The formula-and-data ranking's units for the current line-up.</summary>
+    private BlendScale Scale() => _data.Scales.For(LineUpShape.Of(ItemScoring.RelevantHeroes(Match)));
 
     private void OnMatchChanged()
     {
@@ -231,25 +199,18 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private void Rebind()
     {
         Match.LoadSaved(Match.ToSaved(), _data.Store.Heroes.Keys);
-        LaneResults.Reset();
-        FullResults.Reset();
+        Results.Reset();
         Board.Rebind();
         Refresh();
     }
 
     private void ApplyDisplay()
     {
-        LaneResults.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
-        FullResults.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
+        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
     }
 
-    private void RefreshExplain()
-    {
-        var laneScoped = ResultsTab == 0;
-        ShowExplain((laneScoped ? LaneResults : FullResults).SelectedItemId, laneScoped);
-    }
+    private void RefreshExplain() => ShowExplain(Results.SelectedItemId);
 
-    private void ShowExplain(string? itemId, bool laneScoped) =>
-        Explain.ShowItem(_data.Store, Match, itemId, laneScoped ? Match.LaneHeroes : null, _now(), NetWorth(),
-            EffectiveRankBy == RankBy.Both ? ScaleFor(laneScoped) : null);
+    private void ShowExplain(string? itemId) =>
+        Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy == RankBy.Both ? Scale() : null);
 }

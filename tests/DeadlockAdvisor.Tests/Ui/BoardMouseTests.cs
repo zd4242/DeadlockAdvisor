@@ -62,10 +62,15 @@ public class BoardMouseTests
         Click(ui.Window, Center(Tile(ui, "infernus"), ui.Window));
         Assert.Equal(Role.None, board.RoleOf("infernus"));
 
-        // Clicking a match bar portrait toggles lane; its × removes. An empty enemy slot picks Enemy.
+        // Clicking a match bar portrait opens the role menu; its × removes. An empty enemy slot picks Enemy.
         Click(ui.Window, Slot(ui, "EnemyRow", 0));
-        Assert.True(board.IsInLane("haze"));
-        Click(ui.Window, Slot(ui, "EnemyRow", 0, remove: true));
+        var setAlly = ui.Window.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "Set as Ally"));
+        var menu = TopLevel.GetTopLevel(setAlly)!;
+        menu.MouseDown(Center(setAlly, menu), MouseButton.Left);
+        menu.MouseUp(Center(setAlly, menu), MouseButton.Left);
+        UiHarness.Settle();
+        Assert.Equal(Role.Ally, board.RoleOf("haze"));
+        Click(ui.Window, Slot(ui, "AllyRow", 1, remove: true));
         Assert.Equal(Role.None, board.RoleOf("haze"));
         board.SetMode(Role.Ally);
         Click(ui.Window, Slot(ui, "EnemyRow", 0));
@@ -73,7 +78,6 @@ public class BoardMouseTests
 
         // Clicking a recommendation explains it.
         Click(ui.Window, Center(Tile(ui, "haze"), ui.Window));
-        match.ResultsTab = 1;
         UiHarness.Settle();
         var row = ui.Window.GetVisualDescendants().OfType<Border>().First(border => border.Classes.Contains("result") && border.IsEffectivelyVisible);
         Click(ui.Window, Center(row, ui.Window));

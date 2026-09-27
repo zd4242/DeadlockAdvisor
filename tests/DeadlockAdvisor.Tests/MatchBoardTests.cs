@@ -22,11 +22,9 @@ public class MatchBoardTests
         _board.SetRole("wraith", Role.Self);
         _board.SetRole("abrams", Role.Ally);
         _board.SetRole("lash", Role.Enemy);
-        _board.ToggleLane("abrams");
 
         Assert.Equal(["haze", "wraith", "abrams", null, null, null], _board.AllySlots.Select(slot => slot.HeroId));
         Assert.True(_board.AllySlots[1].IsSelf);
-        Assert.True(_board.AllySlots[2].InLane);
         Assert.Equal("3/6", _board.AllyCount);
         Assert.Equal("lash", _board.EnemySlots[0].HeroId);
         Assert.All(_board.EnemySlots, slot => Assert.Equal(Role.Enemy, slot.Team));

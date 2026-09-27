@@ -7,11 +7,10 @@
  },
  "rank": "all",
  "match_mode": "ranked,unranked",
- "lane_end_s": 600,
  "min_n": 2000,
  "min_reliability": 0.5,
  "families": {
-  "against/full": {
+  "against": {
    "since": 1787443200,
    "since_patch": "08-22",
    "rows": 5928,
@@ -21,22 +20,13 @@
    "kept": true,
    "own_excluded": true
   },
-  "as/full": {
+  "as": {
    "since": 1787443200,
    "since_patch": "08-22",
    "rows": 5928,
    "noise_scale": 1.011,
    "tau": 2.018,
    "reliability": 0.942,
-   "kept": true
-  },
-  "as/lane": {
-   "since": 1787443200,
-   "since_patch": "08-22",
-   "rows": 2508,
-   "noise_scale": 0.991,
-   "tau": 2.047,
-   "reliability": 0.946,
    "kept": true
   }
  }

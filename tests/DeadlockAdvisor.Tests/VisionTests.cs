@@ -8,44 +8,14 @@ using static DeadlockAdvisor.Tests.Support.VisionData;
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>
-/// The screen-detection pipeline, ported from test_vision.py. The lane, role and assignment logic
+/// The screen-detection pipeline, ported from test_vision.py. The role and assignment logic
 /// is pure arithmetic and tested without images; the rest runs against the golden captures.
 /// </summary>
 public class VisionTests
 {
     private static readonly List<string?> _heroes = Enumerable.Range(0, 12).Select(i => (string?)$"h{i}").ToList();
 
-    // -- lane and role arithmetic (no images) ---------------------------------
-
-    [Fact]
-    public void LanePartnerIsTheOtherHalfOfYourPair()
-    {
-        Assert.Equal("h1", VisionApply.LaneHeroesFor(_heroes, 0)[0]);
-        Assert.Equal("h0", VisionApply.LaneHeroesFor(_heroes, 1)[0]);
-        Assert.Equal("h3", VisionApply.LaneHeroesFor(_heroes, 2)[0]);
-        Assert.Equal("h4", VisionApply.LaneHeroesFor(_heroes, 5)[0]);
-    }
-
-    [Fact]
-    public void LaneFacesTheEnemyPairAtTheSameIndex()
-    {
-        Assert.Equal(["h6", "h7"], VisionApply.LaneHeroesFor(_heroes, 0)[1..]);
-        Assert.Equal(["h8", "h9"], VisionApply.LaneHeroesFor(_heroes, 2)[1..]);
-        Assert.Equal(["h10", "h11"], VisionApply.LaneHeroesFor(_heroes, 4)[1..]);
-        Assert.Equal(["h0", "h1"], VisionApply.LaneHeroesFor(_heroes, 6)[1..]);
-        Assert.Equal(["h4", "h5"], VisionApply.LaneHeroesFor(_heroes, 10)[1..]);
-    }
-
-    [Fact]
-    public void LaneIsAlwaysOneAllyAndTwoEnemies()
-    {
-        for (var self = 0; self < 12; self++)
-        {
-            var lane = VisionApply.LaneHeroesFor(_heroes, self);
-            Assert.Equal(3, lane.Count);
-            Assert.DoesNotContain(_heroes[self], lane);
-        }
-    }
+    // -- role arithmetic (no images) -------------------------------------------
 
     [Fact]
     public void TeamsSplitOnWhicheverSideYouAre()
@@ -65,11 +35,10 @@ public class VisionTests
     public void NothingIsAssignedWhenSelfIsUnknown()
     {
         Assert.Empty(VisionApply.RolesFor(_heroes, null));
-        Assert.Empty(VisionApply.LaneHeroesFor(_heroes, null));
     }
 
     [Fact]
-    public void ApplyWritesRolesThenLaneFlags()
+    public void ApplyWritesTheRoles()
     {
         var match = new MatchState();
         var count = VisionApply.ApplyToMatch(match, _heroes, 2, _heroes!);
@@ -77,16 +46,6 @@ public class VisionTests
         Assert.Equal("h2", match.SelfHero);
         Assert.Equal(["h0", "h1", "h3", "h4", "h5"], match.Allies.Order());
         Assert.Equal(6, match.Enemies.Count);
-        // SetLane ignores a hero with no role, so the order matters.
-        Assert.Equal(["h2", "h3", "h8", "h9"], match.LaneHeroes.Order());
-    }
-
-    [Fact]
-    public void ApplyTakesTheLaneItIsGivenOverThePairing()
-    {
-        var match = new MatchState();
-        VisionApply.ApplyToMatch(match, _heroes, 0, _heroes!, laneSlots: [3, 8, 9]);
-        Assert.Equal(["h0", "h3", "h8", "h9"], match.LaneHeroes.Order());
     }
 
     [Fact]
@@ -109,7 +68,6 @@ public class VisionTests
         VisionApply.ApplyToMatch(match, heroes, 2, heroes.OfType<string>());
         Assert.Equal(4, match.Allies.Count);
         Assert.Equal(5, match.Enemies.Count);
-        Assert.Equal(["h2", "h3", "h8"], match.LaneHeroes.Order());
     }
 
     // -- assignment ------------------------------------------------------------
@@ -256,22 +214,14 @@ public class VisionTests
 
     // -- end to end, against real captures -------------------------------------
 
-    private const string KnownFailingFixture = "laning_2560x1440_band";
-
     public static TheoryData<string> Fixtures() =>
         new(Directory.GetFiles(Golden.PathOf("vision", "fixtures"), "*.json")
             .Select(path => Path.GetFileNameWithoutExtension(path))
-            .Where(name => name != KnownFailingFixture)
             .Order(StringComparer.Ordinal));
 
     [Theory]
     [MemberData(nameof(Fixtures))]
-    public void FixturesAreReadCorrectly(string name) => AssertFixtureReadCorrectly(name);
-
-    [Fact(Skip = "Fails in the Python app too (lane came from pairing, expected highlights); see port plan §0")]
-    public void LaningFixtureIsReadCorrectly() => AssertFixtureReadCorrectly(KnownFailingFixture);
-
-    private static void AssertFixtureReadCorrectly(string name)
+    public void FixturesAreReadCorrectly(string name)
     {
         var spec = FixtureSpec(name);
         var result = DetectFixture(name);
@@ -284,15 +234,6 @@ public class VisionTests
         var wrong = wanted.Where(pair => result.HeroAt(pair.Key) != pair.Value).ToList();
         Assert.True(wrong.Count <= ((int?)spec["allow_wrong"] ?? 0),
             $"{name}: misread {string.Join(", ", wrong.Select(pair => $"{pair.Key}: {result.HeroAt(pair.Key)} (expected {pair.Value})"))}");
-
-        if ((string?)spec["lane_source"] is { } source)
-            Assert.Equal(source, result.LaneFromHighlights is null ? "pairing" : "highlights");
-
-        if (spec["lane_heroes"] is JsonArray lane)
-        {
-            var got = result.LaneSlots.Select(result.HeroAt).OfType<string>().Order(StringComparer.Ordinal);
-            Assert.Equal(lane.Select(hero => (string)hero!).Order(StringComparer.Ordinal), got);
-        }
     }
 
     /// <summary>
@@ -314,7 +255,6 @@ public class VisionTests
         Assert.Equal(expected, expected.ToDictionary(pair => pair.Key, pair => result.HeroAt(pair.Key)));
         Assert.All(expected.Keys, slot => Assert.True(result.Slots[slot].IsConfident, $"slot {slot} read correctly but not confidently"));
         Assert.Equal(2, result.SelfSlot);
-        Assert.Equal([3, 8, 9], result.LaneSlots);
     }
 
     /// <summary>A 2551-wide copy of a 2560 capture once picked a pitch of 101 against a true 117, shifting the roster a slot.</summary>
@@ -332,36 +272,6 @@ public class VisionTests
         foreach (var (slot, hero) in spec["heroes"]!.AsObject())
             Assert.Equal((string)hero!, result.HeroAt(int.Parse(slot)));
         Assert.Equal((int)spec["self_slot"]!, result.SelfSlot);
-    }
-
-    private static Detection DetectionWith(double[] selfScores, int selfSlot) =>
-        new([], new Geometry(100.0, 20.0, 0.0), selfSlot, selfScores.Max(), null, selfScores);
-
-    [Fact]
-    public void LaneIsReadFromTheGamesOwnMarksWhenItMakesThem()
-    {
-        var detection = DetectionWith([4.7, 8.9, 0.5, 2.5, 0.5, 0.4, 6.6, 3.6, 0.4, 0.2, 0.4, 0.3], 1);
-        Assert.Equal([0, 1, 6, 7], detection.Highlighted);
-        Assert.Equal([0, 6, 7], detection.LaneFromHighlights);
-        Assert.Equal([0, 6, 7], detection.LaneSlots);
-    }
-
-    [Fact]
-    public void LaneFallsBackToPairingOnceTheMarksAreGone()
-    {
-        var detection = DetectionWith([0.4, 8.0, 0.8, 0.8, 0.9, 0.2, 0.4, 0.9, 0.1, 0.2, 1.3, 0.4], 1);
-        Assert.Equal([1], detection.Highlighted);
-        Assert.Null(detection.LaneFromHighlights);
-        Assert.Equal([0, 6, 7], detection.LaneSlots);
-    }
-
-    [Fact]
-    public void LopsidedMarksAreNotTreatedAsALane()
-    {
-        var detection = DetectionWith([9.0, 8.0, 7.0, 6.0, 0.2, 0.2, 0.2, 0.2, 0.1, 0.2, 0.3, 0.2], 0);
-        Assert.Equal([0, 1, 2, 3], detection.Highlighted);
-        Assert.Null(detection.LaneFromHighlights);
-        Assert.Equal([1, 6, 7], detection.LaneSlots);
     }
 
     [Fact]

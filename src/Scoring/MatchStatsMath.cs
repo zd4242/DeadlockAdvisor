@@ -7,12 +7,8 @@ using DeadlockAdvisor.Services.Formats;
 namespace DeadlockAdvisor.Scoring;
 
 /// <param name="Relation">"against" or "as".</param>
-/// <param name="Scope">"full" or "lane".</param>
 /// <param name="Patches">How many patches back the window reaches.</param>
-public sealed record Family(string Relation, string Scope, int Patches)
-{
-    public string Key => $"{Relation}/{Scope}";
-}
+public sealed record Family(string Relation, int Patches);
 
 /// <param name="Start">Unix seconds: 00:00 UTC the day after the title's date.</param>
 public sealed record Patch(string Title, long Start)
@@ -95,7 +91,7 @@ public sealed record FetchResult(
     {
         var families = new JsonObject();
         foreach (var report in Families)
-            families[report.Family.Key] = report.Meta();
+            families[report.Family.Relation] = report.Meta();
 
         return new JsonObject
         {
@@ -116,7 +112,6 @@ public sealed record FetchResult(
                 },
             // The API's default.
             ["match_mode"] = "ranked,unranked",
-            ["lane_end_s"] = MatchStatsMath.LaneEndSeconds,
             ["min_n"] = MatchStatsMath.MinN,
             ["min_reliability"] = MatchStatsMath.MinReliability,
             ["families"] = families,
@@ -132,7 +127,7 @@ public sealed record FetchResult(
         {
             var stats = report.Stats;
             var reliability = stats.Reliability is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
-            var head = $"{report.Family.Relation} / {report.Family.Scope} (since patch {report.Since.Label}): ";
+            var head = $"{report.Family.Relation} (since patch {report.Since.Label}): ";
             if (report.Kept)
             {
                 lines.Add(head + $"{stats.Full.Count} lifts, reliability {reliability}, "
@@ -152,10 +147,10 @@ public sealed record FetchResult(
 
 /// <summary>
 /// A second opinion from real match results: how much an item's win rate moves against a given enemy
-/// hero, or on a given hero of yours. Per query (one hero, one relation, one scope):
+/// hero, or on a given hero of yours. Per query (one hero, one relation):
 /// <list type="number">
-/// <item>delta = the item's win rate in the query − its win rate in every match of the same window and
-/// scope, so each item is compared with itself (against an enemy, without that enemy's own purchases,
+/// <item>delta = the item's win rate in the query − its win rate in every match of the same window,
+/// so each item is compared with itself (against an enemy, without that enemy's own purchases,
 /// which the query can't see);</item>
 /// <item>lift = delta − the matches-weighted mean delta of the other items in the same tier (a strong
 /// enemy drags every item down; tier 4 only turns up in long games);</item>
@@ -168,9 +163,6 @@ public sealed record FetchResult(
 /// </summary>
 public static partial class MatchStatsMath
 {
-    /// <summary>Items bought before this count as laning-phase buys.</summary>
-    public const int LaneEndSeconds = 600;
-
     /// <summary>An item needs this many matches in a query to get a lift at all.</summary>
     public const int MinN = 2000;
 
@@ -180,21 +172,17 @@ public static partial class MatchStatsMath
     /// <summary>A patch younger than this hasn't collected enough matches, so the window reaches one patch further back.</summary>
     public const int MinWindowDays = 4;
 
-    // Measured September 2026 (scripts/check_match_lift.py in the Python app): against/lane was
-    // mostly noise (reliability 0.32), so it isn't fetched; "as" needs two patches to reach MinN.
-    // "against" shares that window so the "as" download holds each enemy's own purchases for it.
+    // Measured September 2026 (scripts/check_match_lift.py in the Python app): "as" needs two patches
+    // to reach MinN. "against" shares that window so the "as" download holds each enemy's own
+    // purchases for it.
     public static readonly IReadOnlyList<Family> Families =
     [
-        new("against", "full", 2),
-        new("as", "full", 2),
-        new("as", "lane", 2),
+        new("against", 2),
+        new("as", 2),
     ];
 
     public const string OwnIncludedNote =
         "Enemy lifts still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
-
-    public static IReadOnlyList<int> ScopeTiers(string scope) =>
-        scope == "lane" ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
 
     // -- ranks ------------------------------------------------------------------
 
@@ -279,26 +267,12 @@ public static partial class MatchStatsMath
 
     // -- queries ----------------------------------------------------------------
 
-    /// <summary>The item-stats filters for one query. No hero gives the baseline: every match in the scope.</summary>
-    public static OrderedDictionary<string, string> QueryParams(string relation, string scope, long? heroGameId = null)
+    /// <summary>The item-stats filters for one query. No hero gives the baseline: every match.</summary>
+    public static OrderedDictionary<string, string> QueryParams(string relation, long? heroGameId = null)
     {
         var parameters = new OrderedDictionary<string, string>();
         if (heroGameId is { } gameId)
-        {
-            var id = gameId.ToString(CultureInfo.InvariantCulture);
-            if (relation == "against")
-            {
-                parameters["enemy_hero_ids"] = id;
-                if (scope == "lane")
-                    parameters["same_lane_filter"] = "true";
-            }
-            else
-            {
-                parameters["hero_id"] = id;
-            }
-        }
-        if (scope == "lane")
-            parameters["max_bought_at_s"] = LaneEndSeconds.ToString(CultureInfo.InvariantCulture);
+            parameters[relation == "against" ? "enemy_hero_ids" : "hero_id"] = gameId.ToString(CultureInfo.InvariantCulture);
         return parameters;
     }
 
@@ -355,7 +329,7 @@ public static partial class MatchStatsMath
 
     /// <summary>
     /// Steps 1 and 2 for one query. <paramref name="tiers"/> maps game item id → tier for the items in
-    /// scope; anything else is ignored, including in the means. Items under <paramref name="minN"/>
+    /// the recommendations; anything else is ignored, including in the means. Items under <paramref name="minN"/>
     /// still count toward their tier's mean (weighted by matches, they barely move it) but get no
     /// lift of their own.
     /// </summary>
@@ -522,7 +496,7 @@ public static partial class MatchStatsMath
     /// Every family's lifts from a download's totals, over one rank range (null: every match). A family
     /// whose lifts are mostly noise over that range is reported but gives no lifts. An "against" family
     /// takes each enemy's own purchases out of that enemy's baseline, from the "as" family of the same
-    /// scope and window: otherwise an item an enemy buys a lot and does badly with would look like a
+    /// window: otherwise an item an enemy buys a lot and does badly with would look like a
     /// counter to them.
     /// </summary>
     public static FetchResult Analyse(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
@@ -531,13 +505,12 @@ public static partial class MatchStatsMath
         foreach (var item in items.Where(item => item.GameId != 0))
             byGameId[item.GameId] = item;
 
+        var tiers = byGameId.Where(pair => ItemScoring.Tiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
         var lifts = new OrderedDictionary<MatchLiftKey, MatchLift>();
         var reports = new List<FamilyReport>();
         foreach (var family in counts.Families)
         {
-            var (relation, scope) = (family.Family.Relation, family.Family.Scope);
-            var scopeTiers = ScopeTiers(scope);
-            var tiers = byGameId.Where(pair => scopeTiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
+            var relation = family.Family.Relation;
             var heroes = new OrderedDictionary<string, Halves>();
             foreach (var (heroId, halves) in family.Heroes)
                 heroes[heroId] = halves.For(counts.Ranks, range);
@@ -551,34 +524,33 @@ public static partial class MatchStatsMath
             foreach (var (key, lift) in report.Stats.Full)
             {
                 var itemId = byGameId[key.GameItemId].ItemId;
-                lifts[new MatchLiftKey(itemId, key.HeroId, relation, scope)] = new MatchLift(
-                    itemId, key.HeroId, relation, scope, lift.Matches, lift.Lift, lift.Se, Shrink(lift, report.Stats.Tau2));
+                lifts[new MatchLiftKey(itemId, key.HeroId, relation)] = new MatchLift(
+                    itemId, key.HeroId, relation, lift.Matches, lift.Lift, lift.Se, Shrink(lift, report.Stats.Tau2));
             }
         }
         return new FetchResult(lifts, reports, counts.Latest, counts.FetchedAt, range, counts.Describe(range));
     }
 
     /// <summary>
-    /// Each hero's own purchases over an "against" family's window: the "as" family of the same scope,
-    /// when it was downloaded over the same window (one download dates every family from one moment,
+    /// Each hero's own purchases over an "against" family's window: the "as" family, when it was downloaded over the same window (one download dates every family from one moment,
     /// so the same start means the same halves). Null for a download from before the windows matched.
     /// </summary>
     private static Dictionary<string, Halves>? OwnPurchases(MatchCounts counts, FamilyCounts against, RankRange? range)
     {
         var mine = counts.Families.FirstOrDefault(family =>
-            family.Family.Relation == "as" && family.Family.Scope == against.Family.Scope && family.Since.Start == against.Since.Start);
+            family.Family.Relation == "as" && family.Since.Start == against.Since.Start);
         return mine?.Heroes.ToDictionary(pair => pair.Key, pair => pair.Value.For(counts.Ranks, range));
     }
 
     /// <summary>
-    /// How often each hero builds each item next to the average player, from the "as/full" download over
+    /// How often each hero builds each item next to the average player, from the "as" download over
     /// one rank range: the item's share of the hero's purchases in its tier ÷ its share of everyone's.
     /// 1 is typical and 0 never bought. A hero with no purchases in a tier gets no ratio for its items.
     /// </summary>
     public static Dictionary<(string ItemId, string HeroId), double> BuildRatios(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
     {
         var ratios = new Dictionary<(string ItemId, string HeroId), double>();
-        var family = counts.Families.FirstOrDefault(family => family.Family is { Relation: "as", Scope: "full" });
+        var family = counts.Families.FirstOrDefault(family => family.Family.Relation == "as");
         if (family is null)
             return ratios;
 
@@ -631,8 +603,12 @@ public static partial class MatchStatsMath
         return $"{(long)Math.Truncate(hours / 24)}d ago";
     }
 
-    public static JsonObject FamilyMeta(JsonObject meta, string relation, string scope) =>
-        (meta["families"] as JsonObject)?[$"{relation}/{scope}"] as JsonObject ?? [];
+    /// <summary>One family's part of the meta. Downloads from before lane data was dropped keyed it "against/full".</summary>
+    public static JsonObject FamilyMeta(JsonObject meta, string relation)
+    {
+        var families = meta["families"] as JsonObject;
+        return (families?[relation] ?? families?[$"{relation}/full"]) as JsonObject ?? [];
+    }
 
     /// <summary>"patch 09-16 · fetched 2d ago", or "" without data.</summary>
     public static string Summary(JsonObject meta, double now)
@@ -654,16 +630,10 @@ public static partial class MatchStatsMath
         var lines = new List<string>();
         foreach (var family in Families)
         {
-            var data = FamilyMeta(meta, family.Relation, family.Scope);
+            var data = FamilyMeta(meta, family.Relation);
             if (data.Count == 0)
                 continue;
-            var name = (family.Relation, family.Scope) switch
-            {
-                ("against", "full") => "Enemies",
-                ("as", "lane") => "Your hero, lane phase",
-                ("as", _) => "Your hero",
-                _ => family.Key,
-            };
+            var name = family.Relation == "against" ? "Enemies" : "Your hero";
             var reliability = Number(data["reliability"]) is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
             lines.Add(IsTrue(data["kept"])
                 ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} lifts, reliability {reliability}"
@@ -691,12 +661,12 @@ public static partial class MatchStatsMath
         };
         if (RankLabel(meta) is { } rank)
             lines.Add($"Ranked matches only: {rank}.");
-        var against = FamilyMeta(meta, "against", "full");
+        var against = FamilyMeta(meta, "against");
         if (IsTrue(against["kept"]))
             lines.Add($"Enemies: counters, since patch {Text(against["since_patch"]) ?? "?"}. Real effects here are small -- +1 is a standout.");
-        var asFull = FamilyMeta(meta, "as", "full");
-        if (IsTrue(asFull["kept"]))
-            lines.Add($"You: on your hero, since patch {Text(asFull["since_patch"]) ?? "?"}. Partly reflects who builds it on this hero, not only what it does.");
+        var mine = FamilyMeta(meta, "as");
+        if (IsTrue(mine["kept"]))
+            lines.Add($"You: on your hero, since patch {Text(mine["since_patch"]) ?? "?"}. Partly reflects who builds it on this hero, not only what it does.");
         lines.Add($"Fetched {Age(now - fetched.Value)} (Data → Fetch Match Stats).");
         return string.Join("\n", lines);
     }

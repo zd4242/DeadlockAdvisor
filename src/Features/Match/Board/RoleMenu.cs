@@ -3,7 +3,7 @@ using DeadlockAdvisor.Enums;
 
 namespace DeadlockAdvisor.Features.Match.Board;
 
-/// <summary>The explicit role menu, from a right click on a palette tile or a match bar slot.</summary>
+/// <summary>The explicit role menu, from a right click on a palette tile or a click on a match bar slot.</summary>
 public static class RoleMenu
 {
     public static void Show(MatchBoardViewModel? vm, HeroEventArgs e)
@@ -17,11 +17,6 @@ public static class RoleMenu
         foreach (var role in MatchBoardViewModel.ModeOrder)
         {
             items.Add(MenuItem($"Set as {role.Label()}", current == role, () => vm.SetRole(heroId, role)));
-        }
-        if (current is Role.Ally or Role.Enemy)
-        {
-            items.Add(new Separator());
-            items.Add(MenuItem("In my lane", vm.IsInLane(heroId), () => vm.ToggleLane(heroId)));
         }
         if (current != Role.None)
         {

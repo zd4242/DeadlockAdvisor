@@ -170,7 +170,7 @@ public static class ModelHealth
     private static List<ItemShare> Simulate(
         DataStore store, WeightMatrix matrix, List<string> heroes, int matches, int seed)
     {
-        var items = store.Items.Values.Where(item => ItemScoring.FullTiers.Contains(item.Tier)).ToList();
+        var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).ToList();
         var top = new int[items.Count];
         var shown = new int[items.Count];
         var squares = new double[items.Count];
@@ -232,13 +232,13 @@ public static class ModelHealth
         return result;
     }
 
-    /// <summary>Per item and relation, the correlation across heroes between the hand weight and the real (full-match) lift.</summary>
+    /// <summary>Per item and relation, the correlation across heroes between the hand weight and the real lift.</summary>
     private static List<Disagreement> Disagreements(DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix)
     {
         var pairs = new Dictionary<(string ItemId, Relation Relation), List<(double X, double Y)>>();
         foreach (var lift in store.MatchLift.Values)
         {
-            if (lift.Scope != "full" || !Relations.TryParse(lift.Relation, out var relation) || !store.Items.ContainsKey(lift.ItemId))
+            if (!Relations.TryParse(lift.Relation, out var relation) || !store.Items.ContainsKey(lift.ItemId))
                 continue;
             var key = (lift.ItemId, relation);
             if (!pairs.TryGetValue(key, out var list))
@@ -265,7 +265,7 @@ public static class ModelHealth
         var found = new List<DataOnlyPair>();
         foreach (var lift in store.MatchLift.Values)
         {
-            if (lift.Scope != "full" || !Relations.TryParse(lift.Relation, out var relation)
+            if (!Relations.TryParse(lift.Relation, out var relation)
                 || !store.Items.TryGetValue(lift.ItemId, out var item) || !store.Heroes.TryGetValue(lift.HeroId, out var hero))
                 continue;
             var bar = relation == Relation.Against ? ItemScoring.PickMinAgainst : ItemScoring.PickMinAs;

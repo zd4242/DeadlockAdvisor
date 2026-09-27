@@ -77,15 +77,14 @@ public static class TestStore
 
     public static void AddLifts(DataStore store)
     {
-        (string Item, string Hero, string Relation, string Scope, double Shrunk)[] lifts =
+        (string Item, string Hero, string Relation, double Shrunk)[] lifts =
         [
-            ("spirit_resist_t1", "heavy_spirit", "against", "full", 1.5),
-            ("spirit_resist_t1", "generic", "against", "full", -0.25),
-            ("spirit_resist_t1", "low_hp", "as", "full", 3.0),
-            ("spirit_resist_t1", "low_hp", "as", "lane", 2.0),
-            ("irrelevant_t1", "heavy_spirit", "against", "full", 1.2),
+            ("spirit_resist_t1", "heavy_spirit", "against", 1.5),
+            ("spirit_resist_t1", "generic", "against", -0.25),
+            ("spirit_resist_t1", "low_hp", "as", 3.0),
+            ("irrelevant_t1", "heavy_spirit", "against", 1.2),
         ];
-        foreach (var (item, hero, relation, scope, shrunk) in lifts)
-            store.MatchLift[new MatchLiftKey(item, hero, relation, scope)] = new MatchLift(item, hero, relation, scope, 5000, shrunk + 0.1, 0.5, shrunk);
+        foreach (var (item, hero, relation, shrunk) in lifts)
+            store.MatchLift[new MatchLiftKey(item, hero, relation)] = new MatchLift(item, hero, relation, 5000, shrunk + 0.1, 0.5, shrunk);
     }
 }

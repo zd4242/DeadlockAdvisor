@@ -78,22 +78,6 @@ public class ScoringTests
     }
 
     [Fact]
-    public void LanePhaseRestrictsHeroesAndTiers()
-    {
-        var store = TestStore.Make();
-        var match = new MatchState();
-        match.SetRole("heavy_spirit", Role.Enemy);
-        match.SetRole("generic", Role.Enemy);
-        match.SetLane("heavy_spirit", true);
-
-        var results = ItemScoring.LanePhaseResults(store, ItemScoring.BuildWeightMatrix(store), match);
-
-        Assert.Equal(["spirit_resist_t1"], results[1].Select(s => s.ItemId));
-        Assert.Equal(6.0, results[1][0].Score); // only heavy_spirit counted, not generic
-        Assert.False(results.ContainsKey(3)); // tier 3 never appears in the lane view
-    }
-
-    [Fact]
     public void ResultsAreSortedDescendingWithinTier()
     {
         var store = TestStore.Make();
@@ -127,20 +111,6 @@ public class ScoringTests
         Assert.Equal(contributions[0].Amount, contributions[0].Parts.Sum(p => p.Amount));
         Assert.Equal(-2.0, contributions[1].Amount); // generic is below average on spirit damage
         Assert.Equal(4.0, contributions.Sum(c => c.Amount));
-    }
-
-    [Fact]
-    public void ExplainRespectsLaneRestriction()
-    {
-        var store = TestStore.Make();
-        var match = new MatchState();
-        match.SetRole("heavy_spirit", Role.Enemy);
-        match.SetRole("generic", Role.Enemy);
-        match.SetLane("heavy_spirit", true);
-
-        var contributions = ItemScoring.ExplainItem(store, match, "spirit_resist_t1", match.LaneHeroes);
-
-        Assert.Equal(["heavy_spirit"], contributions.Select(c => c.HeroId));
     }
 
     [Theory]
@@ -313,7 +283,7 @@ public class ScoringTests
         // Against weights: heavy_spirit (5 - 2) * 2 = 6, low_hp -4, generic -2. The pair counts
         // 6 + -4/2 = 4; a typical pair, (6 - 2 + 6 - 1 - 2 - 2) / 3 = 5/3. Summed it would be 6 - 4 = 2.
         Assert.Equal(5.0 / 3, matrix.Typical("spirit_resist_t1", Relation.Against, 2), 9);
-        var scored = ItemScoring.ScoreAll(store, matrix, match, ItemScoring.FullTiers).Single(item => item.ItemId == "spirit_resist_t1");
+        var scored = ItemScoring.ScoreAll(store, matrix, match).Single(item => item.ItemId == "spirit_resist_t1");
         Assert.Equal(4 - 5.0 / 3, scored.Score, 9);
 
         var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
@@ -324,10 +294,10 @@ public class ScoringTests
 
         // The whole roster is its own typical team; one enemy is just its weight, with nothing taken off.
         match.SetRole("generic", Role.Enemy);
-        Assert.Equal(0, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(match, null)), 9);
+        Assert.Equal(0, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(match)), 9);
         var alone = new MatchState();
         alone.SetRole("heavy_spirit", Role.Enemy);
-        Assert.Equal(6, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(alone, null)), 9);
+        Assert.Equal(6, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(alone)), 9);
         Assert.Single(ItemScoring.ExplainItem(store, alone, "spirit_resist_t1"));
     }
 
@@ -341,13 +311,13 @@ public class ScoringTests
         // One enemy, each hero a third of the time. Formula: the trinket's 6, -4, -2 and the percent item's
         // 4/3, -8/3, 4/3, so sqrt((56/3 + 96/27) / 2) = 3.33. Data: 1.5 and 1.2 against heavy_spirit and
         // -0.25 against generic, one value a draw on average, so sqrt((2.25 + 1.44 + 0.0625) / 3) = 1.12.
-        var scale = scales.For(new LineUpShape(1, 0, false), lane: false);
+        var scale = scales.For(new LineUpShape(1, 0, false));
         Assert.InRange(scale.Formula, 3.0, 3.7);
         Assert.InRange(scale.Data, 1.0, 1.25);
-        Assert.Equal(scale, scales.For(new LineUpShape(1, 0, false), lane: false));
+        Assert.Equal(scale, scales.For(new LineUpShape(1, 0, false)));
         // No one to draw, or more than the roster holds: plain units.
-        Assert.Equal(BlendScale.One, scales.For(new LineUpShape(0, 0, false), lane: false));
-        Assert.Equal(BlendScale.One, scales.For(LineUpShape.FullMatch, lane: false));
+        Assert.Equal(BlendScale.One, scales.For(new LineUpShape(0, 0, false)));
+        Assert.Equal(BlendScale.One, scales.For(LineUpShape.FullMatch));
     }
 
     [Fact]
@@ -383,7 +353,7 @@ public class ScoringTests
         var patch = new Patch("09-16-2026 Update", 0);
         store.MatchCounts = new MatchCounts(1, patch, [],
         [
-            new(new Family("as", "full", 2), patch, Bought((1, 500, 1000), (2, 500, 1000)), new()
+            new(new Family("as", 2), patch, Bought((1, 500, 1000), (2, 500, 1000)), new()
             {
                 ["low_hp"] = Bought((1, 25, 50), (2, 475, 950)),
                 ["heavy_spirit"] = Bought((2, 500, 1000)),
@@ -401,7 +371,7 @@ public class ScoringTests
         var data = ItemScoring.DataScores(store, match, "spirit_resist_t1");
         Assert.Equal(0.5, data["against"], 9);
         Assert.Equal(3.0, data["as"]);
-        var scored = ItemScoring.ScoreAll(store, ItemScoring.BuildWeightMatrix(store), match, ItemScoring.FullTiers)
+        var scored = ItemScoring.ScoreAll(store, ItemScoring.BuildWeightMatrix(store), match)
             .Single(item => item.ItemId == "spirit_resist_t1");
         Assert.True(scored.RarelyBuilt);
         Assert.Equal(0.5 + 3.0 / 3, scored.DataStrength, 9);
@@ -415,19 +385,6 @@ public class ScoringTests
     }
 
     [Fact]
-    public void LaneDataUsesTheLaneScopeAndOnlyLaneHeroes()
-    {
-        var store = TestStore.Make();
-        TestStore.AddLifts(store);
-        var match = new MatchState();
-        match.SetRole("heavy_spirit", Role.Enemy);
-        match.SetRole("low_hp", Role.Self);
-
-        // heavy_spirit isn't flagged in-lane, and "against" has no lane rows anyway.
-        Assert.Equal([new("as", 2.0)], ItemScoring.DataScores(store, match, "spirit_resist_t1", match.LaneHeroes));
-    }
-
-    [Fact]
     public void DataOnlyPicksListWhatTheHandModelSkips()
     {
         var store = TestStore.Make();
@@ -435,7 +392,7 @@ public class ScoringTests
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
 
-        var picks = ItemScoring.DataOnlyPicks(store, ItemScoring.BuildWeightMatrix(store), match, ItemScoring.FullTiers);
+        var picks = ItemScoring.DataOnlyPicks(store, ItemScoring.BuildWeightMatrix(store), match);
 
         // irrelevant_t1 has no rules (hand score 0) but +1.2 against, so it's listed; spirit_resist_t1
         // is already recommended by the hand model, so it isn't.
@@ -456,14 +413,14 @@ public class ScoringTests
     {
         var store = TestStore.Make();
         TestStore.AddLifts(store);
-        store.MatchLift[new MatchLiftKey("irrelevant_t1", "low_hp", "as", "full")] =
-            new MatchLift("irrelevant_t1", "low_hp", "as", "full", 5000, -6.1, 0.5, -6.0);
+        store.MatchLift[new MatchLiftKey("irrelevant_t1", "low_hp", "as")] =
+            new MatchLift("irrelevant_t1", "low_hp", "as", 5000, -6.1, 0.5, -6.0);
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
         match.SetRole("low_hp", Role.Self);
 
         // enemies +1.2 clears its bar alone, but -6.0 on you nets it to 1.2 - 2 = -0.8.
-        Assert.Empty(ItemScoring.DataOnlyPicks(store, ItemScoring.BuildWeightMatrix(store), match, ItemScoring.FullTiers));
+        Assert.Empty(ItemScoring.DataOnlyPicks(store, ItemScoring.BuildWeightMatrix(store), match));
     }
 
     [Fact]
@@ -474,7 +431,7 @@ public class ScoringTests
         var match = new MatchState();
         match.SetRole("low_hp", Role.Enemy);
 
-        var all = ItemScoring.ScoreAll(store, matrix, match, ItemScoring.FullTiers);
+        var all = ItemScoring.ScoreAll(store, matrix, match);
 
         // 0, then (-4 + 4/3) * 1, then (0 - 2) * 2.
         Assert.Equal(["irrelevant_t1", "pct_dmg_t3", "spirit_resist_t1"], all.Select(item => item.ItemId));

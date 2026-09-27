@@ -19,49 +19,6 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
 
     public List<int> EnemySlots => SelfSlot is null ? [] : Enumerable.Range(Layout.PerTeam - OwnBase, Layout.PerTeam).ToList();
 
-    public List<int> Highlighted => Detector.HighlightedSlots(SelfScores);
-
-    /// <summary>
-    /// The lane as the game marks it during laning (a backplate behind all four players in the lane:
-    /// your colour on two, the enemy's on two), or null once the marks are gone or don't make that pattern.
-    /// </summary>
-    public List<int>? LaneFromHighlights
-    {
-        get
-        {
-            if (SelfSlot is not { } self)
-                return null;
-            var lit = Highlighted;
-            if (lit.Count != 4 || !lit.Contains(self))
-                return null;
-            var own = lit.Count(s => s < Layout.PerTeam == self < Layout.PerTeam);
-            if (own != 2 || lit.Count - own != 2)
-                return null;
-            return lit.Where(s => s != self).Order().ToList();
-        }
-    }
-
-    /// <summary>
-    /// Your lane partner and the two enemies opposite: read off the game's highlights when they're
-    /// there, otherwise inferred from the layout, which pairs each team up in order so pair 0 on the
-    /// left lanes against pair 0 on the right.
-    /// </summary>
-    public List<int> LaneSlots
-    {
-        get
-        {
-            if (SelfSlot is not { } self)
-                return [];
-            if (LaneFromHighlights is { } marked)
-                return marked;
-            var ownBase = OwnBase;
-            var foeBase = Layout.PerTeam - ownBase;
-            var pair = (self - ownBase) / 2;
-            var partner = ownBase + pair * 2 + (1 - (self - ownBase) % 2);
-            return [partner, foeBase + pair * 2, foeBase + pair * 2 + 1];
-        }
-    }
-
     public string? HeroAt(int slot) => slot >= 0 && slot < Slots.Count ? Slots[slot].HeroId : null;
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
@@ -83,9 +40,6 @@ public static class Detector
     // is a lane-mate close behind. Against the median, your slot led by 7× to 37× on every capture.
     public const double SelfMinScore = 2.0;
     public const double SelfBaselineRatio = 4.0;
-
-    /// <summary>A slot scoring at least this share of the best is lit too: it shares your lane.</summary>
-    public const double HighlightFraction = 0.35;
 
     // Where the backplate is sampled: two heights above the art (characters overflow their box by
     // about a tenth, so any closer reads hair and hats) and four points across the slot at each.
@@ -203,7 +157,7 @@ public static class Detector
     /// <summary>A float32 vector length, as np.linalg.norm gives for float32 input.</summary>
     private static float Norm(float x, float y) => MathF.Sqrt(x * x + y * y);
 
-    /// <summary>Without a clear winner, say nothing: a wrong You silently mislabels both teams and the lane.</summary>
+    /// <summary>Without a clear winner, say nothing: a wrong You silently mislabels both teams.</summary>
     public static (int? Slot, double Score) FindSelfSlot(IReadOnlyList<double> values)
     {
         if (values.Count == 0)
@@ -218,16 +172,5 @@ public static class Detector
         if (values[best] < SelfMinScore || values[best] < baseline * SelfBaselineRatio)
             return (null, values[best]);
         return (best, values[best]);
-    }
-
-    /// <summary>Slots the game has drawn a backplate behind: the four lane players early on, later only you.</summary>
-    public static List<int> HighlightedSlots(IReadOnlyList<double> values)
-    {
-        if (values.Count == 0)
-            return [];
-        var best = values.Max();
-        if (best <= 0.0)
-            return [];
-        return Enumerable.Range(0, values.Count).Where(i => values[i] >= best * HighlightFraction).ToList();
     }
 }

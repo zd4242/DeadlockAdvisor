@@ -71,43 +71,27 @@ public class GoldenScoringTests
             store.MatchLift = [];
         var match = Replay(expected["ops"]);
         var matrix = ItemScoring.BuildWeightMatrix(store);
-        var laneHeroes = match.LaneHeroes;
 
         if (Updating)
         {
-            expected["lane_phase_results"] = Grouped(ItemScoring.LanePhaseResults(store, matrix, match));
             expected["full_match_results"] = Grouped(ItemScoring.FullMatchResults(store, matrix, match));
-            foreach (var explained in Items(expected["explain_lane"]))
-                explained["contributions"] = Contributions(ItemScoring.ExplainItem(store, match, Text(explained["item_id"]), laneHeroes));
-            foreach (var explained in Items(expected["explain_full"]))
+            foreach (var explained in Items(expected["explain"]))
                 explained["contributions"] = Contributions(ItemScoring.ExplainItem(store, match, Text(explained["item_id"])));
-            expected["data_only_picks_lane"] = ScoredList(ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.LaneTiers, laneHeroes));
-            expected["data_only_picks_full"] = ScoredList(ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.FullTiers));
+            expected["data_only_picks"] = ScoredList(ItemScoring.DataOnlyPicks(store, matrix, match));
             WriteJson("scoring_cases.json", cases);
         }
 
         Assert.Equal(Strings(expected["allies"]), match.Allies);
         Assert.Equal(Strings(expected["enemies"]), match.Enemies);
         Assert.Equal((string?)expected["self"], match.SelfHero);
-        Assert.Equal(Strings(expected["lane_heroes"]), laneHeroes.Order(StringComparer.Ordinal));
         var saved = match.ToSaved();
         Assert.Equal(expected["saved"]!["roles"]!.AsObject().Select(p => (p.Key, Text(p.Value))), saved.Roles.Select(p => (p.Key, p.Value)));
-        Assert.Equal(Strings(expected["saved"]!["lane"]), saved.Lane);
 
-        AssertGrouped(expected["lane_phase_results"], ItemScoring.LanePhaseResults(store, matrix, match));
         AssertGrouped(expected["full_match_results"], ItemScoring.FullMatchResults(store, matrix, match));
-
-        foreach (var explained in Items(expected["explain_lane"]))
-            AssertContributions(explained["contributions"], ItemScoring.ExplainItem(store, match, Text(explained["item_id"]), laneHeroes));
-        foreach (var explained in Items(expected["explain_full"]))
+        foreach (var explained in Items(expected["explain"]))
             AssertContributions(explained["contributions"], ItemScoring.ExplainItem(store, match, Text(explained["item_id"])));
-
-        AssertScoredList(expected["data_only_picks_lane"], ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.LaneTiers, laneHeroes));
-        AssertScoredList(expected["data_only_picks_full"], ItemScoring.DataOnlyPicks(store, matrix, match, ItemScoring.FullTiers));
-
-        foreach (var row in Items(expected["data_scores_lane"]))
-            AssertPairs(row[1], ItemScoring.DataScores(store, match, Text(row[0]), laneHeroes));
-        foreach (var row in Items(expected["data_scores_full"]))
+        AssertScoredList(expected["data_only_picks"], ItemScoring.DataOnlyPicks(store, matrix, match));
+        foreach (var row in Items(expected["data_scores"]))
             AssertPairs(row[1], ItemScoring.DataScores(store, match, Text(row[0])));
     }
 
@@ -208,13 +192,7 @@ public class GoldenScoringTests
     {
         var match = new MatchState();
         foreach (var op in Items(ops))
-        {
-            var heroId = Text(op[1]);
-            if (Text(op[0]) == "role")
-                match.SetRole(heroId, Roles.TryParse(Text(op[2]), out var role) ? role : throw new FormatException());
-            else
-                match.SetLane(heroId, op[2]!.GetValue<bool>());
-        }
+            match.SetRole(Text(op[1]), Roles.TryParse(Text(op[2]), out var role) ? role : throw new FormatException());
         return match;
     }
 

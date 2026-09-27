@@ -300,16 +300,16 @@ public sealed class DataStore
 
         foreach (var row in rows)
         {
-            if (!row.Has("item_id") || !row.Has("hero_id"))
+            // Downloads from before lane data was dropped also hold lane-phase rows.
+            if (!row.Has("item_id") || !row.Has("hero_id") || row.Or("scope", "full") != "full")
                 continue;
             var lift = new MatchLift(
-                row.Required("item_id"), row.Required("hero_id"),
-                row.Or("relation", ""), row.Or("scope", ""),
+                row.Required("item_id"), row.Required("hero_id"), row.Or("relation", ""),
                 (int)NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("matches"))),
                 NumberFormat.ToFloat(row.Get("lift")),
                 NumberFormat.ToFloat(row.Get("se")),
                 NumberFormat.ToFloat(row.Get("lift_shrunk")));
-            MatchLift[new MatchLiftKey(lift.ItemId, lift.HeroId, lift.Relation, lift.Scope)] = lift;
+            MatchLift[new MatchLiftKey(lift.ItemId, lift.HeroId, lift.Relation)] = lift;
         }
 
         var meta = PathOf(MatchMetaFile);
@@ -786,13 +786,12 @@ public sealed class DataStore
         var itemOrder = IndexOf(Items.Keys);
         var rows = MatchLift.Values
             .OrderBy(lift => lift.Relation, StringComparer.Ordinal)
-            .ThenBy(lift => lift.Scope, StringComparer.Ordinal)
             .ThenBy(lift => lift.HeroId, StringComparer.Ordinal)
             .ThenBy(lift => itemOrder.GetValueOrDefault(lift.ItemId, _missingOrder))
             .Select(lift => Row(
-                lift.ItemId, lift.HeroId, lift.Relation, lift.Scope, Integer(lift.Matches),
+                lift.ItemId, lift.HeroId, lift.Relation, Integer(lift.Matches),
                 NumberFormat.Fixed(lift.Lift, 3), NumberFormat.Fixed(lift.Se, 3), NumberFormat.Fixed(lift.LiftShrunk, 3)));
-        WriteCsv(MatchLiftFile, ["item_id", "hero_id", "relation", "scope", "matches", "lift", "se", "lift_shrunk"], rows);
+        WriteCsv(MatchLiftFile, ["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk"], rows);
         AtomicFile.Write(PathOf(MatchMetaFile), PythonJson.ToFileBytes(MatchMeta, ensureAscii: true));
     }
 

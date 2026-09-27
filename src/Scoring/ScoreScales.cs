@@ -24,7 +24,7 @@ public readonly record struct BlendScale(double Formula, double Data)
 }
 
 /// <summary>
-/// Measures a <see cref="BlendScale"/> once per line-up shape and view, for one version of the data:
+/// Measures a <see cref="BlendScale"/> once per line-up shape, for one version of the data:
 /// the root mean square of every nonzero formula score and data strength over
 /// <see cref="LineUps"/> seeded random line-ups of that shape. Made anew with each weight matrix.
 /// </summary>
@@ -32,28 +32,25 @@ public sealed class ScoreScales(DataStore store, WeightMatrix matrix)
 {
     public const int LineUps = 200;
 
-    private readonly Dictionary<(LineUpShape Shape, bool Lane), BlendScale> _measured = [];
+    private readonly Dictionary<LineUpShape, BlendScale> _measured = [];
 
-    /// <param name="lane">The Lane Phase view: its tiers and its match-data scope.</param>
-    public BlendScale For(LineUpShape shape, bool lane)
+    public BlendScale For(LineUpShape shape)
     {
-        if (!_measured.TryGetValue((shape, lane), out var scale))
+        if (!_measured.TryGetValue(shape, out var scale))
         {
-            scale = Measure(shape, lane);
-            _measured[(shape, lane)] = scale;
+            scale = Measure(shape);
+            _measured[shape] = scale;
         }
         return scale;
     }
 
-    private BlendScale Measure(LineUpShape shape, bool lane)
+    private BlendScale Measure(LineUpShape shape)
     {
         var pool = store.Heroes.Keys.ToArray();
         if (shape.Size == 0 || shape.Size > pool.Length)
             return BlendScale.One;
 
-        var tiers = lane ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
-        var items = store.Items.Values.Where(item => tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
-        var scope = lane ? "lane" : "full";
+        var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
         var random = new Random(1);
         var (formula, data) = (new Spread(), new Spread());
         for (var i = 0; i < LineUps; i++)
@@ -62,7 +59,7 @@ public sealed class ScoreScales(DataStore store, WeightMatrix matrix)
             foreach (var itemId in items)
             {
                 formula.Add(ItemScoring.Total(matrix, itemId, lineUp));
-                data.Add(ItemScoring.DataStrength(ItemScoring.DataScores(store, lineUp, itemId, scope)));
+                data.Add(ItemScoring.DataStrength(ItemScoring.DataScores(store, lineUp, itemId)));
             }
         }
         return new BlendScale(formula.Rms, data.Rms);

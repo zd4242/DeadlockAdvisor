@@ -27,9 +27,6 @@ public class MatchPageTests
         foreach (var hero in new[] { "dynamo", "kelvin", "paradox", "shiv", "yamato" })
             board.SetRole(hero, Role.Ally);
         board.SetRole("wraith", Role.Self);
-        board.ToggleLane("kelvin");
-        board.ToggleLane("haze");
-        board.ToggleLane("infernus");
 
         var souls = new Dictionary<string, int>
         {
@@ -50,12 +47,10 @@ public class MatchPageTests
     {
         using var ui = new UiHarness(settings => settings.Current.ZoomIndex = zoomIndex);
         SetUpMatch(ui);
-        ui.ViewModel.Match.ResultsTab = 1;
         ui.Show();
 
-        var full = ui.ViewModel.Match.FullResults;
-        var first = full.Entries.OfType<ResultRowViewModel>().First();
-        full.Select(first);
+        var results = ui.ViewModel.Match.Results;
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
 
         Assert.True(File.Exists(ui.Screenshot(file)));
         Assert.True(ui.ViewModel.Match.Explain.HasItem);
@@ -63,16 +58,16 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
-    public void TieredLaneViewAndEmptyStateRender()
+    public void TheTieredViewAndEmptyStateRender()
     {
         using var ui = new UiHarness(settings => settings.Current.ResultsByTier = true);
         ui.Show();
         ui.Screenshot("match_empty.png");
-        Assert.True(ui.ViewModel.Match.LaneResults.IsEmpty);
+        Assert.True(ui.ViewModel.Match.Results.IsEmpty);
 
         SetUpMatch(ui);
-        ui.Screenshot("match_lane_tiered.png");
-        Assert.Contains(ui.ViewModel.Match.LaneResults.Entries, entry => entry is SectionHeaderViewModel);
+        ui.Screenshot("match_tiered.png");
+        Assert.Contains(ui.ViewModel.Match.Results.Entries, entry => entry is SectionHeaderViewModel);
     }
 
     [AvaloniaFact]
@@ -80,20 +75,19 @@ public class MatchPageTests
     {
         using var ui = new UiHarness();
         SetUpMatch(ui);
-        ui.ViewModel.Match.ResultsTab = 1;
         ui.Show();
-        var full = ui.ViewModel.Match.FullResults;
-        var picks = full.Entries.OfType<SectionHeaderViewModel>().Single(header => header.Key == ResultsViewModel.DataPicksKey);
-        full.ToggleSection(picks.Key);
-        full.ToggleSection(picks.Key);
+        var results = ui.ViewModel.Match.Results;
+        var picks = results.Entries.OfType<SectionHeaderViewModel>().Single(header => header.Key == ResultsViewModel.DataPicksKey);
+        results.ToggleSection(picks.Key);
+        results.ToggleSection(picks.Key);
 
         // Scrolled to the end, where the data picks sit under the formula's list.
         ScrollResultsToEnd(ui);
         ui.Screenshot("match_data_picks.png");
 
         Assert.False(ui.ViewModel.Match.Explain.HasItem);
-        var pick = full.Entries.OfType<ResultRowViewModel>().Last();
-        full.Select(pick);
+        var pick = results.Entries.OfType<ResultRowViewModel>().Last();
+        results.Select(pick);
         Assert.True(ui.ViewModel.Match.Explain.HasItem);
         ui.Screenshot("match_data_pick_explained.png");
     }
@@ -104,7 +98,6 @@ public class MatchPageTests
         using var ui = new UiHarness();
         SetUpMatch(ui);
         var match = ui.ViewModel.Match;
-        match.ResultsTab = 1;
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.MatchData);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
         ui.Show();
@@ -112,9 +105,9 @@ public class MatchPageTests
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Both);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.Percent == 0);
-        match.FullResults.Select(match.FullResults.Entries.OfType<ResultRowViewModel>().First());
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
         ui.Screenshot("match_rank_blend.png");
-        Assert.All(match.FullResults.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
+        Assert.All(match.Results.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
         Assert.StartsWith("Formula", match.Explain.Verdict);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
 
@@ -122,14 +115,14 @@ public class MatchPageTests
         ScrollResultsToEnd(ui);
         ui.Screenshot("match_every_item_negatives.png");
 
-        Assert.Contains(match.FullResults.Entries.OfType<ResultRowViewModel>(), row => row.IsNegative);
+        Assert.Contains(match.Results.Entries.OfType<ResultRowViewModel>(), row => row.IsNegative);
         Assert.Equal(RankBy.Formula, ui.Settings.Current.ResultsRankBy);
     }
 
     private static void ScrollResultsToEnd(UiHarness ui)
     {
         UiHarness.Settle();
-        ui.Window.MatchPage.GetVisualDescendants().OfType<ResultsView>().Single(view => view.IsEffectivelyVisible)
+        ui.Window.MatchPage.GetVisualDescendants().OfType<ResultsView>().Single()
             .GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
     }
 
@@ -206,7 +199,6 @@ public class MatchPageTests
     {
         using var ui = new UiHarness();
         SetUpMatch(ui);
-        ui.ViewModel.Match.ResultsTab = 1;
         ui.Show();
 
         var icon = ui.Window.GetVisualDescendants().OfType<Controls.Art.ArtImage>()

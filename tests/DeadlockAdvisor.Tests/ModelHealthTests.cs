@@ -39,11 +39,11 @@ public class ModelHealthTests
             store.Heroes[heroId] = new Hero(heroId, $"Hero {i}");
             store.HeroScores[new ScoreKey(heroId, "trait")] = 10 * i;
             store.HeroScores[new ScoreKey(heroId, "unscored")] = 0;
-            store.MatchLift[new MatchLiftKey("countered", heroId, "against", "full")] =
-                new MatchLift("countered", heroId, "against", "full", 5000, -0.1 * i, 0.1, -0.1 * i);
+            store.MatchLift[new MatchLiftKey("countered", heroId, "against")] =
+                new MatchLift("countered", heroId, "against", 5000, -0.1 * i, 0.1, -0.1 * i);
         }
-        store.MatchLift[new MatchLiftKey("untagged", "h5", "against", "full")] =
-            new MatchLift("untagged", "h5", "against", "full", 5000, 2.1, 0.2, 2.0);
+        store.MatchLift[new MatchLiftKey("untagged", "h5", "against")] =
+            new MatchLift("untagged", "h5", "against", 5000, 2.1, 0.2, 2.0);
         return store;
     }
 
@@ -120,7 +120,7 @@ public class ModelHealthTests
         var report = Build(store);
 
         Assert.Equal(ModelHealth.SimulatedMatches, report.Matches);
-        Assert.Equal(store.Items.Values.Count(item => ItemScoring.FullTiers.Contains(item.Tier)), report.Shares.Count);
+        Assert.Equal(store.Items.Values.Count(item => ItemScoring.Tiers.Contains(item.Tier)), report.Shares.Count);
         Assert.All(report.Shares, share => Assert.True(share.TopShare <= share.ShownShare));
         Assert.True(report.HasMatchData);
         Assert.NotEmpty(report.Lines());

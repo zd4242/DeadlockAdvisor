@@ -23,14 +23,10 @@
 
             <Border Classes="card">
                 <DockPanel>
-                    <!-- What ranks the list stays in view; the rest sits behind Filters, shared by both
-                         result tabs. -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
-                        <ListBox Classes="segmented" SelectedIndex="{Binding ResultsTab}" VerticalAlignment="Top">
-                            <ListBoxItem Content="Lane Phase"/>
-                            <ListBoxItem Content="Full Match"/>
-                        </ListBox>
-                        <ComboBox Grid.Column="2"
+                    <!-- What ranks the list stays in view; the rest sits behind Filters. -->
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                        <TextBlock Classes="section" VerticalAlignment="Center" Text="RECOMMENDED ITEMS"/>
+                        <ComboBox Grid.Column="1"
                                   VerticalAlignment="Center"
                                   ItemsSource="{Binding Ranks}"
                                   SelectedItem="{Binding SelectedRank}"
@@ -38,7 +34,7 @@
                                   ToolTip.ShowOnDisabled="True"
                                   ToolTip.Tip="What orders the list. Match data ranks by real-match lifts (enemies, plus a third&#10;of yours); 'agree' keeps only items both rate above 0. The data is never added&#10;into the formula score. Needs match data (Data → Fetch Match Stats)."/>
                         <DropDownButton x:Name="FiltersButton"
-                                        Grid.Column="3"
+                                        Grid.Column="2"
                                         Margin="8,0,0,0"
                                         VerticalAlignment="Center"
                                         Content="{Binding FiltersLabel}"
@@ -88,14 +84,7 @@
                             </DropDownButton.Flyout>
                         </DropDownButton>
                     </Grid>
-                    <Panel>
-                        <Panel IsVisible="{Binding IsLaneTab}">
-                            <results:ResultsView DataContext="{Binding LaneResults}"/>
-                        </Panel>
-                        <Panel IsVisible="{Binding IsFullTab}">
-                            <results:ResultsView DataContext="{Binding FullResults}"/>
-                        </Panel>
-                    </Panel>
+                    <results:ResultsView DataContext="{Binding Results}"/>
                 </DockPanel>
             </Border>
 

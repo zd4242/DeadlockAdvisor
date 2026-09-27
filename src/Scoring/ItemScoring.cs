@@ -16,8 +16,8 @@ namespace DeadlockAdvisor.Scoring;
 /// </summary>
 public static class ItemScoring
 {
-    public static readonly IReadOnlyList<int> LaneTiers = [1, 2];
-    public static readonly IReadOnlyList<int> FullTiers = [1, 2, 3, 4];
+    /// <summary>The shop tiers recommendations come from.</summary>
+    public static readonly IReadOnlyList<int> Tiers = [1, 2, 3, 4];
 
     /// <summary>Bars for <see cref="DataOnlyPicks"/>, a few times each relation's typical real lift.</summary>
     public const double PickMinAgainst = 1.0;
@@ -54,52 +54,29 @@ public static class ItemScoring
         return new WeightMatrix(weights, profiled, singleTarget);
     }
 
-    /// <summary>
-    /// The match's line-up, honouring the lane-phase restriction when one is given; without
-    /// <paramref name="netWorth"/> every hero counts the same.
-    /// </summary>
-    public static LineUp RelevantHeroes(
-        MatchState match, IReadOnlyCollection<string>? restrictTo, NetWorthWeights? netWorth = null)
-    {
-        netWorth ??= NetWorthWeights.None;
-        if (restrictTo is null)
-            return new LineUp(match.Allies, match.Enemies, match.SelfHero, netWorth);
-
-        var allowed = restrictTo.ToHashSet();
-        var self = match.SelfHero is { } hero && allowed.Contains(hero) ? hero : null;
-        return new LineUp(match.Allies.Where(allowed.Contains).ToList(), match.Enemies.Where(allowed.Contains).ToList(), self, netWorth);
-    }
+    /// <summary>The match's line-up; without <paramref name="netWorth"/> every hero counts the same.</summary>
+    public static LineUp RelevantHeroes(MatchState match, NetWorthWeights? netWorth = null) =>
+        new(match.Allies, match.Enemies, match.SelfHero, netWorth ?? NetWorthWeights.None);
 
     /// <summary>
-    /// Early game: only yourself and the heroes flagged as in your lane, tiers 1-2 only.
-    /// Tiers map to that tier's items, highest score first; only tiers with an item above 0 appear.
+    /// Everyone currently selected, every tier. Tiers map to that tier's items, highest score first;
+    /// only tiers with an item above 0 appear.
     /// </summary>
-    public static OrderedDictionary<int, List<ScoredItem>> LanePhaseResults(
-        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null) =>
-        GroupPositive(store, ScoreAll(store, matrix, match, LaneTiers, match.LaneHeroes, netWorth));
-
-    /// <summary>Everyone currently selected, all four tiers.</summary>
     public static OrderedDictionary<int, List<ScoredItem>> FullMatchResults(
         DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null) =>
-        GroupPositive(store, ScoreAll(store, matrix, match, FullTiers, null, netWorth));
+        GroupPositive(store, ScoreAll(store, matrix, match, netWorth));
 
     /// <summary>
-    /// Every item in <paramref name="tiers"/> with its score for the line-up and its match data, however
+    /// Every item in <see cref="Tiers"/> with its score for the line-up and its match data, however
     /// it scores: highest score first, then by name.
     /// </summary>
-    public static List<ScoredItem> ScoreAll(
-        DataStore store,
-        WeightMatrix matrix,
-        MatchState match,
-        IReadOnlyList<int> tiers,
-        IReadOnlyCollection<string>? restrictTo = null,
-        NetWorthWeights? netWorth = null)
+    public static List<ScoredItem> ScoreAll(DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null)
     {
-        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
+        var lineUp = RelevantHeroes(match, netWorth);
         return store.Items
-            .Where(entry => tiers.Contains(entry.Value.Tier))
+            .Where(entry => Tiers.Contains(entry.Value.Tier))
             .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
-                entry.Value.Category, DataScores(store, lineUp, entry.Key, DataScope(restrictTo)), BuildRatio(store, entry.Key, lineUp.Self)))
+                entry.Value.Category, DataScores(store, lineUp, entry.Key), BuildRatio(store, entry.Key, lineUp.Self)))
             .OrderByDescending(scored => scored.Score)
             .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
             .ToList();
@@ -157,11 +134,9 @@ public static class ItemScoring
     /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's
     /// enemies and allies are counted at their rank, with a typical team's sum taken off as one more line.
     /// </summary>
-    public static List<HeroContribution> ExplainItem(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null,
-        NetWorthWeights? netWorth = null)
+    public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
     {
-        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
+        var lineUp = RelevantHeroes(match, netWorth);
         var baselines = store.TraitBaselines();
         var singleTarget = store.Items.TryGetValue(itemId, out var item) && item.SingleTarget;
         var contributions = new List<HeroContribution>();
@@ -270,15 +245,14 @@ public static class ItemScoring
 
     /// <summary>
     /// The match-data rows behind one item's data numbers: each enemy's "against" lift and your own
-    /// hero's "as" lift, in the lane scope when the view is restricted to your lane. Allies have no
-    /// data (the API can't filter by teammate), and heroes without a row are simply absent.
+    /// hero's "as" lift. Allies have no data (the API can't filter by teammate), and heroes without a
+    /// row are simply absent.
     /// </summary>
-    public static List<MatchLift> DataParts(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null) =>
-        DataParts(store, RelevantHeroes(match, restrictTo), itemId, DataScope(restrictTo));
+    public static List<MatchLift> DataParts(DataStore store, MatchState match, string itemId) =>
+        DataParts(store, RelevantHeroes(match), itemId);
 
-    /// <inheritdoc cref="DataParts(DataStore, MatchState, string, IReadOnlyCollection{string}?)"/>
-    public static List<MatchLift> DataParts(DataStore store, LineUp lineUp, string itemId, string scope)
+    /// <inheritdoc cref="DataParts(DataStore, MatchState, string)"/>
+    public static List<MatchLift> DataParts(DataStore store, LineUp lineUp, string itemId)
     {
         if (store.MatchLift.Count == 0)
             return [];
@@ -287,29 +261,25 @@ public static class ItemScoring
         foreach (var (heroId, relation) in lineUp.Members())
         {
             if (relation != Relation.With
-                && store.MatchLift.TryGetValue(new MatchLiftKey(itemId, heroId, relation.Key(), scope), out var lift))
+                && store.MatchLift.TryGetValue(new MatchLiftKey(itemId, heroId, relation.Key()), out var lift))
                 found.Add(lift);
         }
         return found;
     }
-
-    /// <summary>The match data's scope for a view: "lane" when it's restricted to your lane.</summary>
-    public static string DataScope(IReadOnlyCollection<string>? restrictTo) => restrictTo is null ? "full" : "lane";
 
     /// <summary>
     /// Relation → summed lift_shrunk, only for relations with data. Kept apart rather than added up:
     /// "against" is a small counter effect, "as" a much bigger one that also reflects who plays the
     /// hero, so one sum would drown the counters. The "against" sum is counted by <see cref="Relevance"/>.
     /// </summary>
-    public static OrderedDictionary<string, double> DataScores(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null) =>
-        DataScores(store, RelevantHeroes(match, restrictTo), itemId, DataScope(restrictTo));
+    public static OrderedDictionary<string, double> DataScores(DataStore store, MatchState match, string itemId) =>
+        DataScores(store, RelevantHeroes(match), itemId);
 
-    /// <inheritdoc cref="DataScores(DataStore, MatchState, string, IReadOnlyCollection{string}?)"/>
-    public static OrderedDictionary<string, double> DataScores(DataStore store, LineUp lineUp, string itemId, string scope)
+    /// <inheritdoc cref="DataScores(DataStore, MatchState, string)"/>
+    public static OrderedDictionary<string, double> DataScores(DataStore store, LineUp lineUp, string itemId)
     {
         var result = new OrderedDictionary<string, double>();
-        foreach (var lift in DataParts(store, lineUp, itemId, scope))
+        foreach (var lift in DataParts(store, lineUp, itemId))
             result[lift.Relation] = result.GetValueOrDefault(lift.Relation) + lift.LiftShrunk;
         if (result.TryGetValue(Relation.Against.Key(), out var against))
             result[Relation.Against.Key()] = against * Relevance(BuildRatio(store, itemId, lineUp.Self));
@@ -342,16 +312,10 @@ public static class ItemScoring
     /// <see cref="DataStrength"/> of at least 1, strongest first.
     /// </summary>
     public static List<ScoredItem> DataOnlyPicks(
-        DataStore store,
-        WeightMatrix matrix,
-        MatchState match,
-        IReadOnlyList<int> tiers,
-        IReadOnlyCollection<string>? restrictTo = null,
-        NetWorthWeights? netWorth = null,
-        int limit = 6) =>
-        DataOnlyPicks(ScoreAll(store, matrix, match, tiers, restrictTo, netWorth), limit);
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null, int limit = 6) =>
+        DataOnlyPicks(ScoreAll(store, matrix, match, netWorth), limit);
 
-    /// <inheritdoc cref="DataOnlyPicks(DataStore, WeightMatrix, MatchState, IReadOnlyList{int}, IReadOnlyCollection{string}?, NetWorthWeights?, int)"/>
+    /// <inheritdoc cref="DataOnlyPicks(DataStore, WeightMatrix, MatchState, NetWorthWeights?, int)"/>
     public static List<ScoredItem> DataOnlyPicks(IEnumerable<ScoredItem> scored, int limit = 6) =>
         scored
             .Where(item => !(item.Score > 0) && item.DataStrength >= 1)

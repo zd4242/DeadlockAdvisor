@@ -22,8 +22,6 @@ public enum SlotRole
 {
     Unknown,
     You,
-    LaneAlly,
-    LaneEnemy,
     Ally,
     Enemy,
 }
@@ -75,8 +73,6 @@ public class SlotReviewViewModel : ViewModelBase
     [Reactive] public SlotRole Role { get; private set; }
     [Reactive] public string RoleText { get; private set; } = "";
     public bool IsYou => Role == SlotRole.You;
-    public bool IsLaneAlly => Role == SlotRole.LaneAlly;
-    public bool IsLaneEnemy => Role == SlotRole.LaneEnemy;
 
     public ReactiveCommand<Unit, Unit> SetSelfCommand { get; }
 
@@ -90,14 +86,11 @@ public class SlotReviewViewModel : ViewModelBase
         RoleText = role switch
         {
             SlotRole.You => "YOU",
-            SlotRole.LaneAlly or SlotRole.LaneEnemy => "in your lane",
             SlotRole.Ally => "ally",
             SlotRole.Enemy => "enemy",
             _ => "team unknown",
         };
         this.RaisePropertyChanged(nameof(IsYou));
-        this.RaisePropertyChanged(nameof(IsLaneAlly));
-        this.RaisePropertyChanged(nameof(IsLaneEnemy));
     }
 
     private string? NameOf(string? heroId) =>

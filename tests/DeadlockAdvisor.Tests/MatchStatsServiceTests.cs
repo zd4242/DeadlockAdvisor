@@ -155,11 +155,11 @@ public class MatchStatsServiceTests
             counts.Ranks.Select(rank => rank.Name));
         Assert.Equal((0, 116), (counts.Ranks[0].MinBadge, counts.Ranks[^1].MaxBadge));
 
-        const int total = 3 * 39 * 11;
+        const int total = 2 * 39 * 11;
         Assert.Equal(Enumerable.Range(0, total + 1), progress.Seen.Select(step => step.Done));
         Assert.All(progress.Seen, step => Assert.Equal(total, step.Total));
         Assert.Equal(
-            ["against/full: all matches", "against/full: all matches · Initiate", "against/full: all matches · Ascendant", "against/full: Abrams"],
+            ["against: all matches", "against: all matches · Initiate", "against: all matches · Ascendant", "against: Abrams"],
             new[] { 0, 1, 10, 11 }.Select(i => progress.Seen[i].Text));
         Assert.Equal("done", progress.Seen[^1].Text);
 

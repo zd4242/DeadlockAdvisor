@@ -58,8 +58,8 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public string? Verdict { get; private set; }
 
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
-    public void ShowItem(DataStore store, MatchState match, string? itemId, IReadOnlyCollection<string>? restrictTo,
-        double now, NetWorthWeights? netWorth = null, BlendScale? blend = null)
+    public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
+        BlendScale? blend = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -67,7 +67,7 @@ public class ExplainViewModel : ViewModelBase
             return;
         }
 
-        var contributions = ItemScoring.ExplainItem(store, match, itemId, restrictTo, netWorth);
+        var contributions = ItemScoring.ExplainItem(store, match, itemId, netWorth);
         var total = 0.0;
         foreach (var contribution in contributions)
             total += contribution.Amount;
@@ -79,12 +79,12 @@ public class ExplainViewModel : ViewModelBase
         Total = new DisplayAmount(total);
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(Card).ToList();
-        var parts = ItemScoring.DataParts(store, match, itemId, restrictTo);
-        var self = ItemScoring.RelevantHeroes(match, restrictTo).Self;
+        var parts = ItemScoring.DataParts(store, match, itemId);
+        var self = match.SelfHero;
         MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
         Verdict = blend is { } scale
             ? ExplainText.Verdict(new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category,
-                ItemScoring.DataScores(store, match, itemId, restrictTo)), scale, NoContributions)
+                ItemScoring.DataScores(store, match, itemId)), scale, NoContributions)
             : null;
     }
 

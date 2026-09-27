@@ -12,13 +12,13 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Results;
 
 /// <summary>
-/// One tab's worth of recommendations: a flat ranked list or collapsible tier sections, trimmed to
+/// The recommendations: a flat ranked list or collapsible tier sections, trimmed to
 /// items within some share of the best one, plus in formula order the items only the match data
 /// likes. Rows and headers outlive a refresh; the visible list is just re-ordered.
 /// </summary>
 public class ResultsViewModel : ViewModelBase
 {
-    public static readonly IReadOnlyDictionary<int, string> DefaultTierLabels = new Dictionary<int, string>
+    private static readonly IReadOnlyDictionary<int, string> _tierLabels = new Dictionary<int, string>
     {
         [1] = "Tier 1 · 800",
         [2] = "Tier 2 · 1600",
@@ -31,7 +31,6 @@ public class ResultsViewModel : ViewModelBase
     public const string DataPicksNote =
         "Formula score 0 or less, but a standout in real matches for this line-up. Worth a look for a missing rule.";
 
-    private readonly IReadOnlyDictionary<int, string> _tierLabels;
     private readonly string _nothingPickedHint;
     private readonly Dictionary<string, ResultRowViewModel> _rows = [];
     private readonly Dictionary<string, SectionHeaderViewModel> _headers = [];
@@ -44,9 +43,8 @@ public class ResultsViewModel : ViewModelBase
     private bool _byTier;
     private double? _minFraction;
 
-    public ResultsViewModel(string emptyHint, IReadOnlyDictionary<int, string>? tierLabels = null)
+    public ResultsViewModel(string emptyHint)
     {
-        _tierLabels = tierLabels ?? DefaultTierLabels;
         _nothingPickedHint = emptyHint;
         EmptyHint = emptyHint;
         OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext);

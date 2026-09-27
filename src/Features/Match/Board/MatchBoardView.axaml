@@ -59,7 +59,6 @@
                             <controls:HeroTile HeroId="{Binding HeroId}"
                                                HeroName="{Binding HeroName}"
                                                Role="{Binding Role}"
-                                               InLane="{Binding InLane}"
                                                IsHighlighted="{Binding IsHighlighted}"
                                                IsVisible="{Binding IsShown}"
                                                ToolTip.Tip="{Binding HeroName}"

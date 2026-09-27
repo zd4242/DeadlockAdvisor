@@ -29,7 +29,6 @@
                                  HeroName="{Binding HeroName}"
                                  Team="{Binding Team}"
                                  IsSelf="{Binding IsSelf}"
-                                 InLane="{Binding InLane}"
                                  NetWorth="{Binding NetWorth}"
                                  NetWorthChange="{Binding NetWorthChange}"
                                  ShowsNetWorth="{Binding ShowsNetWorth}"/>
@@ -62,7 +61,7 @@
                         Content="Random"
                         Margin="6,0,0,0"
                         Command="{Binding RandomizeCommand}"
-                        ToolTip.Tip="Fill the match with random heroes, one ally and two enemies in your lane (for testing)"/>
+                        ToolTip.Tip="Fill the match with random heroes (for testing)"/>
                 <Button Grid.Column="5"
                         Classes="ghost"
                         Content="Clear"

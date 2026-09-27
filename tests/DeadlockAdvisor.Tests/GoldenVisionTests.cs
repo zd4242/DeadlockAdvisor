@@ -153,10 +153,6 @@ public class GoldenVisionTests
         AssertEx.Close(Number(expected["self_score"]), actual.SelfScore, 1e-4, $"{because}: self score");
         foreach (var (golden, value) in Items(expected["self_scores"]).Zip(actual.SelfScores))
             AssertEx.Close(Number(golden), value, 1e-4, $"{because}: self scores");
-        Assert.Equal(Items(expected["highlighted"]).Select(node => (int)node), actual.Highlighted);
-        Assert.Equal(expected["lane_from_highlights"] is JsonArray lane ? lane.Select(node => (int)node!).ToList() : null,
-            actual.LaneFromHighlights);
-        Assert.Equal(Items(expected["lane_slots"]).Select(node => (int)node), actual.LaneSlots);
         Assert.Equal((int)expected["confident_count"]!, actual.ConfidentCount);
     }
 

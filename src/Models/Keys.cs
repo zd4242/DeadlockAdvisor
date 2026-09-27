@@ -10,4 +10,4 @@ public readonly record struct WeightKey(string CategoryId, Relation Relation);
 
 public readonly record struct StatRuleKey(string Stat, string CategoryId, Relation Relation);
 
-public readonly record struct MatchLiftKey(string ItemId, string HeroId, string Relation, string Scope);
+public readonly record struct MatchLiftKey(string ItemId, string HeroId, string Relation);

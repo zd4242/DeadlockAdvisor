@@ -12,14 +12,12 @@ public class MatchStateTests
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
         match.SetRole("generic", Role.Self);
-        match.SetLane("heavy_spirit", true);
 
         var restored = new MatchState();
         restored.LoadSaved(match.ToSaved(), ["heavy_spirit"]); // "generic" no longer exists
 
         Assert.Equal(["heavy_spirit"], restored.Enemies);
         Assert.Null(restored.SelfHero);
-        Assert.True(restored.IsInLane("heavy_spirit"));
     }
 
     [Fact]
@@ -126,23 +124,7 @@ public class MatchStateTests
     }
 
     [Fact]
-    public void OnlyAlliesAndEnemiesCanBeFlaggedInLane()
-    {
-        var match = new MatchState();
-        match.SetRole("me", Role.Self);
-        match.SetRole("foe", Role.Enemy);
-
-        match.SetLane("me", true);
-        match.SetLane("nobody", true);
-
-        Assert.False(match.IsInLane("me"));
-        Assert.False(match.IsInLane("nobody"));
-        Assert.True(match.ToggleLane("foe"));
-        Assert.Equal(["foe", "me"], match.LaneHeroes);
-    }
-
-    [Fact]
-    public void RandomizeFillsAFullMatchWithALane()
+    public void RandomizeFillsAFullMatch()
     {
         var heroIds = Enumerable.Range(0, 20).Select(i => $"hero{i}").ToList();
         var match = new MatchState();
@@ -155,8 +137,6 @@ public class MatchStateTests
         Assert.Equal(MatchState.MaxEnemies, match.Enemies.Count);
         Assert.Equal(1 + MatchState.MaxAllies + MatchState.MaxEnemies, match.RoleMap.Count);
         Assert.All(match.RoleMap.Keys, heroId => Assert.Contains(heroId, heroIds));
-        Assert.Single(match.Allies, match.IsInLane);
-        Assert.Equal(2, match.Enemies.Count(match.IsInLane));
     }
 
     [Fact]

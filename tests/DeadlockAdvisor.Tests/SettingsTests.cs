@@ -17,7 +17,6 @@ public class SettingsTests
         match.SetRole("zeta", Role.Enemy);
         match.SetRole("alpha", Role.Self);
         match.SetRole("mid", Role.Ally);
-        match.SetLane("zeta", true);
 
         var service = new JsonSettingsService(new FakeLoggingService(), folder.Path);
         service.Update(s =>
@@ -45,7 +44,6 @@ public class SettingsTests
         restored.LoadSaved(settings.LastMatch, ["zeta", "alpha", "mid"]);
         Assert.Equal(["zeta", "alpha", "mid"], restored.RoleMap.Keys);
         Assert.Equal("alpha", restored.SelfHero);
-        Assert.True(restored.IsInLane("zeta"));
     }
 
     private static async Task WaitForFile(string path)

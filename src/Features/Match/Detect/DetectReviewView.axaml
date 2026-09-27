@@ -25,12 +25,6 @@
         <Style Selector="TextBlock.role.you">
             <Setter Property="Foreground" Value="{DynamicResource SelfBrush}"/>
         </Style>
-        <Style Selector="TextBlock.role.laneAlly">
-            <Setter Property="Foreground" Value="{DynamicResource AllyBrush}"/>
-        </Style>
-        <Style Selector="TextBlock.role.laneEnemy">
-            <Setter Property="Foreground" Value="{DynamicResource EnemyBrush}"/>
-        </Style>
         <Style Selector="TextBlock.detail.uncertain">
             <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
         </Style>
@@ -51,8 +45,6 @@
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock Classes="role"
                                        Classes.you="{Binding IsYou}"
-                                       Classes.laneAlly="{Binding IsLaneAlly}"
-                                       Classes.laneEnemy="{Binding IsLaneEnemy}"
                                        Text="{Binding RoleText}"/>
                             <TextBlock Grid.Column="1"
                                        Classes="role"
@@ -64,7 +56,7 @@
                                           Content="You"
                                           IsChecked="{Binding IsYou, Mode=OneWay}"
                                           Command="{Binding SetSelfCommand}"
-                                          ToolTip.Tip="This slot is you: the teams and your lane follow from it"/>
+                                          ToolTip.Tip="This slot is you: the teams follow from it"/>
                         </Grid>
                         <controls:NoWheelComboBox HorizontalAlignment="Stretch"
                                                   ItemsSource="{Binding Choices}"

@@ -16302,84 +16302,48 @@
  "window_start": [
   {
    "relation": "against",
-   "scope": "full",
    "patches": 1,
    "now": 1789689600,
    "start": 1787443200
   },
   {
    "relation": "against",
-   "scope": "full",
    "patches": 1,
    "now": 1789862400,
    "start": 1787443200
   },
   {
    "relation": "against",
-   "scope": "full",
    "patches": 1,
    "now": 1789948800,
    "start": 1789603200
   },
   {
    "relation": "against",
-   "scope": "full",
    "patches": 1,
    "now": 1790208000,
    "start": 1789603200
   },
   {
    "relation": "as",
-   "scope": "full",
    "patches": 2,
    "now": 1789689600,
    "start": 1786579200
   },
   {
    "relation": "as",
-   "scope": "full",
    "patches": 2,
    "now": 1789862400,
    "start": 1786579200
   },
   {
    "relation": "as",
-   "scope": "full",
    "patches": 2,
    "now": 1789948800,
    "start": 1787443200
   },
   {
    "relation": "as",
-   "scope": "full",
-   "patches": 2,
-   "now": 1790208000,
-   "start": 1787443200
-  },
-  {
-   "relation": "as",
-   "scope": "lane",
-   "patches": 2,
-   "now": 1789689600,
-   "start": 1786579200
-  },
-  {
-   "relation": "as",
-   "scope": "lane",
-   "patches": 2,
-   "now": 1789862400,
-   "start": 1786579200
-  },
-  {
-   "relation": "as",
-   "scope": "lane",
-   "patches": 2,
-   "now": 1789948800,
-   "start": 1787443200
-  },
-  {
-   "relation": "as",
-   "scope": "lane",
    "patches": 2,
    "now": 1790208000,
    "start": 1787443200
@@ -16440,65 +16404,26 @@
  "query_params": [
   [
    "against",
-   "full",
    null,
    {}
   ],
   [
    "against",
-   "full",
    13,
    {
     "enemy_hero_ids": "13"
    }
   ],
   [
-   "against",
-   "lane",
-   null,
-   {
-    "max_bought_at_s": "600"
-   }
-  ],
-  [
-   "against",
-   "lane",
-   13,
-   {
-    "enemy_hero_ids": "13",
-    "same_lane_filter": "true",
-    "max_bought_at_s": "600"
-   }
-  ],
-  [
    "as",
-   "full",
    null,
    {}
   ],
   [
    "as",
-   "full",
    13,
    {
     "hero_id": "13"
-   }
-  ],
-  [
-   "as",
-   "lane",
-   null,
-   {
-    "max_bought_at_s": "600"
-   }
-  ],
-  [
-   "as",
-   "lane",
-   13,
-   {
-    "hero_id": "13",
-    "max_bought_at_s": "600"
    }
   ]
  ],
@@ -16511,11 +16436,10 @@
   },
   "rank": "all",
   "match_mode": "ranked,unranked",
-  "lane_end_s": 600,
   "min_n": 2000,
   "min_reliability": 0.5,
   "families": {
-   "against/full": {
+   "against": {
     "since": 1787443200,
     "since_patch": "08-22",
     "rows": 1,
@@ -16524,7 +16448,7 @@
     "reliability": 0.71,
     "kept": true
    },
-   "as/full": {
+   "as": {
     "since": 1787443200,
     "since_patch": "08-22",
     "rows": 0,
@@ -16532,37 +16456,22 @@
     "tau": 0.0,
     "reliability": null,
     "kept": false
-   },
-   "as/lane": {
-    "since": 1787443200,
-    "since_patch": "08-22",
-    "rows": 1,
-    "noise_scale": 1.172,
-    "tau": 2.0,
-    "reliability": 0.333,
-    "kept": false
    }
   }
  },
  "fetch_result_lines": [
-  "against / full (since patch 08-22): 1 lifts, reliability 0.71, typical real lift ±0.37 pts",
-  "as / full (since patch 08-22): left out -- reliability n/a is under 0.5, so the numbers would be mostly noise",
-  "as / lane (since patch 08-22): left out -- reliability 0.33 is under 0.5, so the numbers would be mostly noise"
+  "against (since patch 08-22): 1 lifts, reliability 0.71, typical real lift ±0.37 pts",
+  "as (since patch 08-22): left out -- reliability n/a is under 0.5, so the numbers would be mostly noise"
  ],
  "family_reliability": [
   [
-   "against/full",
+   "against",
    0.7096774193548387,
    true
   ],
   [
-   "as/full",
+   "as",
    null,
-   false
-  ],
-  [
-   "as/lane",
-   0.33333333333333337,
    false
   ]
  ]

@@ -170,7 +170,7 @@ public class DetectAction
 
     private void Apply(MatchState match, DetectReviewResult result, DateTimeOffset capturedAt, string directory)
     {
-        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys, laneSlots: result.LaneSlots,
+        VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys,
             netWorth: (result.SlotSouls, capturedAt));
 
         var learned = 0;

@@ -28,9 +28,6 @@ public class HeroTile : Control
     public static readonly StyledProperty<Role> RoleProperty =
         AvaloniaProperty.Register<HeroTile, Role>(nameof(Role));
 
-    public static readonly StyledProperty<bool> InLaneProperty =
-        AvaloniaProperty.Register<HeroTile, bool>(nameof(InLane));
-
     /// <summary>The search box's current pick: Enter would assign this hero.</summary>
     public static readonly StyledProperty<bool> IsHighlightedProperty =
         AvaloniaProperty.Register<HeroTile, bool>(nameof(IsHighlighted));
@@ -46,7 +43,7 @@ public class HeroTile : Control
 
     static HeroTile()
     {
-        AffectsRender<HeroTile>(HeroIdProperty, HeroNameProperty, RoleProperty, InLaneProperty, IsHighlightedProperty,
+        AffectsRender<HeroTile>(HeroIdProperty, HeroNameProperty, RoleProperty, IsHighlightedProperty,
             IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
         CursorProperty.OverrideDefaultValue<HeroTile>(new Cursor(StandardCursorType.Hand));
     }
@@ -67,12 +64,6 @@ public class HeroTile : Control
     {
         get => GetValue(RoleProperty);
         set => SetValue(RoleProperty, value);
-    }
-
-    public bool InLane
-    {
-        get => GetValue(InLaneProperty);
-        set => SetValue(InLaneProperty, value);
     }
 
     public bool IsHighlighted
@@ -114,8 +105,6 @@ public class HeroTile : Control
 
         var portrait = new Rect(_pad, _pad, _portrait, _portrait);
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId, HeroName, portrait, opacity: assigned || hovered ? 1.0 : 0.82);
-        if (InLane)
-            LaneBar.Paint(context, portrait);
 
         var nameWidth = Bounds.Width - 4;
         var name = Fonts.Centered(HeroName, 11, assigned || hovered ? Palette.Text : Palette.TextDim, nameWidth, bold: assigned);

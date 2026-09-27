@@ -11,7 +11,6 @@ public class HeroTileViewModel(string heroId, string heroName) : ViewModelBase
     public string HeroName { get; } = heroName;
 
     [Reactive] public Role Role { get; set; }
-    [Reactive] public bool InLane { get; set; }
     [Reactive] public bool IsHighlighted { get; set; }
     [Reactive] public bool IsShown { get; set; } = true;
 }

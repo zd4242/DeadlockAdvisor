@@ -18,11 +18,10 @@
     "shows up, but the real check on that art is the other 2560x1440 fixture,",
     "which is a different match entirely.",
     "",
-    "All twelve heroes and the lane were confirmed by the player."
+    "All twelve heroes were confirmed by the player."
   ],
   "screen_height": 1440,
   "self_slot": 1,
-  "lane_heroes": ["abrams", "vindicta", "seven"],
   "allow_wrong": 0,
   "net_worth": ["16", "19", "21", "23", "17", "16", "20", "25", "22", "19", "21", "19"],
   "team_totals": ["112", "125"],

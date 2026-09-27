@@ -40,8 +40,7 @@ public sealed class DataRanksTests : IDisposable
         Assert.Empty(filter.Ranks);
         Assert.True(filter.EveryMatch);
         Assert.Equal("Data: every match", filter.Label);
-        Assert.Equal("Enemies: 5928 lifts, reliability 0.71\nYour hero: 4421 lifts, reliability 0.93\nYour hero, lane phase: 1474 lifts, reliability 0.91",
-            filter.Status);
+        Assert.Equal("Enemies: 5928 lifts, reliability 0.71\nYour hero: 4421 lifts, reliability 0.93", filter.Status);
     }
 
     [Fact]

@@ -45,14 +45,15 @@ the current side and clears the field for the next name
 (<kbd>Up</kbd>/<kbd>Down</kbd> move the highlight). <kbd>Esc</kbd> clears
 the search, then closes the picker.
 
-Click a portrait in the roster to toggle it in or out of your lane.
-**Lane Phase** scores only yourself plus the heroes in your lane (normally
-1 ally and 2 enemies), tiers 1–2 only; **Full Match** uses everyone across
-all four tiers. The cutoff hides items scoring under 20/40/60% of the
-best, and **By tier** groups the list into collapsible tiers. The
-**Data:** button picks which ranks the match data comes from: every
-match, or ranked matches from one rank to another. It's worked out on
-the spot from the last fetch, and stays set until changed.
+Click a portrait in the roster to change its role or remove it.
+Recommendations score everyone in the match across all four tiers. The
+dropdown beside them picks what ranks the list: the formula, the match
+data, or both. The rest sits behind **Filters**: the cutoff hides items
+scoring under 20/40/60% of the best, **Group by tier** splits the list
+into collapsible tiers, and **Match data from** picks which ranks the
+match data comes from: every match, or ranked matches from one rank to
+another. That's worked out on the spot from the last fetch, and stays set
+until changed. The button counts the filters changed from their defaults.
 
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. With nothing selected, the panel
@@ -161,8 +162,7 @@ weight      = Σ over traits of (hero_score[hero, trait] − roster_average[trai
 coefficient = trait_weight[trait, relation] × (typed + from_stats)
 ```
 
-An item's score is its weight summed over everyone in the match (or in
-your lane, for Lane Phase). Because each hero counts by how far they sit
+An item's score is its weight summed over everyone in the match. Because each hero counts by how far they sit
 from the average hero, a score above 0 means this match wants the item
 more than a typical match does, and a trait every hero has doesn't make
 its items look good in every match. Coefficients run roughly 1 = mild, 3 = strong,
@@ -193,12 +193,8 @@ To add art by hand, name the file after the id (`grey_talon.png`) and use
 
 Press <kbd>F9</kbd> (or **Detect from screen**) while Deadlock is in a
 match on the primary monitor. The advisor minimises itself, captures the
-top of the screen, and reads the scoreboard strip: all twelve heroes,
-which one is you (off the coloured backplate behind your slot), and who's
-in your lane. During laning the game marks all four lane players and the
-lane is read from those marks; later it falls back to the layout, where
-each team's pairs face each other in order. The lane the review shows is
-the lane that's applied.
+top of the screen, and reads the scoreboard strip: all twelve heroes, and
+which one is you (off the coloured backplate behind your slot).
 
 **Nothing is applied until you say so.** The review shows each slot's
 crop, what it was read as and how sure that was, with a dropdown to

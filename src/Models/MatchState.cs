@@ -3,8 +3,7 @@ using DeadlockAdvisor.Enums;
 namespace DeadlockAdvisor.Models;
 
 /// <summary>
-/// Who's in the current match: which heroes are allies, enemies or you, and which are flagged as
-/// in your lane. Roster sizes (5 allies + you, 6 enemies) are advisory: the UI shows "4/6" counts
+/// Who's in the current match: which heroes are allies, enemies or you. Roster sizes (5 allies + you, 6 enemies) are advisory: the UI shows "4/6" counts
 /// and blocks nothing, so an unusual or partly known match still works. A detected match also
 /// knows where each hero sits on the game's top bar, which is how net worth read off it finds them.
 /// </summary>
@@ -17,7 +16,6 @@ public sealed class MatchState
     // Insertion-ordered, like the Python dicts: each team comes out in this order, which is the
     // game's top-bar order after a detection and pick order otherwise.
     public OrderedDictionary<string, Role> RoleMap { get; } = [];
-    public OrderedDictionary<string, bool> LaneFlags { get; } = [];
 
     /// <summary>Hero → their slot on the game's top bar (0-11, left to right), for heroes placed by a detection.</summary>
     public OrderedDictionary<string, int> Slots { get; } = [];
@@ -38,7 +36,6 @@ public sealed class MatchState
                 // The Python app leaves the previous "you" in the map as unassigned rather than
                 // removing it; kept for identical saved matches.
                 RoleMap[other] = Role.None;
-                LaneFlags.Remove(other);
                 Slots.Remove(other);
             }
         }
@@ -46,7 +43,6 @@ public sealed class MatchState
         if (role == Role.None)
         {
             RoleMap.Remove(heroId);
-            LaneFlags.Remove(heroId);
             Slots.Remove(heroId);
             return;
         }
@@ -59,8 +55,6 @@ public sealed class MatchState
             Slots.Remove(heroId);
         }
         RoleMap[heroId] = role;
-        if (role == Role.Self)
-            LaneFlags.Remove(heroId);
     }
 
     /// <summary>
@@ -78,30 +72,9 @@ public sealed class MatchState
         return role;
     }
 
-    /// <summary>
-    /// Only allies and enemies can be flagged in-lane. You don't need flagging: you're always
-    /// counted in your own lane.
-    /// </summary>
-    public void SetLane(string heroId, bool inLane)
-    {
-        if (RoleOf(heroId) is Role.Ally or Role.Enemy)
-            LaneFlags[heroId] = inLane;
-        else
-            LaneFlags.Remove(heroId);
-    }
-
-    public bool ToggleLane(string heroId)
-    {
-        SetLane(heroId, !IsInLane(heroId));
-        return IsInLane(heroId);
-    }
-
-    public bool IsInLane(string heroId) => LaneFlags.GetValueOrDefault(heroId);
-
     public void Clear()
     {
         RoleMap.Clear();
-        LaneFlags.Clear();
         Slots.Clear();
         NetWorth.Clear();
     }
@@ -109,12 +82,9 @@ public sealed class MatchState
     /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
     public string? HeroInSlot(int slot) => Slots.FirstOrDefault(entry => entry.Value == slot).Key;
 
-    public void ClearLane() => LaneFlags.Clear();
-
     /// <summary>
     /// Replace the match with a random full one drawn from <paramref name="heroIds"/>: you, the
-    /// allies and the enemies, with one ally and two enemies in your lane. Fills as many slots as
-    /// there are heroes for.
+    /// allies and the enemies. Fills as many slots as there are heroes for.
     /// </summary>
     public void Randomize(IEnumerable<string> heroIds, Random random)
     {
@@ -131,8 +101,6 @@ public sealed class MatchState
             SetRole(ally, Role.Ally);
         foreach (var enemy in enemies)
             SetRole(enemy, Role.Enemy);
-        foreach (var heroId in allies.Take(1).Concat(enemies.Take(2)))
-            SetLane(heroId, true);
     }
 
     public List<string> Allies => HeroesWith(Role.Ally);
@@ -145,21 +113,6 @@ public sealed class MatchState
 
     public bool IsEmpty => RoleMap.Count == 0;
 
-    /// <summary>
-    /// Everyone relevant to the lane-phase view: yourself (implicit) plus whichever allies and
-    /// enemies are flagged as laning with you, typically 1 ally + 2 enemies.
-    /// </summary>
-    public List<string> LaneHeroes
-    {
-        get
-        {
-            var heroes = LaneFlags.Where(entry => entry.Value).Select(entry => entry.Key).ToList();
-            if (SelfHero is { } self && !heroes.Contains(self))
-                heroes.Add(self);
-            return heroes;
-        }
-    }
-
     private List<string> HeroesWith(Role role) =>
         RoleMap.Where(entry => entry.Value == role).Select(entry => entry.Key).ToList();
 
@@ -170,7 +123,6 @@ public sealed class MatchState
         var saved = new SavedMatch();
         foreach (var (heroId, role) in RoleMap)
             saved.Roles[heroId] = role.Key();
-        saved.Lane = LaneFlags.Where(entry => entry.Value).Select(entry => entry.Key).ToList();
         foreach (var (heroId, slot) in Slots)
             saved.Slots[heroId] = slot;
         saved.NetWorth = NetWorth.Snapshots
@@ -191,11 +143,6 @@ public sealed class MatchState
         {
             if (valid.Contains(heroId) && Roles.TryParse(value, out var role))
                 RoleMap[heroId] = role;
-        }
-        foreach (var heroId in saved.Lane)
-        {
-            if (RoleMap.ContainsKey(heroId))
-                SetLane(heroId, true);
         }
         foreach (var (heroId, slot) in saved.Slots)
         {

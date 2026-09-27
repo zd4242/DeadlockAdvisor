@@ -138,8 +138,8 @@ public class MatchStatsMathTests
         static RankedHalves Ranked(Dictionary<long, WinTotals> half) => new(new RankedTotals(half, []), new RankedTotals(half, []));
         MatchCounts Counts(Patch asSince) => new(1790296852, patches[0], [],
         [
-            new(new Family("against", "full", 2), patches[1], Ranked(EveryMatchHalf), new() { ["e"] = Ranked(AgainstHalf) }),
-            new(new Family("as", "full", 2), asSince, Ranked(EveryMatchHalf), new() { ["e"] = Ranked(OwnHalf) }),
+            new(new Family("against", 2), patches[1], Ranked(EveryMatchHalf), new() { ["e"] = Ranked(AgainstHalf) }),
+            new(new Family("as", 2), asSince, Ranked(EveryMatchHalf), new() { ["e"] = Ranked(OwnHalf) }),
         ]);
 
         var matched = MatchStatsMath.Analyse(Counts(patches[1]), null, items).Families[0];
@@ -182,13 +182,11 @@ public class MatchStatsMathTests
     }
 
     [Fact]
-    public void QueryParamsPerRelationAndScope()
+    public void QueryParamsPerRelation()
     {
-        Assert.Equal([new("enemy_hero_ids", "1")], MatchStatsMath.QueryParams("against", "full", 1));
-        Assert.Equal([new("enemy_hero_ids", "1"), new("same_lane_filter", "true"), new("max_bought_at_s", "600")],
-            MatchStatsMath.QueryParams("against", "lane", 1));
-        Assert.Equal([new("hero_id", "13")], MatchStatsMath.QueryParams("as", "full", 13));
-        Assert.Equal([new("max_bought_at_s", "600")], MatchStatsMath.QueryParams("as", "lane")); // lane baseline
+        Assert.Equal([new("enemy_hero_ids", "1")], MatchStatsMath.QueryParams("against", 1));
+        Assert.Equal([new("hero_id", "13")], MatchStatsMath.QueryParams("as", 13));
+        Assert.Empty(MatchStatsMath.QueryParams("as")); // the baseline
     }
 
     [Fact]
@@ -204,13 +202,13 @@ public class MatchStatsMathTests
     public void AYoungPatchReachesOnePatchFurtherBack()
     {
         var patches = MatchStatsMath.ParsePatches(["09-16-2026 Update", "08-22-2026 Update", "08-12-2026 Update"]);
-        var against = new Family("against", "full", 1);
+        var against = new Family("against", 1);
         var weekLater = patches[0].Start + 7 * 86400;
 
         Assert.Equal("09-16", MatchStatsMath.WindowStart(patches, against, weekLater).Label);
         Assert.Equal("08-22", MatchStatsMath.WindowStart(patches, against, patches[0].Start + 86400).Label);
-        var asFull = new Family("as", "full", 2);
-        Assert.Equal("08-12", MatchStatsMath.WindowStart(patches, asFull, patches[0].Start + 86400).Label);
+        var mine = new Family("as", 2);
+        Assert.Equal("08-12", MatchStatsMath.WindowStart(patches, mine, patches[0].Start + 86400).Label);
     }
 
     [Fact]
@@ -225,7 +223,7 @@ public class MatchStatsMathTests
         Assert.Equal("Rank 2", ranks[1].Name);
         Assert.All(ranks.Zip(ranks.Skip(1)), pair => Assert.Equal(pair.First.MaxBadge + 1, pair.Second.MinBadge));
         Assert.Equal([new("hero_id", "13"), new("min_average_badge", "50"), new("max_average_badge", "59")],
-            MatchStatsMath.RankParams(MatchStatsMath.QueryParams("as", "full", 13), ranks[4]));
+            MatchStatsMath.RankParams(MatchStatsMath.QueryParams("as", 13), ranks[4]));
     }
 
     [Fact]

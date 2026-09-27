@@ -14,7 +14,7 @@ public class DetectReviewTests
     {
         using var ui = new UiHarness();
         CopyTopbarInto(ui.Data.AssetsDir);
-        // The laning capture has two uncertain reads and all four lane players marked.
+        // The laning capture has two uncertain reads.
         ui.Capture.Next = Capture("laning_2560x1440_band");
         ui.Show();
 

@@ -101,7 +101,6 @@ public sealed record MatchCounts(long FetchedAt, Patch Latest, IReadOnlyList<Ran
             {
                 writer.WriteStartObject();
                 writer.WriteString("relation", family.Family.Relation);
-                writer.WriteString("scope", family.Family.Scope);
                 writer.WriteNumber("patches", family.Family.Patches);
                 writer.WritePropertyName("since");
                 WritePatch(writer, family.Since);
@@ -170,12 +169,14 @@ public sealed record MatchCounts(long FetchedAt, Patch Latest, IReadOnlyList<Ran
         var families = new List<FamilyCounts>();
         foreach (var family in root.GetProperty("families").EnumerateArray())
         {
+            // Downloads from before lane data was dropped also hold a lane-phase family.
+            if (family.TryGetProperty("scope", out var scope) && scope.GetString() != "full")
+                continue;
             var heroes = new OrderedDictionary<string, RankedHalves>();
             foreach (var hero in family.GetProperty("heroes").EnumerateObject())
                 heroes[hero.Name] = ReadHalves(hero.Value, ranks.Count);
             families.Add(new FamilyCounts(
-                new Family(family.GetProperty("relation").GetString() ?? "", family.GetProperty("scope").GetString() ?? "",
-                    family.GetProperty("patches").GetInt32()),
+                new Family(family.GetProperty("relation").GetString() ?? "", family.GetProperty("patches").GetInt32()),
                 ReadPatch(family.GetProperty("since")),
                 ReadHalves(family.GetProperty("baseline"), ranks.Count),
                 heroes));

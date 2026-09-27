@@ -110,7 +110,7 @@ public class GoldenMatchStatsTests
 
         foreach (var row in Items(_golden["window_start"]))
         {
-            var family = new Family(Text(row["relation"]), Text(row["scope"]), (int)row["patches"]!);
+            var family = new Family(Text(row["relation"]), (int)row["patches"]!);
             Assert.Equal((long)row["start"]!, MatchStatsMath.WindowStart(patches, family, Number(row["now"])).Start);
         }
 
@@ -120,9 +120,9 @@ public class GoldenMatchStatsTests
             Assert.Equal(Text(row[1]), MatchStatsMath.Age(Number(row[0])));
         foreach (var row in Items(_golden["query_params"]))
         {
-            long? gameId = row[2] is null ? null : (long)row[2]!;
-            var parameters = MatchStatsMath.QueryParams(Text(row[0]), Text(row[1]), gameId);
-            Assert.Equal(row[3]!.AsObject().Select(p => (p.Key, Text(p.Value))), parameters.Select(p => (p.Key, p.Value)));
+            long? gameId = row[1] is null ? null : (long)row[1]!;
+            var parameters = MatchStatsMath.QueryParams(Text(row[0]), gameId);
+            Assert.Equal(row[2]!.AsObject().Select(p => (p.Key, Text(p.Value))), parameters.Select(p => (p.Key, p.Value)));
         }
     }
 
@@ -136,7 +136,6 @@ public class GoldenMatchStatsTests
         [
             new(oneLift, (empty, empty), 40, 0.7912, 0.137, 0.55, 0.5),
             new(empty, (empty, empty), 0, 1.0, 0.0, null, 0.0),
-            new(oneLift, (empty, empty), 3, 1.17245, 4.0, 0.2, 0.3),
         ];
         var reports = MatchStatsMath.Families.Zip(stats).Select(pair => new FamilyReport(pair.First, patches[1], pair.Second)).ToList();
         var result = new FetchResult([], reports, patches[0], 1790296852, null, "every match");
@@ -147,7 +146,7 @@ public class GoldenMatchStatsTests
         Assert.Equal(Items(_golden["fetch_result_lines"]).Select(Text), result.Lines());
         foreach (var (row, report) in Items(_golden["family_reliability"]).Zip(reports))
         {
-            Assert.Equal(Text(row[0]), report.Family.Key);
+            Assert.Equal(Text(row[0]), report.Family.Relation);
             AssertEx.Close(NullableNumber(row[1]), report.Stats.Reliability);
             Assert.Equal(row[2]!.GetValue<bool>(), report.Kept);
         }

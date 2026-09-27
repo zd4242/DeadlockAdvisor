@@ -8,10 +8,9 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Detect;
 
 /// <param name="SlotHeroes">The hero in each of the twelve slots, left to right, or null where none was read.</param>
-/// <param name="LaneSlots">The slots the review marked as in your lane.</param>
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
 /// <param name="SlotSouls">Each slot's net worth, where it was read and its side added up.</param>
-public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot, IReadOnlyList<int> LaneSlots,
+public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot,
     IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls);
 
 /// <summary>
@@ -68,14 +67,12 @@ public class DetectReviewViewModel : ViewModelBase
     private void Relabel()
     {
         var view = _detection with { SelfSlot = SelfSlot };
-        var lane = view.LaneSlots;
         var allies = view.AllySlots;
         var enemies = view.EnemySlots;
         foreach (var slot in Slots)
         {
             var index = slot.Index;
             slot.SetRole(index == SelfSlot ? SlotRole.You
-                : lane.Contains(index) ? allies.Contains(index) ? SlotRole.LaneAlly : SlotRole.LaneEnemy
                 : allies.Contains(index) ? SlotRole.Ally
                 : enemies.Contains(index) ? SlotRole.Enemy
                 : SlotRole.Unknown);
@@ -102,7 +99,7 @@ public class DetectReviewViewModel : ViewModelBase
             ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).Select(slot => (slot.HeroId!, slot.Crop!)).ToList()
             : [];
         return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value,
-            (_detection with { SelfSlot = SelfSlot }).LaneSlots, corrections, _netWorth.Souls);
+            corrections, _netWorth.Souls);
     }
 
     protected override void Dispose(bool disposing)

@@ -136,8 +136,7 @@ blend(item) = score ÷ σF + DataStrength ÷ σD
 σF and σD (`BlendScale`) say how far a formula score and a data strength typically
 stray from 0 in line-ups like the one being scored. Each is the root mean square of
 the nonzero values over 200 seeded random line-ups of the same shape: as many
-enemies and allies, with or without you, and the view's tiers and data scope
-(`ScoreScales`). One unit of either is then about as unusual as one of the other,
+enemies and allies, with or without you (`ScoreScales`). One unit of either is then about as unusual as one of the other,
 so the two are weighted equally.
 
 - **Missing opinions add 0.** The ranking used to take `min(score share, data share)`,
@@ -165,10 +164,10 @@ E buys a lot and does badly with would look like a counter to E. For example,
 Lash is Refresher's biggest buyer and does about 8 points worse with it than
 average, which gave "Refresher vs Lash" a raw lift of +1.7. So `MatchStatsMath.Analyse`
 compares each enemy's query with every match minus that enemy's own purchases
-(`MatchStatsMath.Subtract`), taken from the `as` family of the same scope.
+(`MatchStatsMath.Subtract`), taken from the `as` family.
 
-That needs both families over the same window, so `against/full` uses the same two
-patches as `as/full`. One download dates every family from one moment, so the same
+That needs both families over the same window, so `against` uses the same two
+patches as `as`. One download dates every family from one moment, so the same
 start means the same halves and rank groups. Counts downloaded before the windows
 matched can't be corrected: the family meta has `own_excluded: false`, and the
 report and the **Data:** flyout say to fetch again.
@@ -186,7 +185,7 @@ build ratio = (item's share of your hero's purchases in its tier)
 relevance   = clamp(build ratio ÷ RareBuildRatio, 0, 1)      RareBuildRatio = 0.25
 ```
 
-Build ratios come from the `as/full` download over the lifts' rank range
+Build ratios come from the `as` download over the lifts' rank range
 (`MatchStatsMath.BuildRatios`). `DataStore.BuildRatios` caches them and clears the
 cache whenever the counts, the meta or the items change. Relevance is 1 when there's
 no self hero, no counts file, or no purchases by your hero in that tier at all. It is
@@ -212,7 +211,7 @@ button's flyout lists what each family kept. A new fetch keeps the chosen range.
 ## Net worth
 
 Detect reads each hero's net worth off the game's top bar (`Vision/NetWorthReader.cs`)
-into `MatchState.NetWorth`. With the Match tab's "By net worth" toggle on
+into `MatchState.NetWorth`. With the Match tab's "Lean toward heroes ahead on net worth" filter on
 (`AppSettings.ResultsByNetWorth`, on by default), each hero's whole term in a
 score is multiplied by
 

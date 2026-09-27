@@ -22,7 +22,7 @@ namespace DeadlockAdvisor.Features.Match.Board;
 public class MatchBoardViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
-    public const string RosterHint = "Click a portrait to toggle lane · × removes · an empty slot adds to that team";
+    public const string RosterHint = "Click a portrait to change its role · × removes · an empty slot adds to that team";
     public const string NoSelfHint = "You're not set yet -- detect the match, or click an empty ally slot to pick your hero";
 
     public static readonly IReadOnlyList<Role> ModeOrder = [Role.Enemy, Role.Ally, Role.Self];
@@ -64,7 +64,7 @@ public class MatchBoardViewModel : ViewModelBase
         RefreshRosters();
     }
 
-    /// <summary>The match composition or a lane flag changed: rescore.</summary>
+    /// <summary>The match composition changed: rescore.</summary>
     public IObservable<Unit> MatchChanged => _changed;
 
     public ObservableCollection<HeroTileViewModel> Tiles { get; } = [];
@@ -169,14 +169,7 @@ public class MatchBoardViewModel : ViewModelBase
         AfterChange();
     }
 
-    public void ToggleLane(string heroId)
-    {
-        _match.ToggleLane(heroId);
-        AfterChange();
-    }
-
     public Role RoleOf(string heroId) => _match.RoleOf(heroId);
-    public bool IsInLane(string heroId) => _match.IsInLane(heroId);
     public bool HasHero(string heroId) => _store().Heroes.ContainsKey(heroId);
 
     /// <summary>
@@ -249,10 +242,7 @@ public class MatchBoardViewModel : ViewModelBase
     private void RefreshTiles()
     {
         foreach (var tile in Tiles)
-        {
             tile.Role = _match.RoleOf(tile.HeroId);
-            tile.InLane = _match.IsInLane(tile.HeroId);
-        }
     }
 
     private void RefreshRosters()
@@ -279,7 +269,7 @@ public class MatchBoardViewModel : ViewModelBase
             if (index < shown.Count)
             {
                 var heroId = shown[index];
-                slots[index].Fill(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero, _match.IsInLane(heroId),
+                slots[index].Fill(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero,
                     _match.NetWorth.Latest(heroId), ChangeText(_match.NetWorth.Change(heroId)));
             }
             else

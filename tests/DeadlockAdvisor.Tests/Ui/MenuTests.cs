@@ -71,7 +71,6 @@ public class MenuTests
         formulas.ByItem.SearchText = "no item is called this";
         foreach (var hero in new[] { "haze", "infernus", "abrams" })
             ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
-        ui.ViewModel.Match.ResultsTab = 1;
         ui.Show();
 
         // The highest tier on screen, so it sits well down the tier-sorted By Item list.

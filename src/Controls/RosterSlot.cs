@@ -16,8 +16,7 @@ namespace DeadlockAdvisor.Controls;
 /// poster-sized on a wide one.
 /// <para>
 /// Once the match has net worth, a pill under the portrait shows it the way the game's top bar does.
-/// A portrait click toggles lane, its × removes, right click opens the role menu, and an empty
-/// slot starts filling this team.
+/// A portrait click opens the role menu, its × removes, and an empty slot starts filling this team.
 /// </para>
 /// </summary>
 public class RosterSlot : Control
@@ -44,9 +43,6 @@ public class RosterSlot : Control
     public static readonly StyledProperty<bool> IsSelfProperty =
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsSelf));
 
-    public static readonly StyledProperty<bool> InLaneProperty =
-        AvaloniaProperty.Register<RosterSlot, bool>(nameof(InLane));
-
     /// <summary>The hero's net worth in souls, when it's been read.</summary>
     public static readonly StyledProperty<int?> NetWorthProperty =
         AvaloniaProperty.Register<RosterSlot, int?>(nameof(NetWorth));
@@ -62,11 +58,8 @@ public class RosterSlot : Control
     public static readonly RoutedEvent<HeroEventArgs> RemovedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("Removed", RoutingStrategies.Bubble);
 
-    public static readonly RoutedEvent<HeroEventArgs> LaneToggledEvent =
-        RoutedEvent.Register<RosterSlot, HeroEventArgs>("LaneToggled", RoutingStrategies.Bubble);
-
-    public static readonly RoutedEvent<HeroEventArgs> RightClickedEvent =
-        RoutedEvent.Register<RosterSlot, HeroEventArgs>("RightClicked", RoutingStrategies.Bubble);
+    public static readonly RoutedEvent<HeroEventArgs> MenuRequestedEvent =
+        RoutedEvent.Register<RosterSlot, HeroEventArgs>("MenuRequested", RoutingStrategies.Bubble);
 
     public static readonly RoutedEvent<RoutedEventArgs> EmptyClickedEvent =
         RoutedEvent.Register<RosterSlot, RoutedEventArgs>("EmptyClicked", RoutingStrategies.Bubble);
@@ -76,7 +69,7 @@ public class RosterSlot : Control
 
     static RosterSlot()
     {
-        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, InLaneProperty,
+        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty,
             NetWorthProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
         AffectsMeasure<RosterSlot>(ShowsNetWorthProperty);
         CursorProperty.OverrideDefaultValue<RosterSlot>(new Cursor(StandardCursorType.Hand));
@@ -111,12 +104,6 @@ public class RosterSlot : Control
         set => SetValue(IsSelfProperty, value);
     }
 
-    public bool InLane
-    {
-        get => GetValue(InLaneProperty);
-        set => SetValue(InLaneProperty, value);
-    }
-
     public int? NetWorth
     {
         get => GetValue(NetWorthProperty);
@@ -141,8 +128,7 @@ public class RosterSlot : Control
     {
         base.OnPropertyChanged(change);
         if (change.Property == HeroIdProperty || change.Property == HeroNameProperty || change.Property == TeamProperty
-            || change.Property == IsSelfProperty || change.Property == InLaneProperty
-            || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty)
+            || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty)
             UpdateToolTip();
     }
 
@@ -221,13 +207,10 @@ public class RosterSlot : Control
         }
 
         var heroId = HeroId!;
-        if (properties.IsRightButtonPressed)
-            RaiseEvent(new HeroEventArgs(RightClickedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
+        if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
             RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
-        // You're always in your own lane.
-        else if (properties.IsLeftButtonPressed && !IsSelf)
-            RaiseEvent(new HeroEventArgs(LaneToggledEvent, heroId));
+        else if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed)
+            RaiseEvent(new HeroEventArgs(MenuRequestedEvent, heroId));
     }
 
     private void UpdateToolTip()
@@ -237,10 +220,8 @@ public class RosterSlot : Control
             tip = $"Empty slot -- click to add an {Team.Label().ToLowerInvariant()}";
         else if (_overRemove)
             tip = $"Remove {HeroName} from the match";
-        else if (IsSelf)
-            tip = $"{HeroName} (you)";
         else
-            tip = $"{HeroName} -- click to {(InLane ? "take out of" : "put in")} your lane\nRight click for more";
+            tip = $"{HeroName}{(IsSelf ? " (you)" : "")} -- click to change";
         if (!IsEmpty && !_overRemove && NetWorth is { } souls)
             tip += $"\nNet worth {Format.Compact(souls)}{(NetWorthChange is { } moved ? $" ({moved})" : "")}";
         ToolTip.SetTip(this, tip);
@@ -277,8 +258,6 @@ public class RosterSlot : Control
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId!, HeroName, rect, _radius);
         var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), hovered ? 3 : 2);
         context.DrawRectangle(null, ring, new RoundedRect(rect, _radius));
-        if (InLane)
-            LaneBar.Paint(context, rect);
 
         if (hovered)
         {
@@ -292,7 +271,7 @@ public class RosterSlot : Control
         if (NetWorth is { } souls)
             PaintNetWorth(context, rect, souls);
 
-        var color = IsSelf || InLane || hovered ? Palette.Text : Palette.TextDim;
+        var color = IsSelf || hovered ? Palette.Text : Palette.TextDim;
         var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf);
         context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + (_nameHeight - name.Height) / 2));
     }

@@ -10,9 +10,8 @@ public partial class RosterView : ReactiveUserControl<MatchBoardViewModel>
     {
         InitializeComponent();
 
-        AddHandler(RosterSlot.RightClickedEvent, (_, e) => RoleMenu.Show(ViewModel, e));
+        AddHandler(RosterSlot.MenuRequestedEvent, (_, e) => RoleMenu.Show(ViewModel, e));
         AddHandler(RosterSlot.RemovedEvent, (_, e) => ViewModel?.SetRole(e.HeroId, Role.None));
-        AddHandler(RosterSlot.LaneToggledEvent, (_, e) => ViewModel?.ToggleLane(e.HeroId));
         AddHandler(RosterSlot.EmptyClickedEvent, (_, e) =>
         {
             if (e.Source is RosterSlot slot)
