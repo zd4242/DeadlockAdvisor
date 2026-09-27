@@ -12,14 +12,15 @@ namespace DeadlockAdvisor.Features.Match.Explain;
 
 public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share);
 
+/// <param name="Note">Beside the name: the hero's best-target rank and net worth standing, when they scale its share.</param>
 public sealed record ContributionCard(
     string HeroName,
     string RelationText,
     Color RelationColor,
     DisplayAmount Amount,
     IReadOnlyList<TraitLine> Traits,
-    string? NetWorthText = null,
-    string? NetWorthTip = null);
+    string? Note = null,
+    string? NoteTip = null);
 
 public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
 
@@ -90,19 +91,31 @@ public class ExplainViewModel : ViewModelBase
         MatchData = null;
     }
 
-    private static ContributionCard Card(HeroContribution contribution) => new(
-        contribution.HeroName,
-        ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
-        Palette.RelationColor(contribution.Relation),
-        new DisplayAmount(contribution.Amount),
-        contribution.Parts.Select(part => new TraitLine(
-            part.CategoryName,
-            ExplainText.CoefficientSource(part),
-            ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
-            ExplainText.Arithmetic(part),
-            new DisplayAmount(part.Amount))).ToList(),
-        ExplainText.NetWorth(contribution.NetWorth),
-        contribution.NetWorth is { Factor: not 1.0 } standing ? ExplainText.NetWorthTooltip(standing) : null);
+    private static ContributionCard Card(HeroContribution contribution)
+    {
+        var notes = new[] { ExplainText.Rank(contribution.Rank), ExplainText.NetWorth(contribution.NetWorth) }.OfType<string>().ToList();
+        if (contribution.TypicalOf is { } count)
+            notes.Add(ExplainText.Typical(count));
+        var tips = new List<string>();
+        if (contribution.Rank is not null || contribution.TypicalOf is not null)
+            tips.Add(ExplainText.BestTargetsTip);
+        if (contribution.NetWorth is { Factor: not 1.0 } standing)
+            tips.Add(ExplainText.NetWorthTooltip(standing));
+
+        return new ContributionCard(
+            contribution.HeroName,
+            ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
+            Palette.RelationColor(contribution.Relation),
+            new DisplayAmount(contribution.Amount),
+            contribution.Parts.Select(part => new TraitLine(
+                part.CategoryName,
+                ExplainText.CoefficientSource(part),
+                ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
+                ExplainText.Arithmetic(part),
+                new DisplayAmount(part.Amount))).ToList(),
+            notes.Count > 0 ? string.Join(" · ", notes) : null,
+            tips.Count > 0 ? string.Join("\n\n", tips) : null);
+    }
 
     /// <summary>
     /// One line per hero with match data for this item, then where the numbers come from. The enemies

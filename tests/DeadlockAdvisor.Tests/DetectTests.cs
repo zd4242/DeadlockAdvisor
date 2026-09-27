@@ -4,6 +4,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Detect;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
@@ -110,14 +111,15 @@ public sealed class DetectTests : IDisposable
         _page.ResultsTab = 1;
         _page.FullResults.Select(_page.FullResults.Entries.OfType<ResultRowViewModel>().First());
 
-        // 184k over twelve heroes averages 15.3k.
-        var weighted = _page.Explain.Contributions.Where(card => card.NetWorthText is not null).ToList();
+        // 184k over twelve heroes averages 15.3k. A single-target item's rank comes first.
+        static bool NetWorthNote(ContributionCard card) => card.Note?.EndsWith(" avg", StringComparison.Ordinal) == true;
+        var weighted = _page.Explain.Contributions.Where(NetWorthNote).ToList();
         Assert.NotEmpty(weighted);
-        Assert.All(weighted, card => Assert.Matches(@"^×\d\.\d\d · \d+k vs 15k avg$", card.NetWorthText!));
+        Assert.All(weighted, card => Assert.Matches(@"(^|target ×[\d.]+ · )×\d\.\d\d · \d+k vs 15k avg$", card.Note!));
 
         _page.ByNetWorth = false;
 
-        Assert.All(_page.Explain.Contributions, card => Assert.Null(card.NetWorthText));
+        Assert.DoesNotContain(_page.Explain.Contributions, NetWorthNote);
         Assert.False(_fixture.Settings.Current.ResultsByNetWorth);
     }
 

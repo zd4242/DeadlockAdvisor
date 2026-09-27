@@ -38,7 +38,7 @@ public class DataService : IDataService, IDisposable
     public string AssetsDir => Path.Combine(DataRoot, "assets");
 
     public DataStore Store { get; private set; } = new("");
-    public IReadOnlyDictionary<MatrixKey, double> Matrix { get; private set; } = new Dictionary<MatrixKey, double>();
+    public WeightMatrix Matrix { get; private set; } = WeightMatrix.Empty;
 
     public IObservable<Unit> StoreReplaced => _storeReplaced;
     public IObservable<Unit> ScoresChanged => _scoresChanged;

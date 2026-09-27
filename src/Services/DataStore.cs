@@ -175,7 +175,8 @@ public sealed class DataStore
                 row.Required("category"),
                 NumberFormat.ParseInt(row.Required("tier")),
                 NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("game_id"))),
-                (int)NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("cost"))));
+                (int)NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("cost"))),
+                IsTrue(row.Get("single_target")));
         }
     }
 
@@ -267,9 +268,12 @@ public sealed class DataStore
                 itemId, stat, row.Or("label", stat),
                 NumberFormat.ToFloat(row.Get("value")),
                 row.Or("unit", ""),
-                (row.Get("conditional") ?? "").Trim().ToLowerInvariant() is "1" or "true" or "yes"));
+                IsTrue(row.Get("conditional"))));
         }
     }
+
+    /// <summary>A CSV flag: "1", "true" or "yes", in any case; anything else, or a missing column, is false.</summary>
+    private static bool IsTrue(string? text) => (text ?? "").Trim().ToLowerInvariant() is "1" or "true" or "yes";
 
     internal void LoadItemTooltips()
     {
@@ -739,8 +743,8 @@ public sealed class DataStore
     public void SaveItems()
     {
         var rows = Items.Values.Select(item => Row(
-            item.ItemId, item.ItemName, item.Category, Integer(item.Tier), Integer(item.GameId), Integer(item.Cost)));
-        WriteCsv(ItemsFile, ["item_id", "item_name", "category", "tier", "game_id", "cost"], rows);
+            item.ItemId, item.ItemName, item.Category, Integer(item.Tier), Integer(item.GameId), Integer(item.Cost), item.SingleTarget ? "1" : "0"));
+        WriteCsv(ItemsFile, ["item_id", "item_name", "category", "tier", "game_id", "cost", "single_target"], rows);
     }
 
     /// <summary>Written by the game sync, never edited by hand: the next sync would overwrite the edit anyway.</summary>

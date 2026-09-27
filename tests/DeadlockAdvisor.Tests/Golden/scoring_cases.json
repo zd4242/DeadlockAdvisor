@@ -3721,6 +3721,14 @@
       "data": []
      },
      {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 24.72972972972972,
+      "shop_category": "spirit",
+      "data": []
+     },
+     {
       "item_id": "debuff_reducer",
       "item_name": "Debuff Reducer",
       "tier": 2,
@@ -3765,14 +3773,6 @@
       "tier": 2,
       "score": 14.68421052631578,
       "shop_category": "vitality",
-      "data": []
-     },
-     {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 12.105263157894719,
-      "shop_category": "spirit",
       "data": []
      },
      {
@@ -3980,7 +3980,7 @@
       "item_id": "disarming_hex",
       "item_name": "Disarming Hex",
       "tier": 3,
-      "score": 331.84210526315803,
+      "score": 302.3207025843442,
       "shop_category": "spirit",
       "data": [
        [
@@ -4185,6 +4185,23 @@
         -0.873
        ]
       ]
+     },
+     {
+      "item_id": "divine_barrier",
+      "item_name": "Divine Barrier",
+      "tier": 4,
+      "score": 11.684064774235026,
+      "shop_category": "vitality",
+      "data": [
+       [
+        "against",
+        0.0009999999999999037
+       ],
+       [
+        "as",
+        0.74
+       ]
+      ]
      }
     ]
    },
@@ -4195,7 +4212,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 126.5789473684211,
+      "score": 147.16738081337536,
       "shop_category": "spirit",
       "data": [
        [
@@ -4362,10 +4379,17 @@
       ]
      },
      {
+      "hero_id": "",
+      "hero_name": "Typical enemy team",
+      "relation": "against",
+      "amount": -13.165007112375525,
+      "parts": []
+     },
+     {
       "hero_id": "drifter",
       "hero_name": "Drifter",
       "relation": "against",
-      "amount": -51.578947368421055,
+      "amount": -25.789473684210527,
       "parts": [
        {
         "category_id": "deals_spirit_damage_general",
@@ -4774,7 +4798,7 @@
       "hero_id": "graves",
       "hero_name": "Graves",
       "relation": "against",
-      "amount": 141.97368421052633,
+      "amount": 70.98684210526316,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -4794,7 +4818,7 @@
       "hero_id": "drifter",
       "hero_name": "Drifter",
       "relation": "against",
-      "amount": 11.973684210526333,
+      "amount": 2.993421052631583,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -4811,10 +4835,30 @@
       ]
      },
      {
+      "hero_id": "dynamo",
+      "hero_name": "Dynamo",
+      "relation": "against",
+      "amount": -9.782072368421051,
+      "parts": [
+       {
+        "category_id": "cares_about_firerate",
+        "category_name": "Cares About Firerate",
+        "hero_score": 5.0,
+        "baseline": 29.07894736842105,
+        "coefficient": 13.0,
+        "weight": 1.0,
+        "from_stats": 0.0,
+        "effective_coefficient": 13.0,
+        "amount": -313.02631578947364,
+        "stat_parts": []
+       }
+      ]
+     },
+     {
       "hero_id": "grey_talon",
       "hero_name": "Grey Talon",
       "relation": "against",
-      "amount": -118.02631578947367,
+      "amount": -14.753289473684209,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -4834,7 +4878,7 @@
       "hero_id": "doorman",
       "hero_name": "Doorman",
       "relation": "against",
-      "amount": -313.02631578947364,
+      "amount": -19.564144736842103,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -4851,24 +4895,11 @@
       ]
      },
      {
-      "hero_id": "dynamo",
-      "hero_name": "Dynamo",
+      "hero_id": "",
+      "hero_name": "Typical enemy team",
       "relation": "against",
-      "amount": -313.02631578947364,
-      "parts": [
-       {
-        "category_id": "cares_about_firerate",
-        "category_name": "Cares About Firerate",
-        "hero_score": 5.0,
-        "baseline": 29.07894736842105,
-        "coefficient": 13.0,
-        "weight": 1.0,
-        "from_stats": 0.0,
-        "effective_coefficient": 13.0,
-        "amount": -313.02631578947364,
-        "stat_parts": []
-       }
-      ]
+      "amount": -649.5337382051295,
+      "parts": []
      }
     ]
    },
@@ -5109,7 +5140,7 @@
     "item_id": "knockdown",
     "item_name": "Knockdown",
     "tier": 3,
-    "score": -655.2631578947369,
+    "score": -237.40211569400793,
     "shop_category": "spirit",
     "data": [
      [
@@ -7880,14 +7911,6 @@
       "data": []
      },
      {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 157.1052631578947,
-      "shop_category": "spirit",
-      "data": []
-     },
-     {
       "item_id": "healbane",
       "item_name": "Healbane",
       "tier": 2,
@@ -7906,6 +7929,14 @@
       "tier": 2,
       "score": 141.63157894736844,
       "shop_category": "weapon",
+      "data": []
+     },
+     {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 139.7297297297297,
+      "shop_category": "spirit",
       "data": []
      },
      {
@@ -7975,6 +8006,14 @@
         1.612
        ]
       ]
+     },
+     {
+      "item_id": "rusted_barrel",
+      "item_name": "Rusted Barrel",
+      "tier": 1,
+      "score": 7.496443812233288,
+      "shop_category": "spirit",
+      "data": []
      }
     ]
    }
@@ -8035,6 +8074,23 @@
       ]
      },
      {
+      "item_id": "phantom_strike",
+      "item_name": "Phantom Strike",
+      "tier": 4,
+      "score": 224.60170697012808,
+      "shop_category": "vitality",
+      "data": [
+       [
+        "against",
+        -0.08399999999999999
+       ],
+       [
+        "as",
+        0.708
+       ]
+      ]
+     },
+     {
       "item_id": "escalating_exposure",
       "item_name": "Escalating Exposure",
       "tier": 4,
@@ -8065,23 +8121,6 @@
        [
         "as",
         -2.481
-       ]
-      ]
-     },
-     {
-      "item_id": "phantom_strike",
-      "item_name": "Phantom Strike",
-      "tier": 4,
-      "score": 133.94736842105272,
-      "shop_category": "vitality",
-      "data": [
-       [
-        "against",
-        -0.08399999999999999
-       ],
-       [
-        "as",
-        0.708
        ]
       ]
      },
@@ -8211,23 +8250,6 @@
       ]
      },
      {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 157.1052631578947,
-      "shop_category": "spirit",
-      "data": [
-       [
-        "against",
-        0.152
-       ],
-       [
-        "as",
-        4.626
-       ]
-      ]
-     },
-     {
       "item_id": "healbane",
       "item_name": "Healbane",
       "tier": 2,
@@ -8254,6 +8276,23 @@
        [
         "against",
         0.39
+       ]
+      ]
+     },
+     {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 139.7297297297297,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        0.152
+       ],
+       [
+        "as",
+        4.626
        ]
       ]
      },
@@ -8365,27 +8404,10 @@
       ]
      },
      {
-      "item_id": "decay",
-      "item_name": "Decay",
-      "tier": 3,
-      "score": 204.07894736842104,
-      "shop_category": "spirit",
-      "data": [
-       [
-        "against",
-        0.311
-       ],
-       [
-        "as",
-        -3.954
-       ]
-      ]
-     },
-     {
       "item_id": "knockdown",
       "item_name": "Knockdown",
       "tier": 3,
-      "score": 181.57894736842104,
+      "score": 214.7048364153627,
       "shop_category": "spirit",
       "data": [
        [
@@ -8395,6 +8417,23 @@
        [
         "as",
         0.002
+       ]
+      ]
+     },
+     {
+      "item_id": "decay",
+      "item_name": "Decay",
+      "tier": 3,
+      "score": 164.23719772403982,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        0.311
+       ],
+       [
+        "as",
+        -3.954
        ]
       ]
      },
@@ -8425,6 +8464,23 @@
        [
         "as",
         -2.572
+       ]
+      ]
+     },
+     {
+      "item_id": "disarming_hex",
+      "item_name": "Disarming Hex",
+      "tier": 3,
+      "score": 107.06970128022768,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        -0.511
+       ],
+       [
+        "as",
+        -0.017
        ]
       ]
      },
@@ -8474,23 +8530,6 @@
         -2.954
        ]
       ]
-     },
-     {
-      "item_id": "disarming_hex",
-      "item_name": "Disarming Hex",
-      "tier": 3,
-      "score": 23.947368421052715,
-      "shop_category": "spirit",
-      "data": [
-       [
-        "against",
-        -0.511
-       ],
-       [
-        "as",
-        -0.017
-       ]
-      ]
      }
     ]
    },
@@ -8511,6 +8550,23 @@
        [
         "as",
         2.055
+       ]
+      ]
+     },
+     {
+      "item_id": "rusted_barrel",
+      "item_name": "Rusted Barrel",
+      "tier": 1,
+      "score": 7.496443812233288,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        -0.157
+       ],
+       [
+        "as",
+        -0.596
        ]
       ]
      }
@@ -8674,7 +8730,7 @@
       "hero_id": "kelvin",
       "hero_name": "Kelvin",
       "relation": "against",
-      "amount": 8.421052631578945,
+      "amount": 4.210526315789473,
       "parts": [
        {
         "category_id": "deals_spirit_damage_general",
@@ -8689,6 +8745,13 @@
         "stat_parts": []
        }
       ]
+     },
+     {
+      "hero_id": "",
+      "hero_name": "Typical enemy team",
+      "relation": "against",
+      "amount": -13.165007112375525,
+      "parts": []
      }
     ]
    },
@@ -12042,7 +12105,7 @@
       "item_id": "disarming_hex",
       "item_name": "Disarming Hex",
       "tier": 3,
-      "score": 331.84210526315803,
+      "score": 302.3207025843442,
       "shop_category": "spirit",
       "data": []
      },
@@ -12146,6 +12209,14 @@
       "score": 118.94736842105263,
       "shop_category": "vitality",
       "data": []
+     },
+     {
+      "item_id": "divine_barrier",
+      "item_name": "Divine Barrier",
+      "tier": 4,
+      "score": 11.684064774235026,
+      "shop_category": "vitality",
+      "data": []
      }
     ]
    },
@@ -12156,7 +12227,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 126.5789473684211,
+      "score": 147.16738081337536,
       "shop_category": "spirit",
       "data": []
      },
@@ -12671,7 +12742,7 @@
       "hero_id": "graves",
       "hero_name": "Graves",
       "relation": "against",
-      "amount": 141.97368421052633,
+      "amount": 70.98684210526316,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -12691,7 +12762,7 @@
       "hero_id": "drifter",
       "hero_name": "Drifter",
       "relation": "against",
-      "amount": 11.973684210526333,
+      "amount": 2.993421052631583,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -12708,10 +12779,30 @@
       ]
      },
      {
+      "hero_id": "dynamo",
+      "hero_name": "Dynamo",
+      "relation": "against",
+      "amount": -9.782072368421051,
+      "parts": [
+       {
+        "category_id": "cares_about_firerate",
+        "category_name": "Cares About Firerate",
+        "hero_score": 5.0,
+        "baseline": 29.07894736842105,
+        "coefficient": 13.0,
+        "weight": 1.0,
+        "from_stats": 0.0,
+        "effective_coefficient": 13.0,
+        "amount": -313.02631578947364,
+        "stat_parts": []
+       }
+      ]
+     },
+     {
       "hero_id": "grey_talon",
       "hero_name": "Grey Talon",
       "relation": "against",
-      "amount": -118.02631578947367,
+      "amount": -14.753289473684209,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -12731,7 +12822,7 @@
       "hero_id": "doorman",
       "hero_name": "Doorman",
       "relation": "against",
-      "amount": -313.02631578947364,
+      "amount": -19.564144736842103,
       "parts": [
        {
         "category_id": "cares_about_firerate",
@@ -12748,24 +12839,11 @@
       ]
      },
      {
-      "hero_id": "dynamo",
-      "hero_name": "Dynamo",
+      "hero_id": "",
+      "hero_name": "Typical enemy team",
       "relation": "against",
-      "amount": -313.02631578947364,
-      "parts": [
-       {
-        "category_id": "cares_about_firerate",
-        "category_name": "Cares About Firerate",
-        "hero_score": 5.0,
-        "baseline": 29.07894736842105,
-        "coefficient": 13.0,
-        "weight": 1.0,
-        "from_stats": 0.0,
-        "effective_coefficient": 13.0,
-        "amount": -313.02631578947364,
-        "stat_parts": []
-       }
-      ]
+      "amount": -649.5337382051295,
+      "parts": []
      }
     ]
    },
@@ -14446,7 +14524,7 @@
       "item_id": "divine_barrier",
       "item_name": "Divine Barrier",
       "tier": 4,
-      "score": 190.5263157894737,
+      "score": 191.684064774235,
       "shop_category": "vitality",
       "data": [
        [
@@ -14539,19 +14617,6 @@
       ]
      },
      {
-      "item_id": "decay",
-      "item_name": "Decay",
-      "tier": 3,
-      "score": 419.7368421052631,
-      "shop_category": "spirit",
-      "data": [
-       [
-        "against",
-        1.1280000000000001
-       ]
-      ]
-     },
-     {
       "item_id": "spirit_resilience",
       "item_name": "Spirit Resilience",
       "tier": 3,
@@ -14600,6 +14665,19 @@
        [
         "against",
         1.1489999999999998
+       ]
+      ]
+     },
+     {
+      "item_id": "decay",
+      "item_name": "Decay",
+      "tier": 3,
+      "score": 258.5706895667228,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        1.1280000000000001
        ]
       ]
      },
@@ -14687,19 +14765,6 @@
       ]
      },
      {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 90.52631578947367,
-      "shop_category": "spirit",
-      "data": [
-       [
-        "against",
-        -0.351
-       ]
-      ]
-     },
-     {
       "item_id": "enduring_speed",
       "item_name": "Enduring Speed",
       "tier": 2,
@@ -14748,6 +14813,19 @@
        [
         "against",
         -0.7599999999999999
+       ]
+      ]
+     },
+     {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 15.50409584175064,
+      "shop_category": "spirit",
+      "data": [
+       [
+        "against",
+        -0.351
        ]
       ]
      }
@@ -18262,7 +18340,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 64.07894736842105,
+      "score": 58.28947368421053,
       "shop_category": "spirit",
       "data": [
        [
@@ -21520,7 +21598,7 @@
       "item_id": "focus_lens",
       "item_name": "Focus Lens",
       "tier": 4,
-      "score": 16.052631578947363,
+      "score": 0.37273168513493005,
       "shop_category": "spirit",
       "data": []
      }
@@ -21538,19 +21616,19 @@
       "data": []
      },
      {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 48.15789473684207,
-      "shop_category": "spirit",
-      "data": []
-     },
-     {
       "item_id": "spirit_shredder_bullets",
       "item_name": "Spirit Shredder Bullets",
       "tier": 2,
       "score": 48.15789473684207,
       "shop_category": "weapon",
+      "data": []
+     },
+     {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 1.1181950554048115,
+      "shop_category": "spirit",
       "data": []
      }
     ]

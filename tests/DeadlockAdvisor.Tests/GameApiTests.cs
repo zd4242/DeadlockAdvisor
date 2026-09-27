@@ -244,7 +244,9 @@ public class GameApiTests
             "Cheat Death / HealAmpReceivePenaltyPercent: marked self-inflicted, but the item no longer has that property",
             "Mercurial Magnum / BonusFireRate: forced conditional, but the game now flags it conditional itself",
             "Quicksilver Reload / BonusFireRate: forced conditional, but the item no longer has that property",
+            "Silence Wave: marked not single-target, but the game no longer gives it a cast range without a radius",
             "Spellslinger / BonusFireRate: forced per stack, but the item no longer has that property",
+            "Warp Stone: marked not single-target, but the game no longer gives it a cast range without a radius",
         ], GameSync.StaleOverrides([magnum, quicksilver, crippling, ballistic]).Order(StringComparer.Ordinal));
     }
 
@@ -288,6 +290,19 @@ public class GameApiTests
             .ToList();
         Assert.Empty(GameSync.UnmappedStats(items));
         Assert.Empty(GameSync.StaleOverrides(items));
+    }
+
+    [Fact]
+    public void SingleTargetItemsAreActivesWithACastRangeAndNoRadius()
+    {
+        var byName = Json("game_api/shop_items.json").AsArray().OfType<JsonNode>().ToDictionary(record => Text(record["name"]));
+
+        // Cast on one hero, enemy or ally.
+        Assert.All(["Decay", "Knockdown", "Slowing Hex", "Rescue Beam", "Divine Barrier"], name => Assert.True(GameSync.IsSingleTarget(byName[name]), name));
+        // Scourge's aura and Alchemical Fire's area reach more; Silence Wave's projectile hits everyone in its
+        // path and Warp Stone's range is a teleport; Refresher and Toxic Bullets aren't cast at anyone.
+        Assert.All(["Scourge", "Alchemical Fire", "Silence Wave", "Warp Stone", "Refresher", "Toxic Bullets"],
+            name => Assert.False(GameSync.IsSingleTarget(byName[name]), name));
     }
 
     [Fact]

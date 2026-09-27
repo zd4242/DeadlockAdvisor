@@ -7,7 +7,8 @@ namespace DeadlockAdvisor.Scoring;
 
 /// <param name="TopShare">Share of simulated matches with the item among its tier's top <see cref="ModelHealth.TopCount"/>.</param>
 /// <param name="ShownShare">Share of simulated matches where it scores above 0, so the list shows it at all.</param>
-public sealed record ItemShare(string ItemId, string ItemName, int Tier, double TopShare, double ShownShare);
+/// <param name="Swing">How far its score typically strays from 0 across the simulated matches: the root mean square.</param>
+public sealed record ItemShare(string ItemId, string ItemName, int Tier, double TopShare, double ShownShare, double Swing = 0);
 
 /// <summary>An item whose hand weights run opposite to its real lifts across heroes.</summary>
 public sealed record Disagreement(string ItemName, Relation Relation, double R, int Heroes);
@@ -34,6 +35,13 @@ public sealed record ModelHealthReport(
             .OrderBy(share => share.Tier)
             .ThenByDescending(share => share.TopShare);
 
+    /// <summary>The items whose scores swing furthest, biggest first: a coefficient much larger than the rest shows up here.</summary>
+    public IEnumerable<ItemShare> BiggestSwings =>
+        Shares.Where(share => share.Swing > 0)
+            .OrderByDescending(share => share.Swing)
+            .ThenBy(share => share.ItemName, StringComparer.Ordinal)
+            .Take(ModelHealth.SwingCount);
+
     public List<string> Lines()
     {
         var lines = new List<string>();
@@ -58,6 +66,16 @@ public sealed record ModelHealthReport(
             Group(lines, "No rules at all", NoRules);
             Group(lines, "Rules only on traits no hero is scored on", EmptyTraitsOnly);
             Group(lines, "Rules never add up to more than 0", NeverPositive);
+
+            var swings = BiggestSwings.ToList();
+            if (swings.Count > 0)
+            {
+                var typical = Shares.Where(share => share.Swing > 0).Select(share => share.Swing).OrderBy(swing => swing).ToList();
+                lines.Add("");
+                lines.Add($"Biggest swings -- how far the score typically strays from 0 (the median item's is {Format.Num(Math.Round(typical[typical.Count / 2]))}); "
+                          + "these reach the top and the bottom of every list:");
+                lines.AddRange(swings.Select(share => $"  T{share.Tier} {share.ItemName}: ±{Format.Num(Math.Round(share.Swing))}"));
+            }
         }
 
         if (EmptyTraits.Count > 0)
@@ -118,8 +136,9 @@ public static class ModelHealth
 
     public const double DisagreeR = -0.2;
     public const int DataOnlyLimit = 15;
+    public const int SwingCount = 10;
 
-    public static ModelHealthReport Build(DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, int seed = 1)
+    public static ModelHealthReport Build(DataStore store, WeightMatrix matrix, int seed = 1)
     {
         var unprofiled = store.UnprofiledHeroes().ToHashSet();
         var profiled = store.Heroes.Keys.Where(heroId => !unprofiled.Contains(heroId)).ToList();
@@ -149,11 +168,12 @@ public static class ModelHealth
     /// ranking each tier the way the Full Match list does.
     /// </summary>
     private static List<ItemShare> Simulate(
-        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, List<string> heroes, int matches, int seed)
+        DataStore store, WeightMatrix matrix, List<string> heroes, int matches, int seed)
     {
         var items = store.Items.Values.Where(item => ItemScoring.FullTiers.Contains(item.Tier)).ToList();
         var top = new int[items.Count];
         var shown = new int[items.Count];
+        var squares = new double[items.Count];
         var byTier = items.Select((item, index) => (item, index)).GroupBy(pair => pair.item.Tier).ToList();
         var scores = new double[items.Count];
         var random = new Random(seed);
@@ -173,6 +193,7 @@ public static class ModelHealth
             for (var i = 0; i < items.Count; i++)
             {
                 scores[i] = ItemScoring.Total(matrix, items[i].ItemId, lineUp);
+                squares[i] += scores[i] * scores[i];
                 if (scores[i] > 0)
                     shown[i]++;
             }
@@ -189,7 +210,8 @@ public static class ModelHealth
         }
 
         return items
-            .Select((item, i) => new ItemShare(item.ItemId, item.ItemName, item.Tier, (double)top[i] / matches, (double)shown[i] / matches))
+            .Select((item, i) => new ItemShare(
+                item.ItemId, item.ItemName, item.Tier, (double)top[i] / matches, (double)shown[i] / matches, Math.Sqrt(squares[i] / matches)))
             .ToList();
     }
 

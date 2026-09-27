@@ -20,7 +20,9 @@ baseline     = average of hero_score[·, trait] over the profiled heroes
 score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) + you (as)
 ```
 
-`factor` is 1 unless the scores lean on net worth (see "Net worth" below).
+`factor` is 1 unless the scores lean on net worth (see "Net worth" below). A
+single-target item replaces the enemy and ally sums with its best targets (see
+"Best-target items" below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
@@ -39,8 +41,9 @@ Where this lives in the code:
 | Piece | Where |
 |---|---|
 | Baselines | `DataStore.TraitBaselines()`, computed on demand, never cached, because `SetHeroScore` doesn't trigger a rebuild |
-| Weight matrix | `ItemScoring.BuildWeightMatrix` |
+| Weight matrix | `ItemScoring.BuildWeightMatrix` → `WeightMatrix`, which also holds the single-target items and their typical best-target sums |
 | One line-up's score | `ItemScoring.Total` over a `LineUp`, shared by `ScoreAll` (every item, whatever it scores: the Match page's lists and `DataOnlyPicks`) and the model health simulation |
+| Best-target maths | `BestTargets` (`Sum`, `Expected`, `RankFactor`) |
 | The match data's verdict | `ItemScoring.DataStrength`: enemies lift ÷ `PickMinAgainst` + your lift ÷ `PickMinAs`, in "bars"; 1 or more is a standout |
 | Net worth factors | `NetWorthWeights.For(match)`; `NetWorthWeights.None` when the toggle is off |
 | Per-hero, per-trait explanation | `ItemScoring.Contribution` → `HeroContribution` (with `NetWorth`, `Factor`) → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
@@ -75,6 +78,41 @@ top 3 in some match.
 - **Correlations with match data don't change.** Subtracting a baseline shifts
   each item's weights by a constant, so the Pearson r values in the model health
   report compare directly with values from before the change.
+
+### Best-target items
+
+An item whose active is cast on one hero (`Item.SingleTarget`: Decay, Knockdown,
+Slowing Hex, Rescue Beam…) is only as good as its best target. A plain sum counts
+"no use against this hero" once for every such hero. Decay against one big healer
+and five non-healers lost 186 points for each non-healer, when you'd simply cast it
+on the healer. So for these items, the `against` and `with` relations use:
+
+```
+best-target sum = Σ over the team's profiled heroes, best weight first, of weight × ½^(rank − 1)
+relation score  = best-target sum − the same sum's average over every team of that size
+```
+
+The average has a closed form (`BestTargets.Expected`). With the roster's weights
+sorted best first, the r-th best of an n-hero team is roster hero j with probability
+C(j−1, r−1)·C(N−j, n−r)/C(N, n). `WeightMatrix` works it out up front for each team
+size up to 6. The consequences:
+
+- Every item still averages 0 over random matches.
+- A constant shift of every weight cancels out, so the deviation-based weights work as they are.
+- A one-hero team (a 1v1 lane) is exactly the plain sum.
+- Net worth factors apply before the sort.
+- `as` always sums: it's one hero.
+
+On the Decay example above, the enemy side goes from −457 to −31.
+
+`GameSync.IsSingleTarget` decides from the API: an active whose tooltip shows
+`AbilityCastRange` and no `*Radius` property, except the items in
+`_notSingleTarget`. Silence Wave's projectile hits everyone in its path, and Warp
+Stone's range is how far you teleport. The result goes in `items.csv`'s
+`single_target` column. The sync report lists every item that became or stopped
+being single-target, and flags a `_notSingleTarget` entry that no longer matches.
+The explain panel ranks each hero ("2nd target ×0.5") and takes the typical team
+off as a line of its own.
 
 ## Match data on the Match page
 
@@ -243,6 +281,8 @@ afterwards (see "Tests and goldens" below).
    - **Item stat changes**: every stat that moved, e.g. "Long Range: Weapon
      Damage (conditional) none -> 40%". These need no action; stat rules pick
      them up.
+   - **Single-target changes**: items now scored on their best targets, or no
+     longer (see "Best-target items"). Check that each one really is cast on one hero.
    - **Tooltip changed on items with hand-typed rules**: recheck those typed
      coefficients against the new tooltip.
    - **Shown under a scored stat's label but not mapped**: add each property to
@@ -264,6 +304,11 @@ from the profiled heroes) using the real scoring code, then lists:
 - **Never recommended:** items that never score above 0, grouped by cause: no
   rules at all, rules only on traits no hero is scored on, or rules that never
   add up to a positive score.
+- **Biggest swings:** the 10 items whose scores stray furthest from 0 (the root
+  mean square over the simulated matches), next to the median item's. An item far
+  above the median lands at the top or the bottom of nearly every list. The usual
+  cause is a coefficient much bigger than the rest, such as a stat rule giving
+  5.5 per point of healing.
 - **Empty traits:** traits some rule uses that every hero scores 0 on.
 - **Match data disagrees:** per item and relation, the Pearson r across heroes
   between the hand weight and the real lift. Listed at r ≤ −0.2, with at least
@@ -288,7 +333,7 @@ rather than what it does.
   behaviour change, regenerate the affected goldens with:
 
   ```
-  dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenScoringTests|FullyQualifiedName~SyncingTheSnapshot"
+  dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenScoringTests|FullyQualifiedName~SyncingTheSnapshot|FullyQualifiedName~FetchAsksTheRecordedQueries"
   ```
 
   The golden tests then rewrite their files in the source tree
@@ -300,6 +345,10 @@ rather than what it does.
   - `store_queries.json` (`item_contributions`)
   - `game_api/sync_cases.json`
   - `game_api/{fresh,stale}/*.csv`
+  - `match_fetch/{result.json,match_item_lift.csv,match_item_lift.meta.json}`
+
+  `data/items.csv` (the store the other goldens load) and `csv_roundtrip/items.csv`
+  are hand-kept inputs. Give them any new `items.csv` column by hand.
 
 ## Data locations
 

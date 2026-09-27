@@ -35,7 +35,7 @@ public interface IDataService
     string AssetsDir { get; }
 
     DataStore Store { get; }
-    IReadOnlyDictionary<MatrixKey, double> Matrix { get; }
+    WeightMatrix Matrix { get; }
 
     /// <summary>A different store was loaded (reload, sync, data folder change): heroes and items may differ.</summary>
     IObservable<Unit> StoreReplaced { get; }

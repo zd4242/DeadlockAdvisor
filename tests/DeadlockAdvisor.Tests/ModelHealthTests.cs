@@ -76,6 +76,19 @@ public class ModelHealthTests
     }
 
     [Fact]
+    public void TheBiggestSwingsListItemsByHowFarTheirScoresStray()
+    {
+        var report = Build(RosterStore());
+
+        // Six of the twelve heroes' 10i - 65 as enemies: a spread of sqrt(6 · 1191.7 · 6/11) ≈ 62 around 0.
+        // The others never score, so they don't swing at all.
+        var swing = Assert.Single(report.BiggestSwings);
+        Assert.Equal("countered", swing.ItemId);
+        Assert.InRange(swing.Swing, 55, 70);
+        Assert.Contains(report.Lines(), line => line.StartsWith("  T1 Countered: ±", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void DataThatRunsAgainstTheWeightsIsFlagged()
     {
         var report = Build(RosterStore());

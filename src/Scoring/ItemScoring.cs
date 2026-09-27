@@ -31,13 +31,13 @@ public static class ItemScoring
 
     /// <summary>
     /// Precompute weight(item, hero, relation) for every combination reachable from a nonzero
-    /// coefficient. Rebuild whenever the data changes.
+    /// coefficient, with what best-target scoring needs. Rebuild whenever the data changes.
     /// </summary>
-    public static Dictionary<MatrixKey, double> BuildWeightMatrix(DataStore store)
+    public static WeightMatrix BuildWeightMatrix(DataStore store)
     {
         var baselines = store.TraitBaselines();
         var profiled = store.Heroes.Keys.Where(store.IsProfiled).ToList();
-        var matrix = new Dictionary<MatrixKey, double>();
+        var weights = new Dictionary<MatrixKey, double>();
         foreach (var (key, coefficient) in store.EffectiveCoefficients())
         {
             var baseline = baselines.GetValueOrDefault(key.CategoryId);
@@ -47,10 +47,11 @@ public static class ItemScoring
                 if (deviation == 0)
                     continue;
                 var cell = new MatrixKey(key.ItemId, heroId, key.Relation);
-                matrix[cell] = matrix.GetValueOrDefault(cell) + deviation * coefficient;
+                weights[cell] = weights.GetValueOrDefault(cell) + deviation * coefficient;
             }
         }
-        return matrix;
+        var singleTarget = store.Items.Values.Where(item => item.SingleTarget).Select(item => item.ItemId).ToHashSet();
+        return new WeightMatrix(weights, profiled, singleTarget);
     }
 
     /// <summary>
@@ -74,12 +75,12 @@ public static class ItemScoring
     /// Tiers map to that tier's items, highest score first; only tiers with an item above 0 appear.
     /// </summary>
     public static OrderedDictionary<int, List<ScoredItem>> LanePhaseResults(
-        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null) =>
         GroupPositive(store, ScoreAll(store, matrix, match, LaneTiers, match.LaneHeroes, netWorth));
 
     /// <summary>Everyone currently selected, all four tiers.</summary>
     public static OrderedDictionary<int, List<ScoredItem>> FullMatchResults(
-        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null) =>
         GroupPositive(store, ScoreAll(store, matrix, match, FullTiers, null, netWorth));
 
     /// <summary>
@@ -88,7 +89,7 @@ public static class ItemScoring
     /// </summary>
     public static List<ScoredItem> ScoreAll(
         DataStore store,
-        IReadOnlyDictionary<MatrixKey, double> matrix,
+        WeightMatrix matrix,
         MatchState match,
         IReadOnlyList<int> tiers,
         IReadOnlyCollection<string>? restrictTo = null,
@@ -124,13 +125,28 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
-    /// you, each hero's weight times their net worth factor.
+    /// you, each hero's weight times their net worth factor. A single-target item's enemies and allies
+    /// count by <see cref="BestTargets"/> instead of summing.
     /// </summary>
-    public static double Total(IReadOnlyDictionary<MatrixKey, double> matrix, string itemId, LineUp lineUp)
+    public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
+        List<double>? enemies = null;
+        List<double>? allies = null;
         foreach (var (heroId, relation) in lineUp.Members())
-            total += lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
+        {
+            var weight = lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
+            if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
+                total += weight;
+            else if (relation == Relation.Against)
+                (enemies ??= []).Add(weight);
+            else
+                (allies ??= []).Add(weight);
+        }
+        if (enemies is not null)
+            total += BestTargets.Sum(enemies) - matrix.Typical(itemId, Relation.Against, enemies.Count);
+        if (allies is not null)
+            total += BestTargets.Sum(allies) - matrix.Typical(itemId, Relation.With, allies.Count);
         return total;
     }
 
@@ -138,7 +154,8 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score broken down per hero, then per trait, biggest contributor first. Recomputed
-    /// from the store because the per-trait detail isn't kept in the matrix.
+    /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's
+    /// enemies and allies are counted at their rank, with a typical team's sum taken off as one more line.
     /// </summary>
     public static List<HeroContribution> ExplainItem(
         DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null,
@@ -146,11 +163,54 @@ public static class ItemScoring
     {
         var lineUp = RelevantHeroes(match, restrictTo, netWorth);
         var baselines = store.TraitBaselines();
-        return lineUp.Members()
-            .Select(member => Contribution(store, baselines, itemId, member.HeroId, member.Relation, lineUp.NetWorth.StandingOf(member.HeroId)))
-            .OfType<HeroContribution>()
-            .OrderBy(contribution => -contribution.Amount)
+        var singleTarget = store.Items.TryGetValue(itemId, out var item) && item.SingleTarget;
+        var contributions = new List<HeroContribution>();
+        foreach (var relation in new[] { Relation.Against, Relation.With, Relation.As })
+        {
+            var team = lineUp.Members().Where(member => member.Relation == relation).Select(member => member.HeroId).ToList();
+            var found = team
+                .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId)))
+                .OfType<HeroContribution>()
+                .ToList();
+            contributions.AddRange(singleTarget && relation != Relation.As
+                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), found)
+                : found);
+        }
+        return contributions.OrderBy(contribution => -contribution.Amount).ToList();
+    }
+
+    /// <summary>
+    /// A single-target item's heroes on one relation at their <see cref="BestTargets"/> rank, then the
+    /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
+    /// no rule touches, exactly as <see cref="Total"/> counts them.
+    /// </summary>
+    private static IEnumerable<HeroContribution> OnBestTargets(
+        DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, Relation relation,
+        IReadOnlyList<string> team, IReadOnlyList<HeroContribution> found)
+    {
+        if (team.Count == 0)
+            yield break;
+        var byHero = found.ToDictionary(contribution => contribution.HeroId);
+        var ranked = team
+            .Select(heroId => (HeroId: heroId, Weight: byHero.TryGetValue(heroId, out var contribution) ? contribution.Amount : 0.0))
+            .OrderByDescending(pair => pair.Weight)
             .ToList();
+        for (var rank = 1; rank <= ranked.Count; rank++)
+        {
+            if (byHero.TryGetValue(ranked[rank - 1].HeroId, out var contribution))
+                yield return contribution with { Amount = contribution.Amount * BestTargets.RankFactor(rank), Rank = rank };
+        }
+
+        // One hero's typical value is the roster's average weight, which is 0: nothing to take off.
+        if (team.Count == 1)
+            yield break;
+        var roster = store.Heroes.Keys
+            .Where(store.IsProfiled)
+            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation)?.Amount ?? 0.0)
+            .ToList();
+        var typical = BestTargets.Expected(roster, Math.Min(team.Count, BestTargets.MaxTeam));
+        if (typical != 0)
+            yield return new HeroContribution("", relation == Relation.Against ? "Typical enemy team" : "Typical allies", relation, -typical, [], TypicalOf: team.Count);
     }
 
     /// <summary>
@@ -273,7 +333,7 @@ public static class ItemScoring
     /// </summary>
     public static List<ScoredItem> DataOnlyPicks(
         DataStore store,
-        IReadOnlyDictionary<MatrixKey, double> matrix,
+        WeightMatrix matrix,
         MatchState match,
         IReadOnlyList<int> tiers,
         IReadOnlyCollection<string>? restrictTo = null,
@@ -281,7 +341,7 @@ public static class ItemScoring
         int limit = 6) =>
         DataOnlyPicks(ScoreAll(store, matrix, match, tiers, restrictTo, netWorth), limit);
 
-    /// <inheritdoc cref="DataOnlyPicks(DataStore, IReadOnlyDictionary{MatrixKey, double}, MatchState, IReadOnlyList{int}, IReadOnlyCollection{string}?, NetWorthWeights?, int)"/>
+    /// <inheritdoc cref="DataOnlyPicks(DataStore, WeightMatrix, MatchState, IReadOnlyList{int}, IReadOnlyCollection{string}?, NetWorthWeights?, int)"/>
     public static List<ScoredItem> DataOnlyPicks(IEnumerable<ScoredItem> scored, int limit = 6) =>
         scored
             .Where(item => !(item.Score > 0) && item.DataStrength >= 1)

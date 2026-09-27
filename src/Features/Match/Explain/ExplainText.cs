@@ -80,6 +80,25 @@ public static class ExplainText
             ? $"×{NumberFormat.Fixed(standing.Factor, 2)} · {Format.Compact(standing.Souls)} vs {Format.Compact((int)Math.Round(standing.Average))} avg"
             : null;
 
+    /// <summary>"best target ×1", "2nd target ×0.5": where a single-target item counts this hero, or null when it sums.</summary>
+    public static string? Rank(int? rank) => rank is { } value
+        ? $"{(value == 1 ? "best" : Ordinal(value))} target ×{Format.Num(BestTargets.RankFactor(value))}"
+        : null;
+
+    /// <summary>The typical team's line: "a typical team of 6, taken off".</summary>
+    public static string Typical(int count) => $"a typical team of {count}, taken off";
+
+    public const string BestTargetsTip =
+        "Cast on one hero at a time: the best target counts in full, the next ×0.5, then ×0.25 and so on,\n"
+        + "less what the same comes to for a typical team the same size.";
+
+    private static string Ordinal(int value) => value switch
+    {
+        2 => "2nd",
+        3 => "3rd",
+        _ => $"{value}th",
+    };
+
     public static string NetWorthTooltip(NetWorthStanding standing) =>
         $"{Format.Compact(standing.Souls)} souls against the match's average of {Format.Compact((int)Math.Round(standing.Average))},\n"
         + $"so this hero's share counts ×{NumberFormat.Fixed(standing.Factor, 2)}.\n"

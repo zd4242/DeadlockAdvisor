@@ -139,6 +139,12 @@ public static partial class GameSync
     /// <summary>Penalties on the item's owner, filed like the ones put on enemies: Cheat Death's healing reduction is the price of its immunity.</summary>
     private static readonly HashSet<(string?, string)> _selfInflicted = [("Cheat Death", "HealAmpReceivePenaltyPercent")];
 
+    /// <summary>
+    /// Actives with a cast range and no radius that still don't pick one hero: Silence Wave's projectile
+    /// hits everyone in its path, and Warp Stone's range is how far you teleport.
+    /// </summary>
+    private static readonly HashSet<string> _notSingleTarget = ["Silence Wave", "Warp Stone"];
+
     private static readonly string[] _shownKeys = ["properties", "important_properties", "elevated_properties"];
 
     // -- names ----------------------------------------------------------------------
@@ -284,6 +290,21 @@ public static partial class GameSync
             .ToList();
     }
 
+    /// <summary>
+    /// The active is cast on one hero: its tooltip shows a cast range and no radius (an area or an aura
+    /// reaches more than one), and it isn't one of <see cref="_notSingleTarget"/>.
+    /// </summary>
+    public static bool IsSingleTarget(JsonNode record) =>
+        HasCastRangeAndNoRadius(record) && !(NameOf(record) is { } name && _notSingleTarget.Contains(name));
+
+    private static bool HasCastRangeAndNoRadius(JsonNode record)
+    {
+        if (!PyJson.Truthy(PyJson.Get(record, "is_active_item")))
+            return false;
+        var active = ShownProperties(record).Where(p => PyJson.Text(p.Property, "tooltip_section") == "active").Select(p => p.Key).ToList();
+        return active.Contains("AbilityCastRange") && !active.Any(key => key.EndsWith("Radius", StringComparison.Ordinal));
+    }
+
     private static bool PassiveHasCondition(IEnumerable<(string Key, JsonNode Property)> properties) =>
         properties.Any(p => PyJson.Text(p.Property, "tooltip_section") == "passive"
                             && PyJson.Contains(p.Property, "usage_flags", "ConditionallyApplied"));
@@ -375,6 +396,11 @@ public static partial class GameSync
         {
             if (PropertyOf(name, key) is null)
                 stale.Add($"{name} / {key}: forced per stack, but the item no longer has that property");
+        }
+        foreach (var name in _notSingleTarget)
+        {
+            if (!byName.TryGetValue(name, out var record) || !HasCastRangeAndNoRadius(record))
+                stale.Add($"{name}: marked not single-target, but the game no longer gives it a cast range without a radius");
         }
         foreach (var (name, stacks) in _assumedStacks)
         {
@@ -540,23 +566,28 @@ public static partial class GameSync
             var tier = (int)PyJson.Int(record, "item_tier");
             var category = PyJson.Text(record, "item_slot_type");
             var cost = (int)PyJson.Int(record, "cost");
+            var singleTarget = IsSingleTarget(record);
 
             if (!ours.TryGetValue(Norm(name), out var current))
             {
                 var itemId = MakeId(name);
                 if (itemId.Length == 0 || store.Items.ContainsKey(itemId))
                     continue;
-                store.Items[itemId] = new Item(itemId, name, category, tier, gameId, cost);
+                store.Items[itemId] = new Item(itemId, name, category, tier, gameId, cost, singleTarget);
                 matched[itemId] = record;
                 report.AddedItems.Add($"{name} (T{tier})");
+                if (singleTarget)
+                    report.TargetingChanges.Add($"{name}: single-target");
                 report.ItemsChanged = true;
                 continue;
             }
 
             matched[current.ItemId] = record;
-            var updated = new Item(current.ItemId, current.ItemName, category, tier, gameId, cost);
+            var updated = new Item(current.ItemId, current.ItemName, category, tier, gameId, cost, singleTarget);
             if (updated == current)
                 continue;
+            if (current.SingleTarget != singleTarget)
+                report.TargetingChanges.Add($"{current.ItemName}: {(singleTarget ? "single-target" : "no longer single-target")}");
             // A missing game id or cost is just the first sync filling columns in; a tier or shop
             // move is a patch, and worth saying out loud.
             var before = report.Changed.Count;
@@ -568,7 +599,7 @@ public static partial class GameSync
                 report.Changed.Add($"{current.ItemName}: cost {current.Cost} -> {cost}");
             if (current.GameId != 0 && current.GameId != gameId)
                 report.Changed.Add($"{current.ItemName}: game id {current.GameId} -> {gameId}");
-            if (report.Changed.Count == before)
+            if (report.Changed.Count == before && updated with { SingleTarget = current.SingleTarget } != current)
                 report.Filled++;
             store.Items[current.ItemId] = updated;
             report.ItemsChanged = true;

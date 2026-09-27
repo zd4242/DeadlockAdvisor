@@ -272,6 +272,66 @@ public class ScoringTests
     }
 
     [Fact]
+    public void TheTypicalBestTargetSumIsTheAverageOverEveryTeam()
+    {
+        double[] roster = [5, 3, 0, -2, -6];
+
+        for (var count = 1; count <= roster.Length; count++)
+        {
+            var teams = Teams(roster, count).ToList();
+            Assert.Equal(teams.Average(BestTargets.Sum), BestTargets.Expected(roster, count), 9);
+        }
+        Assert.Equal(0, BestTargets.Expected(roster, 0));
+        // 5 in full, 0 at half, -6 at a quarter.
+        Assert.Equal(3.5, BestTargets.Sum([0, -6, 5]));
+    }
+
+    private static IEnumerable<List<double>> Teams(IReadOnlyList<double> roster, int count, int from = 0)
+    {
+        if (count == 0)
+        {
+            yield return [];
+            yield break;
+        }
+        for (var i = from; i <= roster.Count - count; i++)
+        {
+            foreach (var rest in Teams(roster, count - 1, i + 1))
+                yield return [roster[i], .. rest];
+        }
+    }
+
+    [Fact]
+    public void ASingleTargetItemCountsItsBestTargetsAgainstATypicalTeam()
+    {
+        var store = TestStore.Make();
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { SingleTarget = true };
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+
+        // Against weights: heavy_spirit (5 - 2) * 2 = 6, low_hp -4, generic -2. The pair counts
+        // 6 + -4/2 = 4; a typical pair, (6 - 2 + 6 - 1 - 2 - 2) / 3 = 5/3. Summed it would be 6 - 4 = 2.
+        Assert.Equal(5.0 / 3, matrix.Typical("spirit_resist_t1", Relation.Against, 2), 9);
+        var scored = ItemScoring.ScoreAll(store, matrix, match, ItemScoring.FullTiers).Single(item => item.ItemId == "spirit_resist_t1");
+        Assert.Equal(4 - 5.0 / 3, scored.Score, 9);
+
+        var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
+        Assert.Equal([("heavy_spirit", 6.0, (int?)1), ("", Math.Round(-5.0 / 3, 9), null), ("low_hp", -2.0, 2)],
+            explained.Select(contribution => (contribution.HeroId, Math.Round(contribution.Amount, 9), contribution.Rank)));
+        Assert.Equal(2, explained[1].TypicalOf);
+        Assert.Equal(scored.Score, explained.Sum(contribution => contribution.Amount), 9);
+
+        // The whole roster is its own typical team; one enemy is just its weight, with nothing taken off.
+        match.SetRole("generic", Role.Enemy);
+        Assert.Equal(0, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(match, null)), 9);
+        var alone = new MatchState();
+        alone.SetRole("heavy_spirit", Role.Enemy);
+        Assert.Equal(6, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(alone, null)), 9);
+        Assert.Single(ItemScoring.ExplainItem(store, alone, "spirit_resist_t1"));
+    }
+
+    [Fact]
     public void DataScoresKeepEnemiesAndSelfApart()
     {
         var store = TestStore.Make();

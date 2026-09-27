@@ -134,7 +134,10 @@
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
      "Item stats refreshed: 338 stat row(s).",
-     "Item tooltips refreshed: 156 item(s)."
+     "Item tooltips refreshed: 156 item(s).",
+     "",
+     "Single-target changes -- these items are now scored on their best targets, or no longer:",
+     "  Focus Lens: single-target"
     ],
     "added_heroes": [
      "Wraith"

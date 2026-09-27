@@ -47,15 +47,22 @@ public sealed record TraitPart(
 }
 
 /// <summary>One hero's share of an item's score, trait by trait.</summary>
-/// <param name="Amount">The traits' sum times the hero's net worth factor.</param>
+/// <param name="Amount">The traits' sum times the hero's net worth factor, and times its <see cref="BestTargets.RankFactor"/>.</param>
 /// <param name="NetWorth">Where the hero stood, when their net worth weighted the score.</param>
+/// <param name="Rank">For an item scored on its best targets: 1 for the best target on this relation, 2 for the next…; null when the relation sums.</param>
+/// <param name="TypicalOf">
+/// Not a hero: what <see cref="BestTargets"/> gives a typical team of this many, taken off as one line
+/// (<see cref="Amount"/> is its negative, <see cref="Parts"/> empty).
+/// </param>
 public sealed record HeroContribution(
     string HeroId,
     string HeroName,
     Relation Relation,
     double Amount,
     IReadOnlyList<TraitPart> Parts,
-    NetWorthStanding? NetWorth = null)
+    NetWorthStanding? NetWorth = null,
+    int? Rank = null,
+    int? TypicalOf = null)
 {
     public double Factor => NetWorth?.Factor ?? 1.0;
 }
