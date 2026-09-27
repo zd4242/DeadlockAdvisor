@@ -1,8 +1,10 @@
 using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Text.Json.Nodes;
 using ClosedXML.Excel;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
@@ -36,10 +38,15 @@ public sealed class DataMenuTests : IDisposable
         _art.SetAssetsDir(_fixture.Data.AssetsDir);
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         _fixture.Data.StoreReplaced.Subscribe(_ => _replaced++);
+        _menu = Menu();
+    }
+
+    private DataMenuViewModel Menu(IMatchStatsService? matchStats = null, IArtDownloadService? artDownload = null)
+    {
         var gameApi = new GameApiService(_api);
-        _menu = new DataMenuViewModel(_fixture.Data, gameApi, new MatchStatsService(_api), new ExcelExportService(),
-            new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
-            _fixture.Settings, new NoFolderPicker(), new FakeLoggingService());
+        return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api), new ExcelExportService(),
+            artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
+            _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _fixture.Clock);
     }
 
     public void Dispose()
@@ -99,14 +106,109 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task AFailedFetchSaysSo()
+    public async Task AFailedFetchStaysInTheStatusBarWithWhatWentWrong()
     {
         await _menu.FetchMatchStatsCommand.Execute();
 
-        var report = LastMessage();
-        Assert.Equal("Fetch failed", report.Title);
-        Assert.Contains("offline (test)", report.Body);
+        Assert.Empty(_shown);
+        var job = Assert.Single(_menu.Jobs);
+        Assert.True(job.HasFailed);
+        Assert.False(_menu.IsFetchingMatchStats);
         Assert.Equal(0, _replaced);
+
+        await job.OpenCommand.Execute();
+        var report = LastMessage();
+        Assert.Equal("Match stats fetch failed", report.Title);
+        Assert.Contains("offline (test)", report.Body);
+        Assert.Empty(_menu.Jobs);
+    }
+
+    [Fact]
+    public async Task MatchStatsFetchInTheBackgroundAndAskBeforeStopping()
+    {
+        using var menu = Menu(matchStats: new HeldMatchStats());
+        var run = menu.FetchMatchStatsCommand.Execute().ToTask();
+
+        var job = Assert.Single(menu.Jobs);
+        Assert.Empty(_shown);
+        Assert.True(menu.IsFetchingMatchStats);
+        Assert.False(await menu.FetchMatchStatsCommand.CanExecute.FirstAsync());
+        Assert.False(await menu.ChangeDataFolderCommand.CanExecute.FirstAsync());
+
+        await job.CancelCommand.Execute();
+        var ask = Assert.IsType<ConfirmationModalViewModel>(_shown[^1]);
+        Assert.Equal(("Stop", "Keep going"), (ask.ConfirmText, ask.CancelText));
+        ask.CancelCommand!.Execute(null);
+        Assert.False(job.Token.IsCancellationRequested);
+
+        await job.CancelCommand.Execute();
+        Assert.IsType<ConfirmationModalViewModel>(_shown[^1]).ConfirmCommand!.Execute(null);
+        await run;
+
+        Assert.Empty(menu.Jobs);
+        Assert.False(menu.IsFetchingMatchStats);
+        Assert.True(await menu.ChangeDataFolderCommand.CanExecute.FirstAsync());
+        Assert.Equal(0, _replaced);
+    }
+
+    [Fact]
+    public async Task ArtDownloadsInTheBackgroundAndLeavesItsReportInTheStatusBar()
+    {
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+        var artShown = 0;
+        using var watchArt = menu.ViewInteraction.Where(action => action == DataMenuViewModel.ArtChangedAction).Subscribe(_ => artShown++);
+
+        var run = menu.DownloadArtAsync(force: false);
+        var job = Assert.Single(menu.Jobs);
+        Assert.Equal("Art", job.Title);
+        Assert.True(menu.IsDownloadingArt);
+        Assert.False(await menu.DownloadArtCommand.CanExecute.FirstAsync());
+        Assert.Empty(_shown);
+
+        download.Progress!.Report(new FetchProgress(0, 10, "Hero portraits: Abrams"));
+        _fixture.Clock.AdvanceBy(TimeSpan.FromSeconds(5));
+        download.Progress.Report(new FetchProgress(5, 10, "Item icons: Headshot Booster"));
+        Assert.Equal("50% · under a minute left", job.StatusText);
+        // Art that has arrived shows without waiting for the rest.
+        Assert.Equal(1, artShown);
+
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 2, 2, 2, 0, [])]));
+        await run;
+
+        Assert.False(menu.IsDownloadingArt);
+        Assert.Equal(BackgroundJobState.Succeeded, job.State);
+        Assert.Equal("2 downloaded", job.StatusText);
+        Assert.Empty(_shown);
+        await job.OpenCommand.Execute();
+        Assert.Equal("Art downloaded", LastMessage().Title);
+        Assert.Empty(menu.Jobs);
+    }
+
+    [Fact]
+    public async Task CancellingTheArtDownloadTakesItOutOfTheStatusBar()
+    {
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+        var run = menu.DownloadArtAsync(force: false);
+
+        await Assert.Single(menu.Jobs).CancelCommand.Execute();
+        await run;
+
+        Assert.Empty(menu.Jobs);
+        Assert.Empty(_shown);
+        Assert.False(menu.IsDownloadingArt);
+    }
+
+    [Fact]
+    public async Task ANewRunReplacesTheLastOnesUnreadReport()
+    {
+        await _menu.FetchMatchStatsCommand.Execute();
+        var first = Assert.Single(_menu.Jobs);
+
+        await _menu.FetchMatchStatsCommand.Execute();
+
+        Assert.NotSame(first, Assert.Single(_menu.Jobs));
     }
 
     [Fact]

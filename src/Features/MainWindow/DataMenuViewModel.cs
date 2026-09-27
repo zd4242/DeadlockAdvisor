@@ -1,10 +1,14 @@
+using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
 using System.Net.Http;
 using System.Reactive;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
@@ -18,13 +22,19 @@ namespace DeadlockAdvisor.Features.MainWindow;
 
 /// <summary>
 /// The Data menu: syncing with the game, fetching match stats, reloading, exporting, and where the
-/// data and art live. Every network job flushes pending edits first and runs behind a progress modal
-/// that can cancel it; nothing is written until a job has everything it needs.
+/// data and art live. The long downloads, match stats and art, run in the background as
+/// <see cref="Jobs"/> the status bar shows and can cancel; the quick game sync runs behind a progress
+/// modal. Nothing is written until a job has everything it needs.
 /// </summary>
 public class DataMenuViewModel : ViewModelBase
 {
     public const string ArtChangedAction = "ArtChanged";
 
+    // Showing new art re-reads every image on screen, so it's done this often at most while art arrives.
+    private static readonly TimeSpan _artShowGap = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _toastTime = TimeSpan.FromSeconds(5);
+
+    private readonly IScheduler _clock;
     private readonly IDataService _data;
     private readonly IGameApiService _gameApi;
     private readonly IMatchStatsService _matchStats;
@@ -40,7 +50,16 @@ public class DataMenuViewModel : ViewModelBase
     public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats,
         IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log)
+        : this(data, gameApi, matchStats, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
     {
+    }
+
+    internal DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats,
+        IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
+        INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log,
+        IScheduler clock)
+    {
+        _clock = clock;
         _log = log;
         _data = data;
         _gameApi = gameApi;
@@ -56,17 +75,33 @@ public class DataMenuViewModel : ViewModelBase
         var idle = this.WhenAnyValue(vm => vm.IsBusy).Select(busy => !busy);
         SyncNewDataCommand = ReactiveCommand.Create(SyncNewData);
         SyncGameApiCommand = ReactiveCommand.CreateFromTask(SyncGameApiAsync, idle);
-        FetchMatchStatsCommand = ReactiveCommand.CreateFromTask(FetchMatchStatsAsync, idle);
+        FetchMatchStatsCommand = ReactiveCommand.CreateFromTask(FetchMatchStatsAsync,
+            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsFetchingMatchStats, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
         OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
-        ChangeDataFolderCommand = ReactiveCommand.CreateFromTask(ChangeDataFolderAsync, idle);
-        DownloadArtCommand = ReactiveCommand.Create(OfferArtDownload, idle);
+        // A download writes into the folder it started in, so the folder stays put until they're done.
+        ChangeDataFolderCommand = ReactiveCommand.CreateFromTask(ChangeDataFolderAsync,
+            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.HasRunningJobs, (busy, running) => !busy && !running));
+        DownloadArtCommand = ReactiveCommand.Create(OfferArtDownload,
+            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingArt, (busy, downloading) => !busy && !downloading));
+
+        this.WhenAnyValue(vm => vm.IsFetchingMatchStats, vm => vm.IsDownloadingArt)
+            .Skip(1)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(HasRunningJobs)))
+            .DisposeWith(Disposables);
     }
 
-    /// <summary>A network job is running; one at a time.</summary>
+    /// <summary>A job behind a modal, or the model health report, is running; one at a time.</summary>
     [Reactive] public bool IsBusy { get; private set; }
+
+    [Reactive] public bool IsFetchingMatchStats { get; private set; }
+    [Reactive] public bool IsDownloadingArt { get; private set; }
+    public bool HasRunningJobs => IsFetchingMatchStats || IsDownloadingArt;
+
+    /// <summary>The background downloads the status bar shows: running, or finished with a report not yet opened.</summary>
+    public ObservableCollection<BackgroundJobViewModel> Jobs { get; } = [];
 
     /// <summary>Set when a patch is out that the match data predates.</summary>
     [Reactive] public Patch? NewerPatch { get; private set; }
@@ -92,7 +127,8 @@ public class DataMenuViewModel : ViewModelBase
         _settings.Update(s => s.ArtDownloadOffered = true);
         Confirm(
             $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
-            + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB, and Data → Download Art… does it any time.",
+            + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB and downloads in the background, "
+            + "and Data → Download Art… does it any time.",
             "Download", () => Launch(() => DownloadArtAsync(force: false)), cancelText: "Not now");
     }
 
@@ -161,7 +197,7 @@ public class DataMenuViewModel : ViewModelBase
     {
         _data.FlushSaves();
         var progress = new ProgressModalViewModel("Sync from Game API", "Fetching heroes and shop items from deadlock-api.com…");
-        var report = await RunAsync(progress, () => _gameApi.SyncAsync(_data.Store, progress.Token), failure =>
+        var report = await RunBehindModalAsync(progress, () => _gameApi.SyncAsync(_data.Store, progress.Token), failure =>
         {
             if (IsNetworkFailure(failure))
             {
@@ -184,15 +220,31 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- match stats ----------------------------------------------------------------
 
+    /// <summary>About 20 minutes of calls, so it runs in the background; the data only changes once all of it is in.</summary>
     private async Task FetchMatchStatsAsync()
     {
         _data.FlushSaves();
-        var progress = new ProgressModalViewModel("Fetch Match Stats", "Fetching match stats for every rank from deadlock-api.com… (about 20 minutes)");
-        var counts = await RunAsync(progress, () => _matchStats.FetchAsync(_data.Store, progress, progress.Token),
-            failure => ShowMessage("Fetch failed", ["Couldn't fetch match stats from deadlock-api.com:", "", failure.Message, "", "Nothing was changed."]));
-        if (counts is null)
-            return;
+        var job = new BackgroundJobViewModel("Match stats", _clock, cancel => Confirm(
+            "Stop fetching match stats? Nothing fetched so far is kept, and the match data stays as it was.",
+            "Stop", cancel, cancelText: "Keep going"));
+        IsFetchingMatchStats = true;
+        try
+        {
+            var counts = await RunInBackgroundAsync(job, () => _matchStats.FetchAsync(_data.Store, job, job.Token),
+                failure => Failed(job, "Match stats fetch failed",
+                    ["Couldn't fetch match stats from deadlock-api.com:", "", failure.Message, "", "Nothing was changed."]),
+                "Stopped fetching match stats. Nothing was changed.");
+            if (counts is not null)
+                ApplyMatchStats(job, counts);
+        }
+        finally
+        {
+            IsFetchingMatchStats = false;
+        }
+    }
 
+    private void ApplyMatchStats(BackgroundJobViewModel job, MatchCounts counts)
+    {
         FetchResult result;
         try
         {
@@ -200,7 +252,7 @@ public class DataMenuViewModel : ViewModelBase
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
-            ShowMessage("Could not save match stats", [$"Writing to {_data.DataDir} failed:", "", ex.Message]);
+            Failed(job, "Could not save match stats", [$"Writing to {_data.DataDir} failed:", "", ex.Message]);
             return;
         }
         NewerPatch = null;
@@ -208,7 +260,7 @@ public class DataMenuViewModel : ViewModelBase
         var lines = result.Lines();
         lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
         lines.Add("The Match page's \"Data:\" button narrows it to a range of ranks, without fetching again.");
-        ShowMessage("Match stats fetched", lines);
+        Succeeded(job, "fetched", "Match stats fetched", lines, "Match stats fetched: the recommendations now show them.");
     }
 
     // -- model health ---------------------------------------------------------------
@@ -230,30 +282,29 @@ public class DataMenuViewModel : ViewModelBase
         ShowMessage("Model health", report.Lines());
     }
 
+    // -- running jobs ---------------------------------------------------------------
+
+    /// <summary>Stop every download without asking, as the window closes.</summary>
+    public void CancelJobs()
+    {
+        foreach (var job in Jobs.ToList())
+            job.Cancel();
+    }
+
     /// <summary>
     /// Run a network job behind <paramref name="progress"/>. Null when it was cancelled or failed; a
     /// failure has already been reported through <paramref name="failed"/>.
     /// </summary>
-    private async Task<T?> RunAsync<T>(ProgressModalViewModel progress, Func<Task<T>> job, Action<Exception> failed) where T : class
+    private async Task<T?> RunBehindModalAsync<T>(ProgressModalViewModel progress, Func<Task<T>> job, Action<Exception> failed)
+        where T : class
     {
-        _log.Information($"{progress.Title}: started");
         IsBusy = true;
         _modals.ShowModal(progress);
-        T? result = null;
         Exception? failure = null;
+        T? result;
         try
         {
-            result = await job();
-            _log.Information($"{progress.Title}: finished");
-        }
-        catch (OperationCanceledException)
-        {
-            _log.Information($"{progress.Title}: cancelled");
-        }
-        catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException or UnauthorizedAccessException)
-        {
-            _log.Warning($"{progress.Title}: failed\n{ex}");
-            failure = ex;
+            result = await RunAsync(progress.Title, job, ex => failure = ex);
         }
         finally
         {
@@ -264,6 +315,73 @@ public class DataMenuViewModel : ViewModelBase
         if (failure is not null)
             failed(failure);
         return result;
+    }
+
+    /// <summary>
+    /// Run a network job in the background, with <paramref name="job"/> showing it in the status bar.
+    /// Null when it was cancelled, which takes it out of the status bar and says so, or failed, which
+    /// has already been reported through <paramref name="failed"/>.
+    /// </summary>
+    private async Task<T?> RunInBackgroundAsync<T>(BackgroundJobViewModel job, Func<Task<T>> work, Action<Exception> failed,
+        string cancelledText) where T : class
+    {
+        Show(job);
+        var result = await RunAsync(job.Title, work, failed);
+        if (!job.Token.IsCancellationRequested)
+            return result;
+        // Even an answer that arrived just as it was stopped is dropped, as asked.
+        Remove(job);
+        _notifications.ShowInformation(cancelledText, _toastTime);
+        return null;
+    }
+
+    /// <summary>A job's own work, logged. Null when it was cancelled or failed; a failure is passed to <paramref name="failed"/>.</summary>
+    private async Task<T?> RunAsync<T>(string title, Func<Task<T>> job, Action<Exception> failed) where T : class
+    {
+        _log.Information($"{title}: started");
+        try
+        {
+            var result = await job();
+            _log.Information($"{title}: finished");
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _log.Information($"{title}: cancelled");
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException or UnauthorizedAccessException)
+        {
+            _log.Warning($"{title}: failed\n{ex}");
+            failed(ex);
+        }
+        return null;
+    }
+
+    /// <summary>Into the status bar, in place of the last run's report if that's still there.</summary>
+    private void Show(BackgroundJobViewModel job)
+    {
+        foreach (var previous in Jobs.Where(previous => previous.Title == job.Title).ToList())
+            Remove(previous);
+        job.Dismissed.Take(1).Subscribe(_ => Remove(job));
+        Jobs.Add(job);
+    }
+
+    private void Remove(BackgroundJobViewModel job)
+    {
+        if (Jobs.Remove(job))
+            job.Dispose();
+    }
+
+    private void Succeeded(BackgroundJobViewModel job, string status, string title, IReadOnlyList<string> report, string toast)
+    {
+        job.Succeed(status, () => ShowMessage(title, report));
+        _notifications.ShowSuccess(toast, _toastTime);
+    }
+
+    private void Failed(BackgroundJobViewModel job, string title, IReadOnlyList<string> report)
+    {
+        job.Fail(() => ShowMessage(title, report));
+        _notifications.ShowError($"{title}. The status bar has the details.", _toastTime);
     }
 
     /// <summary>Start a job from a modal's button, reporting anything unexpected rather than losing it with the task.</summary>
@@ -288,20 +406,47 @@ public class DataMenuViewModel : ViewModelBase
     private void OfferArtDownload() =>
         Confirm(
             $"Fetch hero portraits, item icons and the top-bar art that Detect from screen matches against, from deadlock-api.com into {_data.AssetsDir}?\n\n"
-            + "Files already there are kept unless you re-download everything.",
+            + "Files already there are kept unless you re-download everything. It downloads in the background, and art shows up as it arrives.",
             "Download missing", () => Launch(() => DownloadArtAsync(force: false)),
             "Re-download all", () => Launch(() => DownloadArtAsync(force: true)));
 
-    private async Task DownloadArtAsync(bool force)
+    internal async Task DownloadArtAsync(bool force)
     {
-        var progress = new ProgressModalViewModel("Download Art", "Downloading art from deadlock-api.com…");
-        var report = await RunAsync(progress, () => _artDownload.DownloadAsync(_data.Store, _data.AssetsDir, force, progress, progress.Token),
-            failure => ShowMessage("Download failed", ["Couldn't download the art from deadlock-api.com:", "", failure.Message]));
-        // Whatever arrived before a cancel or failure is on disk: show it.
+        var job = new BackgroundJobViewModel("Art", _clock);
+        var shown = _clock.Now;
+        using var showAsItArrives = job.WhenAnyValue(vm => vm.Done)
+            .Where(_ => _clock.Now - shown >= _artShowGap)
+            .Subscribe(_ =>
+            {
+                shown = _clock.Now;
+                ShowNewArt();
+            });
+        IsDownloadingArt = true;
+        try
+        {
+            var report = await RunInBackgroundAsync(job,
+                () => _artDownload.DownloadAsync(_data.Store, _data.AssetsDir, force, job, job.Token),
+                failure => Failed(job, "Art download failed",
+                    ["Couldn't download the art from deadlock-api.com:", "", failure.Message, "", "Whatever arrived before that is kept."]),
+                "Stopped downloading art. What arrived is kept.");
+            if (report is not null)
+            {
+                Succeeded(job, report.Downloaded == 0 ? "nothing new" : $"{report.Downloaded} downloaded", "Art downloaded", report.Lines(),
+                    $"Art downloaded: {report.Downloaded} new file(s).");
+            }
+        }
+        finally
+        {
+            IsDownloadingArt = false;
+            // Whatever arrived before a cancel or failure is on disk too.
+            ShowNewArt();
+        }
+    }
+
+    private void ShowNewArt()
+    {
         _art.Refresh();
         RequestViewAction(ArtChangedAction);
-        if (report is not null)
-            ShowMessage("Art downloaded", report.Lines());
     }
 
     // -- files ----------------------------------------------------------------------

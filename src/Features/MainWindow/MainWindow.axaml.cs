@@ -142,7 +142,13 @@ public partial class MainWindow : Window
     protected override void OnClosing(WindowClosingEventArgs e)
     {
         base.OnClosing(e);
-        (DataContext as MainWindowViewModel)?.OnClosing();
+        var vm = DataContext as MainWindowViewModel;
+        if (e.CloseReason != WindowCloseReason.OSShutdown && vm?.HoldCloseForJobs() == true)
+        {
+            e.Cancel = true;
+            return;
+        }
+        vm?.OnClosing();
         _settings?.Update(s => s.WindowGeometry = new WindowGeometry
         {
             X = _normalPosition.X,

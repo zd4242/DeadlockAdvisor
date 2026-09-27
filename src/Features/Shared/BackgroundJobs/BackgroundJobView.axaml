@@ -1,0 +1,109 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:jobs="using:DeadlockAdvisor.Features.Shared.BackgroundJobs"
+             x:Class="DeadlockAdvisor.Features.Shared.BackgroundJobs.BackgroundJobView"
+             x:DataType="jobs:BackgroundJobViewModel">
+
+    <!-- A chip in the status bar: progress while it runs, then how it ended, to click for the report. -->
+    <UserControl.Styles>
+        <Style Selector="Border.job">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,0,2,0"/>
+            <Setter Property="Height" Value="22"/>
+        </Style>
+        <Style Selector="Border.job.finished">
+            <Setter Property="BorderBrush" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
+        <Style Selector="Border.job.failed">
+            <Setter Property="BorderBrush" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+        <Style Selector="Border.job TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.job TextBlock.title">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Border.job TextBlock.done">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
+        <Style Selector="Border.job TextBlock.failed">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="Border.job TextBlock.link">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+
+        <Style Selector="Button.result">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+        </Style>
+        <Style Selector="Button.result:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.result:pointerover TextBlock.link">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
+
+        <Style Selector="Button.close">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="job"
+            Classes.finished="{Binding IsFinished}"
+            Classes.failed="{Binding HasFailed}"
+            ToolTip.Tip="{Binding ToolTipText}">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsRunning}">
+                <TextBlock Classes="title" Text="{Binding Title}"/>
+                <ProgressBar Width="90"
+                             MinWidth="0"
+                             Height="4"
+                             MinHeight="4"
+                             CornerRadius="2"
+                             VerticalAlignment="Center"
+                             Minimum="0"
+                             Maximum="{Binding Total}"
+                             Value="{Binding Done}"
+                             IsIndeterminate="{Binding IsIndeterminate}"
+                             Foreground="{DynamicResource AccentBrush}"
+                             Background="{DynamicResource Surface4Brush}"/>
+                <TextBlock Text="{Binding StatusText}"/>
+            </StackPanel>
+
+            <Button Classes="result" IsVisible="{Binding IsFinished}" Command="{Binding OpenCommand}">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Classes="done" Text="✓" IsVisible="{Binding !HasFailed}"/>
+                    <TextBlock Classes="failed" Text="!" IsVisible="{Binding HasFailed}"/>
+                    <TextBlock Classes="title" Text="{Binding Title}"/>
+                    <TextBlock Text="{Binding StatusText}"/>
+                    <TextBlock Classes="link" Text="Details"/>
+                </StackPanel>
+            </Button>
+
+            <Button Classes="icon close"
+                    Content="✕"
+                    IsVisible="{Binding IsRunning}"
+                    Command="{Binding CancelCommand}"
+                    ToolTip.Tip="Cancel"/>
+            <Button Classes="icon close"
+                    Content="✕"
+                    IsVisible="{Binding IsFinished}"
+                    Command="{Binding DismissCommand}"
+                    ToolTip.Tip="Dismiss"/>
+        </StackPanel>
+    </Border>
+</UserControl>

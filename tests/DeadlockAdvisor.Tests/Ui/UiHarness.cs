@@ -22,7 +22,8 @@ public sealed class UiHarness : IDisposable
     private readonly TempDirectory _root = new();
     private readonly ServiceProvider _services;
 
-    public UiHarness(Action<FakeSettingsService>? configure = null)
+    /// <param name="overrides">Registered last, to stand in for the app's own services.</param>
+    public UiHarness(Action<FakeSettingsService>? configure = null, Action<IServiceCollection>? overrides = null)
     {
         Directory.CreateDirectory(Path.Combine(_root.Path, "data"));
         foreach (var file in Directory.GetFiles(Golden.DataDir))
@@ -38,6 +39,7 @@ public sealed class UiHarness : IDisposable
         services.AddSingleton<ILoggingService>(new FakeLoggingService());
         services.AddSingleton<IDeadlockApi>(Api);
         services.AddSingleton<IScreenCaptureService>(Capture);
+        overrides?.Invoke(services);
         _services = services.BuildServiceProvider();
 
         Data = _services.GetRequiredService<IDataService>();

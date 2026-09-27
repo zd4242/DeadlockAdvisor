@@ -6,6 +6,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Scoring;
@@ -68,6 +69,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly INotificationService _notifications;
     private readonly IModalService _modals;
     private readonly IArtService _art;
+    private bool _closeConfirmed;
 
     public MainWindowViewModel(
         NotificationOverlayViewModel notificationOverlay,
@@ -189,6 +191,34 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>Write pending edits before the window closes.</summary>
     public void OnClosing() => _data.FlushSaves();
+
+    /// <summary>
+    /// True to keep the window open and ask first, because closing would stop a download part-way.
+    /// Quitting from that question closes it for good.
+    /// </summary>
+    public bool HoldCloseForJobs()
+    {
+        if (_closeConfirmed || _modals.IsModalOpen || !DataMenu.HasRunningJobs)
+            return false;
+
+        var running = DataMenu.Jobs.Where(job => job.IsRunning).Select(job => $"  • {job.Title}: {job.StatusText}");
+        _modals.ShowModal(new ConfirmationModalViewModel
+        {
+            Prompt = "Still downloading:\n" + string.Join("\n", running)
+                     + "\n\nQuit anyway? Match stats stopped part-way keep nothing; art that has arrived is kept.",
+            ConfirmText = "Quit",
+            CancelText = "Keep downloading",
+            ConfirmCommand = ReactiveCommand.Create(() =>
+            {
+                _closeConfirmed = true;
+                _modals.CloseModal();
+                DataMenu.CancelJobs();
+                RequestViewAction(CloseAction);
+            }),
+            CancelCommand = ReactiveCommand.Create(_modals.CloseModal),
+        });
+        return true;
+    }
 
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 
