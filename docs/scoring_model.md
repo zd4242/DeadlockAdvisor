@@ -17,8 +17,10 @@ weight(item, hero, relation) = Σ over traits of
 
 coefficient  = trait_weight[trait, relation] × (typed + from_stats)
 baseline     = average of hero_score[·, trait] over the profiled heroes
-score(item)  = Σ weight over enemies (against) + allies (with) + you (as)
+score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) + you (as)
 ```
+
+`factor` is 1 unless the scores lean on net worth (see "Net worth" below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
@@ -37,8 +39,9 @@ Where this lives in the code:
 |---|---|
 | Baselines | `DataStore.TraitBaselines()`, computed on demand, never cached, because `SetHeroScore` doesn't trigger a rebuild |
 | Weight matrix | `ItemScoring.BuildWeightMatrix` |
-| One line-up's score | `ItemScoring.Total`, shared by the results lists, `DataOnlyPicks` and the model health simulation |
-| Per-hero, per-trait explanation | `ItemScoring.Contribution` → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
+| One line-up's score | `ItemScoring.Total` over a `LineUp`, shared by the results lists, `DataOnlyPicks` and the model health simulation |
+| Net worth factors | `NetWorthWeights.For(match)`; `NetWorthWeights.None` when the toggle is off |
+| Per-hero, per-trait explanation | `ItemScoring.Contribution` → `HeroContribution` (with `NetWorth`, `Factor`) → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
 | Displayed arithmetic | `ExplainText.Arithmetic` / `ExplainText.Deviation` show "(80 − 61 avg) × 3"; `FormulaText.Arithmetic` reuses them |
 | User-facing explanation | `MainWindowViewModel.HowScoringWorks` (Help menu) |
 
@@ -70,6 +73,38 @@ top 3 in some match.
 - **Correlations with match data don't change.** Subtracting a baseline shifts
   each item's weights by a constant, so the Pearson r values in the model health
   report compare directly with values from before the change.
+
+## Net worth
+
+Detect reads each hero's net worth off the game's top bar (`Vision/NetWorthReader.cs`)
+into `MatchState.NetWorth`. With the Match tab's "By net worth" toggle on
+(`AppSettings.ResultsByNetWorth`, on by default), each hero's whole term in a
+score is multiplied by
+
+```
+factor(hero) = clamp(1 + Strength × (souls / average − 1), 1 − MaxShift, 1 + MaxShift)
+Strength = 0.5, MaxShift = 0.3
+```
+
+A hero at 1.5× the average counts ×1.25; the effect stops at ±30%.
+
+- **The average** is over the match's heroes in the same reading as the hero's
+  latest value. A reading drops a side whose pills didn't add up to its total,
+  so a hero's latest value can be older than another's. Comparing across
+  readings would make whoever was read last look ahead.
+- **No reading, or an average under 500 souls** (everyone still on their
+  starting 600): factor 1.
+- **Why it multiplies instead of adding.** It reweights the heroes; it isn't a
+  bonus of its own. A counter to a fed enemy gains, and an item that is poor
+  against that enemy loses by the same proportion. Factors average about 1
+  across the lobby, so the "no flat bonuses" rule above still holds.
+- **The match-data lifts** (`DataScores`, `DataParts`) are never weighted. They
+  stay a separate second opinion.
+- **The model health report** simulates line-ups with no net worth
+  (`NetWorthWeights.None`), so it measures the hand model alone.
+- The explain panel shows "×1.18 · 25k vs 19k avg" on a hero whose factor isn't
+  1 (`ExplainText.NetWorth`), and that hero's amount includes the factor. Their
+  trait lines stay unweighted.
 
 ## Where coefficients come from
 

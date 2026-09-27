@@ -34,6 +34,8 @@ public partial class MatchBoardView : ReactiveUserControl<MatchBoardViewModel>
 
     public void FocusSearch()
     {
+        // Opening the picker has only just made the box visible, and it can't take focus until it's laid out.
+        UpdateLayout();
         SearchBox.Focus();
         SearchBox.SelectAll();
     }
@@ -54,6 +56,11 @@ public partial class MatchBoardView : ReactiveUserControl<MatchBoardViewModel>
                 break;
             case Key.Up:
                 ViewModel.MoveHighlight(-1);
+                e.Handled = true;
+                break;
+            // With text in the box, Escape clears it first.
+            case Key.Escape when string.IsNullOrEmpty(SearchBox.Text):
+                ViewModel.IsPickerOpen = false;
                 e.Handled = true;
                 break;
         }

@@ -38,7 +38,9 @@ public class MatchBoardTests
     [Fact]
     public void AnEmptyAllySlotPicksYouUntilYoureSet()
     {
+        Assert.False(_board.IsPickerOpen);
         _board.EmptySlotClicked(Role.Ally);
+        Assert.True(_board.IsPickerOpen);
         Assert.Equal(Role.Self, _board.Mode);
 
         _board.SetRole("wraith", Role.Self);

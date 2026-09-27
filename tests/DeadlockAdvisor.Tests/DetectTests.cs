@@ -4,6 +4,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Detect;
+using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
@@ -98,6 +99,38 @@ public sealed class DetectTests : IDisposable
 
         // Saved with the match, so reopening keeps it.
         Assert.Equal(souls, _band2Heroes.Select(hero => _fixture.Settings.Current.LastMatch!.NetWorth.Single().Souls[hero]));
+    }
+
+    [AvaloniaFact]
+    public async Task ScoresLeanOnTheNetWorthReadUnlessToggledOff()
+    {
+        await (await DetectAsync()).ApplyCommand.Execute();
+        _page.ResultsTab = 1;
+        _page.FullResults.Select(_page.FullResults.Entries.OfType<ResultRowViewModel>().First());
+
+        // 184k over twelve heroes averages 15.3k.
+        var weighted = _page.Explain.Contributions.Where(card => card.NetWorthText is not null).ToList();
+        Assert.NotEmpty(weighted);
+        Assert.All(weighted, card => Assert.Matches(@"^×\d\.\d\d · \d+k vs 15k avg$", card.NetWorthText!));
+
+        _page.ByNetWorth = false;
+
+        Assert.All(_page.Explain.Contributions, card => Assert.Null(card.NetWorthText));
+        Assert.False(_fixture.Settings.Current.ResultsByNetWorth);
+    }
+
+    [Fact]
+    public void CapturesNetWorthWasNotReadOffAreKeptUpToALimit()
+    {
+        var start = new DateTimeOffset(2026, 9, 26, 20, 0, 0, TimeSpan.Zero);
+        for (var i = 0; i < NetWorthCaptures.Keep + 3; i++)
+            Assert.NotNull(NetWorthCaptures.Save(_fixture.Data.DataRoot, new RgbImage(4, 4), start.AddSeconds(i), $"read {i}"));
+
+        var folder = Path.Combine(_fixture.Data.DataRoot, NetWorthCaptures.FolderName);
+        var kept = Directory.GetFiles(folder, "*.png").Order(StringComparer.Ordinal).ToList();
+        Assert.Equal(NetWorthCaptures.Keep, kept.Count);
+        Assert.Equal("read 3", File.ReadAllText(Path.ChangeExtension(kept[0], ".txt")).Trim());
+        Assert.Equal(NetWorthCaptures.Keep, Directory.GetFiles(folder, "*.txt").Length);
     }
 
     [AvaloniaFact]

@@ -86,6 +86,12 @@ public class DetectAction
                              : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, "
                                + NetWorthLog(netWorth))
                          + $", {clock.ElapsedMilliseconds} ms");
+        if (detection is not null && !(netWorth.Agrees(0) && netWorth.Agrees(1)))
+        {
+            var note = $"{NetWorthLog(netWorth)}\ngrid: {detection.Geometry.ToJson().ToJsonString()}";
+            if (await Task.Run(() => NetWorthCaptures.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)
+                _log.Information($"Detect: kept the capture net worth wasn't fully read off, in {path}");
+        }
         if (detection is null)
         {
             _modals.ShowMessage("Nothing found",
@@ -120,7 +126,8 @@ public class DetectAction
             var pills = reading.Pills.Skip(side * Layout.PerTeam).Take(Layout.PerTeam)
                 .Select(souls => souls is { } value ? Format.Compact(value) : "?");
             var total = reading.Totals[side] is { } value ? Format.Compact(value) : "?";
-            return $"{string.Join(" ", pills)} = {total}{(reading.Agrees(side) ? "" : " (doesn't add up)")}";
+            var verdict = reading.Agrees(side) ? "" : reading.Plausible(side) ? " (partly read, kept)" : " (doesn't add up, dropped)";
+            return $"{string.Join(" ", pills)} = {total}{verdict}";
         }
 
         return $"net worth {Side(0)} | {Side(1)}";

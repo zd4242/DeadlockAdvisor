@@ -4,6 +4,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
 
@@ -33,6 +34,7 @@ public class MatchPageTests
         ui.ViewModel.Match.Match.NetWorth.Add(new NetWorthSnapshot(at, souls.ToDictionary(entry => entry.Key, entry => entry.Value - 3_000)));
         ui.ViewModel.Match.Match.NetWorth.Add(new NetWorthSnapshot(at.AddMinutes(2), souls));
         board.Refresh();
+        ui.ViewModel.Match.Refresh();
     }
 
     [AvaloniaTheory]
@@ -68,14 +70,27 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
+    public void TheHeroPickerRendersOpen()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        ui.ViewModel.Match.FocusSearch();
+        ui.Screenshot("match_picker.png");
+        Assert.True(Picker(ui).IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
     public void TypingAHeroAndPressingEnterAssignsIt()
     {
         using var ui = new UiHarness();
         ui.Show();
         var match = ui.ViewModel.Match;
+        Assert.False(Picker(ui).IsEffectivelyVisible);
 
         match.FocusSearch();
         UiHarness.Settle();
+        Assert.True(Picker(ui).IsEffectivelyVisible);
         ui.Window.KeyTextInput("haz");
         UiHarness.Settle();
         Assert.Equal("haz", match.Board.SearchText);
@@ -87,6 +102,40 @@ public class MatchPageTests
         Assert.Equal("", match.Board.SearchText);
         Assert.Equal(["haze"], ui.Settings.Current.LastMatch!.Roles.Keys);
     }
+
+    [AvaloniaFact]
+    public void EscapeClearsTheSearchAndThenClosesThePicker()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Digit2, RawInputModifiers.Alt);
+        UiHarness.Settle();
+        Assert.True(Picker(ui).IsEffectivelyVisible);
+        Assert.Equal(Role.Ally, board.Mode);
+        ui.Window.KeyTextInput("haz");
+        UiHarness.Settle();
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal("", board.SearchText);
+        Assert.True(board.IsPickerOpen);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.False(Picker(ui).IsEffectivelyVisible);
+
+        // Typing no longer reaches the hidden search box.
+        ui.Window.KeyTextInput("haz");
+        ui.Window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal("", board.SearchText);
+        Assert.Empty(ui.ViewModel.Match.Match.OwnTeam);
+    }
+
+    private static MatchBoardView Picker(UiHarness ui) =>
+        ui.Window.MatchPage.GetVisualDescendants().OfType<MatchBoardView>().Single();
 
     [AvaloniaFact]
     public async Task HoveringAnItemIconShowsItsCardAfterTheDelay()

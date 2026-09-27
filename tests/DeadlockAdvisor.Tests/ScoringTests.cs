@@ -143,6 +143,60 @@ public class ScoringTests
         Assert.Equal(["heavy_spirit"], contributions.Select(c => c.HeroId));
     }
 
+    [Theory]
+    [InlineData(15_000, 10_000, 1.25)] // 1 + 0.5 × (1.5 − 1)
+    [InlineData(5_000, 10_000, 0.75)]
+    [InlineData(30_000, 10_000, 1.3)] // capped at ±30%
+    [InlineData(0, 10_000, 0.7)]
+    [InlineData(400, 300, 1.0)] // still on starting souls: no lean at all
+    public void TheNetWorthFactorLeansTowardWhoeverIsAheadWithinLimits(int souls, double average, double factor) =>
+        AssertEx.Close(factor, NetWorthWeights.FactorFor(souls, average));
+
+    [Fact]
+    public void EachHeroIsMeasuredAgainstTheirOwnReading()
+    {
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        match.SetRole("generic", Role.Ally);
+        var at = new DateTimeOffset(2026, 9, 26, 20, 0, 0, TimeSpan.Zero);
+        match.NetWorth.Add(new NetWorthSnapshot(at, new Dictionary<string, int> { ["heavy_spirit"] = 3_000, ["low_hp"] = 1_000, ["generic"] = 2_000 }));
+        // The ally side didn't add up this time; someone no longer in the match is ignored.
+        match.NetWorth.Add(new NetWorthSnapshot(at.AddMinutes(2), new Dictionary<string, int> { ["heavy_spirit"] = 6_000, ["low_hp"] = 2_000, ["gone"] = 50_000 }));
+
+        var weights = NetWorthWeights.For(match);
+
+        Assert.Equal(new NetWorthStanding(6_000, 4_000, 1.25), weights.StandingOf("heavy_spirit"));
+        Assert.Equal(new NetWorthStanding(2_000, 4_000, 0.75), weights.StandingOf("low_hp"));
+        // Against the 2,000 average of its own, older reading, not the newer 4,000.
+        Assert.Equal(new NetWorthStanding(2_000, 2_000, 1.0), weights.StandingOf("generic"));
+        Assert.Null(weights.StandingOf("gone"));
+        Assert.Equal(1.0, NetWorthWeights.None.Factor("heavy_spirit"));
+    }
+
+    [Fact]
+    public void NetWorthScalesEachHerosWholeShare()
+    {
+        var store = TestStore.Make();
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        match.NetWorth.Add(new NetWorthSnapshot(DateTimeOffset.UnixEpoch,
+            new Dictionary<string, int> { ["heavy_spirit"] = 15_000, ["low_hp"] = 5_000 }));
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var weights = NetWorthWeights.For(match);
+
+        // A fed heavy_spirit makes Spirit Resist more wanted: 6 × 1.25 − 4 × 0.75, against 6 − 4 without.
+        Assert.Equal(4.5, ItemScoring.FullMatchResults(store, matrix, match, weights)[1][0].Score);
+        Assert.Equal(2.0, ItemScoring.FullMatchResults(store, matrix, match)[1][0].Score);
+
+        var contributions = ItemScoring.ExplainItem(store, match, "spirit_resist_t1", netWorth: weights);
+        Assert.Equal([(7.5, 1.25), (-3.0, 0.75)], contributions.Select(c => (c.Amount, c.Factor)));
+        // The trait lines stay unweighted; the factor applies to the hero's sum.
+        Assert.Equal(6.0, contributions[0].Parts.Sum(p => p.Amount));
+        Assert.Equal(15_000, contributions[0].NetWorth!.Souls);
+    }
+
     [Fact]
     public void TopHeroesForItemRanksByWeight()
     {

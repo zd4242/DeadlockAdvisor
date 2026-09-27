@@ -7,7 +7,8 @@ namespace DeadlockAdvisor.Scoring;
 /// <summary>
 /// Turns the trait-based formulas into item scores for the heroes in a match:
 /// <c>weight(item, hero, relation) = Σ over traits of (hero_score[hero, trait] − roster_average[trait]) × effective_coefficient[item, trait, relation]</c>,
-/// summed over everyone in the match. Measuring each hero against the roster average makes a score
+/// summed over everyone in the match, each hero's weight times their <see cref="NetWorthWeights"/> factor
+/// when scores lean on net worth. Measuring each hero against the roster average makes a score
 /// mean "this match wants the item more than a typical one does": a trait every hero has would
 /// otherwise give its items the same bonus in every match. <see cref="ExplainItem"/> walks the same
 /// arithmetic one item at a time; <see cref="DataScores"/> is the second opinion from real matches,
@@ -46,16 +47,20 @@ public static class ItemScoring
         return matrix;
     }
 
-    /// <summary>The match split into (allies, enemies, you), honouring the lane-phase restriction when one is given.</summary>
-    public static (List<string> Allies, List<string> Enemies, string? Self) RelevantHeroes(
-        MatchState match, IReadOnlyCollection<string>? restrictTo)
+    /// <summary>
+    /// The match's line-up, honouring the lane-phase restriction when one is given; without
+    /// <paramref name="netWorth"/> every hero counts the same.
+    /// </summary>
+    public static LineUp RelevantHeroes(
+        MatchState match, IReadOnlyCollection<string>? restrictTo, NetWorthWeights? netWorth = null)
     {
+        netWorth ??= NetWorthWeights.None;
         if (restrictTo is null)
-            return (match.Allies, match.Enemies, match.SelfHero);
+            return new LineUp(match.Allies, match.Enemies, match.SelfHero, netWorth);
 
         var allowed = restrictTo.ToHashSet();
         var self = match.SelfHero is { } hero && allowed.Contains(hero) ? hero : null;
-        return (match.Allies.Where(allowed.Contains).ToList(), match.Enemies.Where(allowed.Contains).ToList(), self);
+        return new LineUp(match.Allies.Where(allowed.Contains).ToList(), match.Enemies.Where(allowed.Contains).ToList(), self, netWorth);
     }
 
     /// <summary>
@@ -63,29 +68,30 @@ public static class ItemScoring
     /// Tiers map to that tier's items, highest score first; only tiers with an item above 0 appear.
     /// </summary>
     public static OrderedDictionary<int, List<ScoredItem>> LanePhaseResults(
-        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match) =>
-        ScoreItems(store, matrix, match, LaneTiers, match.LaneHeroes);
+        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
+        ScoreItems(store, matrix, match, LaneTiers, match.LaneHeroes, netWorth);
 
     /// <summary>Everyone currently selected, all four tiers.</summary>
     public static OrderedDictionary<int, List<ScoredItem>> FullMatchResults(
-        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match) =>
-        ScoreItems(store, matrix, match, FullTiers, null);
+        DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
+        ScoreItems(store, matrix, match, FullTiers, null, netWorth);
 
     private static OrderedDictionary<int, List<ScoredItem>> ScoreItems(
         DataStore store,
         IReadOnlyDictionary<MatrixKey, double> matrix,
         MatchState match,
         IReadOnlyList<int> tiers,
-        IReadOnlyCollection<string>? restrictTo)
+        IReadOnlyCollection<string>? restrictTo,
+        NetWorthWeights? netWorth)
     {
-        var (allies, enemies, self) = RelevantHeroes(match, restrictTo);
+        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
 
         var grouped = new OrderedDictionary<int, List<ScoredItem>>();
         foreach (var (itemId, item) in store.Items)
         {
             if (!tiers.Contains(item.Tier))
                 continue;
-            var total = Total(matrix, itemId, allies, enemies, self);
+            var total = Total(matrix, itemId, lineUp);
 
             // Only items actually worth buying.
             if (!(total > 0))
@@ -109,18 +115,15 @@ public static class ItemScoring
         return grouped;
     }
 
-    /// <summary>One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for you.</summary>
-    public static double Total(
-        IReadOnlyDictionary<MatrixKey, double> matrix, string itemId,
-        IEnumerable<string> allies, IEnumerable<string> enemies, string? self)
+    /// <summary>
+    /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
+    /// you, each hero's weight times their net worth factor.
+    /// </summary>
+    public static double Total(IReadOnlyDictionary<MatrixKey, double> matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
-        foreach (var heroId in enemies)
-            total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.Against));
-        foreach (var heroId in allies)
-            total += matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, Relation.With));
-        if (self is not null)
-            total += matrix.GetValueOrDefault(new MatrixKey(itemId, self, Relation.As));
+        foreach (var (heroId, relation) in lineUp.Members())
+            total += lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
         return total;
     }
 
@@ -131,18 +134,13 @@ public static class ItemScoring
     /// from the store because the per-trait detail isn't kept in the matrix.
     /// </summary>
     public static List<HeroContribution> ExplainItem(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null)
+        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null,
+        NetWorthWeights? netWorth = null)
     {
-        var (allies, enemies, self) = RelevantHeroes(match, restrictTo);
-        var targets = enemies.Select(hero => (hero, Relation.Against))
-            .Concat(allies.Select(hero => (hero, Relation.With)))
-            .ToList();
-        if (self is not null)
-            targets.Add((self, Relation.As));
-
+        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
         var baselines = store.TraitBaselines();
-        return targets
-            .Select(target => Contribution(store, baselines, itemId, target.hero, target.Item2))
+        return lineUp.Members()
+            .Select(member => Contribution(store, baselines, itemId, member.HeroId, member.Relation, lineUp.NetWorth.StandingOf(member.HeroId)))
             .OfType<HeroContribution>()
             .OrderBy(contribution => -contribution.Amount)
             .ToList();
@@ -169,7 +167,8 @@ public static class ItemScoring
     /// touches the hero, or the hero isn't profiled yet.
     /// </summary>
     private static HeroContribution? Contribution(
-        DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation)
+        DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation,
+        NetWorthStanding? netWorth = null)
     {
         if (!store.IsProfiled(heroId))
             return null;
@@ -197,7 +196,7 @@ public static class ItemScoring
         foreach (var part in parts)
             amount += part.Amount;
         var heroName = store.Heroes.TryGetValue(heroId, out var hero) ? hero.HeroName : heroId;
-        return new HeroContribution(heroId, heroName, relation, amount, parts);
+        return new HeroContribution(heroId, heroName, relation, (netWorth?.Factor ?? 1.0) * amount, parts, netWorth);
     }
 
     // -- the match-data second opinion ------------------------------------------
@@ -213,16 +212,12 @@ public static class ItemScoring
         if (store.MatchLift.Count == 0)
             return [];
 
-        var (_, enemies, self) = RelevantHeroes(match, restrictTo);
         var scope = restrictTo is null ? "full" : "lane";
-        var targets = enemies.Select(hero => (hero, Relation.Against.Key())).ToList();
-        if (self is not null)
-            targets.Add((self, Relation.As.Key()));
-
         var found = new List<MatchLift>();
-        foreach (var (heroId, relation) in targets)
+        foreach (var (heroId, relation) in RelevantHeroes(match, restrictTo).Members())
         {
-            if (store.MatchLift.TryGetValue(new MatchLiftKey(itemId, heroId, relation, scope), out var lift))
+            if (relation != Relation.With
+                && store.MatchLift.TryGetValue(new MatchLiftKey(itemId, heroId, relation.Key(), scope), out var lift))
                 found.Add(lift);
         }
         return found;
@@ -253,8 +248,10 @@ public static class ItemScoring
         MatchState match,
         IReadOnlyList<int> tiers,
         IReadOnlyCollection<string>? restrictTo = null,
+        NetWorthWeights? netWorth = null,
         int limit = 6)
     {
+        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
         var picks = new List<(double Margin, ScoredItem Item)>();
         foreach (var (itemId, item) in store.Items)
         {
@@ -264,8 +261,7 @@ public static class ItemScoring
             var margin = Math.Max(data.GetValueOrDefault("against") / PickMinAgainst, data.GetValueOrDefault("as") / PickMinAs);
             if (margin < 1)
                 continue;
-            var (allies, enemies, self) = RelevantHeroes(match, restrictTo);
-            var score = Total(matrix, itemId, allies, enemies, self);
+            var score = Total(matrix, itemId, lineUp);
             if (score > 0)
                 continue;
             picks.Add((margin, new ScoredItem(itemId, item.ItemName, item.Tier, score, item.Category, data)));

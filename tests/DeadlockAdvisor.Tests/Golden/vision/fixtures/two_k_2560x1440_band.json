@@ -1,0 +1,28 @@
+{
+  "notes": [
+    "The same match as laning_2560x1440_band, at 3:51, off a paused video of it.",
+    "It arrived as a screenshot with this app below the game; the top 240 rows",
+    "line up with the laning capture's HUD at x=303, y=0 and are pasted there on",
+    "a black band of the real size.",
+    "",
+    "It pins '2.1': the game sets the decimal point hard against a following 1,",
+    "with no gap between them, which read as one glyph (a 3) or hid the dot",
+    "until a run's leading dot-shaped columns were cut off it."
+  ],
+  "screen_height": 1440,
+  "allow_wrong": 0,
+  "net_worth": ["2.4", "2.2", "2.7", "2.9", "2.1", "2.5", "2.1", "2.4", "2.4", "2.8", "2.6", "2.2"],
+  "team_totals": ["14", "14"],
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "5": "vyper",
+    "6": "kelvin",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

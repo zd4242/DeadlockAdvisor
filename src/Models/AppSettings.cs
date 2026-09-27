@@ -20,6 +20,7 @@ public class AppSettings
     public SavedMatch? LastMatch { get; set; }
     public int ResultsMinPercent { get; set; } = 40;
     public bool ResultsByTier { get; set; }
+    public bool ResultsByNetWorth { get; set; } = true;
 
     // Item Formulas tab
     public double? ByItemSplitterPosition { get; set; }

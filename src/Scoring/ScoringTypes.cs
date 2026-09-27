@@ -38,9 +38,30 @@ public sealed record TraitPart(
 }
 
 /// <summary>One hero's share of an item's score, trait by trait.</summary>
+/// <param name="Amount">The traits' sum times the hero's net worth factor.</param>
+/// <param name="NetWorth">Where the hero stood, when their net worth weighted the score.</param>
 public sealed record HeroContribution(
     string HeroId,
     string HeroName,
     Relation Relation,
     double Amount,
-    IReadOnlyList<TraitPart> Parts);
+    IReadOnlyList<TraitPart> Parts,
+    NetWorthStanding? NetWorth = null)
+{
+    public double Factor => NetWorth?.Factor ?? 1.0;
+}
+
+/// <summary>The heroes one score is summed over, each with the relation they're counted on and their net worth factor.</summary>
+public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> Enemies, string? Self, NetWorthWeights NetWorth)
+{
+    /// <summary>Enemies, then allies, then you.</summary>
+    public IEnumerable<(string HeroId, Relation Relation)> Members()
+    {
+        foreach (var heroId in Enemies)
+            yield return (heroId, Relation.Against);
+        foreach (var heroId in Allies)
+            yield return (heroId, Relation.With);
+        if (Self is not null)
+            yield return (Self, Relation.As);
+    }
+}

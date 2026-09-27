@@ -13,16 +13,17 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Board;
 
 /// <summary>
-/// Who's in the match. Click-to-assign: pick what you're assigning (Enemy / Ally / You), then click
-/// heroes in the palette; clicking a hero who already has that role clears them. The fast path is
+/// Who's in the match. Detection normally fills it; the hero picker, hidden until opened, sets or
+/// corrects it by hand. Click-to-assign: pick what you're assigning (Enemy / Ally / You), then click
+/// heroes in the picker; clicking a hero who already has that role clears them. The fast path is
 /// the keyboard: the search box keeps focus, so "hay" Enter puts Haze on the current side and
 /// clears the field for the next name.
 /// </summary>
 public class MatchBoardViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
-    public const string RosterHint = "Click a portrait to toggle lane · × removes · an empty slot picks that team";
-    public const string NoSelfHint = "You're not set yet -- double click your hero below, or click an empty ally slot";
+    public const string RosterHint = "Click a portrait to toggle lane · × removes · an empty slot adds to that team";
+    public const string NoSelfHint = "You're not set yet -- detect the match, or click an empty ally slot to pick your hero";
 
     public static readonly IReadOnlyList<Role> ModeOrder = [Role.Enemy, Role.Ally, Role.Self];
 
@@ -53,6 +54,10 @@ public class MatchBoardViewModel : ViewModelBase
             .Skip(1)
             .Subscribe(ApplyFilter)
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.IsPickerOpen)
+            .Where(open => !open)
+            .Subscribe(_ => SearchText = "")
+            .DisposeWith(Disposables);
 
         BuildTiles();
         SetMode(Role.Enemy);
@@ -68,6 +73,9 @@ public class MatchBoardViewModel : ViewModelBase
     public bool IsEnemyMode => Mode == Role.Enemy;
     public bool IsAllyMode => Mode == Role.Ally;
     public bool IsSelfMode => Mode == Role.Self;
+
+    /// <summary>Whether the hero picker is showing. It starts hidden, on the assumption detection gets the match right.</summary>
+    [Reactive] public bool IsPickerOpen { get; set; }
 
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";
@@ -110,6 +118,20 @@ public class MatchBoardViewModel : ViewModelBase
             Role.Ally => "Type an ally hero, then press Enter",
             _ => "Type your own hero, then press Enter",
         };
+    }
+
+    /// <summary>Show the picker with its search box focused, ready for a name.</summary>
+    public void OpenPicker()
+    {
+        IsPickerOpen = true;
+        RequestViewAction(FocusSearchAction);
+    }
+
+    /// <summary>Open the picker aimed at <paramref name="role"/>, as Alt+1/2/3 and the empty slots do.</summary>
+    public void StartAssigning(Role role)
+    {
+        SetMode(role);
+        OpenPicker();
     }
 
     /// <summary>Rebuild the palette for a reloaded store: heroes may have been added or renamed.</summary>
@@ -158,14 +180,10 @@ public class MatchBoardViewModel : ViewModelBase
     public bool HasHero(string heroId) => _store().Heroes.ContainsKey(heroId);
 
     /// <summary>
-    /// An empty slot on the match bar was clicked: aim the palette at that team. An empty ally slot
-    /// means "You" until you're set.
+    /// An empty slot on the match bar was clicked: open the picker aimed at that team. An empty ally
+    /// slot means "You" until you're set.
     /// </summary>
-    public void EmptySlotClicked(Role team)
-    {
-        SetMode(team == Role.Ally && _match.SelfHero is null ? Role.Self : team);
-        RequestViewAction(FocusSearchAction);
-    }
+    public void EmptySlotClicked(Role team) => StartAssigning(team == Role.Ally && _match.SelfHero is null ? Role.Self : team);
 
     // -- search / keyboard flow -------------------------------------------------
 

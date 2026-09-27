@@ -32,15 +32,18 @@ dotnet test                                         # everything, including the 
 
 **Match** — who you're playing against, and what to buy.
 
-Pick what you're assigning with the Enemy / Ally / You buttons (or
-Alt+1/2/3), then click heroes in the palette. Clicking a hero who already
-has that role clears them; double-click sets You; right-click opens the
-role menu. The search box keeps focus, so `hay` <kbd>Enter</kbd> drops
-Haze onto the current side and clears the field for the next name
-(<kbd>Up</kbd>/<kbd>Down</kbd> move the highlight).
-
-Or press <kbd>F9</kbd> and let it read the whole match off the screen:
+Press <kbd>F9</kbd> and let it read the whole match off the screen:
 see **Detecting the match from the screen** below.
+
+To set or correct heroes by hand, open the hero picker with **Edit heroes**
+(or <kbd>Ctrl</kbd>+<kbd>F</kbd>, Alt+1/2/3, or a click on an empty slot in
+the match bar). Pick what you're assigning with the Enemy / Ally / You
+buttons (or Alt+1/2/3), then click heroes. Clicking a hero who already has
+that role clears them; double-click sets You; right-click opens the role
+menu. The search box keeps focus, so `hay` <kbd>Enter</kbd> drops Haze onto
+the current side and clears the field for the next name
+(<kbd>Up</kbd>/<kbd>Down</kbd> move the highlight). <kbd>Esc</kbd> clears
+the search, then closes the picker.
 
 Click a portrait in the roster to toggle it in or out of your lane.
 **Lane Phase** scores only yourself plus the heroes in your lane (normally

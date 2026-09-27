@@ -16,7 +16,9 @@ public sealed record ContributionCard(
     string RelationText,
     Color RelationColor,
     string AmountText,
-    IReadOnlyList<TraitLine> Traits);
+    IReadOnlyList<TraitLine> Traits,
+    string? NetWorthText = null,
+    string? NetWorthTip = null);
 
 public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, string Share);
 
@@ -56,7 +58,7 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public bool HasPicks { get; private set; }
 
     public void ShowItem(DataStore store, MatchState match, string? itemId, IReadOnlyCollection<string>? restrictTo,
-        IReadOnlyList<ScoredItem> picks, double now)
+        IReadOnlyList<ScoredItem> picks, double now, NetWorthWeights? netWorth = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -64,7 +66,7 @@ public class ExplainViewModel : ViewModelBase
             return;
         }
 
-        var contributions = ItemScoring.ExplainItem(store, match, itemId, restrictTo);
+        var contributions = ItemScoring.ExplainItem(store, match, itemId, restrictTo, netWorth);
         var total = 0.0;
         foreach (var contribution in contributions)
             total += contribution.Amount;
@@ -102,13 +104,15 @@ public class ExplainViewModel : ViewModelBase
         contribution.HeroName,
         ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
         Palette.RelationColor(contribution.Relation),
-        Format.Signed(contribution.Amount),
+        Format.Signed(Services.Formats.NumberFormat.Round(contribution.Amount, 2)),
         contribution.Parts.Select(part => new TraitLine(
             part.CategoryName,
             ExplainText.CoefficientSource(part),
             ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
             ExplainText.Arithmetic(part),
-            ExplainText.Share(part))).ToList());
+            ExplainText.Share(part))).ToList(),
+        ExplainText.NetWorth(contribution.NetWorth),
+        contribution.NetWorth is { Factor: not 1.0 } standing ? ExplainText.NetWorthTooltip(standing) : null);
 
     /// <summary>One line per hero with match data for this item, then where the numbers come from.</summary>
     private static MatchDataCard DataCard(DataStore store, IReadOnlyList<MatchLift> parts, double now)

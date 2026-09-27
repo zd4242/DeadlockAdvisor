@@ -167,13 +167,12 @@ public static class ModelHealth
                 var j = random.Next(i, pool.Length);
                 (pool[i], pool[j]) = (pool[j], pool[i]);
             }
-            var self = pool[0];
-            var allies = pool[1..6];
-            var enemies = pool[6..MatchSize];
+            // Random line-ups have no net worth: the report measures the hand model alone.
+            var lineUp = new LineUp(pool[1..6], pool[6..MatchSize], pool[0], NetWorthWeights.None);
 
             for (var i = 0; i < items.Count; i++)
             {
-                scores[i] = ItemScoring.Total(matrix, items[i].ItemId, allies, enemies, self);
+                scores[i] = ItemScoring.Total(matrix, items[i].ItemId, lineUp);
                 if (scores[i] > 0)
                     shown[i]++;
             }

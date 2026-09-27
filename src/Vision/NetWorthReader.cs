@@ -34,7 +34,7 @@ public static partial class NetWorthReader
     private const double _pillHalfWidth = 0.165;
     private const double _pillEdgeSearch = 0.3;
     private const double _pillMinWidth = 0.28;
-    private const double _pillMaxWidth = 0.44;
+    private const double _pillMaxWidth = 0.52;
     private const double _pillInkHalfHeight = 0.07;
     private const double _totalsAboveLine = 0.525;
     private const double _totalsHalfHeight = 0.15;
@@ -139,8 +139,27 @@ public static partial class NetWorthReader
         var bottom = (int)Math.Round(line + _pillInkHalfHeight * pitch);
         if (top < 0 || bottom > band.Height || right - 1 - (left + 2) < 4)
             return null;
-        return Ink(Luminance(band, left + 2, top, right - 1, bottom)) is { } ink ? PillTokens(ink) : null;
+
+        // An edge found inside the pill cuts a digit, which shows as bold ink on the window's own
+        // border: your slot's backplate, the pill's colour, hides the pill's edge on that side. Move
+        // such an edge out until the border is clear.
+        var (x0, x1) = (left + 2, right - 1);
+        var (limitLeft, limitRight) = (Math.Max(0, (int)Math.Round(center - _pillMaxWidth * pitch / 2)),
+            Math.Min(band.Width, (int)Math.Round(center + _pillMaxWidth * pitch / 2)));
+        while (true)
+        {
+            if (Ink(Luminance(band, x0, top, x1, bottom)) is not { } ink)
+                return null;
+            var cutLeft = x0 > limitLeft && ColumnPeak(ink, 0) >= _strongInk;
+            var cutRight = x1 < limitRight && ColumnPeak(ink, ink.Width - 1) >= _strongInk;
+            if (!cutLeft && !cutRight)
+                return PillTokens(ink);
+            x0 -= cutLeft ? 1 : 0;
+            x1 += cutRight ? 1 : 0;
+        }
     }
+
+    private static float ColumnPeak(Patch ink, int x) => Enumerable.Range(0, ink.Height).Max(y => ink[x, y]);
 
     /// <summary>
     /// The pill's left and right edges: the strongest pair of colour steps around the slot centre, a
@@ -193,18 +212,31 @@ public static partial class NetWorthReader
 
     /// <summary>
     /// Glyphs are runs of columns with bold ink (the "k" never gets there). Runs a narrow, still-inked
-    /// gap apart are one digit whose thin stroke dipped; a short mark low down is the decimal point.
+    /// gap apart and no wider than a digit together are one digit whose thin stroke dipped; wider, they
+    /// are digits set close enough to touch. The decimal point is the columns inked only
+    /// low down, to the baseline: the game sets it hard against a following 1, with no gap between
+    /// them, so a run that starts with a dot's width of them and leaves only a 1's has the dot cut off. The
+    /// end of a 2's base and the foot of a 3 are inked the same way, but leave a whole digit.
     /// </summary>
     private static Text PillTokens(Patch ink)
     {
-        var (runs, columnPeak) = StrongRuns(ink);
-        if (runs.Count == 0)
+        var (strongRuns, columnPeak) = StrongRuns(ink);
+        if (strongRuns.Count == 0)
             return new Text(ink, [], 0, 0);
-        var extents = runs.Select(run => InkRows(ink, Math.Max(0, run.Start - 1), Math.Min(ink.Width, run.End + 1))).ToList();
-        var top = extents.Min(extent => extent.Top);
-        var bottom = extents.Max(extent => extent.Bottom);
+        var text = strongRuns.Select(run => InkRows(ink, run.Start, run.End)).ToList();
+        var top = text.Min(extent => extent.Top);
+        var bottom = text.Max(extent => extent.Bottom);
         var height = bottom - top;
-        bool DotLike(int i) => extents[i].Top >= top + 0.55 * height && runs[i].End - runs[i].Start <= 0.5 * height;
+
+        bool DotColumn(int x)
+        {
+            var (columnTop, columnBottom) = InkRows(ink, x, x + 1);
+            return columnTop >= top + 0.6 * height && columnBottom >= bottom - Math.Max(1, 0.12 * height);
+        }
+
+        var runs = strongRuns.SelectMany(run => CutLeading(run, DotColumn, 0.12 * height, 0.42 * height)).ToList();
+        var extents = runs.Select(run => InkRows(ink, Math.Max(0, run.Start - 1), Math.Min(ink.Width, run.End + 1))).ToList();
+        bool DotLike(int i) => runs[i].End - runs[i].Start <= 0.5 * height && Enumerable.Range(runs[i].Start, runs[i].End - runs[i].Start).All(DotColumn);
 
         var merged = new List<(int Start, int End, int Top, int Bottom, bool IsDot)>();
         for (var i = 0; i < runs.Count; i++)
@@ -214,7 +246,8 @@ public static partial class NetWorthReader
             {
                 var previous = merged[^1];
                 var gap = runs[i].Start - previous.End;
-                if (gap <= 2 && Enumerable.Range(previous.End, gap).All(x => columnPeak[x] >= _bridgeInk))
+                if (gap <= 2 && OneGlyphWide(runs[i].End - previous.Start + 2, height)
+                    && Enumerable.Range(previous.End, gap).All(x => columnPeak[x] >= _bridgeInk))
                 {
                     merged[^1] = (previous.Start, runs[i].End, Math.Min(previous.Top, extents[i].Top), Math.Max(previous.Bottom, extents[i].Bottom), false);
                     continue;
@@ -230,7 +263,9 @@ public static partial class NetWorthReader
             var x1 = Math.Min(ink.Width, end + 1);
             if (dot)
                 tokens.Add(new Token(x0, x1, true));
-            else if (glyphBottom - glyphTop >= 0.6 * height)
+            // Digits stand the full height; the "k", when a stroke of it is bold enough to get this
+            // far, starts a third of the way down.
+            else if (glyphBottom - glyphTop >= 0.6 * height && glyphTop <= top + 0.2 * height)
                 tokens.AddRange(Split(ink, x0, x1, height));
         }
         return new Text(ink, tokens, top, bottom);
@@ -315,7 +350,7 @@ public static partial class NetWorthReader
     private static IEnumerable<Token> Split(Patch ink, int x0, int x1, int height)
     {
         var width = x1 - x0;
-        var pieces = width > 0.95 * height ? Math.Max(1, (int)Math.Round(width / (0.62 * height))) : 1;
+        var pieces = OneGlyphWide(width, height) ? 1 : Math.Max(1, (int)Math.Round(width / (0.62 * height)));
         if (pieces == 1)
         {
             yield return new Token(x0, x1, false);
@@ -339,6 +374,27 @@ public static partial class NetWorthReader
         cuts.Add(x1);
         for (var i = 0; i < pieces; i++)
             yield return new Token(cuts[i], cuts[i + 1], false);
+    }
+
+    /// <summary>Whether a stretch of columns, padded by one either side, is no wider than a single digit.</summary>
+    private static bool OneGlyphWide(int width, int height) => width <= 0.95 * height;
+
+    /// <summary>
+    /// The run split after its leading columns of one kind, when there are at least
+    /// <paramref name="minLead"/> of them and no more than <paramref name="maxRest"/> follow.
+    /// </summary>
+    private static IEnumerable<(int Start, int End)> CutLeading((int Start, int End) run, Func<int, bool> leading, double minLead, double maxRest)
+    {
+        var cut = run.Start;
+        while (cut < run.End && leading(cut))
+            cut++;
+        if (cut - run.Start < minLead || cut == run.End || run.End - cut > maxRest)
+        {
+            yield return run;
+            yield break;
+        }
+        yield return (run.Start, cut);
+        yield return (cut, run.End);
     }
 
     private static (List<(int Start, int End)> Runs, float[] ColumnPeak) StrongRuns(Patch ink)

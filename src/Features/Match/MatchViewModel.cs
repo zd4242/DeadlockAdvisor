@@ -20,7 +20,10 @@ public sealed record CutoffPreset(string Label, int Percent)
     public override string ToString() => Label;
 }
 
-/// <summary>The Match tab: the board on the left, recommendations on the right, and why the selected one scored what it did.</summary>
+/// <summary>
+/// The Match tab: the match bar, a hero picker that opens under it for fixing the match by hand, and
+/// below them the recommendations beside why the selected one scored what it did.
+/// </summary>
 public class MatchViewModel : ViewModelBase, ISearchablePage
 {
     public const int DefaultCutoffPercent = 40;
@@ -69,6 +72,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
                          ?? CutoffPresets.First(p => p.Percent == DefaultCutoffPercent);
         ByTier = settings.Current.ResultsByTier;
+        ByNetWorth = settings.Current.ResultsByNetWorth;
         ApplyDisplay();
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, () =>
@@ -108,6 +112,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 RefreshExplain();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ByNetWorth)
+            .Skip(1)
+            .Subscribe(_ =>
+            {
+                _settings.Update(s => s.ResultsByNetWorth = ByNetWorth);
+                Refresh();
+            })
+            .DisposeWith(Disposables);
 
         _data.ScoresChanged.Subscribe(_ => Refresh()).DisposeWith(Disposables);
         _data.StoreReplaced.Subscribe(_ => Rebind()).DisposeWith(Disposables);
@@ -131,21 +143,27 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
     [Reactive] public bool ByTier { get; set; }
 
+    /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
+    [Reactive] public bool ByNetWorth { get; set; }
+
     public IReadOnlyList<CutoffPreset> Cutoffs => CutoffPresets;
 
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 
-    public void FocusSearch() => RequestViewAction(MatchBoardViewModel.FocusSearchAction);
+    public void FocusSearch() => Board.OpenPicker();
 
     /// <summary>Rescore both views and the explanation from the current data and match.</summary>
     public void Refresh()
     {
         var store = _data.Store;
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
-        LaneResults.SetResults(ItemScoring.LanePhaseResults(store, _data.Matrix, Match), note);
-        FullResults.SetResults(ItemScoring.FullMatchResults(store, _data.Matrix, Match), note);
+        var netWorth = NetWorth();
+        LaneResults.SetResults(ItemScoring.LanePhaseResults(store, _data.Matrix, Match, netWorth), note);
+        FullResults.SetResults(ItemScoring.FullMatchResults(store, _data.Matrix, Match, netWorth), note);
         RefreshExplain();
     }
+
+    private NetWorthWeights NetWorth() => ByNetWorth ? NetWorthWeights.For(Match) : NetWorthWeights.None;
 
     private void OnMatchChanged()
     {
@@ -180,12 +198,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     {
         var store = _data.Store;
         var restrictTo = laneScoped ? Match.LaneHeroes : null;
+        var netWorth = NetWorth();
         IReadOnlyList<ScoredItem> picks = [];
         if (itemId is null)
         {
             var tiers = laneScoped ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
-            picks = ItemScoring.DataOnlyPicks(store, _data.Matrix, Match, tiers, restrictTo);
+            picks = ItemScoring.DataOnlyPicks(store, _data.Matrix, Match, tiers, restrictTo, netWorth);
         }
-        Explain.ShowItem(store, Match, itemId, restrictTo, picks, _now());
+        Explain.ShowItem(store, Match, itemId, restrictTo, picks, _now(), netWorth);
     }
 }

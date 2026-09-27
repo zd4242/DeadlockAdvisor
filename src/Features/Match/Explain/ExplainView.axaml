@@ -58,6 +58,13 @@
                                                         VerticalAlignment="Center"
                                                         Text="{Binding RelationText}"
                                                         Color="{Binding RelationColor}"/>
+                                        <TextBlock Grid.Column="2"
+                                                   Classes="faintText"
+                                                   Margin="10,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Text="{Binding NetWorthText}"
+                                                   ToolTip.Tip="{Binding NetWorthTip}"/>
                                         <TextBlock Grid.Column="3"
                                                    Text="{Binding AmountText}"
                                                    FontWeight="Bold"

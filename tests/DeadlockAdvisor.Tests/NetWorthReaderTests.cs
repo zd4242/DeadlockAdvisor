@@ -10,7 +10,8 @@ public class NetWorthReaderTests
 {
     public static readonly string[] Labelled =
         ["screen_2560x1440_band", "screen_2560x1440_band_2", "laning_2560x1440_band", "cropped_strip_1769", "starting_souls_2560x1440_band",
-         "souls_under_1k_2560x1440_band"];
+         "souls_under_1k_2560x1440_band", "two_k_2560x1440_band",
+         "eight_min_2560x1440_band", "live_2560x1440_band"];
 
     /// <summary>The fixture's labels, as the game prints them: twelve pills left to right, then the two totals.</summary>
     private static (string[] Pills, string[] Totals) Labels(string fixture)
@@ -106,8 +107,28 @@ public class NetWorthReaderTests
     {
         var pills = Enumerable.Repeat<int?>(20_000, 12).ToList();
         Assert.False(new NetWorthReading(pills, [null, 120_000]).Agrees(0));
+        Assert.False(new NetWorthReading(pills, [null, 120_000]).Plausible(0));
         pills[7] = null;
         Assert.False(new NetWorthReading(pills, [120_000, 120_000]).Agrees(1));
+    }
+
+    /// <summary>
+    /// A pill hidden under an overlay leaves the rest of its side read, as long as those read come to
+    /// no more than the total: 846 843 820 820 824 and a hidden one, against 4k.
+    /// </summary>
+    [Fact]
+    public void ASideWithHiddenPillsKeepsThoseReadWhileTheyFitTheTotal()
+    {
+        int?[] enemies = [846, null, 820, 820, 824, null];
+        var reading = new NetWorthReading([.. Enumerable.Repeat<int?>(700, 6), .. enemies], [4_000, 4_000]);
+
+        Assert.False(reading.Agrees(1));
+        Assert.True(reading.Plausible(1));
+        Assert.Equal(enemies, reading.Souls.Skip(6));
+
+        var overTotal = reading with { Pills = [.. reading.Pills.Take(6), 8_400, .. enemies.Skip(1)] };
+        Assert.False(overTotal.Plausible(1));
+        Assert.All(overTotal.Souls.Skip(6), souls => Assert.Null(souls));
     }
 
     [Theory]

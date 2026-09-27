@@ -1,0 +1,27 @@
+{
+  "notes": [
+    "A band exactly as Detect captured it (kept by NetWorthCaptures when its read",
+    "didn't add up): the same match as laning_2560x1440_band at 8:36, off a",
+    "video playing full screen.",
+    "",
+    "It pins the pill edges. You're Ivy in slot 1, and your amber backplate sits",
+    "right behind your amber pill, so the pill's left edge barely shows and was",
+    "found inside it, cutting 4.8 to 1.8; and 6.4k's pill, at 0.45 of a pitch, was",
+    "wider than the width allowed then, so a wrong right edge cut the 4. Slot 5",
+    "has a CRITICAL damage number across its portrait."
+  ],
+  "screen_height": 1440,
+  "allow_wrong": 0,
+  "net_worth": ["5.0", "4.8", "7.6", "5.9", "5.6", "5.3", "4.9", "6.5", "5.7", "6.4", "5.8", "7.2"],
+  "team_totals": ["34", "36"],
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

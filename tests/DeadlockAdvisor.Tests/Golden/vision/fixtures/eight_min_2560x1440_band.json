@@ -1,0 +1,28 @@
+{
+  "notes": [
+    "The same match as laning_2560x1440_band, at 8:01, off a paused video of it.",
+    "It arrived as a screenshot with this app below the game; the top 295 rows",
+    "line up with the laning capture's HUD at x=400, y=0 and are pasted there on",
+    "a black band of the real size.",
+    "",
+    "It pins a brighter 'k': on 5.6 one stroke of it is bold enough to pass for",
+    "ink, and read as a trailing 1 until a digit had to reach the top of the text.",
+    "Slot 0 also has a CRITICAL damage number drawn across its portrait."
+  ],
+  "screen_height": 1440,
+  "allow_wrong": 0,
+  "net_worth": ["4.8", "4.7", "6.9", "5.9", "5.0", "4.8", "4.3", "5.4", "5.4", "5.6", "5.3", "6.5"],
+  "team_totals": ["32", "32"],
+  "heroes": {
+    "0": "grey_talon",
+    "1": "ivy",
+    "2": "mo_and_krill",
+    "3": "mirage",
+    "4": "bebop",
+    "5": "vyper",
+    "6": "kelvin",
+    "7": "abrams",
+    "8": "lash",
+    "11": "venator"
+  }
+}

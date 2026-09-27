@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -49,6 +50,8 @@ public class MenuTests
         using var ui = new UiHarness();
         ui.Show();
         var board = ui.ViewModel.Match.Board;
+        Click(ui.Window, ui.Window.GetVisualDescendants().OfType<ToggleButton>().Single(button => Equals(button.Content, "Edit heroes")));
+        Assert.True(board.IsPickerOpen);
         var tile = ui.Window.GetVisualDescendants().OfType<Controls.HeroTile>().First(t => t.HeroId == "haze");
 
         var at = tile.TranslatePoint(new Point(tile.Bounds.Width / 2, tile.Bounds.Height / 2), ui.Window)!.Value;

@@ -7,18 +7,24 @@
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
-    <Grid RowDefinitions="Auto,12,*" ColumnDefinitions="4*,12,5*" Margin="12">
-        <board:RosterView Grid.ColumnSpan="3" DataContext="{Binding Board}"/>
+    <Grid RowDefinitions="Auto,Auto,12,*" Margin="12">
+        <board:RosterView DataContext="{Binding Board}"/>
 
-        <board:MatchBoardView Grid.Row="2" x:Name="BoardView" DataContext="{Binding Board}"/>
+        <Panel Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding Board.IsPickerOpen}">
+            <board:MatchBoardView DataContext="{Binding Board}"/>
+        </Panel>
 
-        <GridSplitter Grid.Row="2" Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="3*" MinWidth="420"/>
+                <ColumnDefinition Width="12"/>
+                <ColumnDefinition Width="2*" MinWidth="300"/>
+            </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="2" Grid.Column="2" RowDefinitions="3*,12,2*">
             <Border Classes="card">
                 <DockPanel>
                     <!-- Score cutoff and flat/tiered layout, shared by both result tabs -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto" Margin="0,0,0,8">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto,Auto,Auto" Margin="0,0,0,8">
                         <ListBox Classes="segmented" SelectedIndex="{Binding ResultsTab}" VerticalAlignment="Center">
                             <ListBoxItem Content="Lane Phase"/>
                             <ListBoxItem Content="Full Match"/>
@@ -34,6 +40,14 @@
                                       Content="By tier"
                                       IsChecked="{Binding ByTier}"
                                       ToolTip.Tip="Group into collapsible tier sections instead of one ranked list"/>
+                        <ToggleButton Grid.Column="4"
+                                      Margin="8,0,0,0"
+                                      VerticalAlignment="Center"
+                                      Content="By net worth"
+                                      IsChecked="{Binding ByNetWorth}"
+                                      IsEnabled="{Binding Board.HasNetWorth}"
+                                      ToolTip.Tip="Lean scores toward the heroes ahead on net worth: counters to fed enemies&#10;and items for fed allies (or a fed you) count for more, by up to 30%.&#10;Needs a net worth reading, from Detect."
+                                      ToolTip.ShowOnDisabled="True"/>
                     </Grid>
                     <Panel>
                         <Panel IsVisible="{Binding IsLaneTab}">
@@ -46,9 +60,9 @@
                 </DockPanel>
             </Border>
 
-            <GridSplitter Grid.Row="1" Background="Transparent" ResizeDirection="Rows"/>
+            <GridSplitter Grid.Column="1" Background="Transparent" ResizeDirection="Columns"/>
 
-            <Border Grid.Row="2" Classes="card" MinHeight="140">
+            <Border Grid.Column="2" Classes="card">
                 <explain:ExplainView DataContext="{Binding Explain}"/>
             </Border>
         </Grid>

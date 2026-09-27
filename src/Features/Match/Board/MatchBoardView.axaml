@@ -6,41 +6,49 @@
              x:Class="DeadlockAdvisor.Features.Match.Board.MatchBoardView"
              x:DataType="board:MatchBoardViewModel">
 
-    <!-- The palette is 38 tiles tall and won't fit on a short window, so it scrolls. -->
-    <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-        <Border Classes="card" Margin="0,0,4,0">
-            <StackPanel Spacing="8">
-                <Grid ColumnDefinitions="Auto,Auto,*">
-                    <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
-                    <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
-                        <StackPanel>
-                            <ToggleButton Classes="enemy"
-                                          Content="Enemy"
-                                          IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
-                                          Command="{Binding SetModeCommand}"
-                                          CommandParameter="{x:Static enums:Role.Enemy}"
-                                          ToolTip.Tip="Click heroes to mark them as Enemy (Alt+1)"/>
-                            <ToggleButton Classes="ally"
-                                          Content="Ally"
-                                          IsChecked="{Binding IsAllyMode, Mode=OneWay}"
-                                          Command="{Binding SetModeCommand}"
-                                          CommandParameter="{x:Static enums:Role.Ally}"
-                                          ToolTip.Tip="Click heroes to mark them as Ally (Alt+2)"/>
-                            <ToggleButton Classes="self"
-                                          Content="You"
-                                          IsChecked="{Binding IsSelfMode, Mode=OneWay}"
-                                          Command="{Binding SetModeCommand}"
-                                          CommandParameter="{x:Static enums:Role.Self}"
-                                          ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
-                        </StackPanel>
-                    </Border>
-                    <controls:SearchBox Grid.Column="2"
-                                        x:Name="SearchBox"
-                                        Text="{Binding SearchText}"
-                                        Watermark="{Binding SearchPlaceholder}"/>
-                </Grid>
+    <Border Classes="card">
+        <DockPanel>
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,Auto,*" Margin="0,0,0,8">
+                <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
+                <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <StackPanel>
+                        <ToggleButton Classes="enemy"
+                                      Content="Enemy"
+                                      IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Enemy}"
+                                      ToolTip.Tip="Click heroes to mark them as Enemy (Alt+1)"/>
+                        <ToggleButton Classes="ally"
+                                      Content="Ally"
+                                      IsChecked="{Binding IsAllyMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Ally}"
+                                      ToolTip.Tip="Click heroes to mark them as Ally (Alt+2)"/>
+                        <ToggleButton Classes="self"
+                                      Content="You"
+                                      IsChecked="{Binding IsSelfMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Self}"
+                                      ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
+                    </StackPanel>
+                </Border>
+                <controls:SearchBox Grid.Column="2"
+                                    x:Name="SearchBox"
+                                    Width="320"
+                                    Text="{Binding SearchText}"
+                                    Watermark="{Binding SearchPlaceholder}"/>
+                <TextBlock Grid.Column="3"
+                           Classes="hint"
+                           Margin="14,0,0,0"
+                           HorizontalAlignment="Right"
+                           VerticalAlignment="Center"
+                           TextTrimming="CharacterEllipsis"
+                           Text="Left click assigns · right click picks a role · double click sets You · Esc closes"/>
+            </Grid>
 
-                <ItemsControl x:Name="Palette" ItemsSource="{Binding Tiles}">
+            <!-- Full width fits every hero in two or three rows; past three, it scrolls rather than crowding out the results. -->
+            <ScrollViewer MaxHeight="282" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Tiles}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
                             <WrapPanel Orientation="Horizontal"/>
@@ -59,11 +67,7 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-
-                <TextBlock Classes="hint"
-                           TextWrapping="Wrap"
-                           Text="Left click assigns · right click picks a role · double click sets You"/>
-            </StackPanel>
-        </Border>
-    </ScrollViewer>
+            </ScrollViewer>
+        </DockPanel>
+    </Border>
 </UserControl>

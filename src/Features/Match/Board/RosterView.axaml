@@ -39,7 +39,7 @@
     <!-- The match as the game's top bar shows it: your team on the left, the enemy on the right. -->
     <Border Classes="card">
         <StackPanel Spacing="10">
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
                 <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
                 <TextBlock Grid.Column="1"
                            Classes="hint"
@@ -49,16 +49,21 @@
                            Text="{Binding Hint}"
                            ToolTip.Tip="{Binding Hint}"/>
                 <Button Grid.Column="2"
-                        Content="Detect from screen"
+                        Content="Detect from screen (F9)"
                         Command="{Binding DetectCommand}"
-                        ToolTip.Tip="Read the whole match off Deadlock's top bar (F9).&#10;You get to check the result before anything is applied."/>
-                <Button Grid.Column="3"
+                        ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied."/>
+                <ToggleButton Grid.Column="3"
+                              Content="Edit heroes"
+                              Margin="6,0,0,0"
+                              IsChecked="{Binding IsPickerOpen}"
+                              ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
+                <Button Grid.Column="4"
                         Classes="ghost"
                         Content="Random"
                         Margin="6,0,0,0"
                         Command="{Binding RandomizeCommand}"
                         ToolTip.Tip="Fill the match with random heroes, one ally and two enemies in your lane (for testing)"/>
-                <Button Grid.Column="4"
+                <Button Grid.Column="5"
                         Classes="ghost"
                         Content="Clear"
                         Margin="6,0,0,0"

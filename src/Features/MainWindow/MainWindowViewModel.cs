@@ -43,6 +43,10 @@ public class MainWindowViewModel : ViewModelBase
         + "using the 'against' coefficients for enemies, 'with' for allies, and\n"
         + "'as' for your own hero. Above 0 means this match wants the item\n"
         + "more than an average match would.\n\n"
+        + "With 'By net worth' on, and net worth read off the top bar by\n"
+        + "Detect, each hero's share is scaled by how far ahead or behind the\n"
+        + "match's average they are: from ×0.7 to ×1.3. Counters to a fed enemy\n"
+        + "and items for a fed ally (or a fed you) count for more.\n\n"
         + "Click any recommendation to see exactly which hero and which trait\n"
         + "produced its score.\n\n"
         + "The small 'data' numbers are a separate second opinion from real\n"
@@ -129,7 +133,7 @@ public class MainWindowViewModel : ViewModelBase
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, page => page == 0);
-        SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.SetMode, onMatchPage);
+        SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.StartAssigning, onMatchPage);
         DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
 
         RefreshStatus();
@@ -167,7 +171,7 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
-    /// <summary>Alt+1/2/3 and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
+    /// <summary>Alt+1/2/3 (which open the hero picker) and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 

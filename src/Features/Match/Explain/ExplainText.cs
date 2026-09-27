@@ -68,4 +68,15 @@ public static class ExplainText
     }
 
     public static string Share(TraitPart part) => Format.Signed(NumberFormat.Round(part.Amount, 2));
+
+    /// <summary>"×1.18 · 25k vs 19k avg": how much the hero's net worth scaled their share, or null when it didn't.</summary>
+    public static string? NetWorth(NetWorthStanding? standing) =>
+        standing is { Factor: not 1.0 }
+            ? $"×{NumberFormat.Fixed(standing.Factor, 2)} · {Format.Compact(standing.Souls)} vs {Format.Compact((int)Math.Round(standing.Average))} avg"
+            : null;
+
+    public static string NetWorthTooltip(NetWorthStanding standing) =>
+        $"{Format.Compact(standing.Souls)} souls against the match's average of {Format.Compact((int)Math.Round(standing.Average))},\n"
+        + $"so this hero's share counts ×{NumberFormat.Fixed(standing.Factor, 2)}.\n"
+        + $"Net worth scales a hero's share by ×{Format.Num(1 - NetWorthWeights.MaxShift)} to ×{Format.Num(1 + NetWorthWeights.MaxShift)}.";
 }
