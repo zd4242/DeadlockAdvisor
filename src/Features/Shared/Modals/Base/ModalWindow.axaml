@@ -8,5 +8,5 @@
         TransparencyLevelHint="Transparent"
         CanResize="False"
         ShowInTaskbar="False">
-    <base:Modal DataContext="{Binding}"/>
+    <base:Modal x:Name="ModalView" DataContext="{Binding}"/>
 </Window>

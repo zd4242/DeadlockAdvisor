@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -42,6 +43,7 @@ public partial class MainWindow : Window
         AutoScroll = new MiddleClickAutoScroll(this);
         Closed += (_, _) => AutoScroll.Dispose();
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
+        PointerPressed += OnDismissLayerPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
         ItemCardHover.SetPresenter(this, ItemCards);
     }
@@ -184,11 +186,39 @@ public partial class MainWindow : Window
     /// <summary>The bare strip, the divider and the title drag the window; menus, tabs and buttons handle their own clicks.</summary>
     private void OnTitleBarPointerPressed(object? sender, PointerPressedEventArgs e)
     {
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-            return;
         // A press in a menu's dropdown bubbles up here from its popup. Dragging from it would start the
         // OS move loop, which swallows the release, so the menu item would never see its click.
-        if (e.Source is not Visual source || (source != TitleBar && !TitleBar.IsVisualAncestorOf(source)))
+        if (e.Source is Visual source && (source == TitleBar || TitleBar.IsVisualAncestorOf(source)))
+            DragFromTitleBar(e);
+    }
+
+    /// <summary>
+    /// An open menu or popup lays a layer over the window that takes the next press to close it. On the
+    /// title bar, that press drags the window as well, rather than needing a second one.
+    /// </summary>
+    private void OnDismissLayerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source is LightDismissOverlayLayer && IsOverTitleBar(e, this))
+            DragFromTitleBar(e);
+    }
+
+    /// <summary>The modal's dim covers the title bar too, but only the window's content is modal: the title bar still moves it.</summary>
+    private void OnModalBackdropPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (sender is Visual backdrop && IsOverTitleBar(e, backdrop))
+            DragFromTitleBar(e);
+    }
+
+    /// <summary>Whether a press on <paramref name="frame"/>, in this window or one laid over it, falls on the title bar.</summary>
+    private bool IsOverTitleBar(PointerEventArgs e, Visual frame)
+    {
+        var point = TitleBar.PointToClient(frame.PointToScreen(e.GetPosition(frame)));
+        return new Rect(TitleBar.Bounds.Size).Contains(point);
+    }
+
+    private void DragFromTitleBar(PointerPressedEventArgs e)
+    {
+        if (!e.Properties.IsLeftButtonPressed)
             return;
         if (e.ClickCount == 2)
         {
@@ -224,6 +254,7 @@ public partial class MainWindow : Window
     {
         var modalVm = new ModalViewModel();
         _modalWindow = new ModalWindow { DataContext = modalVm };
+        _modalWindow.BackdropPressed += OnModalBackdropPressed;
 
         SyncModalBounds();
         _modalBoundsSync = new CompositeDisposable(

@@ -9,18 +9,14 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
+using DeadlockAdvisor.Services.Contracts;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DeadlockAdvisor.Tests.Ui;
 
 public class MenuTests
 {
-    private static void Click(TopLevel root, Visual target)
-    {
-        var at = target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), root)!.Value;
-        root.MouseDown(at, MouseButton.Left);
-        root.MouseUp(at, MouseButton.Left);
-        UiHarness.Settle();
-    }
+    private static void Click(TopLevel root, Visual target) => Click(root, target, root);
 
     /// <summary>A press in a dropdown bubbles up to the title bar, which mustn't start a window drag and swallow the click.</summary>
     [AvaloniaFact]
@@ -119,5 +115,57 @@ public class MenuTests
         Click(ui.Window, ui.Window.FindControl<TextBlock>("WindowTitle")!);
 
         Assert.Equal(1, drags);
+    }
+
+    [AvaloniaFact]
+    public void PressingTheTitleBarWithAMenuOpenClosesItAndDragsTheWindow()
+    {
+        using var ui = new UiHarness();
+        var drags = 0;
+        ui.Window.WindowDragStarting += (_, _) => drags++;
+        ui.Show();
+        var help = ui.Window.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "_Help"));
+        Click(ui.Window, help);
+        Assert.True(help.IsSubMenuOpen);
+
+        Click(ui.Window, ui.Window.FindControl<TextBlock>("WindowTitle")!);
+
+        Assert.False(help.IsSubMenuOpen);
+        Assert.Equal(1, drags);
+    }
+
+    /// <summary>The modal's dim covers the title bar, but only its own window's content is modal: the title bar still moves it.</summary>
+    [AvaloniaFact]
+    public void PressingTheTitleBarUnderAModalDragsTheWindow()
+    {
+        using var ui = new UiHarness();
+        var drags = 0;
+        ui.Window.WindowDragStarting += (_, _) => drags++;
+        ui.Show();
+        ui.Services.GetRequiredService<IModalService>().ShowMessage("Title", "Body");
+        UiHarness.Settle();
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+
+        // The modal window lies exactly over the main one, so a point in one is the same point in the other.
+        void PressModalOver(Visual target) => Click(modal, target, ui.Window);
+        PressModalOver(ui.Window.FindControl<TextBlock>("WindowTitle")!);
+        Assert.Equal(1, drags);
+        PressModalOver(ui.Window.MainMenu);
+        Assert.Equal(2, drags);
+        Assert.False(ui.Window.MainMenu.IsOpen);
+
+        PressModalOver(ui.Window.StatusBar);
+        Click(modal, modal.GetVisualDescendants().OfType<TextBlock>().First(text => text.Text == "Title"), modal);
+        Assert.Equal(2, drags);
+        Assert.Same(modal, ui.Window.OwnedWindows.OfType<ModalWindow>().Single());
+    }
+
+    /// <summary>Clicks <paramref name="root"/> at the centre of <paramref name="target"/>, measured in <paramref name="frame"/>.</summary>
+    private static void Click(TopLevel root, Visual target, Visual frame)
+    {
+        var at = target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), frame)!.Value;
+        root.MouseDown(at, MouseButton.Left);
+        root.MouseUp(at, MouseButton.Left);
+        UiHarness.Settle();
     }
 }

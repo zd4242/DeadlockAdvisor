@@ -1,3 +1,5 @@
+using Avalonia.Input;
+
 namespace DeadlockAdvisor.Features.Shared.Modals.Base;
 
 public partial class ModalWindow : Window
@@ -14,6 +16,13 @@ public partial class ModalWindow : Window
             if (!_isClosingIntentionally)
                 e.Cancel = true;
         };
+    }
+
+    /// <inheritdoc cref="Modal.BackdropPressed"/>
+    public event EventHandler<PointerPressedEventArgs>? BackdropPressed
+    {
+        add => ModalView.BackdropPressed += value;
+        remove => ModalView.BackdropPressed -= value;
     }
 
     internal void CloseIntentionally()
