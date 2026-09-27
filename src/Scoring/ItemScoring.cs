@@ -69,49 +69,50 @@ public static class ItemScoring
     /// </summary>
     public static OrderedDictionary<int, List<ScoredItem>> LanePhaseResults(
         DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
-        ScoreItems(store, matrix, match, LaneTiers, match.LaneHeroes, netWorth);
+        GroupPositive(store, ScoreAll(store, matrix, match, LaneTiers, match.LaneHeroes, netWorth));
 
     /// <summary>Everyone currently selected, all four tiers.</summary>
     public static OrderedDictionary<int, List<ScoredItem>> FullMatchResults(
         DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, MatchState match, NetWorthWeights? netWorth = null) =>
-        ScoreItems(store, matrix, match, FullTiers, null, netWorth);
+        GroupPositive(store, ScoreAll(store, matrix, match, FullTiers, null, netWorth));
 
-    private static OrderedDictionary<int, List<ScoredItem>> ScoreItems(
+    /// <summary>
+    /// Every item in <paramref name="tiers"/> with its score for the line-up and its match data, however
+    /// it scores: highest score first, then by name.
+    /// </summary>
+    public static List<ScoredItem> ScoreAll(
         DataStore store,
         IReadOnlyDictionary<MatrixKey, double> matrix,
         MatchState match,
         IReadOnlyList<int> tiers,
-        IReadOnlyCollection<string>? restrictTo,
-        NetWorthWeights? netWorth)
+        IReadOnlyCollection<string>? restrictTo = null,
+        NetWorthWeights? netWorth = null)
     {
         var lineUp = RelevantHeroes(match, restrictTo, netWorth);
+        return store.Items
+            .Where(entry => tiers.Contains(entry.Value.Tier))
+            .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
+                entry.Value.Category, DataScores(store, match, entry.Key, restrictTo)))
+            .OrderByDescending(scored => scored.Score)
+            .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
+            .ToList();
+    }
 
+    /// <summary>
+    /// The items actually worth buying (score above 0), by tier; only tiers with one appear, in the
+    /// order the store first lists an item of theirs.
+    /// </summary>
+    private static OrderedDictionary<int, List<ScoredItem>> GroupPositive(DataStore store, IReadOnlyList<ScoredItem> ranked)
+    {
+        var positive = ranked.Where(scored => scored.Score > 0).ToDictionary(scored => scored.ItemId);
         var grouped = new OrderedDictionary<int, List<ScoredItem>>();
-        foreach (var (itemId, item) in store.Items)
+        foreach (var itemId in store.Items.Keys)
         {
-            if (!tiers.Contains(item.Tier))
-                continue;
-            var total = Total(matrix, itemId, lineUp);
-
-            // Only items actually worth buying.
-            if (!(total > 0))
-                continue;
-            if (!grouped.TryGetValue(item.Tier, out var tierItems))
-            {
-                tierItems = [];
-                grouped[item.Tier] = tierItems;
-            }
-            tierItems.Add(new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category,
-                DataScores(store, match, itemId, restrictTo)));
+            if (positive.TryGetValue(itemId, out var scored))
+                grouped.TryAdd(scored.Tier, []);
         }
-
-        foreach (var tier in grouped.Keys.ToList())
-        {
-            grouped[tier] = grouped[tier]
-                .OrderByDescending(scored => scored.Score)
-                .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
-                .ToList();
-        }
+        foreach (var scored in ranked.Where(scored => scored.Score > 0))
+            grouped[scored.Tier].Add(scored);
         return grouped;
     }
 
@@ -238,9 +239,16 @@ public static class ItemScoring
     }
 
     /// <summary>
-    /// Items the match data likes that the hand model doesn't recommend at all (score ≤ 0): an
-    /// enemies lift of at least <see cref="PickMinAgainst"/> or a you lift of at least
-    /// <see cref="PickMinAs"/>, best first by whichever clears its bar by more.
+    /// The data's net verdict on an item, in bars: the enemies lift over <see cref="PickMinAgainst"/>
+    /// plus the you lift over <see cref="PickMinAs"/>. 1 or more is a standout. Netted rather than
+    /// taking the better relation, so a strong counter your own hero does badly with doesn't count.
+    /// </summary>
+    public static double DataStrength(OrderedDictionary<string, double> data) =>
+        data.GetValueOrDefault("against") / PickMinAgainst + data.GetValueOrDefault("as") / PickMinAs;
+
+    /// <summary>
+    /// Items the match data likes that the hand model doesn't recommend at all (score ≤ 0): a
+    /// <see cref="DataStrength"/> of at least 1, strongest first.
     /// </summary>
     public static List<ScoredItem> DataOnlyPicks(
         DataStore store,
@@ -249,25 +257,16 @@ public static class ItemScoring
         IReadOnlyList<int> tiers,
         IReadOnlyCollection<string>? restrictTo = null,
         NetWorthWeights? netWorth = null,
-        int limit = 6)
-    {
-        var lineUp = RelevantHeroes(match, restrictTo, netWorth);
-        var picks = new List<(double Margin, ScoredItem Item)>();
-        foreach (var (itemId, item) in store.Items)
-        {
-            if (!tiers.Contains(item.Tier))
-                continue;
-            var data = DataScores(store, match, itemId, restrictTo);
-            var margin = Math.Max(data.GetValueOrDefault("against") / PickMinAgainst, data.GetValueOrDefault("as") / PickMinAs);
-            if (margin < 1)
-                continue;
-            var score = Total(matrix, itemId, lineUp);
-            if (score > 0)
-                continue;
-            picks.Add((margin, new ScoredItem(itemId, item.ItemName, item.Tier, score, item.Category, data)));
-        }
-        return picks.OrderBy(pick => -pick.Margin).Take(limit).Select(pick => pick.Item).ToList();
-    }
+        int limit = 6) =>
+        DataOnlyPicks(ScoreAll(store, matrix, match, tiers, restrictTo, netWorth), limit);
+
+    /// <inheritdoc cref="DataOnlyPicks(DataStore, IReadOnlyDictionary{MatrixKey, double}, MatchState, IReadOnlyList{int}, IReadOnlyCollection{string}?, NetWorthWeights?, int)"/>
+    public static List<ScoredItem> DataOnlyPicks(IEnumerable<ScoredItem> scored, int limit = 6) =>
+        scored
+            .Where(item => !(item.Score > 0) && item.DataStrength >= 1)
+            .OrderByDescending(item => item.DataStrength)
+            .Take(limit)
+            .ToList();
 
     /// <summary>
     /// (hero name, weight) pairs showing who this item's rules respond to most strongly, read off

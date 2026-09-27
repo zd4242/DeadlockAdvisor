@@ -31,7 +31,8 @@ score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) 
 - `typed` is a hand-typed coefficient. `from_stats` is derived from the item's
   real stats through `stat_rules.csv` (see below).
 - A **score above 0** means *this match wants the item more than a typical match
-  does*. The results list only shows items that score above 0.
+  does*. The results list only shows items that score above 0, unless its
+  cutoff is set to "Every item".
 
 Where this lives in the code:
 
@@ -39,7 +40,8 @@ Where this lives in the code:
 |---|---|
 | Baselines | `DataStore.TraitBaselines()`, computed on demand, never cached, because `SetHeroScore` doesn't trigger a rebuild |
 | Weight matrix | `ItemScoring.BuildWeightMatrix` |
-| One line-up's score | `ItemScoring.Total` over a `LineUp`, shared by the results lists, `DataOnlyPicks` and the model health simulation |
+| One line-up's score | `ItemScoring.Total` over a `LineUp`, shared by `ScoreAll` (every item, whatever it scores: the Match page's lists and `DataOnlyPicks`) and the model health simulation |
+| The match data's verdict | `ItemScoring.DataStrength`: enemies lift ÷ `PickMinAgainst` + your lift ÷ `PickMinAs`, in "bars"; 1 or more is a standout |
 | Net worth factors | `NetWorthWeights.For(match)`; `NetWorthWeights.None` when the toggle is off |
 | Per-hero, per-trait explanation | `ItemScoring.Contribution` → `HeroContribution` (with `NetWorth`, `Factor`) → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
 | Displayed arithmetic | `ExplainText.Arithmetic` / `ExplainText.Deviation` show "(80 − 61 avg) × 3"; `FormulaText.Arithmetic` reuses them |
@@ -73,6 +75,22 @@ top 3 in some match.
 - **Correlations with match data don't change.** Subtracting a baseline shifts
   each item's weights by a constant, so the Pearson r values in the model health
   report compare directly with values from before the change.
+
+## Match data on the Match page
+
+The real-match lifts (`DataScores`) are **never added into the formula score**,
+because they're in different units and are partly about who buys the item. They
+change the list in three ways only:
+
+- **Rank by** (`AppSettings.ResultsRankBy`, `ResultsViewModel.Ranked`) can order
+  the list by `DataStrength` instead of the score, or keep only the items both
+  rate above 0, ranked by `min(score ÷ best score, strength ÷ best strength)`.
+- **DATA ★** marks a row whose `DataStrength` is 1 or more.
+- **"Match data also likes"** lists the items with a strength of 1 or more that the
+  formula scores 0 or below (`DataOnlyPicks`), at the end of the formula-ranked list.
+
+`DataStrength` nets the two relations instead of taking the better one, so a
+strong counter that does badly on your own hero doesn't count as a standout.
 
 ## Net worth
 

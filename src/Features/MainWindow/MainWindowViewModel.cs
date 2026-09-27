@@ -51,8 +51,11 @@ public class MainWindowViewModel : ViewModelBase
         + "produced its score.\n\n"
         + "The small 'data' numbers are a separate second opinion from real\n"
         + "matches (Data → Fetch Match Stats): win-rate points the item gains\n"
-        + "against your enemies, and on your own hero. They never change the\n"
-        + "ranking.";
+        + "against your enemies, and on your own hero. They're never added\n"
+        + "into the score, but 'Rank by match data' orders the list by them\n"
+        + "instead, and 'Formula + data agree' keeps only items both like.\n"
+        + "DATA ★ marks an item that stands out in real matches, and 'Match\n"
+        + "data also likes' lists standouts the formula scores 0 or below.";
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;

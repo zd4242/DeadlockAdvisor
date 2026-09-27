@@ -1,5 +1,7 @@
 using System.Text.Json.Nodes;
+using System.Text.Json.Serialization;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 
 namespace DeadlockAdvisor.Models;
 
@@ -19,6 +21,10 @@ public class AppSettings
     // Match tab
     public SavedMatch? LastMatch { get; set; }
     public int ResultsMinPercent { get; set; } = 40;
+
+    [JsonConverter(typeof(JsonStringEnumConverter<RankBy>))]
+    public RankBy ResultsRankBy { get; set; }
+
     public bool ResultsByTier { get; set; }
     public bool ResultsByNetWorth { get; set; } = true;
 

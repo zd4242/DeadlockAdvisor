@@ -315,4 +315,44 @@ public class ScoringTests
         Assert.Equal(["irrelevant_t1"], picks.Select(p => p.ItemId));
         Assert.Equal([new("against", 1.2)], picks[0].Data);
     }
+
+    [Fact]
+    public void DataStrengthNetsTheRelationsInBars()
+    {
+        Assert.Equal(1.0, ItemScoring.DataStrength(new() { ["against"] = 0.5, ["as"] = 1.5 })); // 0.5 / 1 + 1.5 / 3
+        Assert.Equal(-0.5, ItemScoring.DataStrength(new() { ["against"] = 1.5, ["as"] = -6.0 }));
+        Assert.Equal(0.0, ItemScoring.DataStrength([]));
+    }
+
+    [Fact]
+    public void AStrongCounterYourHeroDoesBadlyWithIsNoDataPick()
+    {
+        var store = TestStore.Make();
+        TestStore.AddLifts(store);
+        store.MatchLift[new MatchLiftKey("irrelevant_t1", "low_hp", "as", "full")] =
+            new MatchLift("irrelevant_t1", "low_hp", "as", "full", 5000, -6.1, 0.5, -6.0);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Self);
+
+        // enemies +1.2 clears its bar alone, but -6.0 on you nets it to 1.2 - 2 = -0.8.
+        Assert.Empty(ItemScoring.DataOnlyPicks(store, ItemScoring.BuildWeightMatrix(store), match, ItemScoring.FullTiers));
+    }
+
+    [Fact]
+    public void ScoreAllListsEveryItemWhateverItScores()
+    {
+        var store = TestStore.Make();
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var match = new MatchState();
+        match.SetRole("low_hp", Role.Enemy);
+
+        var all = ItemScoring.ScoreAll(store, matrix, match, ItemScoring.FullTiers);
+
+        // 0, then (-4 + 4/3) * 1, then (0 - 2) * 2.
+        Assert.Equal(["irrelevant_t1", "pct_dmg_t3", "spirit_resist_t1"], all.Select(item => item.ItemId));
+        AssertEx.Close(-8.0 / 3, all[1].Score);
+        Assert.Equal(-4.0, all[2].Score);
+        Assert.Empty(ItemScoring.FullMatchResults(store, matrix, match));
+    }
 }

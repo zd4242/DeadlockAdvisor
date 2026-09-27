@@ -5046,40 +5046,6 @@
   ],
   "data_only_picks_full": [
    {
-    "item_id": "knockdown",
-    "item_name": "Knockdown",
-    "tier": 3,
-    "score": -655.2631578947369,
-    "shop_category": "spirit",
-    "data": [
-     [
-      "against",
-      2.7030000000000003
-     ],
-     [
-      "as",
-      -4.072
-     ]
-    ]
-   },
-   {
-    "item_id": "slowing_bullets",
-    "item_name": "Slowing Bullets",
-    "tier": 2,
-    "score": 0.0,
-    "shop_category": "weapon",
-    "data": [
-     [
-      "against",
-      -0.698
-     ],
-     [
-      "as",
-      6.305
-     ]
-    ]
-   },
-   {
     "item_id": "intensifying_magazine",
     "item_name": "Intensifying Magazine",
     "tier": 2,
@@ -5106,19 +5072,19 @@
     ]
    },
    {
-    "item_id": "weighted_shots",
-    "item_name": "Weighted Shots",
-    "tier": 3,
-    "score": -48.63157894736837,
+    "item_id": "slowing_bullets",
+    "item_name": "Slowing Bullets",
+    "tier": 2,
+    "score": 0.0,
     "shop_category": "weapon",
     "data": [
      [
       "against",
-      -1.2420000000000002
+      -0.698
      ],
      [
       "as",
-      4.479
+      6.305
      ]
     ]
    },
@@ -5136,6 +5102,40 @@
      [
       "as",
       -0.304
+     ]
+    ]
+   },
+   {
+    "item_id": "knockdown",
+    "item_name": "Knockdown",
+    "tier": 3,
+    "score": -655.2631578947369,
+    "shop_category": "spirit",
+    "data": [
+     [
+      "against",
+      2.7030000000000003
+     ],
+     [
+      "as",
+      -4.072
+     ]
+    ]
+   },
+   {
+    "item_id": "mystic_vulnerability",
+    "item_name": "Mystic Vulnerability",
+    "tier": 2,
+    "score": -56.47368421052633,
+    "shop_category": "spirit",
+    "data": [
+     [
+      "against",
+      0.41300000000000014
+     ],
+     [
+      "as",
+      2.663
      ]
     ]
    }
@@ -9005,36 +9005,70 @@
     ]
    },
    {
-    "item_id": "mercurial_magnum",
-    "item_name": "Mercurial Magnum",
-    "tier": 4,
-    "score": -2.4967105263157894,
-    "shop_category": "spirit",
+    "item_id": "bullet_lifesteal",
+    "item_name": "Bullet Lifesteal",
+    "tier": 2,
+    "score": 0.0,
+    "shop_category": "vitality",
     "data": [
      [
       "against",
-      -0.43600000000000005
+      0.34600000000000003
      ],
      [
       "as",
-      3.391
+      2.773
      ]
     ]
    },
    {
-    "item_id": "quicksilver_reload",
-    "item_name": "Quicksilver Reload",
+    "item_id": "weakening_headshot",
+    "item_name": "Weakening Headshot",
     "tier": 2,
-    "score": -1.1348684210526314,
-    "shop_category": "spirit",
+    "score": 0.0,
+    "shop_category": "weapon",
     "data": [
      [
       "against",
-      -0.317
+      0.45799999999999996
      ],
      [
       "as",
-      3.098
+      2.01
+     ]
+    ]
+   },
+   {
+    "item_id": "cheat_death",
+    "item_name": "Cheat Death",
+    "tier": 4,
+    "score": -95.5263157894737,
+    "shop_category": "vitality",
+    "data": [
+     [
+      "against",
+      0.45
+     ],
+     [
+      "as",
+      2.011
+     ]
+    ]
+   },
+   {
+    "item_id": "diviners_kevlar",
+    "item_name": "Diviner's Kevlar",
+    "tier": 4,
+    "score": 0.0,
+    "shop_category": "vitality",
+    "data": [
+     [
+      "against",
+      0.48
+     ],
+     [
+      "as",
+      1.591
      ]
     ]
    }
@@ -18596,23 +18630,6 @@
   "data_only_picks_lane": [],
   "data_only_picks_full": [
    {
-    "item_id": "weakening_headshot",
-    "item_name": "Weakening Headshot",
-    "tier": 2,
-    "score": 0.0,
-    "shop_category": "weapon",
-    "data": [
-     [
-      "against",
-      0.04
-     ],
-     [
-      "as",
-      5.692
-     ]
-    ]
-   },
-   {
     "item_id": "vampiric_burst",
     "item_name": "Vampiric Burst",
     "tier": 4,
@@ -18630,19 +18647,19 @@
     ]
    },
    {
-    "item_id": "bullet_lifesteal",
-    "item_name": "Bullet Lifesteal",
+    "item_id": "weakening_headshot",
+    "item_name": "Weakening Headshot",
     "tier": 2,
     "score": 0.0,
-    "shop_category": "vitality",
+    "shop_category": "weapon",
     "data": [
      [
       "against",
-      0.057
+      0.04
      ],
      [
       "as",
-      3.49
+      5.692
      ]
     ]
    },
@@ -18660,6 +18677,23 @@
      [
       "as",
       3.07
+     ]
+    ]
+   },
+   {
+    "item_id": "bullet_lifesteal",
+    "item_name": "Bullet Lifesteal",
+    "tier": 2,
+    "score": 0.0,
+    "shop_category": "vitality",
+    "data": [
+     [
+      "against",
+      0.057
+     ],
+     [
+      "as",
+      3.49
      ]
     ]
    },

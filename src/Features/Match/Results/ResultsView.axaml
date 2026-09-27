@@ -4,14 +4,22 @@
              xmlns:controls="using:DeadlockAdvisor.Controls"
              xmlns:art="using:DeadlockAdvisor.Controls.Art"
              xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+             xmlns:theme="using:DeadlockAdvisor.Theme"
              x:Class="DeadlockAdvisor.Features.Match.Results.ResultsView"
              x:DataType="results:ResultsViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="TextBlock.value.zero">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+    </UserControl.Styles>
 
     <DockPanel>
         <TextBlock DockPanel.Dock="Top"
                    Classes="faint"
                    Margin="0,0,0,6"
                    Text="{Binding Summary}"
+                   ToolTip.Tip="{Binding SummaryTip}"
                    IsVisible="{Binding !IsEmpty}"/>
 
         <Panel>
@@ -54,7 +62,7 @@
                                                   VerticalAlignment="Center"
                                                   card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                     <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto">
                                             <TextBlock Text="{Binding Name}"
                                                        FontWeight="Bold"
                                                        TextTrimming="CharacterEllipsis"
@@ -70,16 +78,33 @@
                                                             VerticalAlignment="Center"
                                                             Text="{Binding ShopText}"
                                                             Color="{Binding ShopColor}"/>
-                                            <controls:DataText Grid.Column="4"
+                                            <controls:Badge Grid.Column="3"
+                                                            Margin="8,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Text="DATA ★"
+                                                            Color="{x:Static theme:Palette.Accent}"
+                                                            IsVisible="{Binding IsStandout}"
+                                                            ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>
+                                            <controls:DataText Grid.Column="5"
                                                                Margin="8,0,8,0"
                                                                VerticalAlignment="Center"
                                                                Data="{Binding Data}"
                                                                IsVisible="{Binding HasData}"
                                                                ToolTip.Tip="{Binding DataTip}"/>
-                                            <TextBlock Grid.Column="5"
-                                                       Classes="value"
-                                                       VerticalAlignment="Center"
-                                                       Text="{Binding ScoreText}"/>
+                                            <Panel Grid.Column="6" VerticalAlignment="Center">
+                                                <TextBlock Classes="value"
+                                                           Classes.zero="{Binding IsZero}"
+                                                           HorizontalAlignment="Right"
+                                                           Text="{Binding ScoreText}"
+                                                           IsVisible="{Binding !IsNegative}"/>
+                                                <controls:SignedAmount HorizontalAlignment="Right"
+                                                                       VerticalAlignment="Center"
+                                                                       FontSize="15"
+                                                                       IsBold="True"
+                                                                       Value="{Binding Score}"
+                                                                       Text="{Binding ScoreText}"
+                                                                       IsVisible="{Binding IsNegative}"/>
+                                            </Panel>
                                         </Grid>
                                         <controls:ScoreBar Fraction="{Binding Fraction}"/>
                                     </StackPanel>
@@ -87,29 +112,36 @@
                             </Border>
                         </DataTemplate>
 
-                        <DataTemplate DataType="results:TierHeaderViewModel">
-                            <Grid ColumnDefinitions="12,Auto,Auto,*"
-                                  Classes="tierHeader"
-                                  Margin="0,10,0,6"
-                                  Background="Transparent"
-                                  Cursor="Hand"
-                                  ToolTip.Tip="{Binding ToolTipText}">
-                                <TextBlock Text="{Binding Chevron}"
-                                           Foreground="{Binding Brush}"
-                                           FontSize="16"
-                                           VerticalAlignment="Center"/>
-                                <TextBlock Grid.Column="1"
-                                           Classes="section"
-                                           Margin="8,0,0,0"
-                                           Text="{Binding Title}"
-                                           Foreground="{Binding Brush}"
-                                           VerticalAlignment="Center"/>
-                                <controls:Badge Grid.Column="2"
-                                                Margin="8,0,0,0"
-                                                VerticalAlignment="Center"
-                                                Text="{Binding CountText}"
-                                                Color="{Binding Color}"/>
-                            </Grid>
+                        <DataTemplate DataType="results:SectionHeaderViewModel">
+                            <StackPanel Classes="tierHeader"
+                                        Margin="0,10,0,6"
+                                        Spacing="2"
+                                        Background="Transparent"
+                                        Cursor="Hand"
+                                        ToolTip.Tip="{Binding ToolTipText}">
+                                <Grid ColumnDefinitions="12,Auto,Auto,*">
+                                    <TextBlock Text="{Binding Chevron}"
+                                               Foreground="{Binding Brush}"
+                                               FontSize="16"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Grid.Column="1"
+                                               Classes="section"
+                                               Margin="8,0,0,0"
+                                               Text="{Binding Title}"
+                                               Foreground="{Binding Brush}"
+                                               VerticalAlignment="Center"/>
+                                    <controls:Badge Grid.Column="2"
+                                                    Margin="8,0,0,0"
+                                                    VerticalAlignment="Center"
+                                                    Text="{Binding CountText}"
+                                                    Color="{Binding Color}"/>
+                                </Grid>
+                                <TextBlock Classes="faint"
+                                           Margin="20,0,0,0"
+                                           TextWrapping="Wrap"
+                                           Text="{Binding Note}"
+                                           IsVisible="{Binding HasNote}"/>
+                            </StackPanel>
                         </DataTemplate>
                     </ItemsControl.DataTemplates>
                 </ItemsControl>

@@ -4,65 +4,63 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
 using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
-public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, string Share);
+/// <param name="ShareText">The share without its sign: a ▲/▼ beside it carries that.</param>
+public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, double Share, string ShareText);
 
 public sealed record ContributionCard(
     string HeroName,
     string RelationText,
     Color RelationColor,
+    double Amount,
     string AmountText,
     IReadOnlyList<TraitLine> Traits,
     string? NetWorthText = null,
     string? NetWorthTip = null);
 
-public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, string Share);
+public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, double Share, string ShareText);
 
-public sealed record DataTotal(string Text, Color Color)
+/// <summary>"enemies ▲1.25": one relation's summed lift.</summary>
+public sealed record DataTotal(string Word, Color Color, double Value, string ValueText)
 {
     public IBrush Brush => new SolidColorBrush(Color);
 }
 
 public sealed record MatchDataCard(IReadOnlyList<DataTotal> Totals, IReadOnlyList<DataLine> Lines, string Note);
 
-public sealed record DataPick(
-    string ItemId,
-    string ItemName,
-    Color ShopColor,
-    string TierText,
-    Color TierColor,
-    OrderedDictionary<string, double> Data,
-    string DataTip);
-
 /// <summary>
 /// "Why this item?": the same arithmetic scoring did, spelled out one hero and one trait at a time,
-/// plus the match data's view of the item. With nothing selected, the items only the data likes.
+/// plus the match data's view of the item.
 /// </summary>
 public class ExplainViewModel : ViewModelBase
 {
     public const string IdleTitle = "Select an item to see why it's recommended";
 
+    public const string IdleHint =
+        "Click a result to see which heroes and traits produced its score, and what real matches say about it. "
+        + "Click it again to come back here.";
+
     [Reactive] public bool HasItem { get; private set; }
     [Reactive] public string? ItemId { get; private set; }
     [Reactive] public string ItemName { get; private set; } = IdleTitle;
     [Reactive] public Color ShopColor { get; private set; }
+    [Reactive] public double Total { get; private set; }
     [Reactive] public string TotalText { get; private set; } = "";
     [Reactive] public bool NoContributions { get; private set; }
     [Reactive] public IReadOnlyList<ContributionCard> Contributions { get; private set; } = [];
     [Reactive] public MatchDataCard? MatchData { get; private set; }
-    [Reactive] public IReadOnlyList<DataPick> Picks { get; private set; } = [];
-    [Reactive] public bool HasPicks { get; private set; }
 
     public void ShowItem(DataStore store, MatchState match, string? itemId, IReadOnlyCollection<string>? restrictTo,
-        IReadOnlyList<ScoredItem> picks, double now, NetWorthWeights? netWorth = null)
+        double now, NetWorthWeights? netWorth = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
-            ShowIdle(store, picks, now);
+            ShowIdle();
             return;
         }
 
@@ -75,42 +73,39 @@ public class ExplainViewModel : ViewModelBase
         ItemId = itemId;
         ItemName = item.ItemName;
         ShopColor = Palette.ShopColor(item.Category);
-        TotalText = Format.Num(total);
+        Total = total;
+        TotalText = Format.Num(Math.Abs(total));
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(Card).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId, restrictTo);
         MatchData = parts.Count > 0 ? DataCard(store, parts, now) : null;
-        Picks = [];
-        HasPicks = false;
     }
 
-    private void ShowIdle(DataStore store, IReadOnlyList<ScoredItem> picks, double now)
+    private void ShowIdle()
     {
         HasItem = false;
         ItemId = null;
         ItemName = IdleTitle;
+        Total = 0;
         TotalText = "";
         NoContributions = false;
         Contributions = [];
         MatchData = null;
-        var tip = MatchStatsMath.DataNote(store.MatchMeta, now);
-        Picks = picks.Select(pick => new DataPick(
-            pick.ItemId, pick.ItemName, Palette.ShopColor(pick.ShopCategory), $"T{pick.Tier}",
-            Palette.TierColor(pick.Tier), pick.Data, tip)).ToList();
-        HasPicks = Picks.Count > 0;
     }
 
     private static ContributionCard Card(HeroContribution contribution) => new(
         contribution.HeroName,
         ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
         Palette.RelationColor(contribution.Relation),
-        Format.Signed(Services.Formats.NumberFormat.Round(contribution.Amount, 2)),
+        NumberFormat.Round(contribution.Amount, 2),
+        ExplainText.Magnitude(contribution.Amount),
         contribution.Parts.Select(part => new TraitLine(
             part.CategoryName,
             ExplainText.CoefficientSource(part),
             ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
             ExplainText.Arithmetic(part),
-            ExplainText.Share(part))).ToList(),
+            NumberFormat.Round(part.Amount, 2),
+            ExplainText.Magnitude(part.Amount))).ToList(),
         ExplainText.NetWorth(contribution.NetWorth),
         contribution.NetWorth is { Factor: not 1.0 } standing ? ExplainText.NetWorthTooltip(standing) : null);
 
@@ -126,7 +121,7 @@ public class ExplainViewModel : ViewModelBase
             var sum = 0.0;
             foreach (var part in parts.Where(part => part.Relation == key))
                 sum += part.LiftShrunk;
-            totals.Add(new DataTotal($"{ExplainText.DataWord(key)} {Format.SignedFixed(sum, 2)}", Palette.RelationColor(relation)));
+            totals.Add(new DataTotal(ExplainText.DataWord(key), Palette.RelationColor(relation), NumberFormat.Round(sum, 2), NumberFormat.Fixed(Math.Abs(sum), 2)));
         }
 
         var lines = parts.OrderBy(part => -part.LiftShrunk).Select(part =>
@@ -137,8 +132,9 @@ public class ExplainViewModel : ViewModelBase
                 heroName,
                 ExplainText.RelationWord(relation).ToUpperInvariant(),
                 Palette.RelationColor(relation),
-                $"raw {Format.SignedFixed(part.Lift, 2)} ± {Services.Formats.NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches",
-                $"{Format.SignedFixed(part.LiftShrunk, 2)} pts");
+                $"raw {Format.SignedFixed(part.Lift, 2)} ± {NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches",
+                NumberFormat.Round(part.LiftShrunk, 2),
+                $"{NumberFormat.Fixed(Math.Abs(part.LiftShrunk), 2)} pts");
         }).ToList();
 
         return new MatchDataCard(totals, lines, MatchStatsMath.DataNote(store.MatchMeta, now));

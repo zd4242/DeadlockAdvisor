@@ -4,6 +4,7 @@
              xmlns:controls="using:DeadlockAdvisor.Controls"
              xmlns:art="using:DeadlockAdvisor.Controls.Art"
              xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
+             xmlns:theme="using:DeadlockAdvisor.Theme"
              x:Class="DeadlockAdvisor.Features.Match.Explain.ExplainView"
              x:DataType="explain:ExplainViewModel">
 
@@ -16,7 +17,7 @@
     <DockPanel>
         <TextBlock DockPanel.Dock="Top" Classes="section" Text="WHY THIS ITEM?"/>
 
-        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*" Margin="0,8,0,0">
+        <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,*,Auto" Margin="0,8,0,0">
             <art:ArtImage Width="40"
                           Height="40"
                           Margin="0,0,8,0"
@@ -30,17 +31,27 @@
                        FontWeight="Bold"
                        TextWrapping="Wrap"
                        VerticalAlignment="Center"
-                       Classes.dim="{Binding !HasItem}">
-                <Run Text="{Binding ItemName}"/>
-                <Run Text="  "/>
-                <Run Text="{Binding TotalText}" Foreground="{DynamicResource AccentBrush}"/>
-            </TextBlock>
+                       Classes.dim="{Binding !HasItem}"
+                       Text="{Binding ItemName}"/>
+            <controls:SignedAmount Grid.Column="2"
+                                   Margin="10,0,0,0"
+                                   VerticalAlignment="Center"
+                                   FontSize="15"
+                                   IsBold="True"
+                                   Value="{Binding Total}"
+                                   Text="{Binding TotalText}"
+                                   IsVisible="{Binding HasItem}"/>
         </Grid>
 
         <Border DockPanel.Dock="Top" Classes="hline" Margin="0,6,0,6"/>
 
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
             <StackPanel Spacing="4" Margin="0,0,4,0" Grid.IsSharedSizeScope="True">
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding !HasItem}"
+                           Text="{x:Static explain:ExplainViewModel.IdleHint}"/>
+
                 <TextBlock Classes="hint"
                            TextWrapping="Wrap"
                            IsVisible="{Binding NoContributions}"
@@ -65,10 +76,11 @@
                                                    TextTrimming="CharacterEllipsis"
                                                    Text="{Binding NetWorthText}"
                                                    ToolTip.Tip="{Binding NetWorthTip}"/>
-                                        <TextBlock Grid.Column="3"
-                                                   Text="{Binding AmountText}"
-                                                   FontWeight="Bold"
-                                                   Foreground="{DynamicResource AccentBrush}"/>
+                                        <controls:SignedAmount Grid.Column="3"
+                                                               VerticalAlignment="Center"
+                                                               IsBold="True"
+                                                               Value="{Binding Amount}"
+                                                               Text="{Binding AmountText}"/>
                                     </Grid>
                                     <!-- One line per trait: what it is, where the coefficient came from, the
                                          multiplication, and its share, the last two in right-aligned columns
@@ -95,11 +107,13 @@
                                                                Margin="10,0,0,0"
                                                                HorizontalAlignment="Right"
                                                                Text="{Binding Arithmetic}"/>
-                                                    <TextBlock Grid.Column="3"
-                                                               Margin="10,0,0,0"
-                                                               FontWeight="Bold"
-                                                               HorizontalAlignment="Right"
-                                                               Text="{Binding Share}"/>
+                                                    <controls:SignedAmount Grid.Column="3"
+                                                                           Margin="10,0,0,0"
+                                                                           HorizontalAlignment="Right"
+                                                                           VerticalAlignment="Center"
+                                                                           Value="{Binding Share}"
+                                                                           Text="{Binding ShareText}"
+                                                                           Color="{x:Static theme:Palette.Text}"/>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -125,7 +139,16 @@
                                             </ItemsControl.ItemsPanel>
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="explain:DataTotal">
-                                                    <TextBlock Text="{Binding Text}" Foreground="{Binding Brush}" FontWeight="Bold"/>
+                                                    <StackPanel Orientation="Horizontal" Spacing="4">
+                                                        <TextBlock Text="{Binding Word}"
+                                                                   Foreground="{Binding Brush}"
+                                                                   FontWeight="Bold"
+                                                                   VerticalAlignment="Center"/>
+                                                        <controls:SignedAmount VerticalAlignment="Center"
+                                                                               IsBold="True"
+                                                                               Value="{Binding Value}"
+                                                                               Text="{Binding ValueText}"/>
+                                                    </StackPanel>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>
@@ -152,12 +175,13 @@
                                                                Margin="10,0,0,0"
                                                                VerticalAlignment="Center"
                                                                Text="{Binding Detail}"/>
-                                                    <TextBlock Grid.Column="3"
-                                                               Margin="10,0,0,0"
-                                                               FontWeight="Bold"
-                                                               HorizontalAlignment="Right"
-                                                               VerticalAlignment="Center"
-                                                               Text="{Binding Share}"/>
+                                                    <controls:SignedAmount Grid.Column="3"
+                                                                           Margin="10,0,0,0"
+                                                                           HorizontalAlignment="Right"
+                                                                           VerticalAlignment="Center"
+                                                                           Value="{Binding Share}"
+                                                                           Text="{Binding ShareText}"
+                                                                           Color="{x:Static theme:Palette.Text}"/>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -168,41 +192,6 @@
                         </DataTemplate>
                     </ContentControl.ContentTemplate>
                 </ContentControl>
-
-                <!-- Items the match data rates that no rule of the hand model does -->
-                <Border Classes="inset" IsVisible="{Binding HasPicks}">
-                    <StackPanel Spacing="5">
-                        <TextBlock Text="The data likes these, the hand model doesn't" FontWeight="Bold"/>
-                        <TextBlock Classes="faintText"
-                                   TextWrapping="Wrap"
-                                   Text="Not recommended above (score 0 or less), but strong in real matches for this line-up. Worth a look for a missing rule."/>
-                        <ItemsControl ItemsSource="{Binding Picks}">
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="explain:DataPick">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto" Margin="0,0,0,5">
-                                        <art:ArtImage Width="24"
-                                                      Height="24"
-                                                      Kind="Item"
-                                                      ArtId="{Binding ItemId}"
-                                                      ArtName="{Binding ItemName}"
-                                                      Tint="{Binding ShopColor}"
-                                                      card:ItemCardHover.ItemId="{Binding ItemId}"/>
-                                        <TextBlock Grid.Column="1" Margin="8,0,0,0" VerticalAlignment="Center" Text="{Binding ItemName}"/>
-                                        <controls:Badge Grid.Column="2"
-                                                        Margin="8,0,0,0"
-                                                        VerticalAlignment="Center"
-                                                        Text="{Binding TierText}"
-                                                        Color="{Binding TierColor}"/>
-                                        <controls:DataText Grid.Column="4"
-                                                           VerticalAlignment="Center"
-                                                           Data="{Binding Data}"
-                                                           ToolTip.Tip="{Binding DataTip}"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </StackPanel>
-                </Border>
             </StackPanel>
         </ScrollViewer>
     </DockPanel>

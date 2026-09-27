@@ -17,7 +17,11 @@ public sealed record ScoredItem(
     int Tier,
     double Score,
     string ShopCategory,
-    OrderedDictionary<string, double> Data);
+    OrderedDictionary<string, double> Data)
+{
+    /// <summary>See <see cref="ItemScoring.DataStrength"/>.</summary>
+    public double DataStrength { get; } = ItemScoring.DataStrength(Data);
+}
 
 /// <summary>One trait's share of one hero's contribution to an item's score.</summary>
 /// <param name="Coefficient">The hand-typed part only.</param>

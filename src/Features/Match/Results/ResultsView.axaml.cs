@@ -13,21 +13,21 @@ public partial class ResultsView : ReactiveUserControl<ResultsViewModel>
         List.AddHandler(PointerPressedEvent, OnListPressed, RoutingStrategies.Bubble, handledEventsToo: true);
     }
 
-    /// <summary>A left click on a row selects it; on a tier header, folds or unfolds that tier.</summary>
+    /// <summary>A left click on a row selects it (or clears it, when already selected); on a section header, folds or unfolds that section.</summary>
     private void OnListPressed(object? sender, PointerPressedEventArgs e)
     {
         if (ViewModel is null || !e.GetCurrentPoint(this).Properties.IsLeftButtonPressed || e.Source is not Visual source)
             return;
 
         var owner = source.GetSelfAndVisualAncestors().OfType<Control>()
-            .FirstOrDefault(control => control.DataContext is ResultRowViewModel or TierHeaderViewModel);
+            .FirstOrDefault(control => control.DataContext is ResultRowViewModel or SectionHeaderViewModel);
         switch (owner?.DataContext)
         {
             case ResultRowViewModel row:
                 ViewModel.Select(row);
                 break;
-            case TierHeaderViewModel header:
-                ViewModel.ToggleTier(header.Tier);
+            case SectionHeaderViewModel header:
+                ViewModel.ToggleSection(header.Key);
                 break;
         }
     }

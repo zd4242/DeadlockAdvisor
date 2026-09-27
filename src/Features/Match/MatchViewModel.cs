@@ -2,6 +2,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
@@ -14,8 +15,18 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match;
 
-/// <summary>A results cutoff: items scoring below this share of the best one are hidden.</summary>
+/// <summary>A results cutoff: items scoring below this share of the best one are hidden. A negative percent keeps every item.</summary>
 public sealed record CutoffPreset(string Label, int Percent)
+{
+    public const int EveryItem = -1;
+
+    /// <summary>The share of the best item's measure to keep, or null to keep every item however it scores.</summary>
+    public double? MinFraction => Percent < 0 ? null : Percent / 100.0;
+
+    public override string ToString() => Label;
+}
+
+public sealed record RankPreset(string Label, RankBy RankBy)
 {
     public override string ToString() => Label;
 }
@@ -32,10 +43,18 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     // heroes are picked and to a match where one item runs away with it.
     public static readonly IReadOnlyList<CutoffPreset> CutoffPresets =
     [
-        new("All items", 0),
+        new("Every item", CutoffPreset.EveryItem),
+        new("All above 0", 0),
         new("≥ 20% of best", 20),
         new("≥ 40% of best", 40),
         new("≥ 60% of best", 60),
+    ];
+
+    public static readonly IReadOnlyList<RankPreset> RankPresets =
+    [
+        new("Rank by formula", RankBy.Formula),
+        new("Rank by match data", RankBy.MatchData),
+        new("Formula + data agree", RankBy.Both),
     ];
 
     private static readonly IReadOnlyDictionary<int, string> _laneTierLabels = new Dictionary<int, string>
@@ -71,6 +90,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var savedPercent = settings.Current.ResultsMinPercent;
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
                          ?? CutoffPresets.First(p => p.Percent == DefaultCutoffPercent);
+        SelectedRank = RankPresets.FirstOrDefault(p => p.RankBy == settings.Current.ResultsRankBy) ?? RankPresets[0];
+        HasMatchData = data.Store.MatchLift.Count > 0;
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
         ApplyDisplay();
@@ -98,7 +119,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 RefreshExplain();
             })
             .DisposeWith(Disposables);
-        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier)
+        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData)
             .Skip(1)
             .Subscribe(_ =>
             {
@@ -106,6 +127,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 {
                     s.ResultsMinPercent = SelectedCutoff.Percent;
                     s.ResultsByTier = ByTier;
+                    s.ResultsRankBy = SelectedRank.RankBy;
                 });
                 ApplyDisplay();
                 // Trimming can drop the selected item, which clears the explanation.
@@ -141,12 +163,17 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public bool IsLaneTab => ResultsTab == 0;
     public bool IsFullTab => ResultsTab == 1;
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
+    [Reactive] public RankPreset SelectedRank { get; set; }
+
+    /// <summary>The store has match data, so the results can rank by it.</summary>
+    [Reactive] public bool HasMatchData { get; private set; }
     [Reactive] public bool ByTier { get; set; }
 
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }
 
     public IReadOnlyList<CutoffPreset> Cutoffs => CutoffPresets;
+    public IReadOnlyList<RankPreset> Ranks => RankPresets;
 
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 
@@ -158,8 +185,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var store = _data.Store;
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
         var netWorth = NetWorth();
-        LaneResults.SetResults(ItemScoring.LanePhaseResults(store, _data.Matrix, Match, netWorth), note);
-        FullResults.SetResults(ItemScoring.FullMatchResults(store, _data.Matrix, Match, netWorth), note);
+        HasMatchData = store.MatchLift.Count > 0;
+        LaneResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.LaneTiers, Match.LaneHeroes, netWorth), note);
+        FullResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.FullTiers, null, netWorth), note);
         RefreshExplain();
     }
 
@@ -183,9 +211,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyDisplay()
     {
-        var fraction = SelectedCutoff.Percent / 100.0;
-        LaneResults.SetDisplay(ByTier, fraction);
-        FullResults.SetDisplay(ByTier, fraction);
+        // Without match data, ranking by it would empty the list.
+        var rankBy = HasMatchData ? SelectedRank.RankBy : RankBy.Formula;
+        LaneResults.SetDisplay(rankBy, ByTier, SelectedCutoff.MinFraction);
+        FullResults.SetDisplay(rankBy, ByTier, SelectedCutoff.MinFraction);
     }
 
     private void RefreshExplain()
@@ -194,17 +223,6 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ShowExplain((laneScoped ? LaneResults : FullResults).SelectedItemId, laneScoped);
     }
 
-    private void ShowExplain(string? itemId, bool laneScoped)
-    {
-        var store = _data.Store;
-        var restrictTo = laneScoped ? Match.LaneHeroes : null;
-        var netWorth = NetWorth();
-        IReadOnlyList<ScoredItem> picks = [];
-        if (itemId is null)
-        {
-            var tiers = laneScoped ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
-            picks = ItemScoring.DataOnlyPicks(store, _data.Matrix, Match, tiers, restrictTo, netWorth);
-        }
-        Explain.ShowItem(store, Match, itemId, restrictTo, picks, _now(), netWorth);
-    }
+    private void ShowExplain(string? itemId, bool laneScoped) =>
+        Explain.ShowItem(_data.Store, Match, itemId, laneScoped ? Match.LaneHeroes : null, _now(), NetWorth());
 }

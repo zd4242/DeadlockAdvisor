@@ -1,9 +1,11 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
@@ -66,7 +68,57 @@ public class MatchPageTests
 
         SetUpMatch(ui);
         ui.Screenshot("match_lane_tiered.png");
-        Assert.Contains(ui.ViewModel.Match.LaneResults.Entries, entry => entry is TierHeaderViewModel);
+        Assert.Contains(ui.ViewModel.Match.LaneResults.Entries, entry => entry is SectionHeaderViewModel);
+    }
+
+    [AvaloniaFact]
+    public void TheFormulaListEndsWithTheDataPicksAndTheIdleExplainPointsToIt()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.ViewModel.Match.ResultsTab = 1;
+        ui.Show();
+        var full = ui.ViewModel.Match.FullResults;
+        var picks = full.Entries.OfType<SectionHeaderViewModel>().Single(header => header.Key == ResultsViewModel.DataPicksKey);
+        full.ToggleSection(picks.Key);
+        full.ToggleSection(picks.Key);
+
+        // Scrolled to the end, where the data picks sit under the formula's list.
+        ScrollResultsToEnd(ui);
+        ui.Screenshot("match_data_picks.png");
+
+        Assert.False(ui.ViewModel.Match.Explain.HasItem);
+        var pick = full.Entries.OfType<ResultRowViewModel>().Last();
+        full.Select(pick);
+        Assert.True(ui.ViewModel.Match.Explain.HasItem);
+        ui.Screenshot("match_data_pick_explained.png");
+    }
+
+    [AvaloniaFact]
+    public void RankingByMatchDataWithEveryItemRenders()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.ResultsTab = 1;
+        match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.MatchData);
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+        ui.Show();
+        ui.Screenshot("match_rank_data_every.png");
+
+        match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);
+        ScrollResultsToEnd(ui);
+        ui.Screenshot("match_every_item_negatives.png");
+
+        Assert.Contains(match.FullResults.Entries.OfType<ResultRowViewModel>(), row => row.IsNegative);
+        Assert.Equal(RankBy.Formula, ui.Settings.Current.ResultsRankBy);
+    }
+
+    private static void ScrollResultsToEnd(UiHarness ui)
+    {
+        UiHarness.Settle();
+        ui.Window.MatchPage.GetVisualDescendants().OfType<ResultsView>().Single(view => view.IsEffectivelyVisible)
+            .GetVisualDescendants().OfType<ScrollViewer>().First().ScrollToEnd();
     }
 
     [AvaloniaFact]

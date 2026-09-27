@@ -1,5 +1,6 @@
 using Avalonia.Layout;
 using Avalonia.Media;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Features.ItemFormulas.ByItem;
@@ -76,8 +77,11 @@ public class PreviewPanel : StackPanel
             {
                 if (row.Pieces[column] is not { } piece)
                     continue;
-                var label = new PieceLabel(piece.Amount, piece.Color)
+                var label = new SignedAmount
                 {
+                    Value = piece.Amount,
+                    Text = FormulaText.Amount(Math.Abs(piece.Amount)),
+                    Color = piece.Color,
                     HorizontalAlignment = HorizontalAlignment.Right,
                     VerticalAlignment = VerticalAlignment.Center,
                 };

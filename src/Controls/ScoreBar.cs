@@ -3,7 +3,10 @@ using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Controls;
 
-/// <summary>A horizontal magnitude bar behind a recommendation's score, relative to the best score on screen.</summary>
+/// <summary>
+/// A horizontal magnitude bar behind a recommendation's score, relative to the largest score on
+/// screen. A negative fraction draws its size in the negative colour.
+/// </summary>
 public class ScoreBar : Control
 {
     public static readonly StyledProperty<double> FractionProperty =
@@ -38,10 +41,11 @@ public class ScoreBar : Control
         var radius = height / 2;
         context.DrawRectangle(_track, null, new RoundedRect(new Rect(Bounds.Size), radius));
 
-        var fraction = Math.Clamp(Fraction, 0, 1);
+        var fraction = Math.Clamp(Math.Abs(Fraction), 0, 1);
         if (fraction <= 0)
             return;
         var width = Math.Max(height, Bounds.Width * fraction);
-        context.DrawRectangle(new SolidColorBrush(Color), null, new RoundedRect(new Rect(0, 0, width, height), radius));
+        var color = Fraction < 0 ? Palette.Negative : Color;
+        context.DrawRectangle(new SolidColorBrush(color), null, new RoundedRect(new Rect(0, 0, width, height), radius));
     }
 }
