@@ -1,6 +1,6 @@
 {
  "lines": [
-  "against / full (since patch 09-16): 5928 lifts, reliability 0.59, typical real lift ±0.60 pts",
+  "against / full (since patch 08-22): 5928 lifts, reliability 0.59, typical real lift ±0.60 pts",
   "as / full (since patch 08-22): 5928 lifts, reliability 0.94, typical real lift ±2.02 pts",
   "as / lane (since patch 08-22): 2508 lifts, reliability 0.95, typical real lift ±2.05 pts"
  ],

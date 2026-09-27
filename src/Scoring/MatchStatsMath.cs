@@ -55,20 +55,30 @@ public sealed record FamilyStats(
     public double? Reliability => SplitR is not { } r ? null : r > 0 ? 2 * r / (1 + r) : 0.0;
 }
 
-public sealed record FamilyReport(Family Family, Patch Since, FamilyStats Stats)
+/// <param name="OwnExcluded">
+/// For an "against" family: whether each enemy's own purchases were taken out of its baseline
+/// (<see cref="MatchStatsMath.Analyse"/>); null for the others.
+/// </param>
+public sealed record FamilyReport(Family Family, Patch Since, FamilyStats Stats, bool? OwnExcluded = null)
 {
     public bool Kept => Stats.Reliability is { } reliability && reliability >= MatchStatsMath.MinReliability && Stats.Tau2 > 0;
 
-    public JsonObject Meta() => new()
+    public JsonObject Meta()
     {
-        ["since"] = Since.Start,
-        ["since_patch"] = Since.Label,
-        ["rows"] = Stats.Full.Count,
-        ["noise_scale"] = NumberFormat.Round(Stats.Scale, 3),
-        ["tau"] = NumberFormat.Round(Math.Sqrt(Stats.Tau2), 3),
-        ["reliability"] = Stats.Reliability is { } reliability ? NumberFormat.Round(reliability, 3) : null,
-        ["kept"] = Kept,
-    };
+        var meta = new JsonObject
+        {
+            ["since"] = Since.Start,
+            ["since_patch"] = Since.Label,
+            ["rows"] = Stats.Full.Count,
+            ["noise_scale"] = NumberFormat.Round(Stats.Scale, 3),
+            ["tau"] = NumberFormat.Round(Math.Sqrt(Stats.Tau2), 3),
+            ["reliability"] = Stats.Reliability is { } reliability ? NumberFormat.Round(reliability, 3) : null,
+            ["kept"] = Kept,
+        };
+        if (OwnExcluded is { } excluded)
+            meta["own_excluded"] = excluded;
+        return meta;
+    }
 }
 
 /// <param name="Rank">The rank range the lifts are for; null for every match.</param>
@@ -127,6 +137,8 @@ public sealed record FetchResult(
             {
                 lines.Add(head + $"{stats.Full.Count} lifts, reliability {reliability}, "
                                + $"typical real lift ±{NumberFormat.Fixed(Math.Sqrt(stats.Tau2), 2)} pts");
+                if (report.OwnExcluded == false)
+                    lines.Add("  " + MatchStatsMath.OwnIncludedNote);
             }
             else
             {
@@ -143,7 +155,8 @@ public sealed record FetchResult(
 /// hero, or on a given hero of yours. Per query (one hero, one relation, one scope):
 /// <list type="number">
 /// <item>delta = the item's win rate in the query − its win rate in every match of the same window and
-/// scope, so each item is compared with itself;</item>
+/// scope, so each item is compared with itself (against an enemy, without that enemy's own purchases,
+/// which the query can't see);</item>
 /// <item>lift = delta − the matches-weighted mean delta of the other items in the same tier (a strong
 /// enemy drags every item down; tier 4 only turns up in long games);</item>
 /// <item>shrunk = lift × τ² / (τ² + se²): noisy lifts are pulled toward 0 against τ², how much real
@@ -169,12 +182,16 @@ public static partial class MatchStatsMath
 
     // Measured September 2026 (scripts/check_match_lift.py in the Python app): against/lane was
     // mostly noise (reliability 0.32), so it isn't fetched; "as" needs two patches to reach MinN.
+    // "against" shares that window so the "as" download holds each enemy's own purchases for it.
     public static readonly IReadOnlyList<Family> Families =
     [
-        new("against", "full", 1),
+        new("against", "full", 2),
         new("as", "full", 2),
         new("as", "lane", 2),
     ];
+
+    public const string OwnIncludedNote =
+        "Enemy lifts still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
 
     public static IReadOnlyList<int> ScopeTiers(string scope) =>
         scope == "lane" ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
@@ -320,6 +337,18 @@ public static partial class MatchStatsMath
         return merged;
     }
 
+    /// <summary>Totals without a part of them, e.g. one hero's own purchases; an item never goes below 0.</summary>
+    public static Dictionary<long, WinTotals> Subtract(IReadOnlyDictionary<long, WinTotals> totals, IReadOnlyDictionary<long, WinTotals> part)
+    {
+        var result = new Dictionary<long, WinTotals>();
+        foreach (var (item, (wins, matches)) in totals)
+        {
+            var (partWins, partMatches) = part.GetValueOrDefault(item);
+            result[item] = new WinTotals(Math.Max(0, wins - partWins), Math.Max(0, matches - partMatches));
+        }
+        return result;
+    }
+
     public static long Midpoint(long since, double now) => (long)Math.Truncate(since + (now - since) / 2);
 
     // -- the maths --------------------------------------------------------------
@@ -439,20 +468,28 @@ public static partial class MatchStatsMath
     /// One family: every hero's lifts over the whole window and over each half, the noise calibrated
     /// from how much the halves disagree, then how much real signal is left.
     /// </summary>
-    public static FamilyStats AnalyseFamily(Halves baseline, OrderedDictionary<string, Halves> heroes, IReadOnlyDictionary<long, int> tiers)
+    /// <param name="own">
+    /// Each hero's own purchases over the same window, taken out of the baseline for that hero's lifts:
+    /// an "against" query never sees the enemy's own purchases, so its baseline shouldn't either.
+    /// </param>
+    public static FamilyStats AnalyseFamily(
+        Halves baseline, OrderedDictionary<string, Halves> heroes, IReadOnlyDictionary<long, int> tiers,
+        IReadOnlyDictionary<string, Halves>? own = null)
     {
-        var baseAll = Merge(baseline.First, baseline.Second);
         var full = new OrderedDictionary<HeroItem, RawLift>();
         var first = new OrderedDictionary<HeroItem, RawLift>();
         var second = new OrderedDictionary<HeroItem, RawLift>();
         foreach (var (heroId, heroHalves) in heroes)
         {
-            foreach (var (item, lift) in RawLifts(Merge(heroHalves.First, heroHalves.Second), baseAll, tiers))
+            var heroBaseline = own?.GetValueOrDefault(heroId) is { } ownHalves
+                ? new Halves(Subtract(baseline.First, ownHalves.First), Subtract(baseline.Second, ownHalves.Second))
+                : baseline;
+            foreach (var (item, lift) in RawLifts(Merge(heroHalves.First, heroHalves.Second), Merge(heroBaseline.First, heroBaseline.Second), tiers))
                 full[new HeroItem(heroId, item)] = lift;
             // Each half has half the data, so half the floor.
-            foreach (var (item, lift) in RawLifts(heroHalves.First, baseline.First, tiers, MinN / 2))
+            foreach (var (item, lift) in RawLifts(heroHalves.First, heroBaseline.First, tiers, MinN / 2))
                 first[new HeroItem(heroId, item)] = lift;
-            foreach (var (item, lift) in RawLifts(heroHalves.Second, baseline.Second, tiers, MinN / 2))
+            foreach (var (item, lift) in RawLifts(heroHalves.Second, heroBaseline.Second, tiers, MinN / 2))
                 second[new HeroItem(heroId, item)] = lift;
         }
 
@@ -483,7 +520,10 @@ public static partial class MatchStatsMath
 
     /// <summary>
     /// Every family's lifts from a download's totals, over one rank range (null: every match). A family
-    /// whose lifts are mostly noise over that range is reported but gives no lifts.
+    /// whose lifts are mostly noise over that range is reported but gives no lifts. An "against" family
+    /// takes each enemy's own purchases out of that enemy's baseline, from the "as" family of the same
+    /// scope and window: otherwise an item an enemy buys a lot and does badly with would look like a
+    /// counter to them.
     /// </summary>
     public static FetchResult Analyse(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
     {
@@ -501,8 +541,10 @@ public static partial class MatchStatsMath
             var heroes = new OrderedDictionary<string, Halves>();
             foreach (var (heroId, halves) in family.Heroes)
                 heroes[heroId] = halves.For(counts.Ranks, range);
+            var own = relation == "against" ? OwnPurchases(counts, family, range) : null;
 
-            var report = new FamilyReport(family.Family, family.Since, AnalyseFamily(family.Baseline.For(counts.Ranks, range), heroes, tiers));
+            var stats = AnalyseFamily(family.Baseline.For(counts.Ranks, range), heroes, tiers, own);
+            var report = new FamilyReport(family.Family, family.Since, stats, relation == "against" ? own is not null : null);
             reports.Add(report);
             if (!report.Kept)
                 continue;
@@ -514,6 +556,18 @@ public static partial class MatchStatsMath
             }
         }
         return new FetchResult(lifts, reports, counts.Latest, counts.FetchedAt, range, counts.Describe(range));
+    }
+
+    /// <summary>
+    /// Each hero's own purchases over an "against" family's window: the "as" family of the same scope,
+    /// when it was downloaded over the same window (one download dates every family from one moment,
+    /// so the same start means the same halves). Null for a download from before the windows matched.
+    /// </summary>
+    private static Dictionary<string, Halves>? OwnPurchases(MatchCounts counts, FamilyCounts against, RankRange? range)
+    {
+        var mine = counts.Families.FirstOrDefault(family =>
+            family.Family.Relation == "as" && family.Family.Scope == against.Family.Scope && family.Since.Start == against.Since.Start);
+        return mine?.Heroes.ToDictionary(pair => pair.Key, pair => pair.Value.For(counts.Ranks, range));
     }
 
     // -- describing it ----------------------------------------------------------
@@ -566,6 +620,8 @@ public static partial class MatchStatsMath
             lines.Add(IsTrue(data["kept"])
                 ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} lifts, reliability {reliability}"
                 : $"{name}: left out, reliability {reliability} is too low");
+            if (IsTrue(data["kept"]) && data["own_excluded"] is JsonValue excluded && excluded.TryGetValue<bool>(out var flag) && !flag)
+                lines.Add(OwnIncludedNote);
         }
         return lines;
     }

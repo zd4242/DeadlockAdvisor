@@ -12,7 +12,9 @@ namespace DeadlockAdvisor.Tests;
 /// <summary>
 /// The fetch replayed against the conversation the Python app had with a synthetic API
 /// (export_golden.py's match_stats_fetch), which predates rank groups: every match gets the recorded
-/// answer, and each rank group a fixed share of it. Every match must still give the files Python wrote.
+/// answer, and each rank group a fixed share of it. The enemy queries have since moved to the "as"
+/// window, so the recording asks them over it. The files every match gives are regression snapshots,
+/// rewritten with DEADLOCK_UPDATE_GOLDENS=1.
 /// </summary>
 public class MatchStatsServiceTests
 {
@@ -61,7 +63,7 @@ public class MatchStatsServiceTests
             if (RankTier(url) is { } tier)
                 return Task.FromResult<JsonNode?>(Share(_lastAnswer[recorded], tier));
             if (!_answers.TryGetValue(recorded, out var queue) || queue.Count == 0)
-                throw new InvalidOperationException($"Python never asked for {recorded}");
+                throw new InvalidOperationException($"The recording never asks for {recorded}");
             var answer = queue.Dequeue();
             if (answer is JsonArray rows)
                 _lastAnswer[recorded] = rows;
@@ -137,7 +139,7 @@ public class MatchStatsServiceTests
     internal static Task<MatchCounts> ReplayedCountsAsync() => Replay().Service.FetchAsync(LoadStore(), null, CancellationToken.None);
 
     [Fact]
-    public async Task FetchAsksWhatPythonAskedPlusEachRankGroupAndEveryMatchWritesWhatItWrote()
+    public async Task FetchAsksTheRecordedQueriesPlusEachRankGroupAndEveryMatchWritesTheSnapshot()
     {
         var (service, api, _) = Replay();
         var progress = new Collect<FetchProgress>();
@@ -164,6 +166,16 @@ public class MatchStatsServiceTests
         using var data = CopyData();
         var target = DataStore.Load(data.Path);
         var result = service.Apply(target, counts);
+        if (Updating)
+        {
+            WriteJson("match_fetch/result.json", new JsonObject
+            {
+                ["lines"] = new JsonArray(result.Lines().Select(line => (JsonNode)line).ToArray()),
+                ["lift_count"] = result.Lifts.Count,
+            });
+            CopyFile(data.File(DataStore.MatchLiftFile), "match_fetch", "match_item_lift.csv");
+            CopyFile(data.File(DataStore.MatchMetaFile), "match_fetch", "match_item_lift.meta.json");
+        }
         var expected = Json("match_fetch/result.json");
         Assert.Equal(expected["lines"]!.AsArray().Select(Text), result.Lines());
         Assert.Equal(expected["lift_count"]!.GetValue<int>(), result.Lifts.Count);

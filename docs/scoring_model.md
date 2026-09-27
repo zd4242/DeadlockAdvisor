@@ -92,6 +92,22 @@ change the list in three ways only:
 `DataStrength` nets the two relations instead of taking the better one, so a
 strong counter that does badly on your own hero doesn't count as a standout.
 
+### An enemy's own purchases
+
+An "against E" query only sees players on E's opposing team, so E's own purchases
+are never in it. "Every match" includes them. Compared with every match, an item
+E buys a lot and does badly with would look like a counter to E. For example,
+Lash is Refresher's biggest buyer and does about 8 points worse with it than
+average, which gave "Refresher vs Lash" a raw lift of +1.7. So `MatchStatsMath.Analyse`
+compares each enemy's query with every match minus that enemy's own purchases
+(`MatchStatsMath.Subtract`), taken from the `as` family of the same scope.
+
+That needs both families over the same window, so `against/full` uses the same two
+patches as `as/full`. One download dates every family from one moment, so the same
+start means the same halves and rank groups. Counts downloaded before the windows
+matched can't be corrected: the family meta has `own_excluded: false`, and the
+report and the **Data:** flyout say to fetch again.
+
 ### Which ranks the data comes from
 
 Fetch Match Stats keeps the raw win and match totals in `match_item_counts.json`

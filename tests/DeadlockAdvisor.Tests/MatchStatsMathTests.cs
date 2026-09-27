@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 
 namespace DeadlockAdvisor.Tests;
@@ -95,6 +97,66 @@ public class MatchStatsMathTests
 
         Assert.Equal(new Dictionary<long, WinTotals> { [7] = new(10, 20) }, first);
         Assert.Equal(new Dictionary<long, WinTotals> { [7] = new(15, 40), [8] = new(1, 2) }, MatchStatsMath.Merge(first, second));
+        Assert.Equal(new Dictionary<long, WinTotals> { [7] = new(5, 20), [8] = new(0, 0) },
+            MatchStatsMath.Subtract(MatchStatsMath.Merge(first, second), MatchStatsMath.Totals([(7, 10, 20), (8, 3, 5)])));
+    }
+
+    // Per half: other players win item 1 and item 2 half the time (2500 of 5000 each); the enemy "e"
+    // buys item 1 in 4000 more and wins only 1000, so every match has item 1 at 3500 of 9000. Against
+    // "e", the others still win half their games with either item.
+    private static readonly Dictionary<long, int> _twoItems = new() { [1] = 1, [2] = 1 };
+    private static Dictionary<long, WinTotals> EveryMatchHalf => Totals((1, 3500, 9000), (2, 2500, 5000));
+    private static Dictionary<long, WinTotals> OwnHalf => Totals((1, 1000, 4000));
+    private static Dictionary<long, WinTotals> AgainstHalf => Totals((1, 1500, 3000), (2, 1500, 3000));
+
+    [Fact]
+    public void AnEnemysOwnPurchasesAreTakenOutOfItsBaseline()
+    {
+        var heroes = new OrderedDictionary<string, Halves> { ["e"] = new(AgainstHalf, AgainstHalf) };
+        var baseline = new Halves(EveryMatchHalf, EveryMatchHalf);
+
+        // Against every match, item 1 gains 50 - 38.9 = 11.1 points and item 2 nothing; the tier mean
+        // at equal weight is 5.6, so item 1 looks like a counter to "e" and item 2 like a poor buy.
+        var counted = MatchStatsMath.AnalyseFamily(baseline, heroes, _twoItems);
+        Assert.Equal(50.0 / 9, counted.Full[new HeroItem("e", 1)].Lift, 9);
+        Assert.Equal(-50.0 / 9, counted.Full[new HeroItem("e", 2)].Lift, 9);
+
+        // Without e's own purchases, item 1 is back at 50% and neither item moves.
+        var own = new Dictionary<string, Halves> { ["e"] = new(OwnHalf, OwnHalf) };
+        var excluded = MatchStatsMath.AnalyseFamily(baseline, heroes, _twoItems, own);
+        Assert.Equal(0, excluded.Full[new HeroItem("e", 1)].Lift, 9);
+        Assert.Equal(0, excluded.Full[new HeroItem("e", 2)].Lift, 9);
+        Assert.Equal(0, excluded.Halves.First[new HeroItem("e", 1)].Lift, 9);
+    }
+
+    [Fact]
+    public void TheEnemyFamilyTakesOwnPurchasesFromTheAsFamilyOfTheSameWindowOnly()
+    {
+        var patches = MatchStatsMath.ParsePatches(["09-16-2026 Update", "08-22-2026 Update"]);
+        Item[] items = [new("one", "One", "weapon", 1, GameId: 1), new("two", "Two", "weapon", 1, GameId: 2)];
+
+        static RankedHalves Ranked(Dictionary<long, WinTotals> half) => new(new RankedTotals(half, []), new RankedTotals(half, []));
+        MatchCounts Counts(Patch asSince) => new(1790296852, patches[0], [],
+        [
+            new(new Family("against", "full", 2), patches[1], Ranked(EveryMatchHalf), new() { ["e"] = Ranked(AgainstHalf) }),
+            new(new Family("as", "full", 2), asSince, Ranked(EveryMatchHalf), new() { ["e"] = Ranked(OwnHalf) }),
+        ]);
+
+        var matched = MatchStatsMath.Analyse(Counts(patches[1]), null, items).Families[0];
+        Assert.True(matched.OwnExcluded);
+        Assert.Equal(0, matched.Stats.Full[new HeroItem("e", 1)].Lift, 9);
+        Assert.True(matched.Meta()["own_excluded"]!.GetValue<bool>());
+
+        // A download from before the windows matched can't be corrected, and says so.
+        var older = MatchStatsMath.Analyse(Counts(patches[0]), null, items);
+        Assert.False(older.Families[0].OwnExcluded);
+        Assert.Equal(50.0 / 9, older.Families[0].Stats.Full[new HeroItem("e", 1)].Lift, 9);
+        Assert.Null(older.Families[1].OwnExcluded);
+        Assert.False(older.Families[1].Meta().ContainsKey("own_excluded"));
+
+        var meta = JsonNode.Parse(
+            """{"families": {"against/full": {"kept": true, "rows": 5, "reliability": 0.7, "own_excluded": false}}}""")!.AsObject();
+        Assert.Equal(["Enemies: 5 lifts, reliability 0.70", MatchStatsMath.OwnIncludedNote], MatchStatsMath.FamilyLines(meta));
     }
 
     [Fact]

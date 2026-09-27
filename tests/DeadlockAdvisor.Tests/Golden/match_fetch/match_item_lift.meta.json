@@ -12,13 +12,14 @@
  "min_reliability": 0.5,
  "families": {
   "against/full": {
-   "since": 1789603200,
-   "since_patch": "09-16",
+   "since": 1787443200,
+   "since_patch": "08-22",
    "rows": 5928,
    "noise_scale": 0.994,
-   "tau": 0.596,
+   "tau": 0.597,
    "reliability": 0.593,
-   "kept": true
+   "kept": true,
+   "own_excluded": true
   },
   "as/full": {
    "since": 1787443200,
