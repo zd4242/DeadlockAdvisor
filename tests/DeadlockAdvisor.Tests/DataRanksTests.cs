@@ -31,6 +31,8 @@ public sealed class DataRanksTests : IDisposable
 
     private RankRange? SavedRange() => MatchStatsMath.RankOf(_fixture.Saved().MatchMeta);
 
+    private string? SavedLabel() => MatchStatsMath.RankLabel(_fixture.Saved().MatchMeta);
+
     [Fact]
     public void DataFromBeforeRankSplitsCantBeFiltered()
     {
@@ -39,7 +41,6 @@ public sealed class DataRanksTests : IDisposable
         Assert.False(filter.CanFilter);
         Assert.Empty(filter.Ranks);
         Assert.True(filter.EveryMatch);
-        Assert.Equal("Data: every match", filter.Label);
         Assert.Equal("Enemies: 5928 lifts, reliability 0.71\nYour hero: 4421 lifts, reliability 0.93", filter.Status);
     }
 
@@ -53,13 +54,13 @@ public sealed class DataRanksTests : IDisposable
 
         filter.RankedOnly = true;
         Assert.Equal(new RankRange(1, 10), SavedRange());
-        Assert.Equal("Data: every ranked match", filter.Label);
+        Assert.Equal("every ranked match", SavedLabel());
         Assert.False(filter.EveryMatch);
         Assert.Equal(1, _replaced);
 
         filter.From = filter.Ranks[4];
         Assert.Equal(new RankRange(5, 10), SavedRange());
-        Assert.Equal("Data: Mystic+", filter.Label);
+        Assert.Equal("Mystic+", SavedLabel());
         Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(_fixture.Data.Store.MatchMeta, 0));
 
         // Below the start: the start follows it down, in a single rework.
@@ -70,7 +71,7 @@ public sealed class DataRanksTests : IDisposable
 
         filter.EveryMatch = true;
         Assert.Null(SavedRange());
-        Assert.Equal("Data: every match", filter.Label);
+        Assert.Null(SavedLabel());
         Assert.Equal(4, _replaced);
     }
 
@@ -85,7 +86,7 @@ public sealed class DataRanksTests : IDisposable
 
         Assert.True(filter.RankedOnly);
         Assert.Equal(("Mystic", "Oracle"), (filter.From!.Name, filter.To!.Name));
-        Assert.Equal("Data: Mystic – Oracle", filter.Label);
+        Assert.Equal("Mystic – Oracle", SavedLabel());
         // Only the reload: showing the range doesn't rework it.
         Assert.Equal(1, _replaced);
     }

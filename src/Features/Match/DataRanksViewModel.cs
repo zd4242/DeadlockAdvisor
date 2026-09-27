@@ -71,9 +71,6 @@ public class DataRanksViewModel : ViewModelBase
     [Reactive] public RankBucket? From { get; set; }
     [Reactive] public RankBucket? To { get; set; }
 
-    /// <summary>The button: "Data: Mystic+".</summary>
-    [Reactive] public string Label { get; private set; } = "";
-
     /// <summary>What the current range gave each family, or why a family was left out.</summary>
     [Reactive] public string Status { get; private set; } = "";
 
@@ -89,7 +86,6 @@ public class DataRanksViewModel : ViewModelBase
             RankedOnly = range is not null;
             From = Ranks.FirstOrDefault(rank => rank.Tier == range?.Min) ?? Ranks.FirstOrDefault();
             To = Ranks.FirstOrDefault(rank => rank.Tier == range?.Max) ?? Ranks.LastOrDefault();
-            Label = $"Data: {MatchStatsMath.RankLabel(store.MatchMeta) ?? "every match"}";
             Status = string.Join("\n", MatchStatsMath.FamilyLines(store.MatchMeta));
         }
         finally
