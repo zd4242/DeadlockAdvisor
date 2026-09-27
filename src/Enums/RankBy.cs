@@ -9,6 +9,6 @@ public enum RankBy
     /// <summary>The match data's net verdict, <see cref="Scoring.ScoredItem.DataStrength"/>.</summary>
     MatchData,
 
-    /// <summary>Only items both rate above 0, as high as the less keen of the two, each as a share of its best item.</summary>
+    /// <summary>The formula score and the data strength added in common units (<see cref="Scoring.BlendScale"/>).</summary>
     Both,
 }

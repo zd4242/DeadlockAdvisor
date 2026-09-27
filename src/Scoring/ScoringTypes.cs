@@ -67,6 +67,32 @@ public sealed record HeroContribution(
     public double Factor => NetWorth?.Factor ?? 1.0;
 }
 
+/// <summary>How many enemies and allies a line-up has, and whether you're in it: what the spread of its scores depends on.</summary>
+public readonly record struct LineUpShape(int Enemies, int Allies, bool Self)
+{
+    /// <summary>You, five allies and six enemies.</summary>
+    public static readonly LineUpShape FullMatch = new(6, 5, true);
+
+    public int Size => Enemies + Allies + (Self ? 1 : 0);
+
+    public static LineUpShape Of(LineUp lineUp) => new(lineUp.Enemies.Count, lineUp.Allies.Count, lineUp.Self is not null);
+
+    /// <summary>
+    /// A random line-up of this shape with no net worth, from distinct heroes of <paramref name="pool"/>, which it
+    /// shuffles in part (a partial Fisher-Yates): you first, then the allies, then the enemies.
+    /// </summary>
+    public LineUp Draw(Random random, string[] pool)
+    {
+        for (var i = 0; i < Size; i++)
+        {
+            var j = random.Next(i, pool.Length);
+            (pool[i], pool[j]) = (pool[j], pool[i]);
+        }
+        var first = Self ? 1 : 0;
+        return new LineUp(pool[first..(first + Allies)], pool[(first + Allies)..Size], Self ? pool[0] : null, NetWorthWeights.None);
+    }
+}
+
 /// <summary>The heroes one score is summed over, each with the relation they're counted on and their net worth factor.</summary>
 public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> Enemies, string? Self, NetWorthWeights NetWorth)
 {

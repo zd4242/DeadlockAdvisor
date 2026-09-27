@@ -99,7 +99,7 @@ public static class ItemScoring
         return store.Items
             .Where(entry => tiers.Contains(entry.Value.Tier))
             .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
-                entry.Value.Category, DataScores(store, match, entry.Key, restrictTo), BuildRatio(store, entry.Key, lineUp.Self)))
+                entry.Value.Category, DataScores(store, lineUp, entry.Key, DataScope(restrictTo)), BuildRatio(store, entry.Key, lineUp.Self)))
             .OrderByDescending(scored => scored.Score)
             .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
             .ToList();
@@ -274,14 +274,17 @@ public static class ItemScoring
     /// data (the API can't filter by teammate), and heroes without a row are simply absent.
     /// </summary>
     public static List<MatchLift> DataParts(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null)
+        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null) =>
+        DataParts(store, RelevantHeroes(match, restrictTo), itemId, DataScope(restrictTo));
+
+    /// <inheritdoc cref="DataParts(DataStore, MatchState, string, IReadOnlyCollection{string}?)"/>
+    public static List<MatchLift> DataParts(DataStore store, LineUp lineUp, string itemId, string scope)
     {
         if (store.MatchLift.Count == 0)
             return [];
 
-        var scope = restrictTo is null ? "full" : "lane";
         var found = new List<MatchLift>();
-        foreach (var (heroId, relation) in RelevantHeroes(match, restrictTo).Members())
+        foreach (var (heroId, relation) in lineUp.Members())
         {
             if (relation != Relation.With
                 && store.MatchLift.TryGetValue(new MatchLiftKey(itemId, heroId, relation.Key(), scope), out var lift))
@@ -290,19 +293,26 @@ public static class ItemScoring
         return found;
     }
 
+    /// <summary>The match data's scope for a view: "lane" when it's restricted to your lane.</summary>
+    public static string DataScope(IReadOnlyCollection<string>? restrictTo) => restrictTo is null ? "full" : "lane";
+
     /// <summary>
     /// Relation → summed lift_shrunk, only for relations with data. Kept apart rather than added up:
     /// "against" is a small counter effect, "as" a much bigger one that also reflects who plays the
     /// hero, so one sum would drown the counters. The "against" sum is counted by <see cref="Relevance"/>.
     /// </summary>
     public static OrderedDictionary<string, double> DataScores(
-        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null)
+        DataStore store, MatchState match, string itemId, IReadOnlyCollection<string>? restrictTo = null) =>
+        DataScores(store, RelevantHeroes(match, restrictTo), itemId, DataScope(restrictTo));
+
+    /// <inheritdoc cref="DataScores(DataStore, MatchState, string, IReadOnlyCollection{string}?)"/>
+    public static OrderedDictionary<string, double> DataScores(DataStore store, LineUp lineUp, string itemId, string scope)
     {
         var result = new OrderedDictionary<string, double>();
-        foreach (var lift in DataParts(store, match, itemId, restrictTo))
+        foreach (var lift in DataParts(store, lineUp, itemId, scope))
             result[lift.Relation] = result.GetValueOrDefault(lift.Relation) + lift.LiftShrunk;
         if (result.TryGetValue(Relation.Against.Key(), out var against))
-            result[Relation.Against.Key()] = against * Relevance(BuildRatio(store, itemId, RelevantHeroes(match, restrictTo).Self));
+            result[Relation.Against.Key()] = against * Relevance(BuildRatio(store, itemId, lineUp.Self));
         return result;
     }
 

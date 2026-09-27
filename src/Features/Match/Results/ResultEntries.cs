@@ -8,7 +8,7 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Results;
 
 /// <summary>A row's bars: fractions of a full bar, below 0 for a negative one.</summary>
-/// <param name="Data">A second bar, the data's share, when the ranking weighs both opinions.</param>
+/// <param name="Data">A second bar, the data's part, when the ranking adds both opinions.</param>
 /// <param name="Tip">How the bars were worked out, when that isn't just the score.</param>
 public readonly record struct Bars(double Fraction, double? Data = null, string? Tip = null);
 
@@ -22,6 +22,11 @@ public class ResultRowViewModel : ViewModelBase
     public static readonly string StandoutTip =
         "Standout in real matches for this line-up: the enemies lift plus a third of your lift\n"
         + $"comes to {Format.Num(ItemScoring.PickMinAgainst)} or more (your hero's lifts run about three times bigger).";
+
+    public const string DisagreeTip =
+        "The formula and the match data rate this item a unit or more apart, in opposite directions.\n"
+        + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
+        + "who buys the item more than what it does.";
 
     public ResultRowViewModel(string itemId, string name, string shopCategory, int tier)
     {
@@ -41,17 +46,17 @@ public class ResultRowViewModel : ViewModelBase
     public string ShopText => ShopCategory.Length > 0 ? ShopCategory.ToUpperInvariant() : "—";
     public Color ShopColor => Palette.ShopColor(ShopCategory);
 
-    /// <summary>The formula score, whatever the list is ranked by.</summary>
+    /// <summary>The number on the right: the formula score, or the blend when ranking by formula and data together.</summary>
     [Reactive] public DisplayAmount Score { get; private set; }
 
     /// <summary>As printed, so a score that rounds to 0.0 reads as zero rather than a red ▼0.0.</summary>
     [Reactive] public bool IsNegative { get; private set; }
     [Reactive] public bool IsZero { get; private set; }
 
-    /// <summary>The bar: the ranking's measure over the largest one on screen, below 0 for a negative one.</summary>
+    /// <summary>The bar: the ranking's measure over the largest one on screen (the formula's part, ranking by both), below 0 for a negative one.</summary>
     [Reactive] public double Fraction { get; private set; }
 
-    /// <summary>A second bar under it, the data's share, when ranking by agreement.</summary>
+    /// <summary>A second bar under it, the data's part, when ranking by formula and data together.</summary>
     [Reactive] public double DataFraction { get; private set; }
     [Reactive] public bool HasDataBar { get; private set; }
     [Reactive] public string? BarTip { get; private set; }
@@ -60,6 +65,9 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public bool ShowTier { get; private set; }
 
     [Reactive] public bool IsStandout { get; private set; }
+
+    /// <summary>Ranking by both, the formula and the data point clearly opposite ways (<see cref="BlendScale.Disagree"/>).</summary>
+    [Reactive] public bool Disagrees { get; private set; }
     [Reactive] public OrderedDictionary<string, double>? Data { get; private set; }
     [Reactive] public bool HasData { get; private set; }
 
@@ -68,9 +76,11 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
-    public void SetValues(ScoredItem scored, Bars bars, bool showTier, string dataTip)
+    /// <param name="shown">The number on the right, when it isn't the formula score.</param>
+    public void SetValues(ScoredItem scored, Bars bars, bool showTier, string dataTip, double? shown = null, bool disagrees = false)
     {
-        Score = new DisplayAmount(scored.Score);
+        Score = new DisplayAmount(shown ?? scored.Score);
+        Disagrees = disagrees;
         IsNegative = Score.Shown < 0;
         IsZero = Score.Shown == 0;
         Fraction = bars.Fraction;

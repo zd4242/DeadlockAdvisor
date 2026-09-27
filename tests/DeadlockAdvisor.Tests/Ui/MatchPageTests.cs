@@ -111,8 +111,10 @@ public class MatchPageTests
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Both);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.Percent == 0);
-        ui.Screenshot("match_rank_agree.png");
+        match.FullResults.Select(match.FullResults.Entries.OfType<ResultRowViewModel>().First());
+        ui.Screenshot("match_rank_blend.png");
         Assert.All(match.FullResults.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
+        Assert.StartsWith("Formula", match.Explain.Verdict);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);

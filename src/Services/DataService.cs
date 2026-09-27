@@ -39,6 +39,7 @@ public class DataService : IDataService, IDisposable
 
     public DataStore Store { get; private set; } = new("");
     public WeightMatrix Matrix { get; private set; } = WeightMatrix.Empty;
+    public ScoreScales Scales { get; private set; } = new(new DataStore(""), WeightMatrix.Empty);
 
     public IObservable<Unit> StoreReplaced => _storeReplaced;
     public IObservable<Unit> ScoresChanged => _scoresChanged;
@@ -210,7 +211,12 @@ public class DataService : IDataService, IDisposable
         NotifyReplaced();
     }
 
-    private void RebuildMatrix() => Matrix = ItemScoring.BuildWeightMatrix(Store);
+    /// <summary>After any change to the data, including new match data: the scales depend on the lifts too.</summary>
+    private void RebuildMatrix()
+    {
+        Matrix = ItemScoring.BuildWeightMatrix(Store);
+        Scales = new ScoreScales(Store, Matrix);
+    }
 
     public void Dispose()
     {

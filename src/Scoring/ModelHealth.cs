@@ -124,7 +124,7 @@ public sealed record ModelHealthReport(
 /// </summary>
 public static class ModelHealth
 {
-    public const int MatchSize = 12;
+    public static readonly int MatchSize = LineUpShape.FullMatch.Size;
     public const int SimulatedMatches = 2000;
     public const int TopCount = 3;
 
@@ -181,14 +181,8 @@ public static class ModelHealth
 
         for (var match = 0; match < matches; match++)
         {
-            // A partial Fisher-Yates shuffle: the first twelve are you, five allies and six enemies.
-            for (var i = 0; i < MatchSize; i++)
-            {
-                var j = random.Next(i, pool.Length);
-                (pool[i], pool[j]) = (pool[j], pool[i]);
-            }
             // Random line-ups have no net worth: the report measures the hand model alone.
-            var lineUp = new LineUp(pool[1..6], pool[6..MatchSize], pool[0], NetWorthWeights.None);
+            var lineUp = LineUpShape.FullMatch.Draw(random, pool);
 
             for (var i = 0; i < items.Count; i++)
             {

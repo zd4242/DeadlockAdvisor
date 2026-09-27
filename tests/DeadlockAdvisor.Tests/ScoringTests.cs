@@ -332,6 +332,25 @@ public class ScoringTests
     }
 
     [Fact]
+    public void BlendScalesAreTheSpreadOfNonzeroOpinionsOverRandomLineUps()
+    {
+        var store = TestStore.Make();
+        TestStore.AddLifts(store);
+        var scales = new ScoreScales(store, ItemScoring.BuildWeightMatrix(store));
+
+        // One enemy, each hero a third of the time. Formula: the trinket's 6, -4, -2 and the percent item's
+        // 4/3, -8/3, 4/3, so sqrt((56/3 + 96/27) / 2) = 3.33. Data: 1.5 and 1.2 against heavy_spirit and
+        // -0.25 against generic, one value a draw on average, so sqrt((2.25 + 1.44 + 0.0625) / 3) = 1.12.
+        var scale = scales.For(new LineUpShape(1, 0, false), lane: false);
+        Assert.InRange(scale.Formula, 3.0, 3.7);
+        Assert.InRange(scale.Data, 1.0, 1.25);
+        Assert.Equal(scale, scales.For(new LineUpShape(1, 0, false), lane: false));
+        // No one to draw, or more than the roster holds: plain units.
+        Assert.Equal(BlendScale.One, scales.For(new LineUpShape(0, 0, false), lane: false));
+        Assert.Equal(BlendScale.One, scales.For(LineUpShape.FullMatch, lane: false));
+    }
+
+    [Fact]
     public void DataScoresKeepEnemiesAndSelfApart()
     {
         var store = TestStore.Make();

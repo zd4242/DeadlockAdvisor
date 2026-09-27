@@ -65,7 +65,7 @@
                                                   VerticalAlignment="Center"
                                                   card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                     <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
+                                        <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
                                             <TextBlock Text="{Binding Name}"
                                                        FontWeight="Bold"
                                                        TextTrimming="CharacterEllipsis"
@@ -88,20 +88,27 @@
                                                             Color="{x:Static theme:Palette.Accent}"
                                                             IsVisible="{Binding IsStandout}"
                                                             ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>
-                                            <controls:DataText Grid.Column="5"
+                                            <controls:Badge Grid.Column="4"
+                                                            Margin="8,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            Text="DISAGREE"
+                                                            Color="{x:Static theme:Palette.TextDim}"
+                                                            IsVisible="{Binding Disagrees}"
+                                                            ToolTip.Tip="{x:Static results:ResultRowViewModel.DisagreeTip}"/>
+                                            <controls:DataText Grid.Column="6"
                                                                Margin="8,0,10,0"
                                                                VerticalAlignment="Center"
                                                                Data="{Binding Data}"
                                                                IsRarelyBuilt="{Binding IsRarelyBuilt}"
                                                                IsVisible="{Binding HasData}"
                                                                ToolTip.Tip="{Binding DataTip}"/>
-                                            <Border Grid.Column="6"
+                                            <Border Grid.Column="7"
                                                     Classes="vline"
                                                     Height="18"
                                                     VerticalAlignment="Center"
                                                     IsVisible="{Binding HasData}"/>
                                             <!-- A fixed width, so the scores line up down the list whatever their length. -->
-                                            <Panel Grid.Column="7"
+                                            <Panel Grid.Column="8"
                                                    MinWidth="58"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"

@@ -80,6 +80,17 @@ public static class ExplainText
             ? $"×{NumberFormat.Fixed(standing.Factor, 2)} · {Format.Compact(standing.Souls)} vs {Format.Compact((int)Math.Round(standing.Average))} avg"
             : null;
 
+    /// <summary>
+    /// "Formula +1.6 · data +0.7 → +2.3": each opinion's part in the formula-and-data ranking, in its
+    /// units, saying so when one has nothing to add.
+    /// </summary>
+    public static string Verdict(ScoredItem item, BlendScale scale, bool noRules)
+    {
+        var formula = noRules ? "Formula: no rule for this line-up" : $"Formula {Format.SignedFixed(scale.FormulaUnits(item), 1)}";
+        var data = item.Data.Count == 0 ? "no match data" : $"data {Format.SignedFixed(scale.DataUnits(item), 1)}";
+        return $"{formula} · {data} → {Format.SignedFixed(scale.Blend(item), 1)}";
+    }
+
     /// <summary>"best target ×1", "2nd target ×0.5": where a single-target item counts this hero, or null when it sums.</summary>
     public static string? Rank(int? rank) => rank is { } value
         ? $"{(value == 1 ? "best" : Ordinal(value))} target ×{Format.Num(BestTargets.RankFactor(value))}"

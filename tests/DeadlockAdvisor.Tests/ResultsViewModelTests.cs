@@ -27,10 +27,10 @@ public class ResultsViewModelTests
         Scored("c", -3, against: 1.5),
     ];
 
-    private static ResultsViewModel Show(RankBy rankBy, double? minFraction, bool byTier = false)
+    private static ResultsViewModel Show(RankBy rankBy, double? minFraction, bool byTier = false, BlendScale? blend = null)
     {
         var results = new ResultsViewModel("hint");
-        results.SetResults(_items, "");
+        results.SetResults(_items, "", blend is { } scale ? () => scale : null);
         results.SetDisplay(rankBy, byTier, minFraction);
         return results;
     }
@@ -80,34 +80,49 @@ public class ResultsViewModelTests
     }
 
     [Fact]
-    public void AgreementKeepsItemsBothRateAboveZeroRankedByTheLessKeen()
+    public void FormulaPlusDataRanksByTheSumInCommonUnits()
     {
-        var results = Show(RankBy.Both, 0);
+        // A formula unit of 5 points and a data unit of 1: a 2 + 1 = 3, b 1 + 1.8 = 2.8, c -0.6 + 1.5 = 0.9,
+        // d -0.4 - 0.5 = -0.9. c's data outweighs its formula score, so it's listed.
+        var results = Show(RankBy.Both, 0, blend: new BlendScale(5, 1));
 
-        // a: min(10/10, 1/1.8) = 0.56; b: min(5/10, 1.8/1.8) = 0.5. c has data but a negative score.
-        Assert.Equal(["a", "b"], Rows(results));
+        Assert.Equal(["a", "b", "c"], Rows(results));
         var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
         Assert.All(rows, row => Assert.True(row.HasDataBar));
-        Assert.Equal((1.0, 1 / 1.8), (rows[0].Fraction, rows[0].DataFraction));
-        Assert.Equal((0.5, 1.0), (rows[1].Fraction, rows[1].DataFraction));
+        // Both bars on one scale, the largest part on screen: a's formula 2.
+        Assert.Equal((1.0, 0.5), (rows[0].Fraction, rows[0].DataFraction));
+        Assert.Equal(-0.3, rows[2].Fraction, 9);
+        Assert.Equal(0.75, rows[2].DataFraction, 9);
+        Assert.Equal("3.0", rows[0].Score.Text);
+        Assert.Equal("3 items the formula and the data together rate above 0", results.Summary);
     }
 
     [Fact]
-    public void AgreementSharesOnlyMeasureAgainstItemsBothLike()
+    public void AnItemTheFormulaHasNothingToSayAboutRanksOnItsData()
     {
         var results = new ResultsViewModel("hint");
-        // x is the data's darling but the formula's reject: it mustn't shrink a and b's data shares.
-        results.SetResults([Scored("a", 10, mine: 3.0), Scored("b", 5, against: 2.0), Scored("x", -4, against: 6.0)], "");
+        results.SetResults([Scored("a", 10), Scored("s", 0, against: 1.2)], "", () => new BlendScale(10, 1));
         results.SetDisplay(RankBy.Both, false, 0);
 
-        var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
-        Assert.Equal(["a", "b"], rows.Select(row => row.ItemId));
-        Assert.Equal(0.5, rows[0].DataFraction);
-        Assert.Equal(1.0, rows[1].DataFraction);
+        // s: 0 + 1.2; a: 1 + 0.
+        Assert.Equal(["s", "a"], Rows(results));
     }
 
     [Fact]
-    public void OnlyTheAgreementRankingDrawsADataBar()
+    public void OpposedOpinionsAreMarkedOnlyWhenBlending()
+    {
+        var results = Show(RankBy.Both, null, blend: new BlendScale(1, 1));
+
+        // c: formula -3 against data +1.5; a: 10 and 1, the same way; d: -2 and -0.5, also the same way.
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId);
+        Assert.Equal(["c"], rows.Values.Where(row => row.Disagrees).Select(row => row.ItemId));
+
+        results.SetDisplay(RankBy.Formula, false, null);
+        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.Disagrees);
+    }
+
+    [Fact]
+    public void OnlyTheFormulaPlusDataRankingDrawsADataBar()
     {
         var results = Show(RankBy.Formula, 0);
         Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.HasDataBar);

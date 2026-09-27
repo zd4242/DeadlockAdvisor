@@ -121,11 +121,38 @@ because they're in different units and are partly about who buys the item. They
 change the list in three ways only:
 
 - **Rank by** (`AppSettings.ResultsRankBy`, `ResultsViewModel.Ranked`) can order
-  the list by `DataStrength` instead of the score, or keep only the items both
-  rate above 0, ranked by `min(score ÷ best score, strength ÷ best strength)`.
+  the list by `DataStrength` instead of the score, or by **Formula + data**, the two
+  added in common units (below).
 - **DATA ★** marks a row whose `DataStrength` is 1 or more.
 - **"Match data also likes"** lists the items with a strength of 1 or more that the
   formula scores 0 or below (`DataOnlyPicks`), at the end of the formula-ranked list.
+
+### Formula + data
+
+```
+blend(item) = score ÷ σF + DataStrength ÷ σD
+```
+
+σF and σD (`BlendScale`) say how far a formula score and a data strength typically
+stray from 0 in line-ups like the one being scored. Each is the root mean square of
+the nonzero values over 200 seeded random line-ups of the same shape: as many
+enemies and allies, with or without you, and the view's tiers and data scope
+(`ScoreScales`). One unit of either is then about as unusual as one of the other,
+so the two are weighted equally.
+
+- **Missing opinions add 0.** The ranking used to take `min(score share, data share)`,
+  which let a missing opinion veto an item. Items the formula has no rules for, such
+  as Slowing Bullets or Refresher, could never appear.
+- **The scales depend on the data.** `DataService.RebuildMatrix` makes a new
+  `ScoreScales` on every data change and on new match data. Each shape is measured
+  the first time it's needed, which takes about 40 ms.
+- **The row** shows the blend on the right and two bars in the same units, which go
+  below 0 when negative: the formula's part on top and the data's below. The row
+  tip gives the working.
+- **DISAGREE** marks an item the two rate at least a unit each in opposite
+  directions (`BlendScale.Disagree`).
+- **The explain panel** heads the item with the verdict, such as "Formula +1.6 · data
+  +0.7 → +2.3", and says when either opinion has nothing to add.
 
 `DataStrength` nets the two relations instead of taking the better one, so a
 strong counter that does badly on your own hero doesn't count as a standout.

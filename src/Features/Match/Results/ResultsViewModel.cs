@@ -39,6 +39,7 @@ public class ResultsViewModel : ViewModelBase
 
     private IReadOnlyList<ScoredItem> _scored = [];
     private string _dataTip = "";
+    private Func<BlendScale> _blendScale = () => BlendScale.One;
     private RankBy _rankBy;
     private bool _byTier;
     private double? _minFraction;
@@ -77,10 +78,15 @@ public class ResultsViewModel : ViewModelBase
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
 
     /// <summary>Every item the tab could list, scored for the line-up (<see cref="ItemScoring.ScoreAll"/>).</summary>
-    public void SetResults(IReadOnlyList<ScoredItem> scored, string dataTip)
+    /// <param name="blendScale">
+    /// The units the formula-and-data ranking adds the two in, for this line-up; asked for only when
+    /// ranking that way, since measuring a new shape takes a moment.
+    /// </param>
+    public void SetResults(IReadOnlyList<ScoredItem> scored, string dataTip, Func<BlendScale>? blendScale = null)
     {
         _scored = scored;
         _dataTip = dataTip;
+        _blendScale = blendScale ?? (() => BlendScale.One);
         Render();
     }
 
@@ -124,8 +130,8 @@ public class ResultsViewModel : ViewModelBase
     private void Render()
     {
         var everyItem = _minFraction is null;
-        var bests = AgreeingBests();
-        var ranked = Ranked(bests);
+        var blend = _rankBy == RankBy.Both ? _blendScale() : BlendScale.One;
+        var ranked = Ranked(blend);
         var positive = ranked.Count(entry => entry.Measure > 0);
         var best = ranked.Count > 0 ? ranked[0].Measure : 0.0;
         var cutoff = best > 0 ? best * (_minFraction ?? 0) : 0.0;
@@ -145,7 +151,10 @@ public class ResultsViewModel : ViewModelBase
         if (!shown.Any(entry => entry.Item.ItemId == SelectedItemId) && !picks.Any(item => item.ItemId == SelectedItemId))
             SetSelection(null);
 
-        var scale = shown.Select(entry => Math.Abs(entry.Measure)).DefaultIfEmpty(0).Max();
+        // Blending, both bars share one scale, the largest part on screen, so they compare directly.
+        var scale = _rankBy == RankBy.Both
+            ? shown.Select(entry => Math.Max(Math.Abs(blend.FormulaUnits(entry.Item)), Math.Abs(blend.DataUnits(entry.Item)))).DefaultIfEmpty(0).Max()
+            : shown.Select(entry => Math.Abs(entry.Measure)).DefaultIfEmpty(0).Max();
         var placed = new List<ViewModelBase>();
         if (_byTier)
         {
@@ -154,12 +163,12 @@ public class ResultsViewModel : ViewModelBase
             {
                 var header = Header($"tier{tierGroup.Key}", _tierLabels.GetValueOrDefault(tierGroup.Key, $"Tier {tierGroup.Key}"),
                     Palette.TierColor(tierGroup.Key));
-                AddSection(placed, header, tierGroup.Select(entry => Row(entry.Item, BarsFor(entry.Item, entry.Measure, scale, bests), showTier: false)).ToList());
+                AddSection(placed, header, tierGroup.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend, showTier: false)).ToList());
             }
         }
         else
         {
-            placed.AddRange(shown.Select(entry => Row(entry.Item, BarsFor(entry.Item, entry.Measure, scale, bests), showTier: true)));
+            placed.AddRange(shown.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend, showTier: true)));
         }
 
         if (picks.Count > 0)
@@ -173,24 +182,13 @@ public class ResultsViewModel : ViewModelBase
         Entries.ReplaceAll(placed);
     }
 
-    /// <summary>
-    /// The best score and the best data strength among the items both rate above 0, which the agree
-    /// ranking measures each item's shares against; 1 when no item qualifies. Only those items count,
-    /// so an item the data loves and the formula doesn't can't shrink everyone's data share.
-    /// </summary>
-    private (double Score, double Data) AgreeingBests()
-    {
-        var agreeing = _scored.Where(item => item.Score > 0 && item.DataStrength > 0).ToList();
-        return agreeing.Count == 0 ? (1, 1) : (agreeing.Max(item => item.Score), agreeing.Max(item => item.DataStrength));
-    }
-
     /// <summary>Every item with the measure the list is ranked by, best first.</summary>
-    private List<(ScoredItem Item, double Measure)> Ranked((double Score, double Data) bests) =>
+    private List<(ScoredItem Item, double Measure)> Ranked(BlendScale blend) =>
         _scored
             .Select(item => (Item: item, Measure: _rankBy switch
             {
                 RankBy.MatchData => item.DataStrength,
-                RankBy.Both => Math.Min(item.Score / bests.Score, item.DataStrength / bests.Data),
+                RankBy.Both => blend.Blend(item),
                 _ => item.Score,
             }))
             .OrderByDescending(entry => entry.Measure)
@@ -200,26 +198,28 @@ public class ResultsViewModel : ViewModelBase
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
 
-    /// <summary>
-    /// A row's bars: the ranking's measure against the largest on screen, or when ranking by
-    /// agreement, the formula share over the data share, so it shows which one holds the item back.
-    /// </summary>
-    private Bars BarsFor(ScoredItem item, double measure, double scale, (double Score, double Data) bests)
+    /// <summary>A listed row: blending, it shows the blend rather than the formula score, and whether the two disagree.</summary>
+    private ResultRowViewModel RankedRow(ScoredItem item, double measure, double scale, BlendScale blend, bool showTier) =>
+        _rankBy == RankBy.Both
+            ? Row(item, BlendBars(item, measure, scale, blend), showTier, shown: measure, disagrees: blend.Disagree(item))
+            : Row(item, BarsFor(item, measure, scale), showTier);
+
+    /// <summary>A row's bar: the ranking's measure against the largest on screen.</summary>
+    private Bars BarsFor(ScoredItem item, double measure, double scale) =>
+        _rankBy == RankBy.MatchData
+            ? new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}")
+            : new Bars(Share(measure, scale));
+
+    /// <summary>The formula's part and the data's, on one scale and below 0 when negative, so it shows which one carries the item.</summary>
+    private static Bars BlendBars(ScoredItem item, double measure, double scale, BlendScale blend)
     {
-        switch (_rankBy)
-        {
-            case RankBy.MatchData:
-                return new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}");
-            case RankBy.Both:
-                var formula = item.Score / bests.Score;
-                var data = item.DataStrength / bests.Data;
-                return new Bars(formula, data,
-                    $"Formula {Percent(formula)} of the best agreeing item's score\n"
-                    + $"Data {Percent(data)} of the best agreeing item's data strength ({DataWorking(item)})\n"
-                    + $"Ranked by the lower: {Percent(measure)}");
-            default:
-                return new Bars(Share(measure, scale));
-        }
+        var formula = blend.FormulaUnits(item);
+        var data = blend.DataUnits(item);
+        return new Bars(Share(formula, scale), Share(data, scale),
+            $"Formula {Format.SignedFixed(formula, 1)} (score {Format.Tenths(item.Score)})\n"
+            + $"Data {Format.SignedFixed(data, 1)} ({DataWorking(item)})\n"
+            + $"Ranked by the sum: {Format.SignedFixed(measure, 1)}\n\n"
+            + "Each in units of how far it typically strays from 0 in line-ups like this one.");
     }
 
     /// <summary>"enemies 0.4 + you 1.0 ÷ 3".</summary>
@@ -229,8 +229,6 @@ public class ResultsViewModel : ViewModelBase
         var mine = NumberFormat.Fixed(item.Data.GetValueOrDefault("as"), 2);
         return $"enemies {enemies} + you {mine} ÷ {Format.Num(ItemScoring.PickMinAs / ItemScoring.PickMinAgainst)}";
     }
-
-    private static string Percent(double share) => $"{Math.Round(share * 100)}%";
 
     private void AddSection(List<ViewModelBase> placed, SectionHeaderViewModel header, IReadOnlyList<ResultRowViewModel> rows)
     {
@@ -254,14 +252,14 @@ public class ResultsViewModel : ViewModelBase
     private string RankNoun() => _rankBy switch
     {
         RankBy.MatchData => "the match data rates above 0",
-        RankBy.Both => "both the formula and the data rate above 0",
+        RankBy.Both => "the formula and the data together rate above 0",
         _ => "scoring above 0",
     };
 
     private string MeasureText(double measure) => _rankBy switch
     {
         RankBy.MatchData => NumberFormat.Fixed(measure, 2),
-        RankBy.Both => Percent(measure),
+        RankBy.Both => Format.SignedFixed(measure, 1),
         _ => Format.Num(Math.Round(measure)),
     };
 
@@ -271,9 +269,10 @@ public class ResultsViewModel : ViewModelBase
             "Ranked by the match data: the enemies lift plus a third of your lift (your hero's lifts run\n"
             + "about three times bigger). The bar shows that; the number on the right is still the formula score.",
         RankBy.Both =>
-            "Only items the formula and the match data both rate above 0. Each row's top bar is its share of\n"
-            + "the best of these items' scores, the lower bar its share of their best data strength; an item\n"
-            + "ranks by the shorter of the two.",
+            "Ranked by the formula and the match data added together, each in units of how far it typically\n"
+            + "strays from 0 over random line-ups like this one. The number on the right is that sum; the top bar\n"
+            + "is the formula's part and the lower bar the data's. An item one of them has nothing to say about\n"
+            + "ranks on the other alone. DISAGREE marks an item they rate a unit or more apart in opposite directions.",
         _ => "Ranked by the formula score. The data numbers are a second opinion from real matches.",
     };
 
@@ -285,7 +284,7 @@ public class ResultsViewModel : ViewModelBase
             return "The match data has nothing on these heroes.\n\nIt covers your enemies (Full Match only) and your own hero, "
                    + "never allies. Data → Fetch Match Stats fetches it.";
         return _rankBy == RankBy.Both
-            ? "No item is rated above 0 by both the formula and the match data."
+            ? "The formula and the match data together rate no item above 0 for these heroes."
             : "The match data rates no item above 0 for these heroes.";
     }
 
@@ -296,14 +295,15 @@ public class ResultsViewModel : ViewModelBase
         SelectedItemId = itemId;
     }
 
-    private ResultRowViewModel Row(ScoredItem scored, Bars bars, bool showTier)
+    /// <param name="shown">The number on the right, when it isn't the formula score.</param>
+    private ResultRowViewModel Row(ScoredItem scored, Bars bars, bool showTier, double? shown = null, bool disagrees = false)
     {
         if (!_rows.TryGetValue(scored.ItemId, out var row))
         {
             row = new ResultRowViewModel(scored.ItemId, scored.ItemName, scored.ShopCategory, scored.Tier);
             _rows[scored.ItemId] = row;
         }
-        row.SetValues(scored, bars, showTier, _dataTip);
+        row.SetValues(scored, bars, showTier, _dataTip, shown, disagrees);
         row.IsSelected = scored.ItemId == SelectedItemId;
         return row;
     }

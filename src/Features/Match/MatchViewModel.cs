@@ -54,7 +54,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     [
         new("Rank by formula", RankBy.Formula),
         new("Rank by match data", RankBy.MatchData),
-        new("Formula + data agree", RankBy.Both),
+        new("Formula + data", RankBy.Both),
     ];
 
     private static readonly IReadOnlyDictionary<int, string> _laneTierLabels = new Dictionary<int, string>
@@ -188,12 +188,21 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
         var netWorth = NetWorth();
         HasMatchData = store.MatchLift.Count > 0;
-        LaneResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.LaneTiers, Match.LaneHeroes, netWorth), note);
-        FullResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.FullTiers, null, netWorth), note);
+        LaneResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.LaneTiers, Match.LaneHeroes, netWorth), note,
+            () => ScaleFor(laneScoped: true));
+        FullResults.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, ItemScoring.FullTiers, null, netWorth), note,
+            () => ScaleFor(laneScoped: false));
         RefreshExplain();
     }
 
     private NetWorthWeights NetWorth() => ByNetWorth ? NetWorthWeights.For(Match) : NetWorthWeights.None;
+
+    /// <summary>What the lists rank by: without match data, ranking by it would empty them.</summary>
+    private RankBy EffectiveRankBy => HasMatchData ? SelectedRank.RankBy : RankBy.Formula;
+
+    /// <summary>The formula-and-data ranking's units for one view's current line-up.</summary>
+    private BlendScale ScaleFor(bool laneScoped) =>
+        _data.Scales.For(LineUpShape.Of(ItemScoring.RelevantHeroes(Match, laneScoped ? Match.LaneHeroes : null)), laneScoped);
 
     private void OnMatchChanged()
     {
@@ -213,10 +222,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyDisplay()
     {
-        // Without match data, ranking by it would empty the list.
-        var rankBy = HasMatchData ? SelectedRank.RankBy : RankBy.Formula;
-        LaneResults.SetDisplay(rankBy, ByTier, SelectedCutoff.MinFraction);
-        FullResults.SetDisplay(rankBy, ByTier, SelectedCutoff.MinFraction);
+        LaneResults.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
+        FullResults.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
     }
 
     private void RefreshExplain()
@@ -226,5 +233,6 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     }
 
     private void ShowExplain(string? itemId, bool laneScoped) =>
-        Explain.ShowItem(_data.Store, Match, itemId, laneScoped ? Match.LaneHeroes : null, _now(), NetWorth());
+        Explain.ShowItem(_data.Store, Match, itemId, laneScoped ? Match.LaneHeroes : null, _now(), NetWorth(),
+            EffectiveRankBy == RankBy.Both ? ScaleFor(laneScoped) : null);
 }
