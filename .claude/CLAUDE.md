@@ -8,8 +8,14 @@ Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_ru
 - Every property the tooltip shows under a scored stat's label must be an alias in `GameSync.Stats` or listed, with a reason, in `GameSync.Unscored`. `GameApiTests.TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides` enforces this.
 - After a deliberate scoring or sync change, regenerate the goldens with `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter ...` and review the diff. Use Data → Model Health Report (`Scoring/ModelHealth.cs`) to check the effect on the whole model.
 
+# Testing
+The full suite takes a minute or two, so don't run it after every change. Run tests with `-c Release`, because the app may be running from a Debug build.
+- For most changes, run only the tests for the area you touched, with `--filter "FullyQualifiedName~ResultsViewModel|FullyQualifiedName~MatchPage"` and so on. The test files are named after the features they cover.
+- Run the full suite when a change can affect areas beyond the one you touched: scoring, the formula CSVs, `GameSync`, `DataStore`, vision or detection, and shared infrastructure (app startup, DI wiring, base view models, styles and themes). Also run it whenever you can't confidently name the affected tests, or when the user asks.
+- If a full run fails in an area you didn't touch, look for the recent commit that broke it before assuming it's another session's in-progress work.
+
 # Committing
-When you finish a feature or fix and the tests pass, commit it without being asked. Follow-up changes after that get their own commits. Don't push.
+When you finish a feature or fix and its tests pass (targeted or full, as above), commit it without being asked. Follow-up changes after that get their own commits. Don't push.
 
 Other agents may be working in this repo at the same time, so the working tree can contain changes that aren't yours:
 - Run `git status` before your first edit and note what's already modified. That work isn't yours.
