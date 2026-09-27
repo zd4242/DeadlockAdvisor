@@ -67,16 +67,17 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private readonly ISettingsService _settings;
     private readonly Func<double> _now;
 
-    public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect)
-        : this(data, settings, detect, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
+    public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, DataRanksViewModel dataRanks)
+        : this(data, settings, detect, dataRanks, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
     {
     }
 
-    internal MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, Func<double> now)
+    internal MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, DataRanksViewModel dataRanks, Func<double> now)
     {
         _data = data;
         _settings = settings;
         _now = now;
+        DataRanks = dataRanks.DisposeWith(Disposables);
 
         Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
         Board = new MatchBoardViewModel(Match, () => _data.Store);
@@ -154,6 +155,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public ResultsViewModel LaneResults { get; }
     public ResultsViewModel FullResults { get; }
     public ExplainViewModel Explain { get; } = new();
+    public DataRanksViewModel DataRanks { get; }
 
     /// <summary>An item whose rules a recommendation's context menu asked to open, from either tab.</summary>
     public IObservable<string> FormulaRequested { get; }

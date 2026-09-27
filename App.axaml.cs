@@ -46,6 +46,7 @@ public partial class App : Application
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DataMenuViewModel>();
         services.AddTransient<MatchViewModel>();
+        services.AddTransient<DataRanksViewModel>();
         services.AddTransient<HeroTraitsViewModel>();
         services.AddTransient<ItemFormulasViewModel>();
         services.AddSingleton<NotificationOverlayViewModel>();

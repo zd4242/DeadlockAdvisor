@@ -187,15 +187,16 @@ public class DataMenuViewModel : ViewModelBase
     private async Task FetchMatchStatsAsync()
     {
         _data.FlushSaves();
-        var progress = new ProgressModalViewModel("Fetch Match Stats", "Fetching match stats from deadlock-api.com… (a few minutes)");
-        var result = await RunAsync(progress, () => _matchStats.FetchAsync(_data.Store, progress, progress.Token),
+        var progress = new ProgressModalViewModel("Fetch Match Stats", "Fetching match stats for every rank from deadlock-api.com… (about 20 minutes)");
+        var counts = await RunAsync(progress, () => _matchStats.FetchAsync(_data.Store, progress, progress.Token),
             failure => ShowMessage("Fetch failed", ["Couldn't fetch match stats from deadlock-api.com:", "", failure.Message, "", "Nothing was changed."]));
-        if (result is null)
+        if (counts is null)
             return;
 
+        FetchResult result;
         try
         {
-            _matchStats.Apply(_data.Store, result);
+            result = _matchStats.Apply(_data.Store, counts);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -206,6 +207,7 @@ public class DataMenuViewModel : ViewModelBase
         _data.NotifyReplaced();
         var lines = result.Lines();
         lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
+        lines.Add("The Match page's \"Data:\" button narrows it to a range of ranks, without fetching again.");
         ShowMessage("Match stats fetched", lines);
     }
 

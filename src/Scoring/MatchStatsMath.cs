@@ -71,11 +71,15 @@ public sealed record FamilyReport(Family Family, Patch Since, FamilyStats Stats)
     };
 }
 
+/// <param name="Rank">The rank range the lifts are for; null for every match.</param>
+/// <param name="RankLabel">The range as the UI shows it: "Mystic+".</param>
 public sealed record FetchResult(
     OrderedDictionary<MatchLiftKey, MatchLift> Lifts,
     IReadOnlyList<FamilyReport> Families,
     Patch Latest,
-    long FetchedAt)
+    long FetchedAt,
+    RankRange? Rank,
+    string RankLabel)
 {
     public JsonObject Meta()
     {
@@ -92,7 +96,14 @@ public sealed record FetchResult(
                 ["label"] = Latest.Label,
                 ["start"] = Latest.Start,
             },
-            ["rank"] = "all",
+            ["rank"] = Rank is null
+                ? "all"
+                : new JsonObject
+                {
+                    ["min"] = Rank.Min,
+                    ["max"] = Rank.Max,
+                    ["label"] = RankLabel,
+                },
             // The API's default.
             ["match_mode"] = "ranked,unranked",
             ["lane_end_s"] = MatchStatsMath.LaneEndSeconds,
@@ -105,6 +116,8 @@ public sealed record FetchResult(
     public List<string> Lines()
     {
         var lines = new List<string>();
+        if (Rank is not null)
+            lines.Add($"Ranked matches only: {RankLabel}.");
         foreach (var report in Families)
         {
             var stats = report.Stats;
@@ -165,6 +178,38 @@ public static partial class MatchStatsMath
 
     public static IReadOnlyList<int> ScopeTiers(string scope) =>
         scope == "lane" ? ItemScoring.LaneTiers : ItemScoring.FullTiers;
+
+    // -- ranks ------------------------------------------------------------------
+
+    /// <summary>The highest average badge the API takes: Eternus 6.</summary>
+    public const int MaxBadge = 116;
+
+    /// <summary>Initiate: the lowest rank group, which also takes the few matches below it.</summary>
+    public const int FirstRankTier = 1;
+
+    /// <summary>Ascendant: the highest rank group, which also takes Eternus, too rare to count on its own.</summary>
+    public const int LastRankTier = 10;
+
+    /// <summary>One group per rank from <see cref="FirstRankTier"/> to <see cref="LastRankTier"/>, named from /v1/assets/ranks.</summary>
+    public static List<RankBucket> RankBuckets(IReadOnlyDictionary<int, string> names)
+    {
+        var buckets = new List<RankBucket>();
+        for (var tier = FirstRankTier; tier <= LastRankTier; tier++)
+        {
+            buckets.Add(new RankBucket(
+                tier,
+                names.GetValueOrDefault(tier, $"Rank {tier}"),
+                tier == FirstRankTier ? 0 : tier * 10,
+                tier == LastRankTier ? MaxBadge : tier * 10 + 9));
+        }
+        return buckets;
+    }
+
+    /// <summary>The rank range the stored lifts were worked out for; null for every match.</summary>
+    public static RankRange? RankOf(JsonObject meta) =>
+        meta["rank"] is JsonObject rank && Number(rank["min"]) is { } min && Number(rank["max"]) is { } max
+            ? new RankRange((int)min, (int)max)
+            : null;
 
     // -- patches ----------------------------------------------------------------
 
@@ -239,6 +284,14 @@ public static partial class MatchStatsMath
             parameters["max_bought_at_s"] = LaneEndSeconds.ToString(CultureInfo.InvariantCulture);
         return parameters;
     }
+
+    /// <summary>A query's filters narrowed to one rank group.</summary>
+    public static OrderedDictionary<string, string> RankParams(OrderedDictionary<string, string> parameters, RankBucket rank) =>
+        new(parameters)
+        {
+            ["min_average_badge"] = rank.MinBadge.ToString(CultureInfo.InvariantCulture),
+            ["max_average_badge"] = rank.MaxBadge.ToString(CultureInfo.InvariantCulture),
+        };
 
     /// <summary>An /item-stats answer as game item id → (wins, matches).</summary>
     public static Dictionary<long, WinTotals> Totals(IEnumerable<(long ItemId, long Wins, long Matches)> rows)
@@ -428,6 +481,41 @@ public static partial class MatchStatsMath
             PredictedR: tau2Half + noiseHalf != 0 ? tau2Half / (tau2Half + noiseHalf) : 0.0);
     }
 
+    /// <summary>
+    /// Every family's lifts from a download's totals, over one rank range (null: every match). A family
+    /// whose lifts are mostly noise over that range is reported but gives no lifts.
+    /// </summary>
+    public static FetchResult Analyse(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
+    {
+        var byGameId = new Dictionary<long, Item>();
+        foreach (var item in items.Where(item => item.GameId != 0))
+            byGameId[item.GameId] = item;
+
+        var lifts = new OrderedDictionary<MatchLiftKey, MatchLift>();
+        var reports = new List<FamilyReport>();
+        foreach (var family in counts.Families)
+        {
+            var (relation, scope) = (family.Family.Relation, family.Family.Scope);
+            var scopeTiers = ScopeTiers(scope);
+            var tiers = byGameId.Where(pair => scopeTiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
+            var heroes = new OrderedDictionary<string, Halves>();
+            foreach (var (heroId, halves) in family.Heroes)
+                heroes[heroId] = halves.For(counts.Ranks, range);
+
+            var report = new FamilyReport(family.Family, family.Since, AnalyseFamily(family.Baseline.For(counts.Ranks, range), heroes, tiers));
+            reports.Add(report);
+            if (!report.Kept)
+                continue;
+            foreach (var (key, lift) in report.Stats.Full)
+            {
+                var itemId = byGameId[key.GameItemId].ItemId;
+                lifts[new MatchLiftKey(itemId, key.HeroId, relation, scope)] = new MatchLift(
+                    itemId, key.HeroId, relation, scope, lift.Matches, lift.Lift, lift.Se, Shrink(lift, report.Stats.Tau2));
+            }
+        }
+        return new FetchResult(lifts, reports, counts.Latest, counts.FetchedAt, range, counts.Describe(range));
+    }
+
     // -- describing it ----------------------------------------------------------
 
     /// <summary>"just now", "5h ago", "3d ago".</summary>
@@ -450,8 +538,36 @@ public static partial class MatchStatsMath
         var fetched = Number(meta["fetched_at"]);
         if (fetched is null or 0)
             return "";
-        var latest = (meta["latest_patch"] as JsonObject)?["label"] is JsonValue label && label.TryGetValue<string>(out var text) ? text : "?";
-        return $"patch {latest} · fetched {Age(now - fetched.Value)}";
+        var latest = Text((meta["latest_patch"] as JsonObject)?["label"]) ?? "?";
+        var rank = RankLabel(meta) is { } label ? $" · {label}" : "";
+        return $"patch {latest}{rank} · fetched {Age(now - fetched.Value)}";
+    }
+
+    /// <summary>The rank range the lifts were worked out for, "Mystic+"; null for every match.</summary>
+    public static string? RankLabel(JsonObject meta) => (meta["rank"] as JsonObject)?["label"] is { } label ? Text(label) : null;
+
+    /// <summary>One line per family: its lift count, or why it was left out.</summary>
+    public static List<string> FamilyLines(JsonObject meta)
+    {
+        var lines = new List<string>();
+        foreach (var family in Families)
+        {
+            var data = FamilyMeta(meta, family.Relation, family.Scope);
+            if (data.Count == 0)
+                continue;
+            var name = (family.Relation, family.Scope) switch
+            {
+                ("against", "full") => "Enemies",
+                ("as", "lane") => "Your hero, lane phase",
+                ("as", _) => "Your hero",
+                _ => family.Key,
+            };
+            var reliability = Number(data["reliability"]) is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
+            lines.Add(IsTrue(data["kept"])
+                ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} lifts, reliability {reliability}"
+                : $"{name}: left out, reliability {reliability} is too low");
+        }
+        return lines;
     }
 
     /// <summary>
@@ -469,6 +585,8 @@ public static partial class MatchStatsMath
             "Second opinion from real matches (deadlock-api.com): how many win-rate points the item gains, "
             + "with each hero's own strength taken out and small samples pulled toward 0. Not part of the score.",
         };
+        if (RankLabel(meta) is { } rank)
+            lines.Add($"Ranked matches only: {rank}.");
         var against = FamilyMeta(meta, "against", "full");
         if (IsTrue(against["kept"]))
             lines.Add($"Enemies: counters, since patch {Text(against["since_patch"]) ?? "?"}. Real effects here are small -- +1 is a standout.");

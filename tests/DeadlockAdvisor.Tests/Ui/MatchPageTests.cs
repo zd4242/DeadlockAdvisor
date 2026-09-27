@@ -9,6 +9,9 @@ using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace DeadlockAdvisor.Tests.Ui;
 
@@ -235,5 +238,37 @@ public class MatchPageTests
         Assert.Equal(1.15, ui.ViewModel.UiScale);
         ui.Window.KeyPressQwerty(PhysicalKey.Digit0, RawInputModifiers.Control);
         Assert.Equal(1.0, ui.ViewModel.UiScale);
+    }
+
+    [AvaloniaFact]
+    public async Task TheDataButtonFiltersTheMatchDataByRank()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var button = ui.Window.GetVisualDescendants().OfType<DropDownButton>().Single();
+        Assert.False(button.IsEnabled); // the golden data predates rank splits
+        Assert.Equal("Data: every match", button.Content);
+
+        ui.Services.GetRequiredService<IMatchStatsService>().Apply(ui.Data.Store, await MatchStatsServiceTests.ReplayedCountsAsync());
+        ui.Data.NotifyReplaced();
+        UiHarness.Settle();
+        Assert.True(button.IsEnabled);
+
+        button.Flyout!.ShowAt(button);
+        UiHarness.Settle();
+        var panel = Assert.IsType<StackPanel>(((Flyout)button.Flyout).Content);
+        var radios = panel.Children.OfType<RadioButton>().ToList();
+        var combos = panel.Children.OfType<Grid>().Single().Children.OfType<ComboBox>().ToList();
+        Assert.True(radios[0].IsChecked);
+        Assert.Equal("Initiate", combos[0].SelectedItem?.ToString());
+
+        radios[1].IsChecked = true;
+        combos[0].SelectedIndex = 4;
+        UiHarness.Settle();
+
+        Assert.False(radios[0].IsChecked);
+        Assert.Equal("Data: Mystic+", button.Content);
+        Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
+        Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }
 }

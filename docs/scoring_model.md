@@ -92,6 +92,21 @@ change the list in three ways only:
 `DataStrength` nets the two relations instead of taking the better one, so a
 strong counter that does badly on your own hero doesn't count as a standout.
 
+### Which ranks the data comes from
+
+Fetch Match Stats keeps the raw win and match totals in `match_item_counts.json`
+(`MatchCounts`): one query over every match, plus one per rank group, by the
+average badge of both teams. Each rank from Initiate to Ascendant is a group, and
+Ascendant takes Eternus, which is too rare to stand alone. Unranked matches have
+no badge, so they're only in "every match", and the rank groups don't add up to it.
+
+The Match page's **Data:** button (`DataRanksViewModel`) sums the chosen groups and
+reruns the whole analysis (`MatchStatsMath.Analyse`): noise calibration, τ², shrinking
+and each family's reliability check. The result is written out as the lifts file, and
+the range goes in the meta's `rank`. A narrow range has fewer matches, so its lifts
+shrink harder, and a family that falls under `MinReliability` is left out. The
+button's flyout lists what each family kept. A new fetch keeps the chosen range.
+
 ## Net worth
 
 Detect reads each hero's net worth off the game's top bar (`Vision/NetWorthReader.cs`)

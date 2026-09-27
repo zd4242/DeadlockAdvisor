@@ -150,4 +150,66 @@ public class MatchStatsMathTests
         var asFull = new Family("as", "full", 2);
         Assert.Equal("08-12", MatchStatsMath.WindowStart(patches, asFull, patches[0].Start + 86400).Label);
     }
+
+    [Fact]
+    public void RankGroupsCoverEveryBadgeOnceWithEternusInAscendant()
+    {
+        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string> { [1] = "Initiate", [5] = "Mystic", [10] = "Ascendant" });
+
+        Assert.Equal(Enumerable.Range(1, 10), ranks.Select(rank => rank.Tier));
+        Assert.Equal(("Initiate", 0, 19), (ranks[0].Name, ranks[0].MinBadge, ranks[0].MaxBadge));
+        Assert.Equal(("Mystic", 50, 59), (ranks[4].Name, ranks[4].MinBadge, ranks[4].MaxBadge));
+        Assert.Equal(("Ascendant", 100, 116), (ranks[9].Name, ranks[9].MinBadge, ranks[9].MaxBadge));
+        Assert.Equal("Rank 2", ranks[1].Name);
+        Assert.All(ranks.Zip(ranks.Skip(1)), pair => Assert.Equal(pair.First.MaxBadge + 1, pair.Second.MinBadge));
+        Assert.Equal([new("hero_id", "13"), new("min_average_badge", "50"), new("max_average_badge", "59")],
+            MatchStatsMath.RankParams(MatchStatsMath.QueryParams("as", "full", 13), ranks[4]));
+    }
+
+    [Fact]
+    public void ARankRangeAddsUpItsGroupsAndEveryMatchTakesTheUnfilteredTotals()
+    {
+        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string>());
+        var byRank = ranks.Select(rank => Totals((1, rank.Tier, 10 * rank.Tier))).ToList();
+        byRank[2] = Totals((1, 3, 30), (2, 1, 4));
+        var totals = new RankedTotals(Totals((1, 999, 2000)), byRank);
+
+        Assert.Equal(new WinTotals(999, 2000), totals.For(ranks, null)[1]);
+        var mysticUp = totals.For(ranks, new RankRange(5, 10));
+        Assert.Equal(new WinTotals(5 + 6 + 7 + 8 + 9 + 10, 450), mysticUp[1]);
+        Assert.False(mysticUp.ContainsKey(2));
+        var third = totals.For(ranks, new RankRange(3, 3));
+        Assert.Equal([new WinTotals(3, 30), new WinTotals(1, 4)], [third[1], third[2]]);
+    }
+
+    [Fact]
+    public void RankRangesAreDescribedByTheirEnds()
+    {
+        var names = new Dictionary<int, string> { [1] = "Initiate", [5] = "Mystic", [8] = "Oracle", [10] = "Ascendant" };
+        var counts = new MatchCounts(0, new Patch("", 0), MatchStatsMath.RankBuckets(names), []);
+
+        Assert.Equal("every match", counts.Describe(null));
+        Assert.Equal("every ranked match", counts.Describe(new RankRange(1, 10)));
+        Assert.Equal("Mystic+", counts.Describe(new RankRange(5, 10)));
+        Assert.Equal("Ascendant+", counts.Describe(new RankRange(10, 10)));
+        Assert.Equal("up to Oracle", counts.Describe(new RankRange(1, 8)));
+        Assert.Equal("Mystic – Oracle", counts.Describe(new RankRange(5, 8)));
+        Assert.Equal("Oracle", counts.Describe(new RankRange(8, 8)));
+    }
+
+    [Fact]
+    public void TheRankRangeIsReadBackFromTheMeta()
+    {
+        var patch = new Patch("09-16-2026 Update", 1789603200);
+        var ranged = new FetchResult([], [], patch, 1, new RankRange(5, 10), "Mystic+").Meta();
+        var every = new FetchResult([], [], patch, 1, null, "every match").Meta();
+
+        Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ranged));
+        Assert.Equal("Mystic+", MatchStatsMath.RankLabel(ranged));
+        Assert.Contains("· Mystic+ ·", MatchStatsMath.Summary(ranged, 1));
+        Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(ranged, 1));
+        Assert.Null(MatchStatsMath.RankOf(every));
+        Assert.Null(MatchStatsMath.RankLabel(every));
+        Assert.Equal("all", every["rank"]!.GetValue<string>());
+    }
 }

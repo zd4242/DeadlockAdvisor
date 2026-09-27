@@ -6,6 +6,7 @@ using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using DeadlockAdvisor.Vision;
@@ -31,7 +32,8 @@ public sealed class DetectTests : IDisposable
     {
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, _capture, new FakeLoggingService());
-        _page = new MatchViewModel(_fixture.Data, _fixture.Settings, _detect);
+        var dataRanks = new DataRanksViewModel(_fixture.Data, new MatchStatsService(new FakeDeadlockApi()), new NotificationService(new FakeLoggingService()));
+        _page = new MatchViewModel(_fixture.Data, _fixture.Settings, _detect, dataRanks);
     }
 
     public void Dispose()

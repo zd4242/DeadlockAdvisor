@@ -139,7 +139,7 @@ public class GoldenMatchStatsTests
             new(oneLift, (empty, empty), 3, 1.17245, 4.0, 0.2, 0.3),
         ];
         var reports = MatchStatsMath.Families.Zip(stats).Select(pair => new FamilyReport(pair.First, patches[1], pair.Second)).ToList();
-        var result = new FetchResult([], reports, patches[0], 1790296852);
+        var result = new FetchResult([], reports, patches[0], 1790296852, null, "every match");
 
         var expectedMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(_golden["fetch_result_meta"], ensureAscii: true));
         var actualMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(result.Meta(), ensureAscii: true));

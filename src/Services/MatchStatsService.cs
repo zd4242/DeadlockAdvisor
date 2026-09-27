@@ -18,15 +18,21 @@ public readonly record struct FetchProgress(int Done, int Total, string Text);
 public interface IMatchStatsService
 {
     /// <summary>
-    /// Fetch and analyse every family: about 230 calls, a few minutes. Only reads the store; nothing
-    /// is written until <see cref="Apply"/>, so a cancelled or failed run leaves nothing half-done.
-    /// Throws <see cref="OperationCanceledException"/>, an HTTP / timeout error, or
+    /// Download every family, split by rank: about 2,600 calls, a quarter of an hour. Only reads the
+    /// store; nothing is written until <see cref="Apply"/>, so a cancelled or failed run leaves nothing
+    /// half-done. Throws <see cref="OperationCanceledException"/>, an HTTP / timeout error, or
     /// <see cref="InvalidOperationException"/> if no patch date can be read.
     /// </summary>
-    Task<FetchResult> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken);
+    Task<MatchCounts> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken);
 
-    /// <summary>Put a finished fetch into the store and write it out.</summary>
-    void Apply(DataStore store, FetchResult result);
+    /// <summary>Put a finished download into the store, worked out for the rank range the data was set to, and write it all out.</summary>
+    FetchResult Apply(DataStore store, MatchCounts counts);
+
+    /// <summary>
+    /// Work the lifts out again from the downloaded counts for another rank range (null: every match),
+    /// and write them out. No network. Throws <see cref="InvalidOperationException"/> without counts.
+    /// </summary>
+    FetchResult Refilter(DataStore store, RankRange? range);
 
     /// <summary>The latest patch if it's newer than the one the data was fetched under: one cheap call, the startup check.</summary>
     Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default);
@@ -34,13 +40,14 @@ public interface IMatchStatsService
 
 /// <summary>
 /// The network side of the match data (the maths is <see cref="MatchStatsMath"/>): /v1/patches for the
-/// windows, then /v1/analytics/item-stats per family, hero and half-window, paced well under the
-/// API's 200 requests a minute.
+/// windows and /v1/assets/ranks for the rank names, then /v1/analytics/item-stats per family, hero,
+/// half-window and rank group, paced well under the API's 200 requests a minute.
 /// </summary>
 public sealed class MatchStatsService : IMatchStatsService
 {
     public const string Analytics = "https://api.deadlock-api.com/v1/analytics";
     public const string Patches = "https://api.deadlock-api.com/v1/patches";
+    public const string Ranks = "https://api.deadlock-api.com/v1/assets/ranks";
 
     public static readonly TimeSpan RequestGap = TimeSpan.FromSeconds(0.4);
     public static readonly TimeSpan RateLimitWait = TimeSpan.FromSeconds(30);
@@ -68,17 +75,15 @@ public sealed class MatchStatsService : IMatchStatsService
 
     private double Now => _utcNow().ToUnixTimeMilliseconds() / 1000.0;
 
-    public async Task<FetchResult> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken)
+    public async Task<MatchCounts> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken)
     {
         var patches = await FetchPatchesAsync(cancellationToken);
         if (patches.Count == 0)
             throw new InvalidOperationException("Couldn't read any patch dates from /v1/patches.");
+        var ranks = MatchStatsMath.RankBuckets(await FetchRankNamesAsync(cancellationToken));
         var now = Now;
         var heroes = store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
-        var byGameId = new Dictionary<long, Item>();
-        foreach (var item in store.Items.Values.Where(item => item.GameId != 0))
-            byGameId[item.GameId] = item;
-        var total = MatchStatsMath.Families.Count * (heroes.Count + 1);
+        var total = MatchStatsMath.Families.Count * (heroes.Count + 1) * (ranks.Count + 1);
         var done = 0;
 
         void Step(string text)
@@ -88,42 +93,58 @@ public sealed class MatchStatsService : IMatchStatsService
             done++;
         }
 
-        var lifts = new OrderedDictionary<MatchLiftKey, MatchLift>();
-        var reports = new List<FamilyReport>();
+        var families = new List<FamilyCounts>();
         foreach (var family in MatchStatsMath.Families)
         {
             var since = MatchStatsMath.WindowStart(patches, family, now);
-            var scopeTiers = MatchStatsMath.ScopeTiers(family.Scope);
-            var tiers = byGameId.Where(pair => scopeTiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
             var mid = MatchStatsMath.Midpoint(since.Start, now);
 
-            Step($"{family.Key}: all matches");
-            var baseline = await FetchHalvesAsync(MatchStatsMath.QueryParams(family.Relation, family.Scope), since.Start, mid, cancellationToken);
-            var heroHalves = new OrderedDictionary<string, Halves>();
-            foreach (var hero in heroes)
+            // Every match, then each rank group on its own: unranked matches have no rank, so the
+            // groups don't add up to every match.
+            async Task<RankedHalves> FetchRankedAsync(string subject, long? heroGameId)
             {
-                Step($"{family.Key}: {hero.HeroName}");
-                heroHalves[hero.HeroId] = await FetchHalvesAsync(
-                    MatchStatsMath.QueryParams(family.Relation, family.Scope, hero.GameId), since.Start, mid, cancellationToken);
+                var parameters = MatchStatsMath.QueryParams(family.Relation, family.Scope, heroGameId);
+                Step($"{family.Key}: {subject}");
+                var all = await FetchHalvesAsync(parameters, since.Start, mid, cancellationToken);
+                var byRank = new List<Halves>();
+                foreach (var rank in ranks)
+                {
+                    Step($"{family.Key}: {subject} · {rank.Name}");
+                    byRank.Add(await FetchHalvesAsync(MatchStatsMath.RankParams(parameters, rank), since.Start, mid, cancellationToken));
+                }
+                return new RankedHalves(
+                    new RankedTotals(all.First, byRank.Select(halves => halves.First).ToList()),
+                    new RankedTotals(all.Second, byRank.Select(halves => halves.Second).ToList()));
             }
 
-            var report = new FamilyReport(family, since, MatchStatsMath.AnalyseFamily(baseline, heroHalves, tiers));
-            reports.Add(report);
-            if (!report.Kept)
-                continue;
-            foreach (var (key, lift) in report.Stats.Full)
-            {
-                var itemId = byGameId[key.GameItemId].ItemId;
-                lifts[new MatchLiftKey(itemId, key.HeroId, family.Relation, family.Scope)] = new MatchLift(
-                    itemId, key.HeroId, family.Relation, family.Scope, lift.Matches, lift.Lift, lift.Se,
-                    MatchStatsMath.Shrink(lift, report.Stats.Tau2));
-            }
+            var baseline = await FetchRankedAsync("all matches", null);
+            var heroCounts = new OrderedDictionary<string, RankedHalves>();
+            foreach (var hero in heroes)
+                heroCounts[hero.HeroId] = await FetchRankedAsync(hero.HeroName, hero.GameId);
+            families.Add(new FamilyCounts(family, since, baseline, heroCounts));
         }
         progress?.Report(new FetchProgress(total, total, "done"));
-        return new FetchResult(lifts, reports, patches[0], (long)Math.Truncate(Now));
+        return new MatchCounts((long)Math.Truncate(Now), patches[0], ranks, families);
     }
 
-    public void Apply(DataStore store, FetchResult result)
+    public FetchResult Apply(DataStore store, MatchCounts counts)
+    {
+        var result = MatchStatsMath.Analyse(counts, MatchStatsMath.RankOf(store.MatchMeta), store.Items.Values);
+        store.MatchCounts = counts;
+        store.SaveMatchCounts();
+        PutLifts(store, result);
+        return result;
+    }
+
+    public FetchResult Refilter(DataStore store, RankRange? range)
+    {
+        var counts = store.MatchCounts ?? throw new InvalidOperationException("There are no downloaded match counts to filter by rank.");
+        var result = MatchStatsMath.Analyse(counts, range, store.Items.Values);
+        PutLifts(store, result);
+        return result;
+    }
+
+    private static void PutLifts(DataStore store, FetchResult result)
     {
         store.MatchLift = new OrderedDictionary<MatchLiftKey, MatchLift>(result.Lifts);
         store.MatchMeta = result.Meta();
@@ -145,6 +166,18 @@ public sealed class MatchStatsService : IMatchStatsService
                                                                    && title.TryGetValue<string>(out var text) ? text : null));
     }
 
+    /// <summary>Tier → name, as the game names its ranks now.</summary>
+    private async Task<Dictionary<int, string>> FetchRankNamesAsync(CancellationToken cancellationToken)
+    {
+        var names = new Dictionary<int, string>();
+        foreach (var rank in await _api.GetJsonAsync(Ranks, cancellationToken) as JsonArray ?? [])
+        {
+            if (PyJson.Get(rank, "name") is JsonValue name && name.TryGetValue<string>(out var text))
+                names[(int)PyJson.Int(rank, "tier")] = text;
+        }
+        return names;
+    }
+
     /// <summary>Both halves of a window. Both bounds are inclusive, so the first half stops a second short: no match counts twice.</summary>
     private async Task<Halves> FetchHalvesAsync(OrderedDictionary<string, string> parameters, long since, long mid, CancellationToken cancellationToken)
     {
@@ -161,8 +194,11 @@ public sealed class MatchStatsService : IMatchStatsService
     private async Task<List<(long, long, long)>> FetchItemStatsAsync(
         OrderedDictionary<string, string> parameters, long since, long? until, CancellationToken cancellationToken)
     {
+        // The API leaves out an item with under 20 matches unless told otherwise, and the rank groups
+        // are added up, so every match has to count.
         var query = new OrderedDictionary<string, string>(parameters)
         {
+            ["min_matches"] = "1",
             ["min_unix_timestamp"] = since.ToString(CultureInfo.InvariantCulture),
         };
         if (until is { } end)

@@ -77,6 +77,16 @@
             <StaticResource x:Key="MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver" ResourceKey="TextDimBrush"/>
             <StaticResource x:Key="MenuFlyoutSeparatorBackground" ResourceKey="BorderBrush"/>
 
+            <StaticResource x:Key="FlyoutPresenterBackground" ResourceKey="Surface2Brush"/>
+            <StaticResource x:Key="FlyoutBorderThemeBrush" ResourceKey="BorderStrongBrush"/>
+
+            <StaticResource x:Key="RadioButtonOuterEllipseCheckedStroke" ResourceKey="AccentBrush"/>
+            <StaticResource x:Key="RadioButtonOuterEllipseCheckedStrokePointerOver" ResourceKey="AccentBrush"/>
+            <StaticResource x:Key="RadioButtonOuterEllipseCheckedFill" ResourceKey="AccentBrush"/>
+            <StaticResource x:Key="RadioButtonOuterEllipseCheckedFillPointerOver" ResourceKey="AccentBrush"/>
+            <StaticResource x:Key="RadioButtonCheckGlyphFill" ResourceKey="BgBrush"/>
+            <StaticResource x:Key="RadioButtonCheckGlyphFillPointerOver" ResourceKey="BgBrush"/>
+
             <StaticResource x:Key="ToolTipBackground" ResourceKey="Surface3Brush"/>
             <StaticResource x:Key="ToolTipForeground" ResourceKey="TextBrush"/>
             <StaticResource x:Key="ToolTipBorderBrush" ResourceKey="BorderStrongBrush"/>
