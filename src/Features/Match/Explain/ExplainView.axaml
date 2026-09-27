@@ -82,38 +82,40 @@
                                                                Value="{Binding Amount}"
                                                                Text="{Binding AmountText}"/>
                                     </Grid>
-                                    <!-- One line per trait: what it is, where the coefficient came from, the
-                                         multiplication, and its share, the last two in right-aligned columns
-                                         so the numbers stack and scan. -->
+                                    <!-- One line per trait with the multiplication and its share in right-aligned
+                                         columns so the numbers stack and scan, then where the coefficient came from
+                                         on its own line beneath, so a long source wraps across the card's full
+                                         width instead of squeezing between the name and the numbers. -->
                                     <ItemsControl ItemsSource="{Binding Traits}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="explain:TraitLine">
-                                                <Grid Margin="0,0,0,3">
+                                                <Grid Margin="0,0,0,4" RowDefinitions="Auto,Auto">
                                                     <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="Auto" SharedSizeGroup="Trait"/>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Arithmetic"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Share"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Classes="dim" Text="{Binding TraitName}"/>
+                                                    <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding TraitName}"/>
                                                     <TextBlock Grid.Column="1"
-                                                               Classes="faintText"
-                                                               Margin="10,0,0,0"
-                                                               TextWrapping="Wrap"
-                                                               Text="{Binding Source}"
-                                                               ToolTip.Tip="{Binding SourceTip}"/>
-                                                    <TextBlock Grid.Column="2"
                                                                Classes="faintText"
                                                                Margin="10,0,0,0"
                                                                HorizontalAlignment="Right"
                                                                Text="{Binding Arithmetic}"/>
-                                                    <controls:SignedAmount Grid.Column="3"
+                                                    <controls:SignedAmount Grid.Column="2"
                                                                            Margin="10,0,0,0"
                                                                            HorizontalAlignment="Right"
-                                                                           VerticalAlignment="Center"
                                                                            Value="{Binding Share}"
                                                                            Text="{Binding ShareText}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
+                                                    <TextBlock Grid.Row="1"
+                                                               Grid.ColumnSpan="2"
+                                                               Classes="faintText"
+                                                               Margin="12,1,0,0"
+                                                               FontSize="12"
+                                                               TextWrapping="Wrap"
+                                                               Text="{Binding Source}"
+                                                               ToolTip.Tip="{Binding SourceTip}"
+                                                               IsVisible="{Binding Source, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
