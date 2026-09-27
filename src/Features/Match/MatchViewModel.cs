@@ -159,7 +159,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public IObservable<string> FormulaRequested { get; }
 
     /// <summary>0: Lane Phase, 1: Full Match.</summary>
-    [Reactive] public int ResultsTab { get; set; }
+    [Reactive] public int ResultsTab { get; set; } = 1;
     public bool IsLaneTab => ResultsTab == 0;
     public bool IsFullTab => ResultsTab == 1;
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
