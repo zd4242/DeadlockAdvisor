@@ -8,6 +8,39 @@
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Button.filters">
+            <Setter Property="Width" Value="36"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Button.filters Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextDimBrush}"/>
+            <Setter Property="StrokeThickness" Value="1.3"/>
+        </Style>
+        <Style Selector="Button.filters:pointerover Path, Button.filters.changed Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="Border.filterCount">
+            <Setter Property="Background" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="CornerRadius" Value="7"/>
+            <Setter Property="MinWidth" Value="14"/>
+            <Setter Property="Height" Value="14"/>
+            <Setter Property="Padding" Value="3,0"/>
+            <Setter Property="Margin" Value="0,-5,-5,0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="IsHitTestVisible" Value="False"/>
+        </Style>
+        <Style Selector="Border.filterCount TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+            <Setter Property="FontSize" Value="10"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="HorizontalAlignment" Value="Center"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid RowDefinitions="Auto,Auto,12,*" Margin="12">
         <board:RosterView DataContext="{Binding Board}"/>
 
@@ -34,62 +67,77 @@
                                   IsEnabled="{Binding HasMatchData}"
                                   ToolTip.ShowOnDisabled="True"
                                   ToolTip.Tip="What orders the list. Match data ranks by real-match lifts (enemies, plus a third&#10;of yours); 'Formula + data' adds the two, each in its typical units. The data is never&#10;added into the formula score. Needs match data (Data → Fetch Match Stats).">
+                            <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
+                            <ComboBox.Resources>
+                                <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
+                                <StaticResource x:Key="ComboBoxItemForegroundPointerOver" ResourceKey="TextBrush"/>
+                            </ComboBox.Resources>
                             <ComboBox.ItemTemplate>
                                 <DataTemplate x:DataType="match:RankPreset">
                                     <controls:RichText Spans="{Binding Label, Converter={x:Static controls:OpinionTerms.Converter}}"/>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
                         </ComboBox>
-                        <DropDownButton x:Name="FiltersButton"
-                                        Grid.Column="2"
-                                        Margin="8,0,0,0"
-                                        VerticalAlignment="Center"
-                                        Content="{Binding FiltersLabel}"
-                                        ToolTip.Tip="Which items are listed, how they're laid out, and which matches the data comes from">
-                            <DropDownButton.Flyout>
-                                <Flyout Placement="BottomEdgeAlignedRight">
-                                    <StackPanel Width="320" Spacing="8">
-                                        <TextBlock Classes="section" Text="SHOW"/>
-                                        <ComboBox HorizontalAlignment="Stretch"
-                                                  ItemsSource="{Binding Cutoffs}"
-                                                  SelectedItem="{Binding SelectedCutoff}"
-                                                  ToolTip.Tip="Hide items scoring below this share of the top item's score,&#10;so only the real contenders are left. 'Every item' also lists items at 0 or below."/>
-                                        <CheckBox Content="Group by tier"
-                                                  IsChecked="{Binding ByTier}"
-                                                  ToolTip.Tip="Group into collapsible tier sections instead of one ranked list"/>
-                                        <CheckBox Content="Lean toward heroes ahead on net worth"
-                                                  IsChecked="{Binding ByNetWorth}"
-                                                  IsEnabled="{Binding Board.HasNetWorth}"
-                                                  ToolTip.Tip="Counters to fed enemies and items for fed allies (or a fed you) count for more,&#10;by up to 30%. Needs a net worth reading, from Detect."
-                                                  ToolTip.ShowOnDisabled="True"/>
 
-                                        <Border Classes="hline" Margin="0,4"/>
+                        <!-- A funnel, with a count of the options changed from their defaults on its corner. -->
+                        <Panel Grid.Column="2" Margin="8,0,0,0" VerticalAlignment="Center">
+                            <Button x:Name="FiltersButton"
+                                    Classes="filters"
+                                    Classes.changed="{Binding HasChangedFilters}"
+                                    ToolTip.Tip="Filters: which items are listed, how they're laid out, and which matches the data comes from">
+                                <Path Data="M1.5,2.5 H14.5 L9.5,8.5 V13.5 L6.5,11.5 V8.5 Z"
+                                      Width="16"
+                                      Height="16"
+                                      Stretch="Uniform"
+                                      StrokeJoin="Round"/>
+                                <Button.Flyout>
+                                    <Flyout Placement="BottomEdgeAlignedRight">
+                                        <StackPanel Width="320" Spacing="8">
+                                            <TextBlock Classes="section" Text="SHOW"/>
+                                            <ComboBox HorizontalAlignment="Stretch"
+                                                      ItemsSource="{Binding Cutoffs}"
+                                                      SelectedItem="{Binding SelectedCutoff}"
+                                                      ToolTip.Tip="Hide items scoring below this share of the top item's score,&#10;so only the real contenders are left. 'Every item' also lists items at 0 or below."/>
+                                            <CheckBox Content="Group by tier"
+                                                      IsChecked="{Binding ByTier}"
+                                                      ToolTip.Tip="Group into collapsible tier sections instead of one ranked list"/>
+                                            <CheckBox Content="Lean toward heroes ahead on net worth"
+                                                      IsChecked="{Binding ByNetWorth}"
+                                                      IsEnabled="{Binding Board.HasNetWorth}"
+                                                      ToolTip.Tip="Counters to fed enemies and items for fed allies (or a fed you) count for more,&#10;by up to 30%. Needs a net worth reading, from Detect."
+                                                      ToolTip.ShowOnDisabled="True"/>
 
-                                        <StackPanel Spacing="8" DataContext="{Binding DataRanks}" x:DataType="match:DataRanksViewModel">
-                                            <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA FROM"/>
-                                            <TextBlock Classes="faint"
-                                                       TextWrapping="Wrap"
-                                                       IsVisible="{Binding !CanFilter}"
-                                                       Text="Needs match stats fetched split by rank (Data → Fetch Match Stats)."/>
-                                            <StackPanel Spacing="8" IsEnabled="{Binding CanFilter}">
-                                                <RadioButton GroupName="DataRanks" Content="Every match, ranked or not" IsChecked="{Binding EveryMatch}"/>
-                                                <RadioButton GroupName="DataRanks" Content="Ranked matches only, from" IsChecked="{Binding RankedOnly}"/>
-                                                <Grid ColumnDefinitions="*,Auto,*" Margin="28,0,0,0" IsEnabled="{Binding RankedOnly}">
-                                                    <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}"/>
-                                                    <TextBlock Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Text="to"/>
-                                                    <ComboBox Grid.Column="2" HorizontalAlignment="Stretch" ItemsSource="{Binding Ranks}" SelectedItem="{Binding To}"/>
-                                                </Grid>
+                                            <Border Classes="hline" Margin="0,4"/>
+
+                                            <StackPanel Spacing="8" DataContext="{Binding DataRanks}" x:DataType="match:DataRanksViewModel">
+                                                <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA FROM"/>
+                                                <TextBlock Classes="faint"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding !CanFilter}"
+                                                           Text="Needs match stats fetched split by rank (Data → Fetch Match Stats)."/>
+                                                <StackPanel Spacing="8" IsEnabled="{Binding CanFilter}">
+                                                    <RadioButton GroupName="DataRanks" Content="Every match, ranked or not" IsChecked="{Binding EveryMatch}"/>
+                                                    <RadioButton GroupName="DataRanks" Content="Ranked matches only, from" IsChecked="{Binding RankedOnly}"/>
+                                                    <Grid ColumnDefinitions="*,Auto,*" Margin="28,0,0,0" IsEnabled="{Binding RankedOnly}">
+                                                        <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}"/>
+                                                        <TextBlock Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Text="to"/>
+                                                        <ComboBox Grid.Column="2" HorizontalAlignment="Stretch" ItemsSource="{Binding Ranks}" SelectedItem="{Binding To}"/>
+                                                    </Grid>
+                                                </StackPanel>
+                                                <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Status}" IsVisible="{Binding CanFilter}"/>
+                                                <TextBlock Classes="faint"
+                                                           TextWrapping="Wrap"
+                                                           IsVisible="{Binding CanFilter}"
+                                                           Text="A match's rank is both teams' average; Ascendant includes Eternus. Unranked matches have no rank, so only 'every match' has them. Fewer matches make noisier numbers, and a kind of lift that turns to noise is left out."/>
                                             </StackPanel>
-                                            <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Status}" IsVisible="{Binding CanFilter}"/>
-                                            <TextBlock Classes="faint"
-                                                       TextWrapping="Wrap"
-                                                       IsVisible="{Binding CanFilter}"
-                                                       Text="A match's rank is both teams' average; Ascendant includes Eternus. Unranked matches have no rank, so only 'every match' has them. Fewer matches make noisier numbers, and a kind of lift that turns to noise is left out."/>
                                         </StackPanel>
-                                    </StackPanel>
-                                </Flyout>
-                            </DropDownButton.Flyout>
-                        </DropDownButton>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                            <Border Classes="filterCount" IsVisible="{Binding HasChangedFilters}">
+                                <TextBlock Text="{Binding ChangedFilters}"/>
+                            </Border>
+                        </Panel>
                     </Grid>
                     <results:ResultsView DataContext="{Binding Results}"/>
                 </DockPanel>

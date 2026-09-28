@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -108,7 +109,7 @@ public class MatchPageTests
         match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
         ui.Screenshot("match_rank_blend.png");
         Assert.All(match.Results.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
-        Assert.StartsWith("Formula", match.Explain.Verdict);
+        Assert.NotNull(match.Explain.Verdict?.Formula);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);
@@ -117,6 +118,23 @@ public class MatchPageTests
 
         Assert.Contains(match.Results.Entries.OfType<ResultRowViewModel>(), row => row.IsNegative);
         Assert.Equal(RankBy.Formula, ui.Settings.Current.ResultsRankBy);
+    }
+
+    [AvaloniaFact]
+    public void TheRankOptionsKeepTheirTextPlainWhenHovered()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var rank = ui.Window.MatchPage.GetVisualDescendants().OfType<ComboBox>().Single(combo => combo.ItemsSource == MatchViewModel.RankPresets);
+        rank.IsDropDownOpen = true;
+        UiHarness.Settle();
+
+        // Gold is the formula's colour, so only the words that name it may be gold.
+        var option = TopLevel.GetTopLevel(rank.GetVisualDescendants().OfType<Popup>().Single().Child!)!
+            .GetVisualDescendants().OfType<ComboBoxItem>().First();
+        Assert.Same(ui.Window.FindResource("TextBrush"), option.FindResource("ComboBoxItemForegroundPointerOver"));
+        Assert.Same(ui.Window.FindResource("TextBrush"), option.FindResource("ComboBoxItemForegroundSelected"));
+        rank.IsDropDownOpen = false;
     }
 
     private static void ScrollResultsToEnd(UiHarness ui)
@@ -240,8 +258,8 @@ public class MatchPageTests
     {
         using var ui = new UiHarness();
         ui.Show();
-        var button = ui.Window.MatchPage.GetVisualDescendants().OfType<DropDownButton>().Single(b => b.Name == "FiltersButton");
-        Assert.Equal("Filters", button.Content);
+        var button = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "FiltersButton");
+        Assert.Equal(0, ui.ViewModel.Match.ChangedFilters);
 
         button.Flyout!.ShowAt(button);
         UiHarness.Settle();
@@ -266,7 +284,7 @@ public class MatchPageTests
         UiHarness.Settle();
 
         Assert.False(radios[0].IsChecked);
-        Assert.Equal("Filters · 1", button.Content);
+        Assert.Equal(1, ui.ViewModel.Match.ChangedFilters);
         Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }
@@ -276,16 +294,16 @@ public class MatchPageTests
     {
         using var ui = new UiHarness();
         var match = ui.ViewModel.Match;
-        Assert.Equal("Filters", match.FiltersLabel);
+        Assert.Equal((0, false), (match.ChangedFilters, match.HasChangedFilters));
 
         match.ByTier = true;
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
-        Assert.Equal("Filters · 2", match.FiltersLabel);
+        Assert.Equal((2, true), (match.ChangedFilters, match.HasChangedFilters));
 
         // Leaning on net worth only counts once there's a reading to lean on.
         match.ByNetWorth = true;
-        Assert.Equal("Filters · 2", match.FiltersLabel);
+        Assert.Equal(2, match.ChangedFilters);
         SetUpMatch(ui);
-        Assert.Equal("Filters · 3", match.FiltersLabel);
+        Assert.Equal(3, match.ChangedFilters);
     }
 }

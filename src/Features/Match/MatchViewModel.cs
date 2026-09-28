@@ -124,7 +124,11 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.ByNetWorth, vm => vm.Board.HasNetWorth,
                 vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter)
             .Select(_ => ChangedFilterCount())
-            .Subscribe(changed => FiltersLabel = changed > 0 ? $"Filters · {changed}" : "Filters")
+            .Subscribe(changed =>
+            {
+                ChangedFilters = changed;
+                HasChangedFilters = changed > 0;
+            })
             .DisposeWith(Disposables);
 
         _data.ScoresChanged.Subscribe(_ => Refresh()).DisposeWith(Disposables);
@@ -152,8 +156,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }
 
-    /// <summary>The filters button, counting the options changed from their defaults since they're out of sight.</summary>
-    [Reactive] public string FiltersLabel { get; private set; } = "Filters";
+    /// <summary>The options changed from their defaults, counted on the filters button since they're out of sight.</summary>
+    [Reactive] public int ChangedFilters { get; private set; }
+    [Reactive] public bool HasChangedFilters { get; private set; }
 
     public IReadOnlyList<CutoffPreset> Cutoffs => CutoffPresets;
     public IReadOnlyList<RankPreset> Ranks => RankPresets;

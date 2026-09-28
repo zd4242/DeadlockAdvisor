@@ -30,6 +30,11 @@ public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
     public IBrush Brush => new SolidColorBrush(Color);
 }
 
+/// <summary>"Formula ▲1.6 · data ▲0.7 → ▲2.3": each opinion's part in the formula-and-data ranking, and their sum.</summary>
+/// <param name="Formula">Null when no rule of the item's applies to the line-up.</param>
+/// <param name="Data">Null when the match data has nothing on the item for these heroes.</param>
+public sealed record BlendVerdict(double? Formula, double? Data, double Total);
+
 /// <param name="Relevance">Why the enemy lifts count for less, when your hero rarely builds the item.</param>
 public sealed record MatchDataCard(IReadOnlyList<DataTotal> Totals, IReadOnlyList<DataLine> Lines, string Note, string? Relevance = null);
 
@@ -55,7 +60,7 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public MatchDataCard? MatchData { get; private set; }
 
     /// <summary>Ranking by formula and data together: each one's part in the item's rank, and their sum.</summary>
-    [Reactive] public string? Verdict { get; private set; }
+    [Reactive] public BlendVerdict? Verdict { get; private set; }
 
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,

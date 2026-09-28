@@ -44,13 +44,11 @@
                                    IsVisible="{Binding HasItem}"/>
         </Grid>
 
-        <controls:RichText DockPanel.Dock="Top"
-                           Classes="dim"
-                           Margin="0,6,0,0"
-                           TextWrapping="Wrap"
-                           Spans="{Binding Verdict, Converter={x:Static controls:OpinionTerms.Converter}}"
-                           ToolTip.Tip="Ranked by the formula and the match data added together, each in units of how far it typically strays from 0 in line-ups like this one."
-                           IsVisible="{Binding Verdict, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <controls:VerdictText DockPanel.Dock="Top"
+                              Margin="0,6,0,0"
+                              Verdict="{Binding Verdict}"
+                              ToolTip.Tip="Ranked by the formula and the match data added together, each in units of how far it typically strays from 0 in line-ups like this one."
+                              IsVisible="{Binding Verdict, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
         <Border DockPanel.Dock="Top" Classes="hline" Margin="0,6,0,6"/>
 
