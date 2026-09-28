@@ -28,6 +28,9 @@ public static class Palette
     public static readonly Color Positive = Ally;
     public static readonly Color Negative = Enemy;
 
+    /// <summary>The formula's opinion of an item, wherever it's told apart from the match data's.</summary>
+    public static readonly Color Formula = Accent;
+
     /// <summary>Real-match data, where it's drawn beside the formula's gold.</summary>
     public static readonly Color Data = Color.Parse("#5bbfc7");
 

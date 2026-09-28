@@ -4,6 +4,7 @@
              xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
              xmlns:results="using:DeadlockAdvisor.Features.Match.Results"
              xmlns:explain="using:DeadlockAdvisor.Features.Match.Explain"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
@@ -32,7 +33,13 @@
                                   SelectedItem="{Binding SelectedRank}"
                                   IsEnabled="{Binding HasMatchData}"
                                   ToolTip.ShowOnDisabled="True"
-                                  ToolTip.Tip="What orders the list. Match data ranks by real-match lifts (enemies, plus a third&#10;of yours); 'agree' keeps only items both rate above 0. The data is never added&#10;into the formula score. Needs match data (Data → Fetch Match Stats)."/>
+                                  ToolTip.Tip="What orders the list. Match data ranks by real-match lifts (enemies, plus a third&#10;of yours); 'Formula + data' adds the two, each in its typical units. The data is never&#10;added into the formula score. Needs match data (Data → Fetch Match Stats).">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="match:RankPreset">
+                                    <controls:RichText Spans="{Binding Label, Converter={x:Static controls:OpinionTerms.Converter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
                         <DropDownButton x:Name="FiltersButton"
                                         Grid.Column="2"
                                         Margin="8,0,0,0"
@@ -59,7 +66,7 @@
                                         <Border Classes="hline" Margin="0,4"/>
 
                                         <StackPanel Spacing="8" DataContext="{Binding DataRanks}" x:DataType="match:DataRanksViewModel">
-                                            <TextBlock Classes="section" Text="MATCH DATA FROM"/>
+                                            <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA FROM"/>
                                             <TextBlock Classes="faint"
                                                        TextWrapping="Wrap"
                                                        IsVisible="{Binding !CanFilter}"

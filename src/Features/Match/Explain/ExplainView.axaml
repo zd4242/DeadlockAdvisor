@@ -44,13 +44,13 @@
                                    IsVisible="{Binding HasItem}"/>
         </Grid>
 
-        <TextBlock DockPanel.Dock="Top"
-                   Classes="dim"
-                   Margin="0,6,0,0"
-                   TextWrapping="Wrap"
-                   Text="{Binding Verdict}"
-                   ToolTip.Tip="Ranked by the formula and the match data added together, each in units of how far it typically strays from 0 in line-ups like this one."
-                   IsVisible="{Binding Verdict, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <controls:RichText DockPanel.Dock="Top"
+                           Classes="dim"
+                           Margin="0,6,0,0"
+                           TextWrapping="Wrap"
+                           Spans="{Binding Verdict, Converter={x:Static controls:OpinionTerms.Converter}}"
+                           ToolTip.Tip="Ranked by the formula and the match data added together, each in units of how far it typically strays from 0 in line-ups like this one."
+                           IsVisible="{Binding Verdict, Converter={x:Static ObjectConverters.IsNotNull}}"/>
 
         <Border DockPanel.Dock="Top" Classes="hline" Margin="0,6,0,6"/>
 
@@ -143,7 +143,7 @@
                             <Border Classes="inset">
                                 <StackPanel Spacing="4">
                                     <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="Match data" FontWeight="Bold"/>
+                                        <TextBlock Text="Match data" FontWeight="Bold" Foreground="{DynamicResource DataBrush}"/>
                                         <ItemsControl Grid.Column="1" ItemsSource="{Binding Totals}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>

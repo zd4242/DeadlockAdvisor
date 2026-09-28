@@ -20,6 +20,8 @@
     <SolidColorBrush x:Key="SelfBrush" Color="{x:Static theme:Palette.Self}"/>
     <SolidColorBrush x:Key="PositiveBrush" Color="{x:Static theme:Palette.Positive}"/>
     <SolidColorBrush x:Key="NegativeBrush" Color="{x:Static theme:Palette.Negative}"/>
+    <SolidColorBrush x:Key="FormulaBrush" Color="{x:Static theme:Palette.Formula}"/>
+    <SolidColorBrush x:Key="DataBrush" Color="{x:Static theme:Palette.Data}"/>
     <SolidColorBrush x:Key="CloseHoverBrush" Color="{x:Static theme:Palette.CloseHover}"/>
     <SolidColorBrush x:Key="ClosePressedBrush" Color="{x:Static theme:Palette.ClosePressed}"/>
 

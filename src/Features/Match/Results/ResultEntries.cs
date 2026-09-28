@@ -41,9 +41,6 @@ public class ResultRowViewModel : ViewModelBase
     public string ShopCategory { get; }
     public int Tier { get; }
 
-    public string TierText => $"T{Tier}";
-    public Color TierColor => Palette.TierColor(Tier);
-    public string ShopText => ShopCategory.Length > 0 ? ShopCategory.ToUpperInvariant() : "—";
     public Color ShopColor => Palette.ShopColor(ShopCategory);
 
     /// <summary>The number on the right: the formula score, or the blend when ranking by formula and data together.</summary>
@@ -61,9 +58,6 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public bool HasDataBar { get; private set; }
     [Reactive] public string? BarTip { get; private set; }
 
-    /// <summary>Only in the flat list, where no section header says which tier the item is from.</summary>
-    [Reactive] public bool ShowTier { get; private set; }
-
     [Reactive] public bool IsStandout { get; private set; }
 
     /// <summary>Ranking by both, the formula and the data point clearly opposite ways (<see cref="BlendScale.Disagree"/>).</summary>
@@ -77,7 +71,7 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public bool IsSelected { get; set; }
 
     /// <param name="shown">The number on the right, when it isn't the formula score.</param>
-    public void SetValues(ScoredItem scored, Bars bars, bool showTier, string dataTip, double? shown = null, bool disagrees = false)
+    public void SetValues(ScoredItem scored, Bars bars, string dataTip, double? shown = null, bool disagrees = false)
     {
         Score = new DisplayAmount(shown ?? scored.Score);
         Disagrees = disagrees;
@@ -87,7 +81,6 @@ public class ResultRowViewModel : ViewModelBase
         DataFraction = bars.Data ?? 0;
         HasDataBar = bars.Data is not null;
         BarTip = bars.Tip;
-        ShowTier = showTier;
         IsStandout = scored.DataStrength >= 1;
         if (Data is null || !Data.SequenceEqual(scored.Data))
             Data = scored.Data;

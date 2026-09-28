@@ -161,20 +161,20 @@ public class ResultsViewModel : ViewModelBase
             {
                 var header = Header($"tier{tierGroup.Key}", _tierLabels.GetValueOrDefault(tierGroup.Key, $"Tier {tierGroup.Key}"),
                     Palette.TierColor(tierGroup.Key));
-                AddSection(placed, header, tierGroup.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend, showTier: false)).ToList());
+                AddSection(placed, header, tierGroup.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)).ToList());
             }
         }
         else
         {
-            placed.AddRange(shown.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend, showTier: true)));
+            placed.AddRange(shown.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)));
         }
 
         if (picks.Count > 0)
         {
             // Their bars are on the same scale as the list's, so a deep negative reads as one.
             var pickScale = Math.Max(scale, picks.Max(item => Math.Abs(item.Score)));
-            var header = Header(DataPicksKey, DataPicksTitle, Palette.Accent, DataPicksNote);
-            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)), showTier: true)).ToList());
+            var header = Header(DataPicksKey, DataPicksTitle, Palette.Data, DataPicksNote);
+            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)))).ToList());
         }
 
         Entries.ReplaceAll(placed);
@@ -197,10 +197,10 @@ public class ResultsViewModel : ViewModelBase
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
 
     /// <summary>A listed row: blending, it shows the blend rather than the formula score, and whether the two disagree.</summary>
-    private ResultRowViewModel RankedRow(ScoredItem item, double measure, double scale, BlendScale blend, bool showTier) =>
+    private ResultRowViewModel RankedRow(ScoredItem item, double measure, double scale, BlendScale blend) =>
         _rankBy == RankBy.Both
-            ? Row(item, BlendBars(item, measure, scale, blend), showTier, shown: measure, disagrees: blend.Disagree(item))
-            : Row(item, BarsFor(item, measure, scale), showTier);
+            ? Row(item, BlendBars(item, measure, scale, blend), shown: measure, disagrees: blend.Disagree(item))
+            : Row(item, BarsFor(item, measure, scale));
 
     /// <summary>A row's bar: the ranking's measure against the largest on screen.</summary>
     private Bars BarsFor(ScoredItem item, double measure, double scale) =>
@@ -294,14 +294,14 @@ public class ResultsViewModel : ViewModelBase
     }
 
     /// <param name="shown">The number on the right, when it isn't the formula score.</param>
-    private ResultRowViewModel Row(ScoredItem scored, Bars bars, bool showTier, double? shown = null, bool disagrees = false)
+    private ResultRowViewModel Row(ScoredItem scored, Bars bars, double? shown = null, bool disagrees = false)
     {
         if (!_rows.TryGetValue(scored.ItemId, out var row))
         {
             row = new ResultRowViewModel(scored.ItemId, scored.ItemName, scored.ShopCategory, scored.Tier);
             _rows[scored.ItemId] = row;
         }
-        row.SetValues(scored, bars, showTier, _dataTip, shown, disagrees);
+        row.SetValues(scored, bars, _dataTip, shown, disagrees);
         row.IsSelected = scored.ItemId == SelectedItemId;
         return row;
     }

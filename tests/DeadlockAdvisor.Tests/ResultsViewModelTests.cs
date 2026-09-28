@@ -1,6 +1,9 @@
+using Avalonia.Media;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Tests;
 
@@ -95,6 +98,19 @@ public class ResultsViewModelTests
         Assert.Equal(0.75, rows[2].DataFraction, 9);
         Assert.Equal("3.0", rows[0].Score.Text);
         Assert.Equal("3 items the formula and the data together rate above 0", results.Summary);
+    }
+
+    [Fact]
+    public void LabelsColourEachOpinionLikeItsBar()
+    {
+        (string, Color?)[] expected =
+        [
+            ("Formula", Palette.Formula), (" +8.0 · no ", null), ("match data", Palette.Data), (" · the ", null), ("data", Palette.Data),
+        ];
+
+        Assert.Equal(expected, OpinionTerms.Spans("Formula +8.0 · no match data · the data").Select(span => (span.Text, span.Color)));
+        Assert.Empty(OpinionTerms.Spans(null));
+        Assert.Equal([new TextSpan("Metadata")], OpinionTerms.Spans("Metadata"));
     }
 
     [Fact]
