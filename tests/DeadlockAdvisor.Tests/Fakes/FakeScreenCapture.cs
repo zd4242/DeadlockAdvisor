@@ -8,9 +8,13 @@ public sealed class FakeScreenCapture : IScreenCaptureService
     public ScreenCapture? Next { get; set; }
     public int Captures { get; private set; }
 
-    public Task<ScreenCapture> CaptureTopBandAsync()
+    /// <summary>Whether the last capture asked for the window to be minimized first.</summary>
+    public bool? Minimized { get; private set; }
+
+    public Task<ScreenCapture> CaptureTopBandAsync(bool minimize)
     {
         Captures++;
+        Minimized = minimize;
         return Next is { } capture ? Task.FromResult(capture) : throw new CaptureException("No screen in tests.");
     }
 }

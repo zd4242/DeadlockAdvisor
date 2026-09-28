@@ -62,7 +62,7 @@ public class DetectAction
         ScreenCapture capture;
         try
         {
-            capture = await _capture.CaptureTopBandAsync();
+            capture = await _capture.CaptureTopBandAsync(_settings.Current.MinimizeToDetect);
         }
         catch (CaptureException ex)
         {
@@ -86,7 +86,7 @@ public class DetectAction
                              : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, "
                                + NetWorthLog(netWorth))
                          + $", {clock.ElapsedMilliseconds} ms");
-        if (detection is not null && !(netWorth.Agrees(0) && netWorth.Agrees(1)))
+        if (_settings.Current.KeepUnreadCaptures && detection is not null && !(netWorth.Agrees(0) && netWorth.Agrees(1)))
         {
             var note = $"{NetWorthLog(netWorth)}\ngrid: {detection.Geometry.ToJson().ToJsonString()}";
             if (await Task.Run(() => NetWorthCaptures.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)

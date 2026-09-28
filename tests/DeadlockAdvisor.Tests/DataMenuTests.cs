@@ -267,6 +267,19 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public void ThePatchCheckCanBeTurnedOff()
+    {
+        _fixture.Settings.Current.ArtDownloadOffered = true;
+        _fixture.Settings.Current.CheckForNewerPatch = false;
+        _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "10-01-2026 Gameplay Update"}]""");
+
+        _menu.OnStartup();
+
+        Assert.Null(_menu.NewerPatch);
+        Assert.DoesNotContain(MatchStatsService.Patches, _api.Asked);
+    }
+
+    [Fact]
     public void AnUnreachablePatchCheckSaysNothing()
     {
         _fixture.Settings.Current.ArtDownloadOffered = true;

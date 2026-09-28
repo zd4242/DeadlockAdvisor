@@ -13,6 +13,13 @@ public class AppSettings
     // Asked once, on a first run with no art, whether to download it.
     public bool ArtDownloadOffered { get; set; }
 
+    // Preferences (the Settings page)
+    public bool ReopenLastPage { get; set; } = true;
+    public bool ReopenLastMatch { get; set; } = true;
+    public bool CheckForNewerPatch { get; set; } = true;
+    public bool MinimizeToDetect { get; set; } = true;
+    public bool KeepUnreadCaptures { get; set; } = true;
+
     // View
     public int ZoomIndex { get; set; } = ZoomLevels.DefaultIndex;
     public WindowGeometry? WindowGeometry { get; set; }

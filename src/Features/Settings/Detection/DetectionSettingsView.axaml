@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:DeadlockAdvisor.Features.Settings"
+             xmlns:detection="using:DeadlockAdvisor.Features.Settings.Detection"
+             x:Class="DeadlockAdvisor.Features.Settings.Detection.DetectionSettingsView"
+             x:DataType="detection:DetectionSettingsViewModel">
+    <StackPanel>
+        <TextBlock Classes="section" Text="CAPTURE"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Minimize while capturing"
+                                     Description="Get this window out of the way so it isn't captured over the game's top bar. Turn it off if the advisor sits on another monitor.">
+                    <ToggleSwitch IsChecked="{Binding MinimizeToDetect}"/>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Keep captures net worth couldn't be read from"
+                                     Description="Saved with what was read in the captures folder of your data folder, the latest 20 kept, as material for fixing the reader.">
+                    <ToggleSwitch IsChecked="{Binding KeepUnreadCaptures}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="HERO STRIP"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Remembered positions" Description="{Binding RememberedLayouts}">
+                    <Button Content="Forget" Command="{Binding ForgetLayoutsCommand}"
+                            ToolTip.Tip="Search the whole top bar again on the next Detect, e.g. after changing the HUD scale"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

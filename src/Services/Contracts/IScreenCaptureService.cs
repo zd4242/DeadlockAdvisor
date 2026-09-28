@@ -10,8 +10,9 @@ public sealed class CaptureException(string message) : Exception(message);
 public interface IScreenCaptureService
 {
     /// <summary>
-    /// Grab the top of the primary monitor as the game shows it, getting this app's window out of the
-    /// way first. Throws <see cref="CaptureException"/> when the screen can't be read.
+    /// Grab the top of the primary monitor as the game shows it, first minimizing this app's window
+    /// when <paramref name="minimize"/> so it isn't captured over the game. Throws
+    /// <see cref="CaptureException"/> when the screen can't be read.
     /// </summary>
-    Task<ScreenCapture> CaptureTopBandAsync();
+    Task<ScreenCapture> CaptureTopBandAsync(bool minimize);
 }

@@ -81,6 +81,7 @@ public class DataMenuViewModel : ViewModelBase
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
         OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
+        OpenFolderCommand = ReactiveCommand.Create<string>(OpenFolder);
         // A download writes into the folder it started in, so the folder stays put until they're done.
         ChangeDataFolderCommand = ReactiveCommand.CreateFromTask(ChangeDataFolderAsync,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.HasRunningJobs, (busy, running) => !busy && !running));
@@ -113,6 +114,9 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
+
+    /// <summary>Show a folder in Explorer.</summary>
+    public ReactiveCommand<string, Unit> OpenFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> ChangeDataFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> DownloadArtCommand { get; }
 
@@ -121,7 +125,7 @@ public class DataMenuViewModel : ViewModelBase
     /// <summary>Once the window is up: check for a newer patch in the background, and offer art on a first run without any.</summary>
     public void OnStartup()
     {
-        _ = CheckForNewerPatchAsync();
+        CheckForNewerPatch();
         if (_settings.Current.ArtDownloadOffered || _art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0)
             return;
         _settings.Update(s => s.ArtDownloadOffered = true);
@@ -130,6 +134,12 @@ public class DataMenuViewModel : ViewModelBase
             + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB and downloads in the background, "
             + "and Data → Download Art… does it any time.",
             "Download", () => Launch(() => DownloadArtAsync(force: false)), cancelText: "Not now");
+    }
+
+    private void CheckForNewerPatch()
+    {
+        if (_settings.Current.CheckForNewerPatch)
+            _ = CheckForNewerPatchAsync();
     }
 
     /// <summary>One call to /v1/patches. Says nothing unless a newer patch is out: a failed check isn't worth interrupting anyone over.</summary>
@@ -513,7 +523,7 @@ public class DataMenuViewModel : ViewModelBase
         _art.SetAssetsDir(_data.AssetsDir);
         RequestViewAction(ArtChangedAction);
         NewerPatch = null;
-        _ = CheckForNewerPatchAsync();
+        CheckForNewerPatch();
         _notifications.ShowSuccess($"Now using the data in {_data.DataRoot}.");
     }
 

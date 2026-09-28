@@ -73,7 +73,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         _now = now;
         DataRanks = dataRanks.DisposeWith(Disposables);
 
-        Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
+        if (settings.Current.ReopenLastMatch)
+            Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
         Board = new MatchBoardViewModel(Match, () => _data.Store);
         Results = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
 

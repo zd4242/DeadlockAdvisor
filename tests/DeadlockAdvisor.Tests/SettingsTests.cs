@@ -46,6 +46,25 @@ public class SettingsTests
         Assert.Equal("alpha", restored.SelfHero);
     }
 
+    /// <summary>A settings file from before the Settings page leaves every preference at what the app used to do.</summary>
+    [Fact]
+    public async Task PreferencesMissingFromAnOlderFileKeepTheirDefaults()
+    {
+        using var folder = new TempDirectory();
+        await File.WriteAllTextAsync(folder.File("settings.json"), """{ "ZoomIndex": 4 }""");
+
+        var service = new JsonSettingsService(new FakeLoggingService(), folder.Path);
+        await service.LoadAsync();
+
+        var settings = service.Current;
+        Assert.Equal(4, settings.ZoomIndex);
+        Assert.True(settings.ReopenLastPage);
+        Assert.True(settings.ReopenLastMatch);
+        Assert.True(settings.CheckForNewerPatch);
+        Assert.True(settings.MinimizeToDetect);
+        Assert.True(settings.KeepUnreadCaptures);
+    }
+
     private static async Task WaitForFile(string path)
     {
         for (var attempt = 0; attempt < 100 && !File.Exists(path); attempt++)

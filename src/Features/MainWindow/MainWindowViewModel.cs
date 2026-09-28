@@ -6,6 +6,10 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.Settings;
+using DeadlockAdvisor.Features.Settings.Data;
+using DeadlockAdvisor.Features.Settings.Detection;
+using DeadlockAdvisor.Features.Settings.General;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Notifications;
@@ -17,9 +21,9 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.MainWindow;
 
 /// <summary>
-/// The window: three pages switched from tabs in the title bar, the Data / View / Help menus, and
-/// the status bar. Edits anywhere write through to the data service, which flushes them to CSV on
-/// a short debounce, so there's no save step.
+/// The window: three pages switched from tabs in the title bar, the Settings page over them, the
+/// Data / View / Help menus, and the status bar. Edits anywhere write through to the data service,
+/// which flushes them to CSV on a short debounce, so there's no save step.
 /// </summary>
 public class MainWindowViewModel : ViewModelBase
 {
@@ -96,15 +100,19 @@ public class MainWindowViewModel : ViewModelBase
         _art = art;
         Pages = [Match, HeroTraits, ItemFormulas];
 
-        CurrentPage = Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1);
+        CurrentPage = settings.Current.ReopenLastPage ? Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1) : 0;
         this.WhenAnyValue(vm => vm.CurrentPage)
             .Skip(1)
-            .Subscribe(page =>
+            .Subscribe(page => _settings.Update(s => s.LastPage = page))
+            .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen)
+            .Skip(1)
+            .Subscribe(_ =>
             {
+                this.RaisePropertyChanged(nameof(SelectedTab));
                 this.RaisePropertyChanged(nameof(IsMatchPage));
                 this.RaisePropertyChanged(nameof(IsHeroTraitsPage));
                 this.RaisePropertyChanged(nameof(IsItemFormulasPage));
-                _settings.Update(s => s.LastPage = page);
             })
             .DisposeWith(Disposables);
 
@@ -132,19 +140,32 @@ public class MainWindowViewModel : ViewModelBase
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
-        ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1));
-        ZoomOutCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex - 1));
-        ResetZoomCommand = ReactiveCommand.Create(() => SetZoom(ZoomLevels.DefaultIndex));
+        var zoom = settings.SettingsChanged.Select(s => ZoomLevels.Clamp(s.ZoomIndex));
+        ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1),
+            zoom.Select(index => index < ZoomLevels.Steps.Count - 1));
+        ZoomOutCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex - 1), zoom.Select(index => index > 0));
+        ResetZoomCommand = ReactiveCommand.Create(() => SetZoom(ZoomLevels.DefaultIndex), zoom.Select(index => index != ZoomLevels.DefaultIndex));
         NextPageCommand = ReactiveCommand.Create(() => CyclePage(1));
         PreviousPageCommand = ReactiveCommand.Create(() => CyclePage(-1));
-        ShowPageCommand = ReactiveCommand.Create<int>(page => CurrentPage = page);
+        ShowPageCommand = ReactiveCommand.Create<int>(ShowPage);
 
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
+        Settings = new SettingsViewModel(
+            new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
+            new DetectionSettingsViewModel(settings),
+            new DataSettingsViewModel(settings, data, art, dataMenu, ReloadArtCommand)).DisposeWith(Disposables);
+        Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
+        // A new data folder, or new art, changes what the Data settings show.
+        data.StoreReplaced
+            .Merge(ViewInteraction.Merge(dataMenu.ViewInteraction).Where(action => action == ArtChangedAction).Select(_ => Unit.Default))
+            .Subscribe(_ => Settings.Refresh())
+            .DisposeWith(Disposables);
+        OpenSettingsCommand = ReactiveCommand.Create(OpenSettings);
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
-        var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, page => page == 0);
+        var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
         SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.StartAssigning, onMatchPage);
         DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
 
@@ -157,13 +178,29 @@ public class MainWindowViewModel : ViewModelBase
     public HeroTraitsViewModel HeroTraits { get; }
     public ItemFormulasViewModel ItemFormulas { get; }
     public DataMenuViewModel DataMenu { get; }
+    public SettingsViewModel Settings { get; }
     public IReadOnlyList<ViewModelBase> Pages { get; }
     public IReadOnlyList<string> PageNames { get; } = ["Match", "Hero Traits", "Item Formulas"];
 
+    /// <summary>The page the tabs show, which the Settings page covers while it's open.</summary>
     [Reactive] public int CurrentPage { get; set; }
-    public bool IsMatchPage => CurrentPage == 0;
-    public bool IsHeroTraitsPage => CurrentPage == 1;
-    public bool IsItemFormulasPage => CurrentPage == 2;
+
+    [Reactive] public bool IsSettingsOpen { get; private set; }
+
+    /// <summary>The highlighted tab: none while Settings is open, and picking one, even the current page's, closes it.</summary>
+    public int SelectedTab
+    {
+        get => IsSettingsOpen ? -1 : CurrentPage;
+        set
+        {
+            if (value >= 0)
+                ShowPage(value);
+        }
+    }
+
+    public bool IsMatchPage => CurrentPage == 0 && !IsSettingsOpen;
+    public bool IsHeroTraitsPage => CurrentPage == 1 && !IsSettingsOpen;
+    public bool IsItemFormulasPage => CurrentPage == 2 && !IsSettingsOpen;
     [Reactive] public double UiScale { get; private set; } = 1.0;
 
     [Reactive] public string ZoomText { get; private set; } = "";
@@ -181,6 +218,7 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ReloadArtCommand { get; }
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
+    public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
     /// <summary>Alt+1/2/3 (which open the hero picker) and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
@@ -223,24 +261,39 @@ public class MainWindowViewModel : ViewModelBase
 
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 
-    private void CyclePage(int step) => CurrentPage = ((CurrentPage + step) % Pages.Count + Pages.Count) % Pages.Count;
+    private void CyclePage(int step) => ShowPage(((CurrentPage + step) % Pages.Count + Pages.Count) % Pages.Count);
+
+    private void ShowPage(int page)
+    {
+        CurrentPage = page;
+        IsSettingsOpen = false;
+    }
+
+    private void OpenSettings()
+    {
+        if (IsSettingsOpen)
+            return;
+        Settings.Refresh();
+        IsSettingsOpen = true;
+    }
 
     private void ShowFormula(string itemId)
     {
-        CurrentPage = 2;
+        ShowPage(2);
         ItemFormulas.OpenItem(itemId);
     }
 
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()
     {
-        if (Pages[CurrentPage] is ISearchablePage page)
+        if (Pages[CurrentPage] is not ISearchablePage page)
         {
-            page.FocusSearch();
+            ShowPage(0);
+            Match.FocusSearch();
             return;
         }
-        CurrentPage = 0;
-        Match.FocusSearch();
+        ShowPage(CurrentPage);
+        page.FocusSearch();
     }
 
     private void ReloadArt()

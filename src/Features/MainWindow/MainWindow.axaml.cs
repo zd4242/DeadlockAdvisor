@@ -14,6 +14,7 @@ using DeadlockAdvisor.Features.Shared.ItemCard;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services.Contracts;
+using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.MainWindow;
 
@@ -70,13 +71,15 @@ public partial class MainWindow : Window
         _viewActions?.Dispose();
         if (DataContext is MainWindowViewModel vm)
         {
-            _viewActions = vm.ViewInteraction.Subscribe(action =>
-            {
-                if (action == MainWindowViewModel.CloseAction)
-                    Close();
-                else if (action == MainWindowViewModel.ArtChangedAction)
-                    ArtHost.SetRevision(this, ArtHost.GetRevision(this) + 1);
-            });
+            _viewActions = new CompositeDisposable(
+                vm.ViewInteraction.Subscribe(action =>
+                {
+                    if (action == MainWindowViewModel.CloseAction)
+                        Close();
+                    else if (action == MainWindowViewModel.ArtChangedAction)
+                        ArtHost.SetRevision(this, ArtHost.GetRevision(this) + 1);
+                }),
+                vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()));
         }
     }
 

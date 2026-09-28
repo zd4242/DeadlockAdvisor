@@ -1,0 +1,188 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:DeadlockAdvisor.Features.Settings"
+             x:Class="DeadlockAdvisor.Features.Settings.SettingsView"
+             x:DataType="settings:SettingsViewModel"
+             Background="{DynamicResource BgBrush}">
+
+    <UserControl.Resources>
+        <!-- The switch's knob in the dark of the page on the gold track, as a checked toggle's text is -->
+        <StaticResource x:Key="ToggleSwitchKnobFillOn" ResourceKey="BgBrush"/>
+        <StaticResource x:Key="ToggleSwitchKnobFillOnPointerOver" ResourceKey="BgBrush"/>
+        <StaticResource x:Key="ToggleSwitchKnobFillOnPressed" ResourceKey="BgBrush"/>
+        <StaticResource x:Key="ToggleSwitchFillOff" ResourceKey="Surface2Brush"/>
+        <StaticResource x:Key="ToggleSwitchFillOffPointerOver" ResourceKey="Surface3Brush"/>
+        <StaticResource x:Key="ToggleSwitchStrokeOff" ResourceKey="BorderStrongBrush"/>
+        <StaticResource x:Key="ToggleSwitchStrokeOffPointerOver" ResourceKey="TextDimBrush"/>
+        <StaticResource x:Key="ToggleSwitchKnobFillOff" ResourceKey="TextDimBrush"/>
+        <StaticResource x:Key="ToggleSwitchKnobFillOffPointerOver" ResourceKey="TextBrush"/>
+    </UserControl.Resources>
+
+    <UserControl.Styles>
+        <!-- the sidebar: an icon and a name per category, the chosen one marked with a gold bar -->
+        <Style Selector="ListBox.nav">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="Margin" Value="0,1"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:pointerover">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected /template/ ContentPresenter#PART_ContentPresenter, ListBox.nav ListBoxItem:selected:pointerover /template/ ContentPresenter#PART_ContentPresenter, ListBox.nav ListBoxItem:selected:focus /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem Path.icon">
+            <Setter Property="Stroke" Value="{Binding $parent[ListBoxItem].Foreground}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected Path.icon">
+            <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem Border.marker">
+            <Setter Property="Opacity" Value="0"/>
+        </Style>
+        <Style Selector="ListBox.nav ListBoxItem:selected Border.marker">
+            <Setter Property="Opacity" Value="1"/>
+        </Style>
+
+        <Style Selector="Path.icon">
+            <Setter Property="Width" Value="16"/>
+            <Setter Property="Height" Value="16"/>
+            <Setter Property="StrokeThickness" Value="1.3"/>
+            <Setter Property="StrokeLineCap" Value="Round"/>
+            <Setter Property="StrokeJoin" Value="Round"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+
+        <!-- A card of settings: rows separated by hairlines -->
+        <Style Selector="Border.settings">
+            <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="8"/>
+            <Setter Property="ClipToBounds" Value="True"/>
+        </Style>
+        <Style Selector="TextBlock.section">
+            <Setter Property="Margin" Value="2,24,0,8"/>
+        </Style>
+        <Style Selector="settings|SettingRow">
+            <Setter Property="Padding" Value="16,12"/>
+            <Setter Property="MinHeight" Value="60"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+            <Setter Property="Template">
+                <ControlTemplate>
+                    <Border Background="{TemplateBinding Background}"
+                            BorderBrush="{TemplateBinding BorderBrush}"
+                            BorderThickness="{TemplateBinding BorderThickness}"
+                            Padding="{TemplateBinding Padding}"
+                            MinHeight="{TemplateBinding MinHeight}">
+                        <Grid ColumnDefinitions="*,Auto">
+                            <StackPanel VerticalAlignment="Center" Spacing="3" Margin="0,0,24,0">
+                                <TextBlock Text="{TemplateBinding Title}" FontWeight="SemiBold"/>
+                                <TextBlock Classes="dim"
+                                           FontSize="12"
+                                           TextWrapping="Wrap"
+                                           Text="{TemplateBinding Description}"
+                                           IsVisible="{TemplateBinding Description, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            </StackPanel>
+                            <ContentPresenter Grid.Column="1"
+                                              VerticalAlignment="Center"
+                                              Content="{TemplateBinding Content}"
+                                              ContentTemplate="{TemplateBinding ContentTemplate}"/>
+                        </Grid>
+                    </Border>
+                </ControlTemplate>
+            </Setter>
+        </Style>
+        <Style Selector="Border.settings > StackPanel > settings|SettingRow:nth-child(n+2)">
+            <Setter Property="BorderThickness" Value="0,1,0,0"/>
+        </Style>
+        <Style Selector="settings|SettingRow Button">
+            <Setter Property="MinHeight" Value="32"/>
+            <Setter Property="Padding" Value="14,4"/>
+        </Style>
+        <Style Selector="settings|SettingRow ToggleSwitch">
+            <Setter Property="OnContent" Value="{x:Null}"/>
+            <Setter Property="OffContent" Value="{x:Null}"/>
+            <Setter Property="MinWidth" Value="0"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Grid ColumnDefinitions="232,*">
+        <Border Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,0,1,0">
+            <DockPanel Margin="12,14">
+                <Button DockPanel.Dock="Top"
+                        x:Name="BackButton"
+                        Classes="ghost"
+                        HorizontalAlignment="Left"
+                        Padding="10,4"
+                        MinHeight="30"
+                        Command="{Binding CloseCommand}"
+                        ToolTip.Tip="Back to the app (Esc)">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Data="M6,1 L1,6 L6,11"
+                              Stroke="{Binding $parent[Button].Foreground}"
+                              StrokeThickness="1.5"
+                              StrokeLineCap="Round"
+                              StrokeJoin="Round"
+                              VerticalAlignment="Center"/>
+                        <TextBlock Text="Back" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </Button>
+                <TextBlock DockPanel.Dock="Top" Classes="h2" Text="Settings" Margin="10,18,0,14"/>
+                <ListBox x:Name="Nav"
+                         Classes="nav"
+                         ItemsSource="{Binding Categories}"
+                         SelectedItem="{Binding SelectedCategory}">
+                    <ListBox.ItemTemplate>
+                        <DataTemplate x:DataType="settings:SettingsCategory">
+                            <Grid ColumnDefinitions="Auto,Auto,*" Height="38">
+                                <Border Classes="marker"
+                                        Width="3"
+                                        Height="16"
+                                        CornerRadius="1.5"
+                                        VerticalAlignment="Center"
+                                        Background="{DynamicResource AccentBrush}"/>
+                                <Path Grid.Column="1" Classes="icon" Data="{Binding Icon}" Margin="9,0,12,0"/>
+                                <TextBlock Grid.Column="2"
+                                           Text="{Binding Name}"
+                                           FontWeight="SemiBold"
+                                           VerticalAlignment="Center"/>
+                            </Grid>
+                        </DataTemplate>
+                    </ListBox.ItemTemplate>
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- Up to a readable width, from the sidebar's edge: the capped star column leaves the rest empty. -->
+        <ScrollViewer Grid.Column="1" HorizontalScrollBarVisibility="Disabled">
+            <Grid Margin="40,30,40,40">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" MaxWidth="760"/>
+                </Grid.ColumnDefinitions>
+                <StackPanel>
+                    <TextBlock Text="{Binding SelectedCategory.Name}" FontSize="24" FontWeight="Bold"/>
+                    <TextBlock Classes="dim" Text="{Binding SelectedCategory.Summary}" Margin="0,4,0,0"/>
+                    <ContentControl Content="{Binding SelectedCategory.Page}"/>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

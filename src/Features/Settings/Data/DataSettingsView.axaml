@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:DeadlockAdvisor.Features.Settings"
+             xmlns:data="using:DeadlockAdvisor.Features.Settings.Data"
+             x:Class="DeadlockAdvisor.Features.Settings.Data.DataSettingsView"
+             x:DataType="data:DataSettingsViewModel">
+    <StackPanel>
+        <TextBlock Classes="section" Text="FOLDERS"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Data folder" Description="{Binding DataFolder}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding DataFolder}"/>
+                        <Button Content="Change…" Command="{Binding ChangeDataFolderCommand}"
+                                ToolTip.Tip="Use another folder holding data/ and assets/"/>
+                    </StackPanel>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Settings and log" Description="{Binding AppFolder}">
+                    <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AppFolder}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="ART"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Hero portraits and item icons" Description="{Binding ArtSummary}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="Reload" Command="{Binding ReloadArtCommand}"
+                                ToolTip.Tip="Pick up art added to the folder while the app is running"/>
+                        <Button Content="Download…" Command="{Binding DownloadArtCommand}"
+                                ToolTip.Tip="Fetch hero portraits, item icons and top-bar art from deadlock-api.com"/>
+                    </StackPanel>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="ONLINE"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Check for a newer patch on startup"
+                                     Description="Ask deadlock-api.com whether a patch is out that your match data predates, and say so in the status bar.">
+                    <ToggleSwitch IsChecked="{Binding CheckForNewerPatch}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

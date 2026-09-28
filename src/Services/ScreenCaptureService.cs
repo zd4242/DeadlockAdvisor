@@ -20,13 +20,15 @@ public class ScreenCaptureService : IScreenCaptureService
     // Long enough for Windows' minimise animation to finish, so the window isn't caught mid-fade.
     private static readonly TimeSpan _minimiseDelay = TimeSpan.FromMilliseconds(350);
 
-    public async Task<ScreenCapture> CaptureTopBandAsync()
+    public async Task<ScreenCapture> CaptureTopBandAsync(bool minimize)
     {
         if (!OperatingSystem.IsWindows())
             throw new CaptureException("Screen capture is only supported on Windows.");
 
         var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        var restoreTo = window is { IsVisible: true } && window.WindowState != WindowState.Minimized ? window.WindowState : (WindowState?)null;
+        var restoreTo = minimize && window is { IsVisible: true } && window.WindowState != WindowState.Minimized
+            ? window.WindowState
+            : (WindowState?)null;
         if (restoreTo is not null)
         {
             // The advisor sitting over the top bar would be captured instead of the game.
