@@ -44,9 +44,9 @@ public class MatchBoardViewModel : ViewModelBase
             _match.Clear();
             AfterChange();
         });
-        RandomizeCommand = ReactiveCommand.Create(() =>
+        RandomizeCommand = ReactiveCommand.Create<RandomizeKeep>(keep =>
         {
-            _match.Randomize(_store().Heroes.Keys, Random.Shared);
+            _match.Randomize(_store().Heroes.Keys, Random.Shared, keep);
             AfterChange();
         });
 
@@ -100,7 +100,7 @@ public class MatchBoardViewModel : ViewModelBase
 
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearCommand { get; }
-    public ReactiveCommand<Unit, Unit> RandomizeCommand { get; }
+    public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
 
     /// <summary>Screen detection, owned by the Match tab (F9 or the button).</summary>
     public System.Windows.Input.ICommand? DetectCommand { get; set; }

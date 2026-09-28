@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:board="using:DeadlockAdvisor.Features.Match.Board"
              xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:enums="using:DeadlockAdvisor.Enums"
              x:Class="DeadlockAdvisor.Features.Match.Board.RosterView"
              x:DataType="board:MatchBoardViewModel">
 
@@ -56,12 +57,28 @@
                               Margin="6,0,0,0"
                               IsChecked="{Binding IsPickerOpen}"
                               ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
-                <Button Grid.Column="4"
-                        Classes="ghost"
-                        Content="Random"
-                        Margin="6,0,0,0"
-                        Command="{Binding RandomizeCommand}"
-                        ToolTip.Tip="Fill the match with random heroes (for testing)"/>
+                <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="6,0,0,0">
+                    <Button Classes="ghost"
+                            Content="Random"
+                            Command="{Binding RandomizeCommand}"
+                            CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"
+                            ToolTip.Tip="Fill the match with random heroes (for testing)"/>
+                    <Button Classes="ghost"
+                            Content="▾"
+                            Padding="6,6"
+                            ToolTip.Tip="Randomize while keeping part of the match">
+                        <Button.Flyout>
+                            <MenuFlyout Placement="BottomEdgeAlignedRight">
+                                <MenuItem Header="Random, keeping your hero"
+                                          Command="{Binding RandomizeCommand}"
+                                          CommandParameter="{x:Static enums:RandomizeKeep.Self}"/>
+                                <MenuItem Header="Random enemies, keeping your team"
+                                          Command="{Binding RandomizeCommand}"
+                                          CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"/>
+                            </MenuFlyout>
+                        </Button.Flyout>
+                    </Button>
+                </StackPanel>
                 <Button Grid.Column="5"
                         Classes="ghost"
                         Content="Clear"

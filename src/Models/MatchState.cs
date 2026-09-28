@@ -84,23 +84,36 @@ public sealed class MatchState
 
     /// <summary>
     /// Replace the match with a random full one drawn from <paramref name="heroIds"/>: you, the
-    /// allies and the enemies. Fills as many slots as there are heroes for.
+    /// allies and the enemies, apart from whoever <paramref name="keep"/> holds on to. Fills as
+    /// many slots as there are heroes for.
     /// </summary>
-    public void Randomize(IEnumerable<string> heroIds, Random random)
+    public void Randomize(IEnumerable<string> heroIds, Random random, RandomizeKeep keep = RandomizeKeep.Nothing)
     {
+        var kept = RoleMap.Where(entry => keep switch
+        {
+            RandomizeKeep.Self => entry.Value == Role.Self,
+            RandomizeKeep.OwnTeam => entry.Value.Team() == Role.Ally,
+            _ => false,
+        }).ToList();
+
         Clear();
-        var shuffled = heroIds.ToArray();
+        foreach (var (heroId, role) in kept)
+            RoleMap[heroId] = role;
+
+        var shuffled = heroIds.Where(heroId => !RoleMap.ContainsKey(heroId)).ToArray();
         random.Shuffle(shuffled);
+        var draw = new Queue<string>(shuffled);
 
-        var allies = shuffled.Skip(1).Take(MaxAllies).ToList();
-        var enemies = shuffled.Skip(1 + MaxAllies).Take(MaxEnemies).ToList();
+        if (SelfHero is null)
+            Draw(draw, Role.Self, 1);
+        Draw(draw, Role.Ally, MaxAllies - Allies.Count);
+        Draw(draw, Role.Enemy, MaxEnemies - Enemies.Count);
+    }
 
-        foreach (var self in shuffled.Take(1))
-            SetRole(self, Role.Self);
-        foreach (var ally in allies)
-            SetRole(ally, Role.Ally);
-        foreach (var enemy in enemies)
-            SetRole(enemy, Role.Enemy);
+    private void Draw(Queue<string> draw, Role role, int count)
+    {
+        for (var drawn = 0; drawn < count && draw.TryDequeue(out var heroId); drawn++)
+            SetRole(heroId, role);
     }
 
     public List<string> Allies => HeroesWith(Role.Ally);

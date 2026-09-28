@@ -149,4 +149,50 @@ public class MatchStateTests
         Assert.Equal(2, match.Allies.Count);
         Assert.Empty(match.Enemies);
     }
+
+    [Fact]
+    public void RandomizeCanKeepYourHero()
+    {
+        var heroIds = Enumerable.Range(0, 20).Select(i => $"hero{i}").ToList();
+        var match = new MatchState();
+        match.SetRole("hero0", Role.Self);
+        match.SetRole("hero1", Role.Ally);
+        match.SetRole("hero2", Role.Enemy);
+
+        match.Randomize(heroIds, new Random(1), RandomizeKeep.Self);
+
+        Assert.Equal("hero0", match.SelfHero);
+        Assert.Equal(MatchState.MaxAllies, match.Allies.Count);
+        Assert.Equal(MatchState.MaxEnemies, match.Enemies.Count);
+        Assert.Equal(1 + MatchState.MaxAllies + MatchState.MaxEnemies, match.RoleMap.Count);
+    }
+
+    [Fact]
+    public void RandomizeCanKeepYourTeamAndTopItUp()
+    {
+        var heroIds = Enumerable.Range(0, 20).Select(i => $"hero{i}").ToList();
+        var match = new MatchState();
+        match.SetRole("hero0", Role.Ally);
+        match.SetRole("hero1", Role.Self);
+        match.SetRole("hero2", Role.Ally);
+        match.SetRole("hero3", Role.Enemy);
+
+        match.Randomize(heroIds, new Random(1), RandomizeKeep.OwnTeam);
+
+        Assert.Equal(["hero0", "hero1", "hero2"], match.OwnTeam.Take(3));
+        Assert.Equal("hero1", match.SelfHero);
+        Assert.Equal(MatchState.MaxAllies, match.Allies.Count);
+        Assert.Equal(MatchState.MaxEnemies, match.Enemies.Count);
+        Assert.Equal(1 + MatchState.MaxAllies + MatchState.MaxEnemies, match.RoleMap.Count);
+    }
+
+    [Fact]
+    public void RandomizeKeepingYourHeroDrawsOneWhenYoureNotSet()
+    {
+        var match = new MatchState();
+        match.Randomize(["a", "b", "c"], new Random(1), RandomizeKeep.Self);
+
+        Assert.NotNull(match.SelfHero);
+        Assert.Equal(2, match.Allies.Count);
+    }
 }
