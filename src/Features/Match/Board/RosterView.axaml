@@ -53,9 +53,15 @@
                            ToolTip.Tip="{x:Static board:MatchBoardViewModel.NoSelfHint}"
                            IsVisible="{Binding IsSelfMissing}"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
-                    <Button Content="{Binding DetectText}"
-                            Command="{Binding DetectCommand}"
-                            ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied."/>
+                    <Button Command="{Binding DetectCommand}"
+                            ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied.">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <TextBlock Text="Detect from screen" VerticalAlignment="Center"/>
+                            <TextBlock Classes="shortcut"
+                                       Text="{Binding DetectKey}"
+                                       IsVisible="{Binding DetectKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        </StackPanel>
+                    </Button>
                     <Button Content="Import match…"
                             Command="{Binding ImportCommand}"
                             ToolTip.Tip="Look up a finished match by its ID and bring in its heroes"/>

@@ -259,6 +259,15 @@
         <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
     </Style>
 
+    <!-- A button's key, drawn as menus draw theirs. -->
+    <Style Selector="TextBlock.shortcut">
+        <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemKeyboardAcceleratorTextForeground}"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Button:pointerover TextBlock.shortcut">
+        <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver}"/>
+    </Style>
+
     <Style Selector="Button.ghost, ToggleButton.ghost">
         <Setter Property="Background" Value="Transparent"/>
         <Setter Property="BorderBrush" Value="Transparent"/>

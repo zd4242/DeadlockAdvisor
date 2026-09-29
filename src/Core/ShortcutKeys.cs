@@ -57,7 +57,7 @@ public static class ShortcutKeys
     /// <summary>How the app writes a key for people: "Ctrl+Shift+F9", "Alt+1", "Num 5".</summary>
     public static string Label(KeyGesture gesture) => ModifierPrefix(gesture.KeyModifiers) + KeyName(gesture.Key);
 
-    /// <summary><paramref name="text"/> with its key after it in brackets, as a button or tooltip names it: "Random (F6)".</summary>
+    /// <summary><paramref name="text"/> with its key after it in brackets, as a tooltip names it: "Random (F6)".</summary>
     public static string WithKey(string text, KeyGesture? gesture) => gesture is null ? text : $"{text} ({Label(gesture)})";
 
     /// <summary>Why <paramref name="gesture"/> can't be a shortcut, or null if it can.</summary>
