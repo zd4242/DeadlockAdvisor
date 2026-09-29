@@ -104,6 +104,8 @@ public class GoldenScoringTests
         {
             foreach (var row in Items(expected["item_contributions"]))
                 row[2] = Contributions(ItemScoring.ItemContributions(store, Text(row[0]), ParseRelation(row[1])));
+            foreach (var row in Items(expected["item_matches"]))
+                row[1] = new JsonArray(store.Items.Keys.Where(itemId => store.ItemMatches(itemId, Text(row[0]))).Select(id => (JsonNode)id).ToArray());
             WriteJson("store_queries.json", expected);
         }
 

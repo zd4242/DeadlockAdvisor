@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text;
 using System.Text.Json.Nodes;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
@@ -478,10 +479,13 @@ public sealed class DataStore
             .Select(entry => entry.Key)
             .ToList();
 
-    /// <summary>Whether a lowercased search string appears in the item's name, id, or anywhere on its tooltip card.</summary>
+    /// <summary>
+    /// Whether a lowercased search string fuzzily matches the item's name, or appears as typed in its id or anywhere
+    /// on its tooltip card, where a fuzzy match would find almost anything.
+    /// </summary>
     public bool ItemMatches(string itemId, string needle)
     {
-        if (Items.TryGetValue(itemId, out var item) && item.ItemName.ToLowerInvariant().Contains(needle, StringComparison.Ordinal))
+        if (Items.TryGetValue(itemId, out var item) && FuzzyMatch.Score(needle, item.ItemName) is not null)
             return true;
         if (itemId.ToLowerInvariant().Contains(needle, StringComparison.Ordinal))
             return true;

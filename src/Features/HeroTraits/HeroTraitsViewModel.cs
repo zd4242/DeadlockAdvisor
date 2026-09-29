@@ -388,12 +388,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyFilter()
     {
-        var needle = FilterText.Trim().ToLowerInvariant();
-        VisibleRows = RowOrder
-            .Where(row => needle.Length == 0
-                          || Heroes[row].HeroName.ToLowerInvariant().Contains(needle, StringComparison.Ordinal)
-                          || Heroes[row].HeroId.ToLowerInvariant().Contains(needle, StringComparison.Ordinal))
-            .ToList();
+        VisibleRows = RowOrder.Where(row => FuzzyMatch.Score(FilterText, Heroes[row].HeroName) is not null).ToList();
     }
 
     // -- toolbar ------------------------------------------------------------------

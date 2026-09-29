@@ -158,9 +158,14 @@ public sealed class HeroTraitsTests : IDisposable
     [Fact]
     public void TheFilterHidesHeroesAndEntrySkipsThem()
     {
+        // A fuzzy match: a run of letters or the starts of words.
+        _vm.FilterText = "  LG ";
+        Assert.Equal(["Lady Geist"], _vm.VisibleRows.Select(row => _vm.Heroes[row].HeroName));
         _vm.FilterText = "  LA ";
         var shown = _vm.VisibleRows.Select(row => _vm.Heroes[row].HeroName).ToList();
-        Assert.All(shown, name => Assert.Contains("la", name.ToLowerInvariant()));
+        Assert.Contains("Lash", shown);
+        Assert.Contains("Lady Geist", shown);
+        Assert.DoesNotContain("Holliday", shown);
 
         _vm.CurrentRow = _vm.VisibleRows[0];
         Type("33");

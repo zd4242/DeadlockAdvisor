@@ -11,8 +11,9 @@ public class FuzzyMatchTests
     [InlineData("GREY", "Grey Talon")]
     [InlineData("grey t", "Grey Talon")]
     [InlineData("mk", "Mo & Krill")]
-    [InlineData("vnr", "Venator")]
-    public void FindsTheLettersInOrderIgnoringCaseAndSpaces(string query, string text) =>
+    [InlineData("mcg", "McGinnis")]
+    [InlineData("ven", "Seven")]
+    public void FindsRunsOfLettersAndStartsOfWordsIgnoringCaseAndSpaces(string query, string text) =>
         Assert.NotNull(FuzzyMatch.Score(query, text));
 
     [Theory]
@@ -20,6 +21,14 @@ public class FuzzyMatchTests
     [InlineData("abramss", "Abrams")]
     [InlineData("x", "Abrams")]
     public void MissesWhenTheLettersArentThereInOrder(string query, string text) =>
+        Assert.Null(FuzzyMatch.Score(query, text));
+
+    [Theory]
+    [InlineData("vnr", "Venator")]
+    [InlineData("la", "Holliday")]
+    [InlineData("slow", "Compress Cooldown")]
+    [InlineData("heal", "Alchemical Fire")]
+    public void MissesLettersScatteredThroughWords(string query, string text) =>
         Assert.Null(FuzzyMatch.Score(query, text));
 
     [Theory]

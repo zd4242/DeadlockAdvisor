@@ -17,7 +17,7 @@ namespace DeadlockAdvisor.Features.Match.Board;
 /// Who's in the match. Detection normally fills it; the hero picker, hidden until opened, sets or
 /// corrects it by hand. Click-to-assign: pick what you're assigning (Enemy / Ally / You), then click
 /// heroes in the picker; clicking a hero who already has that role clears them. The fast path is
-/// the keyboard: the search box keeps focus, so "hay" Enter puts Haze on the current side and
+/// the keyboard: the search box keeps focus, so "gt" Enter puts Grey Talon on the current side and
 /// clears the field for the next name.
 /// </summary>
 public class MatchBoardViewModel : ViewModelBase
@@ -208,19 +208,13 @@ public class MatchBoardViewModel : ViewModelBase
         RefreshHighlight();
     }
 
+    /// <summary>The tiles stay where they are, but the pick goes best match first, so Enter takes it and Up/Down step down the ranking.</summary>
     private void ApplyFilter(string text)
     {
-        var needle = text.Trim().ToLowerInvariant();
-        _visibleOrder = [];
+        _visibleOrder = FuzzyMatch.Filter(Tiles, text, tile => tile.HeroName).Select(tile => tile.HeroId).ToList();
+        var shown = _visibleOrder.ToHashSet();
         foreach (var tile in Tiles)
-        {
-            var match = needle.Length == 0
-                        || tile.HeroName.ToLowerInvariant().Contains(needle, StringComparison.Ordinal)
-                        || tile.HeroId.ToLowerInvariant().Contains(needle, StringComparison.Ordinal);
-            tile.IsShown = match;
-            if (match)
-                _visibleOrder.Add(tile.HeroId);
-        }
+            tile.IsShown = shown.Contains(tile.HeroId);
         _highlightIndex = 0;
         RefreshHighlight();
     }

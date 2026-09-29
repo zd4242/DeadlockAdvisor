@@ -35,6 +35,22 @@ public class MatchBoardTests
     }
 
     [Fact]
+    public void TheSearchPicksTheBestMatchFirstThoughTheTilesStayInOrder()
+    {
+        string? Highlighted() => _board.Tiles.SingleOrDefault(tile => tile.IsHighlighted)?.HeroId;
+
+        _board.SearchText = "ven";
+
+        Assert.Equal(["seven", "venator"], _board.Tiles.Where(tile => tile.IsShown).Select(tile => tile.HeroId));
+        Assert.Equal("venator", Highlighted());
+        _board.MoveHighlight(1);
+        Assert.Equal("seven", Highlighted());
+
+        _board.SearchText = "gt";
+        Assert.Equal("grey_talon", Highlighted());
+    }
+
+    [Fact]
     public void AnEmptyAllySlotPicksYouUntilYoureSet()
     {
         Assert.False(_board.IsPickerOpen);

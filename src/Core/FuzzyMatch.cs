@@ -1,8 +1,10 @@
 namespace DeadlockAdvisor.Core;
 
 /// <summary>
-/// Type-to-find matching: the query's letters in order anywhere in the text, ignoring case and spaces, scored so
-/// that runs of letters and the starts of words rank first ("gt" finds Grey Talon, "ven" Venator before Seven).
+/// Type-to-find matching, ignoring case and spaces: the query's letters in order, where each letter after the first
+/// either follows the one before or starts a word ("gt" finds Grey Talon, "mk" Mo &amp; Krill). Letters scattered
+/// through the middle of words don't count, so "slow" doesn't find Compress Cooldown. Starts of words and longer
+/// runs rank first ("ven" finds Venator before Seven).
 /// </summary>
 public static class FuzzyMatch
 {
@@ -21,8 +23,8 @@ public static class FuzzyMatch
             return null;
 
         // For each letter of the query in turn, best[j] is the best score with that letter matched at text[j]:
-        // a letter just after the previous one's match earns the run bonus, and one further on loses a point
-        // per letter skipped, as the first match does for the letters before it.
+        // a letter just after the previous one's match earns the run bonus, and one further on, which must
+        // start a word, loses a point per letter skipped, as the first match does for the letters before it.
         var best = new int?[text.Length];
         for (var j = 0; j < text.Length; j++)
             best[j] = Matches(needle[0], text, j) ? Bonus(text, j) - j : null;
@@ -39,7 +41,7 @@ public static class FuzzyMatch
                 if (!Matches(needle[i], text, j))
                     continue;
                 int? from = best[j - 1] is { } adjacent ? adjacent + Run : null;
-                if (gapped is { } far)
+                if (gapped is { } far && StartsWord(text, j))
                     from = Math.Max(from ?? int.MinValue, far - j + 1);
                 next[j] = from + Bonus(text, j);
             }
@@ -63,12 +65,15 @@ public static class FuzzyMatch
 
     private static bool Matches(char letter, string text, int at) => char.ToLowerInvariant(text[at]) == letter;
 
-    private static int Bonus(string text, int at)
+    private static int Bonus(string text, int at) =>
+        Letter + (StartsWord(text, at) ? WordStart : 0) + (at == 0 ? TextStart : 0);
+
+    /// <summary>The first letter of the text or of a word in it, including the capital of "McGinnis".</summary>
+    private static bool StartsWord(string text, int at)
     {
         if (at == 0)
-            return Letter + WordStart + TextStart;
+            return true;
         var before = text[at - 1];
-        var startsWord = !char.IsLetterOrDigit(before) || (char.IsLower(before) && char.IsUpper(text[at]));
-        return Letter + (startsWord ? WordStart : 0);
+        return !char.IsLetterOrDigit(before) || (char.IsLower(before) && char.IsUpper(text[at]));
     }
 }
