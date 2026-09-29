@@ -8,8 +8,11 @@
 
     <Border Classes="card">
         <DockPanel>
-            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,Auto,*" Margin="0,0,0,8">
-                <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <Grid DockPanel.Dock="Top" ColumnDefinitions="Auto,Auto,Auto" Margin="0,0,0,8">
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,10,0">
+                    <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center"/>
+                    <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static board:MatchBoardViewModel.PickerHint}"/>
+                </StackPanel>
                 <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
                     <StackPanel>
                         <ToggleButton Classes="self"
@@ -37,13 +40,6 @@
                                     Width="320"
                                     Text="{Binding SearchText}"
                                     Watermark="{Binding SearchPlaceholder}"/>
-                <TextBlock Grid.Column="3"
-                           Classes="hint"
-                           Margin="14,0,0,0"
-                           HorizontalAlignment="Right"
-                           VerticalAlignment="Center"
-                           TextTrimming="CharacterEllipsis"
-                           Text="Left click assigns · right click picks a role · double click sets You · Esc closes"/>
             </Grid>
 
             <!-- Full width fits every hero in two or three rows; past three, it scrolls rather than crowding out the results. -->

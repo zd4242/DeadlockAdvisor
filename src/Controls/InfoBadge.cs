@@ -9,11 +9,14 @@ public class InfoBadge : Control
 {
     private const double _size = 15;
     private const double _fontSize = 11;
+    private const int _tipDelay = 100;
 
     static InfoBadge()
     {
         AffectsRender<InfoBadge>(IsPointerOverProperty);
         CursorProperty.OverrideDefaultValue<InfoBadge>(new Cursor(StandardCursorType.Help));
+        // Hovering the badge is asking for its tip, so it comes up almost at once.
+        ToolTip.ShowDelayProperty.OverrideDefaultValue<InfoBadge>(_tipDelay);
     }
 
     protected override Size MeasureOverride(Size availableSize) => new(_size, _size);

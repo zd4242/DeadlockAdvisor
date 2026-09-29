@@ -10,6 +10,7 @@ using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Board;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
@@ -106,7 +107,8 @@ public class MatchPageTests
         match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown"));
         ui.Screenshot("match_typical_team_info.png");
 
-        var tips = ui.Window.MatchPage.GetVisualDescendants().OfType<InfoBadge>()
+        var tips = ui.Window.MatchPage.GetVisualDescendants().OfType<ExplainView>().Single()
+            .GetVisualDescendants().OfType<InfoBadge>()
             .Where(badge => badge.IsVisible)
             .Select(badge => ToolTip.GetTip(badge) as string)
             .ToList();
@@ -114,6 +116,25 @@ public class MatchPageTests
         Assert.Contains(tips, tip => tip!.StartsWith("Knockdown is cast on one enemy at a time", StringComparison.Ordinal));
         Assert.Contains(tips, tip => tip!.StartsWith("Second opinion from real matches", StringComparison.Ordinal));
         Assert.StartsWith("Fetched ", match.Explain.MatchData!.Source);
+    }
+
+    /// <summary>How to use the match bar sits behind its heading's info badge; only "you're not set" stays in view, until you are.</summary>
+    [AvaloniaFact]
+    public void TheMatchBarKeepsItsHowToBehindAnInfoBadge()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var roster = ui.Window.MatchPage.GetVisualDescendants().OfType<RosterView>().Single();
+        TextBlock? NoSelfLine() => roster.GetVisualDescendants().OfType<TextBlock>()
+            .SingleOrDefault(text => text.Text == MatchBoardViewModel.NoSelfHint && text.IsEffectivelyVisible);
+
+        var badge = roster.GetVisualDescendants().OfType<InfoBadge>().Single();
+        Assert.Equal(MatchBoardViewModel.RosterHint, ToolTip.GetTip(badge));
+        Assert.NotNull(NoSelfLine());
+
+        SetUpMatch(ui);
+        UiHarness.Settle();
+        Assert.Null(NoSelfLine());
     }
 
     [AvaloniaFact]

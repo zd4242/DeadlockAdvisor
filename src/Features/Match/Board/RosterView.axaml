@@ -40,14 +40,18 @@
     <Border Classes="card">
         <StackPanel Spacing="10">
             <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
-                <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
+                    <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static board:MatchBoardViewModel.RosterHint}"/>
+                </StackPanel>
                 <TextBlock Grid.Column="1"
                            Classes="hint"
                            Margin="14,0"
                            VerticalAlignment="Center"
                            TextTrimming="CharacterEllipsis"
-                           Text="{Binding Hint}"
-                           ToolTip.Tip="{Binding Hint}"/>
+                           Text="{x:Static board:MatchBoardViewModel.NoSelfHint}"
+                           ToolTip.Tip="{x:Static board:MatchBoardViewModel.NoSelfHint}"
+                           IsVisible="{Binding IsSelfMissing}"/>
                 <Button Grid.Column="2"
                         Content="{Binding DetectText}"
                         Command="{Binding DetectCommand}"

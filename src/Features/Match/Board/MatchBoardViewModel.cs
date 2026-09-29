@@ -24,8 +24,12 @@ namespace DeadlockAdvisor.Features.Match.Board;
 public class MatchBoardViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
-    public const string RosterHint = "Click a portrait to change its role · × removes · an empty slot adds to that team";
-    public const string NoSelfHint = "You're not set yet -- detect the match, or click an empty ally slot to pick your hero";
+    public const string RosterHint =
+        "Click a portrait to change its role.\n× on a portrait removes the hero.\nAn empty slot adds a hero to that team.";
+    public const string PickerHint =
+        "Left click assigns a hero to the role chosen here.\nRight click picks a role for it.\nDouble click sets it as You.\n"
+        + "Type a name and press Enter to assign the best match.\nEsc closes the picker.";
+    public const string NoSelfHint = "You're not set yet — detect the match, or click an empty ally slot to pick your hero";
 
     public static readonly IReadOnlyList<Role> ModeOrder = [Role.Self, Role.Enemy, Role.Ally];
 
@@ -111,7 +115,8 @@ public class MatchBoardViewModel : ViewModelBase
     public IReadOnlyList<RosterSlotViewModel> EnemySlots { get; } = TeamSlots(Role.Enemy);
     [Reactive] public string AllyCount { get; private set; } = "";
     [Reactive] public string EnemyCount { get; private set; } = "";
-    [Reactive] public string Hint { get; private set; } = NoSelfHint;
+    /// <summary>Your hero isn't set, which the match bar asks you to fix.</summary>
+    [Reactive] public bool IsSelfMissing { get; private set; } = true;
 
     /// <summary>Whether any net worth has been read this match, which makes room for it on the bar.</summary>
     [Reactive] public bool HasNetWorth { get; private set; }
@@ -275,7 +280,7 @@ public class MatchBoardViewModel : ViewModelBase
         HasNetWorth = !_match.NetWorth.IsEmpty;
         FillSlots(AllySlots, allies);
         FillSlots(EnemySlots, enemies);
-        Hint = _match.SelfHero is null ? NoSelfHint : RosterHint;
+        IsSelfMissing = _match.SelfHero is null;
         RefreshTotals(allies, enemies);
     }
 

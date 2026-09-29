@@ -118,7 +118,15 @@
                                             <Border Classes="hline" Margin="0,4"/>
 
                                             <StackPanel Spacing="8" DataContext="{Binding DataRanks}" x:DataType="match:DataRanksViewModel">
-                                                <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA FROM"/>
+                                                <StackPanel Orientation="Horizontal" Spacing="6">
+                                                    <TextBlock Classes="section"
+                                                               VerticalAlignment="Center"
+                                                               Foreground="{DynamicResource DataBrush}"
+                                                               Text="MATCH DATA FROM"/>
+                                                    <controls:InfoBadge VerticalAlignment="Center"
+                                                                        ToolTip.Tip="{x:Static match:DataRanksViewModel.Info}"
+                                                                        IsVisible="{Binding CanFilter}"/>
+                                                </StackPanel>
                                                 <TextBlock Classes="faint"
                                                            TextWrapping="Wrap"
                                                            IsVisible="{Binding !CanFilter}"
@@ -133,10 +141,6 @@
                                                     </Grid>
                                                 </StackPanel>
                                                 <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Status}" IsVisible="{Binding CanFilter}"/>
-                                                <TextBlock Classes="faint"
-                                                           TextWrapping="Wrap"
-                                                           IsVisible="{Binding CanFilter}"
-                                                           Text="A match's rank is both teams' average; Ascendant includes Eternus. Unranked matches have no rank, so only 'every match' has them. Fewer matches make noisier numbers, and the enemy or your-hero numbers are left out once they're mostly noise."/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Flyout>

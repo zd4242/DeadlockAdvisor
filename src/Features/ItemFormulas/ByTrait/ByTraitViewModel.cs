@@ -25,8 +25,8 @@ public class ByTraitViewModel : ViewModelBase
     public const string FocusSearchAction = "FocusSearch";
 
     public const string Hint =
-        "Type a digit to set a coefficient and drop to the next item · "
-        + "\"-\" first to discourage an item · Backspace clears";
+        "Type a digit to set a coefficient and drop to the next item.\n"
+        + "\"-\" first to discourage an item.\nBackspace clears.";
 
     public const string WeightTip =
         "Scales every item on this trait + relation at once -- typed and\n"

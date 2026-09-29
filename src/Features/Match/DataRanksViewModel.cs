@@ -16,6 +16,11 @@ namespace DeadlockAdvisor.Features.Match;
 /// </summary>
 public class DataRanksViewModel : ViewModelBase
 {
+    public const string Info =
+        "A match's rank is both teams' average; Ascendant includes Eternus.\n"
+        + "Unranked matches have no rank, so only 'every match' has them.\n"
+        + "Fewer matches make noisier numbers, and the enemy or your-hero numbers are left out once they're mostly noise.";
+
     private readonly IDataService _data;
     private readonly IMatchStatsService _matchStats;
     private readonly INotificationService _notifications;

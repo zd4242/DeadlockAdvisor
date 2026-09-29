@@ -107,7 +107,6 @@
                                                             Margin="6,0,0,0"
                                                             VerticalAlignment="Center"
                                                             ToolTip.Tip="{Binding Info}"
-                                                            ToolTip.ShowDelay="100"
                                                             IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         <TextBlock Grid.Column="4"
                                                    Classes="faintText"
@@ -180,7 +179,6 @@
                                                             HorizontalAlignment="Left"
                                                             VerticalAlignment="Center"
                                                             ToolTip.Tip="{Binding Info}"
-                                                            ToolTip.ShowDelay="100"
                                                             IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         <ItemsControl Grid.Column="2" ItemsSource="{Binding Totals}">
                                             <ItemsControl.ItemsPanel>

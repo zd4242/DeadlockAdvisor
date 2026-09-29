@@ -131,10 +131,9 @@
 
         <!-- The table's own bar: how to type into it, and what it shows -->
         <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
-            <TextBlock Classes="hint"
-                       VerticalAlignment="Center"
-                       TextTrimming="CharacterEllipsis"
-                       Text="{x:Static byTrait:ByTraitViewModel.Hint}"/>
+            <controls:InfoBadge HorizontalAlignment="Right"
+                                VerticalAlignment="Center"
+                                ToolTip.Tip="{x:Static byTrait:ByTraitViewModel.Hint}"/>
             <controls:SearchBox Grid.Column="1"
                                 x:Name="SearchBox"
                                 Width="200"

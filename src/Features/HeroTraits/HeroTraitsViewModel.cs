@@ -31,9 +31,8 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     public const string FocusSearchAction = "FocusSearch";
 
     public const string Hint =
-        "Type 0–100 · it commits as soon as no more digits fit (space or tab "
-        + "ends a short one) · \"-\" first for ± traits · Backspace clears · "
-        + "Enter moves down a hero";
+        "Type 0–100: it commits as soon as no more digits fit (space or Tab ends a short one).\n"
+        + "\"-\" first for ± traits.\nBackspace clears.\nEnter moves down a hero.";
 
     private readonly IDataService _data;
     private readonly IModalService _modals;
