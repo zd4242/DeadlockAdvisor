@@ -44,6 +44,10 @@
                         <Button Classes="ghost" Content="Reset" ToolTip.Tip="Back to 100% (Ctrl+0)" Command="{Binding ResetZoomCommand}"/>
                     </StackPanel>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Show the Random buttons"
+                                     Description="Random and its ▾ menu on the match bar fill the match with random heroes, for trying things out. F6, F7 and F8 only work while they're shown.">
+                    <ToggleSwitch IsChecked="{Binding ShowRandomButtons}"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 

@@ -60,6 +60,7 @@ public class SettingsTests
         Assert.Equal(4, settings.ZoomIndex);
         Assert.True(settings.ReopenLastPage);
         Assert.True(settings.ReopenLastMatch);
+        Assert.True(settings.ShowRandomButtons);
         Assert.True(settings.CheckForNewerPatch);
         Assert.True(settings.DetectFromAnywhere);
         Assert.True(settings.MinimizeToDetect);

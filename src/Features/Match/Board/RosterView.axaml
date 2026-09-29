@@ -57,7 +57,10 @@
                               Margin="6,0,0,0"
                               IsChecked="{Binding IsPickerOpen}"
                               ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
-                <StackPanel Grid.Column="4" Orientation="Horizontal" Margin="6,0,0,0">
+                <StackPanel Grid.Column="4"
+                            Orientation="Horizontal"
+                            Margin="6,0,0,0"
+                            IsVisible="{Binding ShowsRandom}">
                     <Button Classes="ghost"
                             Content="Random"
                             Command="{Binding RandomizeCommand}"

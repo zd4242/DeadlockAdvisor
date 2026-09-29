@@ -75,7 +75,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         if (settings.Current.ReopenLastMatch)
             Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
-        Board = new MatchBoardViewModel(Match, () => _data.Store);
+        Board = new MatchBoardViewModel(Match, () => _data.Store, settings);
         Results = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
 
         var savedPercent = settings.Current.ResultsMinPercent;

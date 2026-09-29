@@ -1,6 +1,7 @@
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
@@ -12,7 +13,7 @@ public class MatchBoardTests
     public MatchBoardTests()
     {
         var store = Golden.LoadStore();
-        _board = new MatchBoardViewModel(new MatchState(), () => store);
+        _board = new MatchBoardViewModel(new MatchState(), () => store, new FakeSettingsService());
     }
 
     [Fact]

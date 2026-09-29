@@ -40,4 +40,10 @@ public class GeneralSettingsViewModel : SettingsPageViewModel
         get => Current.ReopenLastMatch;
         set => Change(s => s.ReopenLastMatch = value);
     }
+
+    public bool ShowRandomButtons
+    {
+        get => Current.ShowRandomButtons;
+        set => Change(s => s.ShowRandomButtons = value);
+    }
 }

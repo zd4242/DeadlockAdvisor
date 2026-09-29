@@ -170,7 +170,9 @@ public class MainWindowViewModel : ViewModelBase
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
         SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.StartAssigning, onMatchPage);
         DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
-        RandomizeCommand = ReactiveCommand.CreateFromObservable<RandomizeKeep, Unit>(Match.Board.RandomizeCommand.Execute, onMatchPage);
+        RandomizeCommand = ReactiveCommand.CreateFromObservable<RandomizeKeep, Unit>(
+            Match.Board.RandomizeCommand.Execute,
+            onMatchPage.CombineLatest(Match.Board.RandomizeCommand.CanExecute, (onPage, canRandomize) => onPage && canRandomize));
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
 

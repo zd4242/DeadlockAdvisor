@@ -2,6 +2,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
@@ -76,6 +77,26 @@ public class ShortcutTests
         ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
         UiHarness.Settle();
         Assert.Equal(team, Team());
+    }
+
+    [AvaloniaFact]
+    public void HidingTheRandomButtonsTurnsTheirKeysOffToo()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.Window.FocusManager!.ClearFocus();
+        var board = ui.ViewModel.Match.Board;
+        var random = ui.Window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Random"));
+        Assert.True(random.IsEffectivelyVisible);
+
+        ui.ViewModel.Settings.General.ShowRandomButtons = false;
+        UiHarness.Settle();
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        UiHarness.Settle();
+
+        Assert.False(ui.Settings.Current.ShowRandomButtons);
+        Assert.False(random.IsEffectivelyVisible);
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.Null(slot.HeroId));
     }
 
     /// <summary>F9 held system-wide: from the game, it detects onto the Match page and brings the window up for what that shows.</summary>

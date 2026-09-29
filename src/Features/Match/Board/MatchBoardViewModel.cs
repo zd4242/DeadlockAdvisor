@@ -7,6 +7,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -33,10 +34,16 @@ public class MatchBoardViewModel : ViewModelBase
     private List<string> _visibleOrder = [];
     private int _highlightIndex;
 
-    public MatchBoardViewModel(MatchState match, Func<DataStore> store)
+    public MatchBoardViewModel(MatchState match, Func<DataStore> store, ISettingsService settings)
     {
         _match = match;
         _store = store;
+
+        settings.SettingsChanged
+            .Select(s => s.ShowRandomButtons)
+            .DistinctUntilChanged()
+            .Subscribe(show => ShowsRandom = show)
+            .DisposeWith(Disposables);
 
         SetModeCommand = ReactiveCommand.Create<Role>(SetMode);
         ClearCommand = ReactiveCommand.Create(() =>
@@ -48,7 +55,7 @@ public class MatchBoardViewModel : ViewModelBase
         {
             _match.Randomize(_store().Heroes.Keys, Random.Shared, keep);
             AfterChange();
-        });
+        }, this.WhenAnyValue(vm => vm.ShowsRandom));
 
         this.WhenAnyValue(vm => vm.SearchText)
             .Skip(1)
@@ -76,6 +83,9 @@ public class MatchBoardViewModel : ViewModelBase
 
     /// <summary>Whether the hero picker is showing. It starts hidden, on the assumption detection gets the match right.</summary>
     [Reactive] public bool IsPickerOpen { get; set; }
+
+    /// <summary>Whether the match bar offers Random, which a setting can hide; F6–F8 go with it, so a stray key can't wipe a detected match.</summary>
+    [Reactive] public bool ShowsRandom { get; private set; }
 
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";
