@@ -20,16 +20,24 @@ public static class ExplainText
 
     /// <summary>How to read one of the match data card's lines, for its info badge.</summary>
     public const string DataLinesTip =
-        "Each line: \"raw\" is the gain measured in matches with that hero, ± how uncertain it is, and how many "
-        + "matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
+        "Each line: \"raw\" is the win-rate gain measured in matches with that hero, ± how uncertain it is, and how "
+        + "many matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
         + "toward 0, and they're what the totals at the top add up.";
 
-    /// <summary>"Vindicta builds this 1/12 as often as the average player, so the enemy lifts count ×0.33."</summary>
+    /// <summary>How "Formula + data" puts its two opinions on one footing, for its tooltips.</summary>
+    public const string BlendScaleNote =
+        "Each is scaled by how big it usually gets in line-ups like this one, so the two count equally.";
+
+    public const string VerdictTip = "Ranked by the formula and the match data added together. " + BlendScaleNote;
+
+    /// <summary>"Vindicta builds this 1/12 as often as the average player, so the gains against the enemies count ×0.33 …"</summary>
     public static string RarelyBuilt(string who, double ratio) =>
         ratio <= 0
-            ? $"{who} never builds this in real matches, so the enemy lifts don't count."
+            ? $"{who} never builds this in real matches, so the gains against the enemies don't count: "
+              + "they come from other heroes' players."
             : $"{who} builds this 1/{Format.Num(Math.Round(1 / ratio))} as often as the average player, "
-              + $"so the enemy lifts count ×{NumberFormat.Fixed(ItemScoring.Relevance(ratio), 2)}.";
+              + $"so the gains against the enemies count ×{NumberFormat.Fixed(ItemScoring.Relevance(ratio), 2)}: "
+              + "they mostly come from other heroes' players.";
 
     /// <summary>
     /// Where a coefficient came from, when it isn't just the typed number. The multiplied-out value is

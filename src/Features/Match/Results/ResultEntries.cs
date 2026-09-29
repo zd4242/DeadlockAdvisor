@@ -20,11 +20,12 @@ public readonly record struct Bars(double Fraction, double? Data = null, string?
 public class ResultRowViewModel : ViewModelBase
 {
     public static readonly string StandoutTip =
-        "Standout in real matches for this line-up: the enemies lift plus a third of your lift\n"
-        + $"comes to {Format.Num(ItemScoring.PickMinAgainst)} or more (your hero's lifts run about three times bigger).";
+        "Stands out in real matches: players win noticeably more often with it against these enemies, or on your hero.\n"
+        + $"Its win-rate gain against the enemies, plus a third of the gain on your hero, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
+        + "(gains on your own hero usually run about three times bigger).";
 
     public const string DisagreeTip =
-        "The formula and the match data rate this item a unit or more apart, in opposite directions.\n"
+        "The formula and the match data clearly disagree: one rates this item well, the other poorly.\n"
         + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
         + "who buys the item more than what it does.";
 
@@ -65,7 +66,7 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public OrderedDictionary<string, double>? Data { get; private set; }
     [Reactive] public bool HasData { get; private set; }
 
-    /// <summary>Your hero rarely builds the item, so its enemy lifts count for less.</summary>
+    /// <summary>Your hero rarely builds the item, so its gains against the enemies count for less.</summary>
     [Reactive] public bool IsRarelyBuilt { get; private set; }
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }

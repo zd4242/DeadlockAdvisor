@@ -269,7 +269,7 @@ public class DataMenuViewModel : ViewModelBase
         _data.NotifyReplaced();
         var lines = result.Lines();
         lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
-        lines.Add("The Match page's \"Data:\" button narrows it to a range of ranks, without fetching again.");
+        lines.Add("The Match page's filters (the funnel) narrow it to a range of ranks, without fetching again.");
         Succeeded(job, "fetched", "Match stats fetched", lines, "Match stats fetched: the recommendations now show them.");
     }
 

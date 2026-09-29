@@ -74,7 +74,7 @@
                                   SelectedItem="{Binding SelectedRank}"
                                   IsEnabled="{Binding HasMatchData}"
                                   ToolTip.ShowOnDisabled="True"
-                                  ToolTip.Tip="What orders the list. Match data ranks by real-match lifts (enemies, plus a third&#10;of yours); 'Formula + data' adds the two, each in its typical units. The data is never&#10;added into the formula score. Needs match data (Data → Fetch Match Stats).">
+                                  ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;and on your hero. 'Formula + data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Fetch Match Stats).">
                             <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
                             <ComboBox.Resources>
                                 <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
@@ -136,7 +136,7 @@
                                                 <TextBlock Classes="faint"
                                                            TextWrapping="Wrap"
                                                            IsVisible="{Binding CanFilter}"
-                                                           Text="A match's rank is both teams' average; Ascendant includes Eternus. Unranked matches have no rank, so only 'every match' has them. Fewer matches make noisier numbers, and a kind of lift that turns to noise is left out."/>
+                                                           Text="A match's rank is both teams' average; Ascendant includes Eternus. Unranked matches have no rank, so only 'every match' has them. Fewer matches make noisier numbers, and the enemy or your-hero numbers are left out once they're mostly noise."/>
                                             </StackPanel>
                                         </StackPanel>
                                     </Flyout>

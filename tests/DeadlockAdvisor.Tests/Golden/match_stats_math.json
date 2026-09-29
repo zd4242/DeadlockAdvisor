@@ -16460,8 +16460,8 @@
   }
  },
  "fetch_result_lines": [
-  "against (since patch 08-22): 1 lifts, reliability 0.71, typical real lift ±0.37 pts",
-  "as (since patch 08-22): left out -- reliability n/a is under 0.5, so the numbers would be mostly noise"
+  "Enemies (since patch 08-22): 1 measurements, reliability 0.71, typical win-rate gain ±0.37 pts",
+  "Your hero (since patch 08-22): left out -- reliability n/a is under 0.5, so the numbers would be mostly noise"
  ],
  "family_reliability": [
   [

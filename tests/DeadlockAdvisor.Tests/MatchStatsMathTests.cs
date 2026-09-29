@@ -156,7 +156,7 @@ public class MatchStatsMathTests
 
         var meta = JsonNode.Parse(
             """{"families": {"against/full": {"kept": true, "rows": 5, "reliability": 0.7, "own_excluded": false}}}""")!.AsObject();
-        Assert.Equal(["Enemies: 5 lifts, reliability 0.70", MatchStatsMath.OwnIncludedNote], MatchStatsMath.FamilyLines(meta));
+        Assert.Equal(["Enemies: 5 measurements, reliability 0.70", MatchStatsMath.OwnIncludedNote], MatchStatsMath.FamilyLines(meta));
     }
 
     [Fact]

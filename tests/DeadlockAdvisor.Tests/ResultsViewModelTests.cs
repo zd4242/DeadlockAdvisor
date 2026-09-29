@@ -170,7 +170,8 @@ public class ResultsViewModelTests
 
         var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
         Assert.True(rows[0].IsRarelyBuilt);
-        Assert.Equal("Your hero builds this 1/10 as often as the average player, so the enemy lifts count ×0.40.\n\nnote", rows[0].DataTip);
+        Assert.Equal("Your hero builds this 1/10 as often as the average player, so the gains against the enemies count ×0.40: "
+                     + "they mostly come from other heroes' players.\n\nnote", rows[0].DataTip);
         // Without data there's nothing that counts for less.
         Assert.False(rows[2].IsRarelyBuilt);
         Assert.Equal("note", rows[2].DataTip);

@@ -5,6 +5,7 @@ using System.Reactive.Subjects;
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
@@ -223,7 +224,7 @@ public class ResultsViewModel : ViewModelBase
     /// <summary>A row's bar: the ranking's measure against the largest on screen.</summary>
     private Bars BarsFor(ScoredItem item, double measure, double scale) =>
         _rankBy == RankBy.MatchData
-            ? new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}")
+            ? new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}\n\n{DataStrengthNote}")
             : new Bars(Share(measure, scale));
 
     /// <summary>The formula's part and the data's, on one scale and below 0 when negative, so it shows which one carries the item.</summary>
@@ -235,8 +236,12 @@ public class ResultsViewModel : ViewModelBase
             $"Formula {Format.SignedFixed(formula, 1)} (score {Format.Tenths(item.Score)})\n"
             + $"Data {Format.SignedFixed(data, 1)} ({DataWorking(item)})\n"
             + $"Ranked by the sum: {Format.SignedFixed(measure, 1)}\n\n"
-            + "Each in units of how far it typically strays from 0 in line-ups like this one.");
+            + ExplainText.BlendScaleNote);
     }
+
+    private const string DataStrengthNote =
+        "Win-rate gains in real matches: against these enemies, plus a third of the gain on your hero\n"
+        + "(those usually run about three times bigger).";
 
     /// <summary>"enemies 0.4 + you 1.0 ÷ 3".</summary>
     private static string DataWorking(ScoredItem item)
@@ -275,14 +280,17 @@ public class ResultsViewModel : ViewModelBase
     private string RankTip() => _rankBy switch
     {
         RankBy.MatchData =>
-            "Ranked by the match data: the enemies lift plus a third of your lift (your hero's lifts run\n"
-            + "about three times bigger). The bar shows that; the number on the right is still the formula score.",
+            "Ranked by the match data: how much more often players win with each item in real matches.\n"
+            + DataStrengthNote + "\n"
+            + "The bar shows that; the number on the right is still the formula score.",
         RankBy.Both =>
-            "Ranked by the formula and the match data added together, each in units of how far it typically\n"
-            + "strays from 0 over random line-ups like this one. The number on the right is that sum; the top bar\n"
-            + "is the formula's part and the lower bar the data's. An item one of them has nothing to say about\n"
-            + "ranks on the other alone. DISAGREE marks an item they rate a unit or more apart in opposite directions.",
-        _ => "Ranked by the formula score. The data numbers are a second opinion from real matches.",
+            "Ranked by the formula and the match data added together.\n"
+            + ExplainText.BlendScaleNote + "\n"
+            + "The number on the right is that sum; the top bar is the formula's part and the lower bar the data's.\n"
+            + "An item only one of them has an opinion on ranks on that one alone.\n"
+            + "DISAGREE marks an item one rates well and the other poorly.",
+        _ => "Ranked by the formula score: the app's own rating, from the heroes' traits and what the item does.\n"
+             + "The data numbers are a second opinion from real matches.",
     };
 
     private string Hint(bool nothingScored)

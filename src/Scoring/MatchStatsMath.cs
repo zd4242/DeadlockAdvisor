@@ -127,11 +127,11 @@ public sealed record FetchResult(
         {
             var stats = report.Stats;
             var reliability = stats.Reliability is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
-            var head = $"{report.Family.Relation} (since patch {report.Since.Label}): ";
+            var head = $"{MatchStatsMath.FamilyName(report.Family.Relation)} (since patch {report.Since.Label}): ";
             if (report.Kept)
             {
-                lines.Add(head + $"{stats.Full.Count} lifts, reliability {reliability}, "
-                               + $"typical real lift ±{NumberFormat.Fixed(Math.Sqrt(stats.Tau2), 2)} pts");
+                lines.Add(head + $"{stats.Full.Count} measurements, reliability {reliability}, "
+                               + $"typical win-rate gain ±{NumberFormat.Fixed(Math.Sqrt(stats.Tau2), 2)} pts");
                 if (report.OwnExcluded == false)
                     lines.Add("  " + MatchStatsMath.OwnIncludedNote);
             }
@@ -182,7 +182,10 @@ public static partial class MatchStatsMath
     ];
 
     public const string OwnIncludedNote =
-        "Enemy lifts still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
+        "The enemy numbers still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
+
+    /// <summary>How the reports name a family: "Enemies" for "against", "Your hero" for "as".</summary>
+    public static string FamilyName(string relation) => relation == "against" ? "Enemies" : "Your hero";
 
     // -- ranks ------------------------------------------------------------------
 
@@ -633,10 +636,10 @@ public static partial class MatchStatsMath
             var data = FamilyMeta(meta, family.Relation);
             if (data.Count == 0)
                 continue;
-            var name = family.Relation == "against" ? "Enemies" : "Your hero";
+            var name = FamilyName(family.Relation);
             var reliability = Number(data["reliability"]) is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
             lines.Add(IsTrue(data["kept"])
-                ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} lifts, reliability {reliability}"
+                ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} measurements, reliability {reliability}"
                 : $"{name}: left out, reliability {reliability} is too low");
             if (IsTrue(data["kept"]) && data["own_excluded"] is JsonValue excluded && excluded.TryGetValue<bool>(out var flag) && !flag)
                 lines.Add(OwnIncludedNote);
@@ -659,15 +662,18 @@ public static partial class MatchStatsMath
 
         var lines = new List<string>
         {
-            "Second opinion from real matches (deadlock-api.com): how many win-rate points the item gains, "
-            + "with each hero's own strength taken out and small samples pulled toward 0. Not part of the score.",
+            "Second opinion from real matches (deadlock-api.com): how much more often players win when they build "
+            + "the item, in win-rate points (+1 is 50% → 51%). Each hero's own strength is taken out, and small "
+            + "samples are pulled toward 0. It never changes the formula score.",
         };
         var against = FamilyMeta(meta, "against");
         if (IsTrue(against["kept"]))
-            lines.Add($"Enemies: counters, since patch {Text(against["since_patch"]) ?? "?"}. Real effects here are small -- +1 is a standout.");
+            lines.Add($"Enemies: the gain against each enemy hero, since patch {Text(against["since_patch"]) ?? "?"}. "
+                      + "These gains are small: +1 is a standout.");
         var mine = FamilyMeta(meta, "as");
         if (IsTrue(mine["kept"]))
-            lines.Add($"You: on your hero, since patch {Text(mine["since_patch"]) ?? "?"}. Partly reflects who builds it on this hero, not only what it does.");
+            lines.Add($"You: the gain when your hero builds it, since patch {Text(mine["since_patch"]) ?? "?"}. "
+                      + "Usually about three times bigger, and partly shows who builds it on this hero, not only what it does.");
         return string.Join("\n", lines);
     }
 
