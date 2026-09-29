@@ -81,6 +81,12 @@ public sealed class DetectTests : IDisposable
         Assert.True(_page.Board.AllySlots[0].IsSelf);
         Assert.Equal("self", _fixture.Settings.Current.LastMatch!.Roles["apollo"]);
         Assert.False(_page.Results.IsEmpty);
+
+        // A new line-up opens on its best item, explained.
+        var top = _page.Results.Entries.OfType<ResultRowViewModel>().First();
+        Assert.True(top.IsSelected);
+        Assert.Equal(top.ItemId, _page.Results.SelectedItemId);
+        Assert.True(_page.Explain.HasItem);
     }
 
     [AvaloniaFact]
@@ -110,7 +116,6 @@ public sealed class DetectTests : IDisposable
     public async Task ScoresLeanOnTheNetWorthReadUnlessToggledOff()
     {
         await (await DetectAsync()).ApplyCommand.Execute();
-        _page.Results.Select(_page.Results.Entries.OfType<ResultRowViewModel>().First());
 
         // 184k over twelve heroes averages 15.3k. A single-target item's rank comes first.
         static bool NetWorthNote(ContributionCard card) => card.Note?.EndsWith(" avg", StringComparison.Ordinal) == true;
@@ -142,8 +147,12 @@ public sealed class DetectTests : IDisposable
     public async Task DetectingTheSameMatchAgainAddsToTheHistory()
     {
         await (await DetectAsync()).ApplyCommand.Execute();
+        var picked = _page.Results.Entries.OfType<ResultRowViewModel>().Skip(1).First();
+        _page.Results.Select(picked);
         await (await DetectAsync()).ApplyCommand.Execute();
 
+        // The same heroes again, say to update net worth, keep what you were reading about.
+        Assert.Equal(picked.ItemId, _page.Results.SelectedItemId);
         Assert.Equal(2, _page.Match.NetWorth.Snapshots.Count);
         Assert.Equal(0, _page.Match.NetWorth.Change("apollo")?.Souls);
 

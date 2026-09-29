@@ -45,6 +45,7 @@ public class ResultsViewModel : ViewModelBase
     private RankBy _rankBy;
     private bool _byTier;
     private double? _minFraction;
+    private string? _topItemId;
 
     public ResultsViewModel(string emptyHint)
     {
@@ -124,18 +125,16 @@ public class ResultsViewModel : ViewModelBase
     /// <summary>Pick a row, or clear the pick when it's the one already picked.</summary>
     public void Select(ResultRowViewModel row)
     {
-        if (row.IsSelected)
-        {
-            SetSelection(null);
-            _rowClicked.OnNext(null);
-            return;
-        }
-        if (_rows.GetValueOrDefault(SelectedItemId ?? "") is { } previous)
-            previous.IsSelected = false;
-        row.IsSelected = true;
-        SelectedItemId = row.ItemId;
-        _rowClicked.OnNext(row.ItemId);
+        var itemId = row.IsSelected ? null : row.ItemId;
+        SetSelection(itemId);
+        _rowClicked.OnNext(itemId);
     }
+
+    /// <summary>
+    /// Pick the best-ranked item listed, or clear the pick when nothing is. Like a refresh dropping
+    /// the pick, this doesn't raise <see cref="RowClicked"/>.
+    /// </summary>
+    public void SelectTop() => SetSelection(_topItemId);
 
     public void ToggleSection(string key)
     {
@@ -159,6 +158,7 @@ public class ResultsViewModel : ViewModelBase
         var nothingScored = _scored.All(item => item.Score == 0 && item.Data.Count == 0);
         IsEmpty = nothingScored || (shown.Count == 0 && picks.Count == 0);
         EmptyHint = Hint(nothingScored);
+        _topItemId = IsEmpty || shown.Count == 0 ? null : shown[0].Item.ItemId;
         Summary = IsEmpty ? "" : SummaryText(positive, shown.Count, cutoff, everyItem);
         SummaryTip = RankTip();
 
@@ -307,8 +307,10 @@ public class ResultsViewModel : ViewModelBase
 
     private void SetSelection(string? itemId)
     {
-        if (itemId is null && _rows.GetValueOrDefault(SelectedItemId ?? "") is { } previous)
+        if (_rows.GetValueOrDefault(SelectedItemId ?? "") is { } previous)
             previous.IsSelected = false;
+        if (_rows.GetValueOrDefault(itemId ?? "") is { } row)
+            row.IsSelected = true;
         SelectedItemId = itemId;
     }
 

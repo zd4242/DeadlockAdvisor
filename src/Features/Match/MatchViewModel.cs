@@ -89,12 +89,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ByNetWorth = settings.Current.ResultsByNetWorth;
         ApplyDisplay();
 
-        DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, OnMatchReplaced));
+        DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
         Board.DetectCommand = DetectCommand;
-        ImportCommand = ReactiveCommand.Create(() => import.Run(Match, OnMatchReplaced));
+        ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
+        // Runs after the board's own rescore, so the list is already ranked for the new heroes.
+        Board.RandomizeCommand.Subscribe(_ => ShowTopPick()).DisposeWith(Disposables);
 
         Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
         settings.SettingsChanged
@@ -201,11 +203,29 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>The formula-and-data ranking's units for the current line-up.</summary>
     private BlendScale Scale() => _data.Scales.For(LineUpShape.Of(ItemScoring.RelevantHeroes(Match)));
 
-    /// <summary>A detection or an import wrote the match from outside the board.</summary>
-    private void OnMatchReplaced()
+    /// <summary>
+    /// What to do once a detection or an import writes the match from outside the board. A new
+    /// line-up starts on its best item; re-reading the same one, say for net worth, keeps your pick.
+    /// </summary>
+    private Action WhenReplaced()
     {
-        Board.Refresh();
-        OnMatchChanged();
+        var before = LineUp();
+        return () =>
+        {
+            Board.Refresh();
+            OnMatchChanged();
+            if (!before.SetEquals(LineUp()))
+                ShowTopPick();
+        };
+    }
+
+    private HashSet<(string HeroId, Role Role)> LineUp() =>
+        Match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => (entry.Key, entry.Value)).ToHashSet();
+
+    private void ShowTopPick()
+    {
+        Results.SelectTop();
+        RefreshExplain();
     }
 
     private void OnMatchChanged()

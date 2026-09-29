@@ -1,3 +1,4 @@
+using System.Reactive.Linq;
 using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Controls.Primitives;
@@ -58,6 +59,20 @@ public class MatchPageTests
         Assert.True(File.Exists(ui.Screenshot(file)));
         Assert.True(ui.ViewModel.Match.Explain.HasItem);
         Assert.NotEmpty(ui.ViewModel.Match.Explain.Contributions);
+    }
+
+    [AvaloniaFact]
+    public async Task RandomOpensOnTheBestItem()
+    {
+        using var ui = new UiHarness();
+        var match = ui.ViewModel.Match;
+
+        await match.Board.RandomizeCommand.Execute(RandomizeKeep.Nothing);
+
+        var top = match.Results.Entries.OfType<ResultRowViewModel>().First();
+        Assert.True(top.IsSelected);
+        Assert.Equal(top.ItemId, match.Results.SelectedItemId);
+        Assert.True(match.Explain.HasItem);
     }
 
     [AvaloniaFact]
