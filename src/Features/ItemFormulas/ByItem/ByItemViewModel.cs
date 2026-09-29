@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
@@ -75,7 +76,8 @@ public class ByItemViewModel : ViewModelBase
 
         SetTierFilterCommand = ReactiveCommand.Create<int>(SetTierFilter);
         AddRuleCommand = ReactiveCommand.Create(AddRule);
-        CopyRulesCommand = ReactiveCommand.Create(CopyRules);
+        CopyRulesCommand = ReactiveCommand.Create<string?>(CopyRules);
+        ClearRulesCommand = ReactiveCommand.Create<string?>(ClearRules);
 
         // A cleared list selection (the row was filtered away) leaves the detail where it was.
         this.WhenAnyValue(vm => vm.SelectedRow)
@@ -121,7 +123,12 @@ public class ByItemViewModel : ViewModelBase
 
     public ReactiveCommand<int, Unit> SetTierFilterCommand { get; }
     public ReactiveCommand<Unit, Unit> AddRuleCommand { get; }
-    public ReactiveCommand<Unit, Unit> CopyRulesCommand { get; }
+
+    /// <summary>Onto the item whose id is the parameter (a list row's menu), or the open one without.</summary>
+    public ReactiveCommand<string?, Unit> CopyRulesCommand { get; }
+
+    /// <summary>Delete the hand-typed rules of the item whose id is the parameter, or the open one without.</summary>
+    public ReactiveCommand<string?, Unit> ClearRulesCommand { get; }
 
     /// <summary>Where the divider between the rules and the preview sits, as the rules' share of the height.</summary>
     public double? SplitterPosition
@@ -369,9 +376,9 @@ public class ByItemViewModel : ViewModelBase
         AfterEdit(rerenderRules: true);
     }
 
-    private void CopyRules()
+    private void CopyRules(string? itemId)
     {
-        if (CurrentItem is not { } target)
+        if (OpenTarget(itemId) is not { } target)
             return;
         var store = _data.Store;
         var sources = store.ItemsSorted().Where(item => item.ItemId != target.ItemId && store.RuleCount(item.ItemId) > 0).ToList();
@@ -392,6 +399,33 @@ public class ByItemViewModel : ViewModelBase
                 if (_data.Store.CopyItemRules(sources[index].ItemId, target.ItemId))
                     AfterEdit(rerenderRules: true);
             }));
+    }
+
+    private void ClearRules(string? itemId)
+    {
+        if (OpenTarget(itemId) is not { } item)
+            return;
+        var count = _data.Store.RuleCount(item.ItemId);
+        if (count == 0)
+            return;
+        var stats = _data.Store.DerivedRuleCount(item.ItemId) > 0 ? " The rules from its stats stay." : "";
+        _modals.Confirm(
+            $"Delete {(count == 1 ? "the rule" : $"all {count} rules")} on {item.ItemName}?{stats}\n\nThis can't be undone.",
+            "Clear rules",
+            () =>
+            {
+                if (_data.Store.ClearItemRules(item.ItemId))
+                    AfterEdit(rerenderRules: true);
+            },
+            destructive: true);
+    }
+
+    /// <summary>Open the item a list row's menu names, so the action shows where it lands; without one, the open item.</summary>
+    private Item? OpenTarget(string? itemId)
+    {
+        if (itemId is not null)
+            OpenItem(itemId);
+        return CurrentItem;
     }
 
     private void AfterEdit(bool rerenderRules)

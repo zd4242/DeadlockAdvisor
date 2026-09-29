@@ -195,7 +195,7 @@ public class MenuTests
     }
 
     [AvaloniaFact]
-    public void TheHeroTraitNamesLinkTheirWikiPages()
+    public void AHeroNameOffersCopyClearAndItsWikiPageAndBecomesCurrent()
     {
         using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
         var page = ui.ViewModel.HeroTraits;
@@ -203,8 +203,11 @@ public class MenuTests
         var grid = ui.Window.HeroTraitsPage.Grid;
 
         var nameOfSecond = new Point(40, grid.HeaderHeight + Features.HeroTraits.TraitGrid.RowHeight * 1.5);
+        var shown = RightClick(ui.Window, grid, nameOfSecond);
 
-        Assert.Equal(page.Heroes[page.VisibleRows[1]].HeroName, RightClickForWiki(ui.Window, grid, nameOfSecond).Page);
+        Assert.Equal(["Copy traits from...", "Clear all traits...", WikiMenuItem.Text], shown.Select(item => item.Header));
+        Assert.Equal(page.Heroes[page.VisibleRows[1]].HeroName, shown.OfType<WikiMenuItem>().Single().Page);
+        Assert.Equal(page.VisibleRows[1], page.CurrentRow);
     }
 
     [AvaloniaFact]
@@ -217,7 +220,10 @@ public class MenuTests
         var list = ui.Window.ItemFormulasPage.ByItemPanel.GetVisualDescendants().OfType<ListBox>()
             .Single(candidate => candidate.ItemsSource == formulas.ByItem.Items);
         var listed = list.ContainerFromIndex(1)!;
-        Assert.Equal(formulas.ByItem.Items[1].Name, RightClickForWiki(ui.Window, listed).Page);
+        var shown = RightClick(ui.Window, listed);
+        Assert.Equal(["Copy rules from...", "Clear rules...", WikiMenuItem.Text], shown.Select(item => item.Header));
+        Assert.Equal(formulas.ByItem.Items[1].HasRules, shown[1].IsEnabled);
+        Assert.Equal(formulas.ByItem.Items[1].Name, shown.OfType<WikiMenuItem>().Single().Page);
 
         formulas.SelectedTab = 1;
         UiHarness.Settle();

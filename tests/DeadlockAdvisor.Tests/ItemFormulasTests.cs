@@ -3,6 +3,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.ItemFormulas.ByItem;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Support;
@@ -165,6 +166,31 @@ public sealed class ItemFormulasTests : IDisposable
 
         Assert.Equal(Store.RulesForItem(FocusLens).Select(rule => (rule.CategoryId, rule.Relation, rule.Coefficient)),
             Store.RulesForItem(itemId).Select(rule => (rule.CategoryId, rule.Relation, rule.Coefficient)));
+    }
+
+    [Fact]
+    public void ClearRulesFromAListRowOpensTheItemAndAsksFirst()
+    {
+        ConfirmationModalViewModel? confirm = null;
+        using var _ = _fixture.Modals.ShowModalObservable.Subscribe(shown => confirm = shown as ConfirmationModalViewModel);
+        var page = Select(Untagged());
+        var row = page.Items.Single(row => row.ItemId == FocusLens);
+        Assert.True(row.HasRules);
+
+        page.ClearRulesCommand.Execute(FocusLens).Subscribe();
+        Assert.Same(row, page.SelectedRow);
+        Assert.NotNull(confirm);
+        Assert.True(confirm.IsDestructive);
+        Assert.StartsWith("Delete all 4 rules on Focus Lens?", confirm.Prompt);
+        confirm.CancelCommand!.Execute(null);
+        Assert.Equal(4, Store.RuleCount(FocusLens));
+
+        page.ClearRulesCommand.Execute(FocusLens).Subscribe();
+        confirm.ConfirmCommand!.Execute(null);
+        Assert.Equal(0, Store.RuleCount(FocusLens));
+        Assert.False(row.HasRules);
+        Assert.Empty(page.Rules);
+        Assert.Equal(0, _fixture.Saved().RuleCount(FocusLens));
     }
 
     [Fact]

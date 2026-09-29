@@ -19,6 +19,11 @@ public class CellEditedEventArgs(RoutedEvent routedEvent, int row, int column, d
     public double Value { get; } = value;
 }
 
+public class RowMenuRequestedEventArgs(RoutedEvent routedEvent, int row) : RoutedEventArgs(routedEvent)
+{
+    public int Row { get; } = row;
+}
+
 /// <summary>
 /// The hero × trait grid as one drawn control: heat-shaded cells, hero names with portraits down
 /// the side, and trait names on a 45° slant across the top.
@@ -77,6 +82,10 @@ public class TraitGrid : ScrollingGrid
 
     public static readonly RoutedEvent<CellEditedEventArgs> CellEditedEvent =
         RoutedEvent.Register<TraitGrid, CellEditedEventArgs>("CellEdited", RoutingStrategies.Bubble);
+
+    /// <summary>A right click on a hero's name, which has already made that hero the current row.</summary>
+    public static readonly RoutedEvent<RowMenuRequestedEventArgs> RowMenuRequestedEvent =
+        RoutedEvent.Register<TraitGrid, RowMenuRequestedEventArgs>("RowMenuRequested", RoutingStrategies.Bubble);
 
     private Dictionary<int, int> _displayIndex = [];
     private Dictionary<int, int> _orderIndex = [];
@@ -253,7 +262,10 @@ public class TraitGrid : ScrollingGrid
         var (region, row, column) = HitTest(e.GetPosition(this));
         if (properties.IsRightButtonPressed && region == Region.RowHeader)
         {
-            WikiMenuItem.ShowMenu(this, Heroes[row].HeroName);
+            SetCurrentValue(CurrentRowProperty, row);
+            SetCurrentValue(CurrentColumnProperty, Math.Max(0, CurrentColumn));
+            Focus();
+            RaiseEvent(new RowMenuRequestedEventArgs(RowMenuRequestedEvent, row));
             e.Handled = true;
             return;
         }

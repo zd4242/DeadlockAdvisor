@@ -29,6 +29,13 @@ public class ItemRowViewModel : ViewModelBase
     [Reactive] public string RulesText { get; private set; } = "";
     [Reactive] public Color RulesColor { get; private set; } = Palette.TextFaint;
 
-    public void RefreshRules(DataStore store) =>
-        (RulesText, RulesColor) = FormulaText.RulesBadge(store.RuleCount(ItemId), store.DerivedRuleCount(ItemId));
+    /// <summary>Any hand-typed rules, the ones clearing the item would delete.</summary>
+    [Reactive] public bool HasRules { get; private set; }
+
+    public void RefreshRules(DataStore store)
+    {
+        var count = store.RuleCount(ItemId);
+        (RulesText, RulesColor) = FormulaText.RulesBadge(count, store.DerivedRuleCount(ItemId));
+        HasRules = count > 0;
+    }
 }

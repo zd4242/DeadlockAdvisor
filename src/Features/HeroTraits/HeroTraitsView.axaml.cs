@@ -1,6 +1,7 @@
 using System.Reactive.Disposables;
 using Avalonia.Input;
 using Avalonia.ReactiveUI;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Grids;
 using ReactiveUI;
 
@@ -25,6 +26,7 @@ public partial class HeroTraitsView : ReactiveUserControl<HeroTraitsViewModel>
         };
         Grid.AddHandler(TraitGrid.CellEditedEvent, (_, e) => ViewModel?.SetValue(e.Row, e.Column, e.Value));
         Grid.AddHandler(ScrollingGrid.SortRequestedEvent, (_, e) => ViewModel?.SortCommand.Execute(e.Column).Subscribe());
+        Grid.AddHandler(TraitGrid.RowMenuRequestedEvent, (_, e) => ShowHeroMenu(e.Row));
         Scroller.PropertyChanged += (_, e) =>
         {
             if (e.Property == ScrollViewer.ViewportProperty && ViewModel is not null)
@@ -48,4 +50,19 @@ public partial class HeroTraitsView : ReactiveUserControl<HeroTraitsViewModel>
 
     /// <summary>Put the keyboard on the grid, ready for typing numbers.</summary>
     public void FocusGrid() => Grid.Focus();
+
+    /// <summary>The toolbar's actions for the right-clicked hero, who the grid has already made current, and their wiki page.</summary>
+    private void ShowHeroMenu(int row)
+    {
+        if (ViewModel is not { } vm || row < 0 || row >= vm.Heroes.Count)
+            return;
+        Control[] items =
+        [
+            new MenuItem { Header = "Copy traits from...", Command = vm.CopyFromCommand },
+            new MenuItem { Header = "Clear all traits...", Command = vm.ClearHeroCommand },
+            new Separator(),
+            new WikiMenuItem(vm.Heroes[row].HeroName),
+        ];
+        new ContextMenu { ItemsSource = items, Placement = PlacementMode.Pointer }.Open(Grid);
+    }
 }

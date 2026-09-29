@@ -58,6 +58,14 @@
                             <Setter Property="ContextMenu">
                                 <Template>
                                     <ContextMenu x:DataType="byItem:ItemRowViewModel">
+                                        <MenuItem Header="Copy rules from..."
+                                                  Command="{Binding $parent[byItem:ByItemView].((byItem:ByItemViewModel)DataContext).CopyRulesCommand}"
+                                                  CommandParameter="{Binding ItemId}"/>
+                                        <MenuItem Header="Clear rules..."
+                                                  Command="{Binding $parent[byItem:ByItemView].((byItem:ByItemViewModel)DataContext).ClearRulesCommand}"
+                                                  CommandParameter="{Binding ItemId}"
+                                                  IsEnabled="{Binding HasRules}"/>
+                                        <Separator/>
                                         <controls:WikiMenuItem Page="{Binding Name}"/>
                                     </ContextMenu>
                                 </Template>
