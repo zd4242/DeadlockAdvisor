@@ -82,12 +82,12 @@ public class ExplainViewModel : ViewModelBase
 
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
 
-    /// <summary>The header offers Go to Item Formula on right-click, which needs the model editors shown.</summary>
-    [Reactive] public bool OffersFormula { get; set; }
+    /// <summary>The model editors are shown, so the header offers Go to Item Formula on right-click.</summary>
+    [Reactive] public bool ShowsEditors { get; set; }
 
     public ExplainViewModel()
     {
-        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.OffersFormula));
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
     }
 
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>

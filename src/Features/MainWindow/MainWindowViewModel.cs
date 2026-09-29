@@ -129,6 +129,7 @@ public class MainWindowViewModel : ViewModelBase
                 ShowsEditors = show;
                 if (!show)
                     CurrentPage = 0;
+                RefreshStatus();
             })
             .DisposeWith(Disposables);
 
@@ -164,6 +165,7 @@ public class MainWindowViewModel : ViewModelBase
         NextPageCommand = ReactiveCommand.Create(() => CyclePage(1));
         PreviousPageCommand = ReactiveCommand.Create(() => CyclePage(-1));
         ShowPageCommand = ReactiveCommand.Create<int>(ShowPage);
+        ReloadCommand = ReactiveCommand.CreateFromObservable(() => DataMenu.ReloadCommand.Execute(), this.WhenAnyValue(vm => vm.ShowsEditors));
 
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
         Settings = new SettingsViewModel(
@@ -239,6 +241,9 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> NextPageCommand { get; }
     public ReactiveCommand<Unit, Unit> PreviousPageCommand { get; }
     public ReactiveCommand<int, Unit> ShowPageCommand { get; }
+
+    /// <summary>Data → Reload from Disk and Ctrl+R, for picking up CSVs edited by hand: only with the model editors.</summary>
+    public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadArtCommand { get; }
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
@@ -359,25 +364,29 @@ public class MainWindowViewModel : ViewModelBase
 
     private void RefreshStatus()
     {
+        // How much of the model is filled in only matters to someone filling it in.
         var coverage = _data.Store.Coverage();
-        CoverageText = $"  {coverage.ScoresFilled}/{coverage.ScoresTotal} hero traits rated"
-                       + $"   ·   {coverage.ItemsTagged}/{coverage.ItemsTotal} items tagged"
-                       + $"   ·   {coverage.Rules} formula rules + {coverage.DerivedRules} from stats";
+        CoverageText = ShowsEditors
+            ? $"  {coverage.ScoresFilled}/{coverage.ScoresTotal} hero traits rated"
+              + $"   ·   {coverage.ItemsTagged}/{coverage.ItemsTotal} items tagged"
+              + $"   ·   {coverage.Rules} formula rules + {coverage.DerivedRules} from stats"
+            : "";
+        var lead = ShowsEditors ? "   ·   " : "  ";
 
         var summary = MatchStatsMath.Summary(_data.Store.MatchMeta, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0);
         if (summary.Length == 0)
         {
-            DataStatusText = "   ·   no match data (Data → Fetch Match Stats)";
+            DataStatusText = $"{lead}no match data (Data → Fetch Match Stats)";
             DataStatusAlert = false;
         }
         else if (DataMenu.NewerPatch is { } newer)
         {
-            DataStatusText = $"   ·   match data: {summary} — patch {newer.Label} is out, refetch";
+            DataStatusText = $"{lead}match data: {summary} — patch {newer.Label} is out, refetch";
             DataStatusAlert = true;
         }
         else
         {
-            DataStatusText = $"   ·   match data: {summary}";
+            DataStatusText = $"{lead}match data: {summary}";
             DataStatusAlert = false;
         }
     }

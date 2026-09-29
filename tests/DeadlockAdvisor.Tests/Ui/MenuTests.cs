@@ -39,6 +39,32 @@ public class MenuTests
         Assert.Equal("How scoring works", Assert.IsType<MessageModalViewModel>(((ModalViewModel)modal.DataContext!).Content).Title);
     }
 
+    [AvaloniaFact]
+    public void TheDataMenusModelToolsAndCtrlRComeWithTheEditors()
+    {
+        using var ui = new UiHarness();
+        var reloads = 0;
+        using var watchReloads = ui.Data.StoreReplaced.Subscribe(_ => reloads++);
+        ui.Show();
+        var data = ui.Window.MainMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "_Data"));
+        List<string> Shown() => data.Items.OfType<MenuItem>().Where(item => item.IsVisible).Select(item => (string)item.Header!).ToList();
+        string[] modelTools = ["Sync New Heroes / Items / Categories", "Model Health Report", "Reload from Disk", "Export Snapshot to Excel"];
+
+        Assert.Empty(Shown().Intersect(modelTools));
+        Assert.Contains("Sync from Game API", Shown());
+        ui.Window.KeyPressQwerty(PhysicalKey.R, RawInputModifiers.Control);
+        UiHarness.Settle();
+        Assert.Equal(0, reloads);
+
+        ui.ViewModel.Settings.General.ShowModelEditors = true;
+        UiHarness.Settle();
+
+        Assert.Equal(modelTools, Shown().Intersect(modelTools));
+        ui.Window.KeyPressQwerty(PhysicalKey.R, RawInputModifiers.Control);
+        UiHarness.Settle();
+        Assert.Equal(1, reloads);
+    }
+
     /// <summary>The role menu's presses bubble up to the tile it was opened on, which mustn't take them as a click of its own.</summary>
     [AvaloniaFact]
     public void TheRoleMenuSetsExactlyTheRolePicked()
@@ -133,18 +159,19 @@ public class MenuTests
         results.Select(results.Entries.OfType<ResultRowViewModel>().First());
         UiHarness.Settle();
         var header = ui.Window.GetVisualDescendants().OfType<Grid>().Single(grid => grid.Classes.Contains("itemHeader"));
-        var rows = ui.Window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("result")).Take(2).ToList();
+        List<Border> Rows() => ui.Window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("result")).Take(2).ToList();
 
         Assert.Null(header.ContextMenu);
-        Assert.All(rows, row => Assert.Null(row.ContextMenu));
+        Assert.All(Rows(), row => Assert.Null(row.ContextMenu));
         Assert.False(((System.Windows.Input.ICommand)results.OpenFormulaCommand).CanExecute(results.SelectedItemId));
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
         UiHarness.Settle();
 
+        var rows = Rows();
         Assert.NotNull(header.ContextMenu);
-        Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
         Assert.All(rows, row => Assert.NotNull(row.ContextMenu));
+        Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
     }
 
     /// <summary>Wholly inside the scroll viewer showing it.</summary>

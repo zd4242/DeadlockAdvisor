@@ -1,4 +1,6 @@
 using System.Reactive;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
@@ -28,8 +30,8 @@ public class ResultsViewModel : ViewModelBase
 
     public const string DataPicksKey = "data";
     public const string DataPicksTitle = "Match data also likes";
-    public const string DataPicksNote =
-        "Formula score 0 or less, but a standout in real matches for this line-up. Worth a look for a missing rule.";
+    public const string DataPicksNote = "Formula score 0 or less, but a standout in real matches for this line-up.";
+    public const string DataPicksEditorNote = DataPicksNote + " Worth a look for a missing rule.";
 
     private readonly string _nothingPickedHint;
     private readonly Dictionary<string, ResultRowViewModel> _rows = [];
@@ -47,7 +49,17 @@ public class ResultsViewModel : ViewModelBase
     {
         _nothingPickedHint = emptyHint;
         EmptyHint = emptyHint;
-        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.OffersFormula));
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
+
+        // A header keeps its note, so the data picks' one is rebuilt for its new wording.
+        this.WhenAnyValue(vm => vm.ShowsEditors)
+            .Skip(1)
+            .Subscribe(_ =>
+            {
+                _headers.Remove(DataPicksKey);
+                Render();
+            })
+            .DisposeWith(Disposables);
     }
 
     /// <summary>Section headers and rows, in display order.</summary>
@@ -75,8 +87,11 @@ public class ResultsViewModel : ViewModelBase
 
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
 
-    /// <summary>Rows offer Go to Item Formula on right-click, which needs the model editors shown.</summary>
-    [Reactive] public bool OffersFormula { get; set; }
+    /// <summary>
+    /// The model editors are shown: rows offer Go to Item Formula on right-click, and the data picks
+    /// suggest a rule might be missing.
+    /// </summary>
+    [Reactive] public bool ShowsEditors { get; set; }
 
     /// <summary>Every item the tab could list, scored for the line-up (<see cref="ItemScoring.ScoreAll"/>).</summary>
     /// <param name="blendScale">
@@ -176,7 +191,7 @@ public class ResultsViewModel : ViewModelBase
         {
             // Their bars are on the same scale as the list's, so a deep negative reads as one.
             var pickScale = Math.Max(scale, picks.Max(item => Math.Abs(item.Score)));
-            var header = Header(DataPicksKey, DataPicksTitle, Palette.Data, DataPicksNote);
+            var header = Header(DataPicksKey, DataPicksTitle, Palette.Data, ShowsEditors ? DataPicksEditorNote : DataPicksNote);
             AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)))).ToList());
         }
 

@@ -32,7 +32,7 @@
         <KeyBinding Gesture="Ctrl+Subtract" Command="{Binding ZoomOutCommand}"/>
         <KeyBinding Gesture="Ctrl+D0" Command="{Binding ResetZoomCommand}"/>
         <KeyBinding Gesture="Ctrl+NumPad0" Command="{Binding ResetZoomCommand}"/>
-        <KeyBinding Gesture="Ctrl+R" Command="{Binding DataMenu.ReloadCommand}"/>
+        <KeyBinding Gesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FindCommand}"/>
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
@@ -158,9 +158,11 @@
 
                         <Grid x:Name="TitleBarGrid" ColumnDefinitions="Auto,Auto,Auto,*,Auto">
                             <Menu x:Name="MainMenu" Margin="6,0,0,0" VerticalAlignment="Center">
+                                <!-- The items for maintaining the model by hand only show with its editors. -->
                                 <MenuItem Header="_Data">
                                     <MenuItem Header="Sync New Heroes / Items / Categories"
                                               Command="{Binding DataMenu.SyncNewDataCommand}"
+                                              IsVisible="{Binding ShowsEditors}"
                                               ToolTip.Tip="Backfill score rows after adding to the CSVs by hand"/>
                                     <MenuItem Header="Sync from Game API"
                                               Command="{Binding DataMenu.SyncGameApiCommand}"
@@ -169,14 +171,17 @@
                                               Command="{Binding DataMenu.FetchMatchStatsCommand}"
                                               ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (about 20 minutes, in the background)"/>
                                     <MenuItem Header="Model Health Report"
-                                              Command="{Binding DataMenu.ModelHealthCommand}"/>
+                                              Command="{Binding DataMenu.ModelHealthCommand}"
+                                              IsVisible="{Binding ShowsEditors}"/>
                                     <MenuItem Header="Reload from Disk"
                                               InputGesture="Ctrl+R"
-                                              Command="{Binding DataMenu.ReloadCommand}"
+                                              Command="{Binding ReloadCommand}"
+                                              IsVisible="{Binding ShowsEditors}"
                                               ToolTip.Tip="Re-read the CSVs, discarding nothing (edits are already saved)"/>
                                     <Separator/>
                                     <MenuItem Header="Export Snapshot to Excel"
                                               Command="{Binding DataMenu.ExportCommand}"
+                                              IsVisible="{Binding ShowsEditors}"
                                               ToolTip.Tip="Write a read-only .xlsx copy of the CSVs for backup or review"/>
                                     <MenuItem Header="Open Data Folder" Command="{Binding DataMenu.OpenDataFolderCommand}"/>
                                     <MenuItem Header="Change Data Folder..." Command="{Binding DataMenu.ChangeDataFolderCommand}"/>

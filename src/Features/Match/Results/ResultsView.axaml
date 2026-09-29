@@ -42,7 +42,7 @@
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
             <ItemsControl x:Name="List"
                           ItemsSource="{Binding Entries}"
-                          Classes.offersFormula="{Binding OffersFormula}"
+                          Classes.offersFormula="{Binding ShowsEditors}"
                           Margin="0,0,4,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>

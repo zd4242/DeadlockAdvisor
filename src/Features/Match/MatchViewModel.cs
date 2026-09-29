@@ -100,7 +100,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         settings.SettingsChanged
             .Select(s => s.ShowModelEditors)
             .DistinctUntilChanged()
-            .Subscribe(show => Results.OffersFormula = Explain.OffersFormula = show)
+            .Subscribe(show => Results.ShowsEditors = Explain.ShowsEditors = show)
             .DisposeWith(Disposables);
 
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData)

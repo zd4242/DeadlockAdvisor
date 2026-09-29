@@ -36,7 +36,7 @@
         <Grid DockPanel.Dock="Top"
               Classes="itemHeader"
               Classes.hasItem="{Binding HasItem}"
-              Classes.offersFormula="{Binding OffersFormula}"
+              Classes.offersFormula="{Binding ShowsEditors}"
               ColumnDefinitions="Auto,*,Auto"
               Margin="0,8,0,0"
               Background="Transparent">

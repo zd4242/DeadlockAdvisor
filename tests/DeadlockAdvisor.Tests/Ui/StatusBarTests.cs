@@ -73,6 +73,20 @@ public class StatusBarTests
         ui.Show();
 
         Assert.False(ui.ViewModel.DataStatusAlert);
+        Assert.StartsWith("  match data: patch ", ui.ViewModel.DataStatusText);
+    }
+
+    /// <summary>How much of the model is filled in, which only someone filling it in needs.</summary>
+    [AvaloniaFact]
+    public void CoverageShowsOnlyWithTheEditors()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        ui.Show();
+        Assert.Equal("", ui.ViewModel.CoverageText);
+
+        ui.ViewModel.Settings.General.ShowModelEditors = true;
+
+        Assert.Contains("hero traits rated", ui.ViewModel.CoverageText);
         Assert.StartsWith("   ·   match data: patch ", ui.ViewModel.DataStatusText);
     }
 }

@@ -58,6 +58,20 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void OnlyTheEditorsHearADataPickMayMeanAMissingRule()
+    {
+        var results = Show(RankBy.Formula, 0);
+        SectionHeaderViewModel Picks() => results.Entries.OfType<SectionHeaderViewModel>().Single();
+        Assert.Equal(ResultsViewModel.DataPicksNote, Picks().Note);
+        results.ToggleSection(ResultsViewModel.DataPicksKey);
+
+        results.ShowsEditors = true;
+
+        Assert.Equal(ResultsViewModel.DataPicksEditorNote, Picks().Note);
+        Assert.True(Picks().IsCollapsed);
+    }
+
+    [Fact]
     public void EveryItemListsNegativesWithNegativeBars()
     {
         var results = Show(RankBy.Formula, null);
