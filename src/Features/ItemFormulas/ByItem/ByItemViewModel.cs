@@ -385,7 +385,8 @@ public class ByItemViewModel : ViewModelBase
             _modals,
             "Copy rules",
             $"Replace {target.ItemName}'s rules with those from:",
-            sources.Select(item => $"{item.ItemName}  (T{item.Tier}, {store.RuleCount(item.ItemId)} rules)").ToList(),
+            sources.Select(item => new Choice(item.ItemName, $"T{item.Tier} · {FormulaText.RulesBadge(store.RuleCount(item.ItemId), 0).Text}",
+                ArtKind.Item, item.ItemId, Palette.ShopColor(item.Category))).ToList(),
             index =>
             {
                 if (_data.Store.CopyItemRules(sources[index].ItemId, target.ItemId))

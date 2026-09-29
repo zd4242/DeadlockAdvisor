@@ -1,15 +1,53 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:choice="using:DeadlockAdvisor.Features.Shared.Modals.Choice"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
              x:Class="DeadlockAdvisor.Features.Shared.Modals.Choice.ChoiceModalView"
              x:DataType="choice:ChoiceModalViewModel">
-    <StackPanel Margin="20" Spacing="12" MinWidth="360">
+    <StackPanel Margin="20" Spacing="12" Width="420">
         <TextBlock Classes="h2" Text="{Binding Title}"/>
         <TextBlock Text="{Binding Prompt}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
-        <ComboBox x:Name="Choices"
-                  HorizontalAlignment="Stretch"
-                  ItemsSource="{Binding Choices}"
-                  SelectedIndex="{Binding SelectedIndex}"/>
+        <controls:SearchBox x:Name="Search"
+                            Watermark="Type to search..."
+                            Text="{Binding SearchText}"/>
+        <!-- A fixed height, so the dialog holds still while the search narrows the list. -->
+        <Panel Height="300">
+            <ListBox x:Name="List"
+                     Classes="flat"
+                     ItemsSource="{Binding Shown}"
+                     SelectedItem="{Binding Selected}"
+                     ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="choice:Choice">
+                        <Grid ColumnDefinitions="Auto,*,Auto" Height="22">
+                            <art:ArtImage Width="20"
+                                          Height="20"
+                                          Margin="0,0,8,0"
+                                          VerticalAlignment="Center"
+                                          Kind="{Binding Kind}"
+                                          ArtId="{Binding ArtId}"
+                                          ArtName="{Binding Label}"
+                                          Tint="{Binding Tint}"
+                                          IsVisible="{Binding ArtId, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                            <TextBlock Grid.Column="1"
+                                       VerticalAlignment="Center"
+                                       TextTrimming="CharacterEllipsis"
+                                       Text="{Binding Label}"/>
+                            <TextBlock Grid.Column="2"
+                                       Classes="faint"
+                                       Margin="8,0,0,0"
+                                       VerticalAlignment="Center"
+                                       Text="{Binding Detail}"/>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Classes="hint"
+                       Margin="4"
+                       Text="Nothing matches."
+                       IsVisible="{Binding !Shown.Count}"/>
+        </Panel>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
             <Button Classes="primary"
                     Content="OK"

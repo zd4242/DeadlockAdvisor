@@ -4,6 +4,8 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Controls;
+using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -29,9 +31,9 @@ public class HeroTraitsPageTests
         Assert.Equal("Billy", page.Heroes[page.CurrentRow].HeroName);
     }
 
-    /// <summary>Copy from… end to end with the mouse: the toolbar button, then the pick and OK in the modal's own window.</summary>
+    /// <summary>Copy from… end to end: the toolbar button, then a search and Enter in the modal's own window.</summary>
     [AvaloniaFact]
-    public void CopyFromClonesTheProfilePickedInTheModal()
+    public async Task CopyFromClonesTheProfilePickedInTheModal()
     {
         using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
         var page = ui.ViewModel.HeroTraits;
@@ -51,9 +53,16 @@ public class HeroTraitsPageTests
         Click(ui.Window, ui.Window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Copy from...")));
         var modal = ui.Window.OwnedWindows.OfType<Features.Shared.Modals.Base.ModalWindow>().Single();
         var choice = Assert.IsType<Features.Shared.Modals.Choice.ChoiceModalViewModel>(((Features.Shared.Modals.Base.ModalViewModel)modal.DataContext!).Content);
-        choice.SelectedIndex = choice.Choices.ToList().IndexOf("Billy");
+        // The search box has focus: typing narrows the list to the best match and Enter takes it.
+        Assert.True(await UiHarness.WaitUntilAsync(() => modal.FocusManager?.GetFocusedElement() is SearchBox));
+        Assert.All(modal.GetVisualDescendants().OfType<ArtImage>(), portrait => Assert.NotNull(ArtHost.GetService(portrait)));
+        modal.KeyTextInput("bil");
         UiHarness.Settle();
-        Click(modal, modal.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "OK")));
+        Assert.Equal("Billy", choice.Selected?.Label);
+        ui.ScreenshotModal("copy_from.png");
+        modal.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Empty(ui.Window.OwnedWindows.OfType<Features.Shared.Modals.Base.ModalWindow>());
 
         var billy = page.Heroes.Single(hero => hero.HeroName == "Billy").HeroId;
         Assert.All(page.Categories, category =>

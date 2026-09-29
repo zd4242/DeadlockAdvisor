@@ -415,7 +415,8 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
             _modals,
             "Copy trait profile",
             $"Copy every trait onto {target.HeroName} from:",
-            rated.Select(hero => hero.HeroName).ToList(),
+            rated.Select(hero => new Choice(hero.HeroName, $"{store.HeroFilledCount(hero.HeroId)}/{Categories.Count} traits",
+                ArtKind.Hero, hero.HeroId)).ToList(),
             index =>
             {
                 var source = rated[index];

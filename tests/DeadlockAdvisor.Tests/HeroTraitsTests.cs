@@ -245,9 +245,9 @@ public sealed class HeroTraitsTests : IDisposable
 
         _vm.CopyFromCommand.Execute().Subscribe();
         Assert.NotNull(modal);
-        Assert.DoesNotContain(target.HeroName, modal.Choices);
-        var source = _vm.Heroes.First(hero => hero.HeroName == modal.Choices[1]);
-        modal.SelectedIndex = 1;
+        Assert.DoesNotContain(target.HeroId, modal.Choices.Select(choice => choice.ArtId));
+        var source = _vm.Heroes.First(hero => hero.HeroId == modal.Choices[1].ArtId);
+        modal.Selected = modal.Choices[1];
         modal.OkCommand.Execute().Subscribe();
 
         Assert.All(_vm.Categories, category =>

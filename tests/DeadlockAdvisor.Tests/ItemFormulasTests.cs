@@ -4,7 +4,9 @@ using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.ItemFormulas.ByItem;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Support;
+using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Tests;
 
@@ -156,7 +158,9 @@ public sealed class ItemFormulasTests : IDisposable
 
         page.CopyRulesCommand.Execute().Subscribe();
         Assert.NotNull(modal);
-        modal.SelectedIndex = modal.Choices.ToList().FindIndex(choice => choice.StartsWith("Focus Lens  (T4, 4 rules)"));
+        modal.SearchText = "focus";
+        Assert.Equal(new Choice("Focus Lens", "T4 · 4 rules", ArtKind.Item, FocusLens, Palette.ShopColor(Store.Items[FocusLens].Category)),
+            modal.Selected);
         modal.OkCommand.Execute().Subscribe();
 
         Assert.Equal(Store.RulesForItem(FocusLens).Select(rule => (rule.CategoryId, rule.Relation, rule.Coefficient)),
