@@ -261,6 +261,19 @@ public sealed class DetectTests : IDisposable
 
         await _page.DetectCommand.Execute();
 
-        Assert.Equal("Nothing found", Assert.IsType<MessageModalViewModel>(_shown[^1]).Title);
+        var message = Assert.IsType<MessageModalViewModel>(_shown[^1]);
+        Assert.Equal("Nothing found", message.Title);
+        Assert.DoesNotContain("wasn't found", message.Body);
+    }
+
+    [AvaloniaFact]
+    public async Task FindingNothingWithoutTheGameWindowSaysThePrimaryMonitorWasRead()
+    {
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        _capture.Next = new(new RgbImage(200, 64), 2560, 1440, FoundGame: false);
+
+        await _page.DetectCommand.Execute();
+
+        Assert.Contains("primary monitor was read", Assert.IsType<MessageModalViewModel>(_shown[^1]).Body);
     }
 }

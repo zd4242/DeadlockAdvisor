@@ -96,7 +96,8 @@ public class DetectAction
         {
             _modals.ShowMessage("Nothing found",
                 "Could not find the hero strip along the top of the screen.\n\n"
-                + "Detection reads the live scoreboard, so Deadlock needs to be in a match and on the primary monitor when you press Detect.");
+                + "Detection reads the live scoreboard, so Deadlock needs to be in a match when you press Detect."
+                + (capture.FoundGame ? "" : "\n\nDeadlock's window wasn't found, so the primary monitor was read."));
             return;
         }
         if (detection.ConfidentCount > 0)

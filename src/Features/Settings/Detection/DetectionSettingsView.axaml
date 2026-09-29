@@ -18,7 +18,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Minimize while capturing"
-                                     Description="Get this window out of the way so it isn't captured over the game's top bar. Turn it off if the advisor sits on another monitor.">
+                                     Description="Get this window out of the way when it covers the game's top bar, so it isn't captured over it. It stays put when it's on another monitor.">
                     <ToggleSwitch IsChecked="{Binding MinimizeToDetect}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Keep captures net worth couldn't be read from"
