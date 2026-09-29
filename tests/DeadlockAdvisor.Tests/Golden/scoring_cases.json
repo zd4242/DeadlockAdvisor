@@ -9513,7 +9513,7 @@
       "item_id": "counterspell",
       "item_name": "Counterspell",
       "tier": 3,
-      "score": 852.6315789473686,
+      "score": 580.3906592703032,
       "shop_category": "vitality",
       "data": [
        [
@@ -9779,7 +9779,7 @@
       "hero_id": "rem",
       "hero_name": "Rem",
       "relation": "against",
-      "amount": 742.1052631578948,
+      "amount": 371.0526315789474,
       "parts": [
        {
         "category_id": "countered_by_counterspell",
@@ -9799,7 +9799,7 @@
       "hero_id": "paige",
       "hero_name": "Paige",
       "relation": "against",
-      "amount": 142.10526315789474,
+      "amount": 35.526315789473685,
       "parts": [
        {
         "category_id": "countered_by_counterspell",
@@ -9816,21 +9816,21 @@
       ]
      },
      {
-      "hero_id": "mo_and_krill",
-      "hero_name": "Mo & Krill",
+      "hero_id": "mirage",
+      "hero_name": "Mirage",
       "relation": "against",
-      "amount": -257.89473684210526,
+      "amount": -14.30921052631579,
       "parts": [
        {
         "category_id": "countered_by_counterspell",
         "category_name": "Countered by Counterspell",
-        "hero_score": 15.0,
+        "hero_score": 5.0,
         "baseline": 27.894736842105264,
         "coefficient": 20.0,
         "weight": 1.0,
         "from_stats": 0.0,
         "effective_coefficient": 20.0,
-        "amount": -257.89473684210526,
+        "amount": -457.89473684210526,
         "stat_parts": []
        }
       ]
@@ -9839,7 +9839,7 @@
       "hero_id": "paradox",
       "hero_name": "Paradox",
       "relation": "against",
-      "amount": -357.89473684210526,
+      "amount": -22.36842105263158,
       "parts": [
        {
         "category_id": "countered_by_counterspell",
@@ -9856,24 +9856,31 @@
       ]
      },
      {
-      "hero_id": "mirage",
-      "hero_name": "Mirage",
+      "hero_id": "mo_and_krill",
+      "hero_name": "Mo & Krill",
       "relation": "against",
-      "amount": -457.89473684210526,
+      "amount": -32.23684210526316,
       "parts": [
        {
         "category_id": "countered_by_counterspell",
         "category_name": "Countered by Counterspell",
-        "hero_score": 5.0,
+        "hero_score": 15.0,
         "baseline": 27.894736842105264,
         "coefficient": 20.0,
         "weight": 1.0,
         "from_stats": 0.0,
         "effective_coefficient": 20.0,
-        "amount": -457.89473684210526,
+        "amount": -257.89473684210526,
         "stat_parts": []
        }
       ]
+     },
+     {
+      "hero_id": "",
+      "hero_name": "Typical enemy team",
+      "relation": "against",
+      "amount": -799.379077571802,
+      "parts": []
      }
     ]
    },

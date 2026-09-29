@@ -146,6 +146,12 @@ public static partial class GameSync
     /// </summary>
     private static readonly HashSet<string> _notSingleTarget = ["Silence Wave", "Warp Stone"];
 
+    /// <summary>
+    /// Items only as good as their best target that have no targeted active to flag them: Counterspell's
+    /// parry blocks one enemy ability per cooldown, so you save it for the one that matters most.
+    /// </summary>
+    private static readonly Dictionary<string, Relation> _forceSingleTarget = new() { ["Counterspell"] = Relation.Against };
+
     private static readonly string[] _shownKeys = ["properties", "important_properties", "elevated_properties"];
 
     // -- names ----------------------------------------------------------------------
@@ -295,9 +301,12 @@ public static partial class GameSync
     /// The team the active is cast on one hero of, or null when it isn't single-target. It is when its
     /// tooltip shows a cast range and no radius (an area or an aura reaches more than one) and it isn't
     /// one of <see cref="_notSingleTarget"/>. Every ally-cast active's text says "Can be self-cast";
-    /// no enemy-cast one does.
+    /// no enemy-cast one does. <see cref="_forceSingleTarget"/> adds the ones no active shows.
     /// </summary>
-    public static Relation? CastOn(JsonNode record)
+    public static Relation? CastOn(JsonNode record) =>
+        NameOf(record) is { } name && _forceSingleTarget.TryGetValue(name, out var forced) ? forced : ActiveCastOn(record);
+
+    private static Relation? ActiveCastOn(JsonNode record)
     {
         if (!HasCastRangeAndNoRadius(record) || NameOf(record) is { } name && _notSingleTarget.Contains(name))
             return null;
@@ -412,6 +421,13 @@ public static partial class GameSync
         {
             if (!byName.TryGetValue(name, out var record) || !HasCastRangeAndNoRadius(record))
                 stale.Add($"{name}: marked not single-target, but the game no longer gives it a cast range without a radius");
+        }
+        foreach (var name in _forceSingleTarget.Keys)
+        {
+            if (!byName.TryGetValue(name, out var record))
+                stale.Add($"{name}: forced single-target, but the game no longer sells it");
+            else if (ActiveCastOn(record) is not null)
+                stale.Add($"{name}: forced single-target, but the game now gives it a targeted active");
         }
         foreach (var (name, stacks) in _assumedStacks)
         {

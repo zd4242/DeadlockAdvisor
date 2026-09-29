@@ -113,11 +113,14 @@ On the Decay example above, the enemy side goes from −457 to −31.
 `_notSingleTarget`. Silence Wave's projectile hits everyone in its path, and Warp
 Stone's range is how far you teleport. The API doesn't name the target's team,
 but every ally-cast active's text says "Can be self-cast" and no enemy-cast one
-does, so that phrase makes it `with`. The result goes in `items.csv`'s
+does, so that phrase makes it `with`. `_forceSingleTarget` adds items with no
+targeted active that still work one hero at a time: Counterspell's parry blocks
+one enemy ability per cooldown, so it counts its best enemy, not all of them.
+The result goes in `items.csv`'s
 `single_target` column (`against`, `with` or empty; an old `1` loads as
 `against` until the next sync). The sync report lists every item that became or
-stopped being single-target or switched sides, and flags a `_notSingleTarget`
-entry that no longer matches.
+stopped being single-target or switched sides, and flags a `_notSingleTarget` or
+`_forceSingleTarget` entry that no longer matches.
 The explain panel ranks each hero ("2nd target ×0.5") and takes the typical team
 off as a line of its own.
 

@@ -243,6 +243,7 @@ public class GameApiTests
         [
             "Ballistic Enchantment: assumed 2 stacks, but the game now files its MaxStacks",
             "Cheat Death / HealAmpReceivePenaltyPercent: marked self-inflicted, but the item no longer has that property",
+            "Counterspell: forced single-target, but the game no longer sells it",
             "Mercurial Magnum / BonusFireRate: forced conditional, but the game now flags it conditional itself",
             "Quicksilver Reload / BonusFireRate: forced conditional, but the item no longer has that property",
             "Silence Wave: marked not single-target, but the game no longer gives it a cast range without a radius",
@@ -300,6 +301,8 @@ public class GameApiTests
 
         Assert.All(["Decay", "Knockdown", "Slowing Hex", "Spirit Sap", "Cursed Relic"],
             name => Assert.Equal(Relation.Against, GameSync.CastOn(byName[name])));
+        // Counterspell has no active, but its parry blocks one enemy ability at a time.
+        Assert.Equal(Relation.Against, GameSync.CastOn(byName["Counterspell"]));
         // Ally-cast actives say they can be self-cast.
         Assert.All(["Rescue Beam", "Divine Barrier", "Guardian Ward", "Healing Rite"],
             name => Assert.Equal(Relation.With, GameSync.CastOn(byName[name])));
