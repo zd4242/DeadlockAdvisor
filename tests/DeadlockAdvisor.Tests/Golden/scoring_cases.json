@@ -2430,23 +2430,6 @@
         -0.873
        ]
       ]
-     },
-     {
-      "item_id": "divine_barrier",
-      "item_name": "Divine Barrier",
-      "tier": 4,
-      "score": 11.684064774235026,
-      "shop_category": "vitality",
-      "data": [
-       [
-        "against",
-        0.0009999999999999037
-       ],
-       [
-        "as",
-        0.74
-       ]
-      ]
      }
     ]
    },
@@ -2457,7 +2440,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 147.16738081337536,
+      "score": 115.22456172272345,
       "shop_category": "spirit",
       "data": [
        [
@@ -8070,14 +8053,6 @@
       "score": 118.94736842105263,
       "shop_category": "vitality",
       "data": []
-     },
-     {
-      "item_id": "divine_barrier",
-      "item_name": "Divine Barrier",
-      "tier": 4,
-      "score": 11.684064774235026,
-      "shop_category": "vitality",
-      "data": []
      }
     ]
    },
@@ -8088,7 +8063,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 147.16738081337536,
+      "score": 115.22456172272345,
       "shop_category": "spirit",
       "data": []
      },
@@ -9468,7 +9443,7 @@
       "item_id": "divine_barrier",
       "item_name": "Divine Barrier",
       "tier": 4,
-      "score": 191.684064774235,
+      "score": 190.5263157894737,
       "shop_category": "vitality",
       "data": [
        [
@@ -12362,7 +12337,7 @@
       "item_id": "rusted_barrel",
       "item_name": "Rusted Barrel",
       "tier": 1,
-      "score": 58.28947368421053,
+      "score": 64.07894736842107,
       "shop_category": "spirit",
       "data": [
        [
@@ -14662,7 +14637,7 @@
       "item_id": "focus_lens",
       "item_name": "Focus Lens",
       "tier": 4,
-      "score": 0.37273168513493005,
+      "score": 16.052631578947363,
       "shop_category": "spirit",
       "data": []
      }
@@ -14680,19 +14655,19 @@
       "data": []
      },
      {
+      "item_id": "spirit_sap",
+      "item_name": "Spirit Sap",
+      "tier": 2,
+      "score": 48.15789473684207,
+      "shop_category": "spirit",
+      "data": []
+     },
+     {
       "item_id": "spirit_shredder_bullets",
       "item_name": "Spirit Shredder Bullets",
       "tier": 2,
       "score": 48.15789473684207,
       "shop_category": "weapon",
-      "data": []
-     },
-     {
-      "item_id": "spirit_sap",
-      "item_name": "Spirit Sap",
-      "tier": 2,
-      "score": 1.1181950554048115,
-      "shop_category": "spirit",
       "data": []
      }
     ]

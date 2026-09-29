@@ -1,157 +1,157 @@
 item_id,item_name,category,tier,game_id,cost,single_target
-active_reload,Active Reload,weapon,2,381961617,1600,0
-alchemical_fire,Alchemical Fire,weapon,3,1932939246,3200,0
-arcane_surge,Arcane Surge,spirit,2,1150006784,1600,0
-arctic_blast,Arctic Blast,spirit,4,3812615317,6400,0
-armor_piercing_rounds,Armor Piercing Rounds,weapon,4,673001892,6400,0
-ballistic_enchantment,Ballistic Enchantment,weapon,3,3294954488,3200,0
-battle_vest,Battle Vest,vitality,2,1235347618,1600,0
-berserker,Berserker,weapon,3,1414319208,3200,0
-blood_tribute,Blood Tribute,weapon,3,989206714,3200,0
-boundless_spirit,Boundless Spirit,spirit,4,2519598785,6400,0
-bullet_lifesteal,Bullet Lifesteal,vitality,2,499683006,1600,0
-bullet_resilience,Bullet Resilience,vitality,3,3140772621,3200,0
-bullet_resist_shredder,Bullet Resist Shredder,spirit,2,2971868509,1600,0
-burst_fire,Burst Fire,weapon,3,2739107182,3200,0
-capacitor,Capacitor,weapon,4,710436191,6400,0
-cheat_death,Cheat Death,vitality,4,3361811174,6400,0
-close_quarters,Close Quarters,weapon,1,1342610602,800,0
-cold_front,Cold Front,spirit,2,1976391348,1600,0
-colossus,Colossus,vitality,4,2407781327,6400,0
-compress_cooldown,Compress Cooldown,spirit,2,380806748,1600,0
-counterspell,Counterspell,vitality,3,1414025773,3200,0
-crippling_headshot,Crippling Headshot,weapon,4,3884003354,6400,0
-crushing_fists,Crushing Fists,weapon,4,800008313,6400,0
-cultist_sacrifice,Cultist Sacrifice,weapon,3,709540378,3200,0
-cursed_relic,Cursed Relic,spirit,4,2617435668,6400,1
-debuff_reducer,Debuff Reducer,vitality,2,1047818222,1600,0
-decay,Decay,spirit,3,3144988365,3200,1
-disarming_hex,Disarming Hex,spirit,3,2061878743,3200,1
-dispel_magic,Dispel Magic,vitality,3,3731635960,3200,0
-divine_barrier,Divine Barrier,vitality,4,1662311306,6400,1
-diviners_kevlar,Diviner's Kevlar,vitality,4,2820116164,6400,0
-duration_extender,Duration Extender,spirit,2,2951612397,1600,0
-echo_shard,Echo Shard,spirit,4,630839635,6400,0
-enchanters_emblem,Enchanter's Emblem,vitality,2,3970837787,1600,0
-enduring_speed,Enduring Speed,vitality,2,2447176615,1600,0
-escalating_exposure,Escalating Exposure,spirit,4,3005970438,6400,0
-escalating_resilience,Escalating Resilience,weapon,3,2463960640,3200,0
-ethereal_shift,Ethereal Shift,spirit,4,2533252781,6400,0
-express_shot,Express Shot,weapon,3,690458959,3200,0
-extended_magazine,Extended Magazine,weapon,1,1548066885,800,0
-extra_charge,Extra Charge,spirit,1,3776945997,800,0
-extra_health,Extra Health,vitality,1,3633614685,800,0
-extra_spirit,Extra Spirit,spirit,1,968099481,800,0
-extra_stamina,Extra Stamina,vitality,1,4139877411,800,0
-fleetfoot,Fleetfoot,weapon,2,3403085434,1600,0
-fortitude,Fortitude,vitality,3,3585132399,3200,0
-frenzy,Frenzy,weapon,4,339443430,6400,0
-fury_trance,Fury Trance,vitality,3,1409190604,3200,0
-glass_cannon,Glass Cannon,weapon,4,365620721,6400,0
-golden_goose_egg,Golden Goose Egg,spirit,1,2462046703,800,0
-greater_expansion,Greater Expansion,spirit,3,1193964439,3200,0
-grit,Grit,vitality,1,1672893796,800,0
-guardian_ward,Guardian Ward,vitality,2,857669956,1600,1
-headhunter,Headhunter,weapon,3,4053935515,3200,0
-headshot_booster,Headshot Booster,weapon,1,2010028405,800,0
-healbane,Healbane,vitality,2,2603935618,1600,0
-healing_booster,Healing Booster,vitality,2,2566692615,1600,0
-healing_nova,Healing Nova,vitality,3,2956256701,3200,0
-healing_rite,Healing Rite,vitality,1,1710079648,800,1
-healing_tempo,Healing Tempo,vitality,4,1427630806,6400,0
-heroic_aura,Heroic Aura,weapon,3,2108215830,3200,0
-high_velocity_rounds,High-Velocity Rounds,weapon,1,3077079169,800,0
-hollow_point,Hollow Point,weapon,3,2678489038,3200,0
-hunters_aura,Hunter's Aura,weapon,3,2481177645,3200,0
-improved_spirit,Improved Spirit,spirit,2,7409189,1600,0
-indomitable,Indomitable,vitality,4,951866250,6400,0
-infuser,Infuser,vitality,4,1797283378,6400,0
-inhibitor,Inhibitor,vitality,4,2037039379,6400,0
-intensifying_magazine,Intensifying Magazine,weapon,2,2407033488,1600,0
-juggernaut,Juggernaut,vitality,4,1250307611,6400,0
-kinetic_dash,Kinetic Dash,weapon,2,3977876567,1600,0
-knockdown,Knockdown,spirit,3,1254091416,3200,1
-leech,Leech,vitality,4,865846625,6400,0
-lifestrike,Lifestrike,vitality,3,1252627263,3200,0
-lightning_scroll,Lightning Scroll,spirit,4,493591231,6400,0
-long_range,Long Range,weapon,2,3331811235,1600,0
-lucky_shot,Lucky Shot,weapon,4,1396247347,6400,0
-magic_carpet,Magic Carpet,spirit,4,2800629741,6400,0
-majestic_leap,Majestic Leap,vitality,3,600033864,3200,0
-melee_charge,Melee Charge,weapon,2,26002154,1600,0
-melee_lifesteal,Melee Lifesteal,vitality,1,1437614329,800,0
-mercurial_magnum,Mercurial Magnum,spirit,4,3919289022,6400,0
-metal_skin,Metal Skin,vitality,3,1378931225,3200,0
-monster_rounds,Monster Rounds,weapon,1,1009965641,800,0
-mystic_burst,Mystic Burst,spirit,1,1998374645,800,0
-mystic_expansion,Mystic Expansion,spirit,1,754480263,800,0
-mystic_regeneration,Mystic Regeneration,spirit,1,1439347412,800,0
-mystic_reverb,Mystic Reverb,spirit,4,3577481646,6400,0
-mystic_shot,Mystic Shot,weapon,2,395867183,1600,0
-mystic_slow,Mystic Slow,spirit,2,1102081447,1600,0
-mystic_vulnerability,Mystic Vulnerability,spirit,2,2081037738,1600,0
-opening_rounds,Opening Rounds,weapon,2,2064029594,1600,0
-phantom_strike,Phantom Strike,vitality,4,1371725689,6400,1
-plated_armor,Plated Armor,vitality,4,3491236900,6400,0
-point_blank,Point Blank,weapon,3,2095565695,3200,0
-quicksilver_reload,Quicksilver Reload,spirit,2,84321454,1600,0
-radiant_regeneration,Radiant Regeneration,spirit,3,2947183272,3200,0
-rapid_recharge,Rapid Recharge,spirit,3,787198704,3200,0
-rapid_rounds,Rapid Rounds,weapon,1,668299740,800,0
-reactive_barrier,Reactive Barrier,vitality,2,1644605047,1600,0
-rebuttal,Rebuttal,vitality,1,4204808176,800,0
-recharging_rush,Recharging Rush,weapon,2,1763073141,1600,0
-refresher,Refresher,spirit,4,677738769,6400,0
-rescue_beam,Rescue Beam,vitality,3,1804594021,3200,1
-restorative_locket,Restorative Locket,vitality,2,2059712766,1600,0
-restorative_shot,Restorative Shot,weapon,1,3862866912,800,0
-return_fire,Return Fire,vitality,2,3361075077,1600,0
-ricochet,Ricochet,weapon,4,2480592370,6400,0
-rusted_barrel,Rusted Barrel,spirit,1,2922054143,800,1
-scourge,Scourge,spirit,4,2417568017,6400,0
-shadow_weave,Shadow Weave,weapon,3,1798666702,3200,0
-sharpshooter,Sharpshooter,weapon,3,2152872419,3200,0
-silence_wave,Silence Wave,spirit,3,619484391,3200,0
-silencer,Silencer,weapon,4,1113837674,6400,0
-siphon_bullets,Siphon Bullets,vitality,4,1282141666,6400,0
-slowing_bullets,Slowing Bullets,weapon,2,393974127,1600,0
-slowing_hex,Slowing Hex,spirit,2,1813726886,1600,1
-spellbreaker,Spellbreaker,vitality,4,1955841979,6400,0
-spellslinger,Spellslinger,weapon,4,2221211450,6400,0
-spirit_burn,Spirit Burn,spirit,4,343572757,6400,0
-spirit_lifesteal,Spirit Lifesteal,vitality,2,876563814,1600,0
-spirit_rend,Spirit Rend,weapon,3,4075861416,3200,0
-spirit_resilience,Spirit Resilience,vitality,3,2163598980,3200,0
-spirit_sap,Spirit Sap,spirit,2,1219329868,1600,1
-spirit_shielding,Spirit Shielding,vitality,2,112198670,1600,0
-spirit_shredder_bullets,Spirit Shredder Bullets,weapon,2,1144549437,1600,0
-spirit_snatch,Spirit Snatch,spirit,3,3190916303,3200,0
-spirit_strike,Spirit Strike,spirit,1,465043967,800,0
-spiritual_overflow,Spiritual Overflow,weapon,4,2226497419,6400,0
-split_shot,Split Shot,weapon,2,3647584222,1600,0
-sprint_boots,Sprint Boots,vitality,1,3399065363,800,0
-stalker,Stalker,weapon,2,98582110,1600,0
-stamina_mastery,Stamina Mastery,vitality,3,334300056,3200,0
-superior_cooldown,Superior Cooldown,spirit,3,3261353684,3200,0
-superior_duration,Superior Duration,spirit,3,2717651715,3200,0
-suppressor,Suppressor,spirit,2,1925087134,1600,0
-surge_of_power,Surge of Power,spirit,3,1292979587,3200,0
-swift_striker,Swift Striker,weapon,2,4104549924,1600,0
-tankbuster,Tankbuster,spirit,3,2121044373,3200,0
-tesla_bullets,Tesla Bullets,weapon,3,811521119,3200,0
-titanic_magazine,Titanic Magazine,weapon,2,2356412290,1600,0
-torment_pulse,Torment Pulse,spirit,3,395944548,3200,0
-toxic_bullets,Toxic Bullets,weapon,3,3696726732,3200,0
-transcendent_cooldown,Transcendent Cooldown,spirit,4,915014646,6400,0
-trophy_collector,Trophy Collector,vitality,2,3074274290,1600,0
-unstoppable,Unstoppable,vitality,4,3357231760,6400,0
-vampiric_burst,Vampiric Burst,vitality,4,1055679805,6400,0
-veil_walker,Veil Walker,vitality,3,865958998,3200,0
-vortex_web,Vortex Web,spirit,4,1152158042,6400,0
-weakening_headshot,Weakening Headshot,weapon,2,1770441818,1600,0
-weapon_shielding,Weapon Shielding,vitality,2,805079544,1600,0
-weighted_shots,Weighted Shots,weapon,3,3791587546,3200,0
-witchmail,Witchmail,vitality,4,3028234315,6400,0
-focus_lens,Focus Lens,spirit,4,2142980412,6400,1
-warp_stone,Warp Stone,vitality,3,3270001687,3200,0
-extra_regen,Extra Regen,vitality,1,2829638276,800,0
+active_reload,Active Reload,weapon,2,381961617,1600,
+alchemical_fire,Alchemical Fire,weapon,3,1932939246,3200,
+arcane_surge,Arcane Surge,spirit,2,1150006784,1600,
+arctic_blast,Arctic Blast,spirit,4,3812615317,6400,
+armor_piercing_rounds,Armor Piercing Rounds,weapon,4,673001892,6400,
+ballistic_enchantment,Ballistic Enchantment,weapon,3,3294954488,3200,
+battle_vest,Battle Vest,vitality,2,1235347618,1600,
+berserker,Berserker,weapon,3,1414319208,3200,
+blood_tribute,Blood Tribute,weapon,3,989206714,3200,
+boundless_spirit,Boundless Spirit,spirit,4,2519598785,6400,
+bullet_lifesteal,Bullet Lifesteal,vitality,2,499683006,1600,
+bullet_resilience,Bullet Resilience,vitality,3,3140772621,3200,
+bullet_resist_shredder,Bullet Resist Shredder,spirit,2,2971868509,1600,
+burst_fire,Burst Fire,weapon,3,2739107182,3200,
+capacitor,Capacitor,weapon,4,710436191,6400,
+cheat_death,Cheat Death,vitality,4,3361811174,6400,
+close_quarters,Close Quarters,weapon,1,1342610602,800,
+cold_front,Cold Front,spirit,2,1976391348,1600,
+colossus,Colossus,vitality,4,2407781327,6400,
+compress_cooldown,Compress Cooldown,spirit,2,380806748,1600,
+counterspell,Counterspell,vitality,3,1414025773,3200,
+crippling_headshot,Crippling Headshot,weapon,4,3884003354,6400,
+crushing_fists,Crushing Fists,weapon,4,800008313,6400,
+cultist_sacrifice,Cultist Sacrifice,weapon,3,709540378,3200,
+cursed_relic,Cursed Relic,spirit,4,2617435668,6400,against
+debuff_reducer,Debuff Reducer,vitality,2,1047818222,1600,
+decay,Decay,spirit,3,3144988365,3200,against
+disarming_hex,Disarming Hex,spirit,3,2061878743,3200,against
+dispel_magic,Dispel Magic,vitality,3,3731635960,3200,
+divine_barrier,Divine Barrier,vitality,4,1662311306,6400,with
+diviners_kevlar,Diviner's Kevlar,vitality,4,2820116164,6400,
+duration_extender,Duration Extender,spirit,2,2951612397,1600,
+echo_shard,Echo Shard,spirit,4,630839635,6400,
+enchanters_emblem,Enchanter's Emblem,vitality,2,3970837787,1600,
+enduring_speed,Enduring Speed,vitality,2,2447176615,1600,
+escalating_exposure,Escalating Exposure,spirit,4,3005970438,6400,
+escalating_resilience,Escalating Resilience,weapon,3,2463960640,3200,
+ethereal_shift,Ethereal Shift,spirit,4,2533252781,6400,
+express_shot,Express Shot,weapon,3,690458959,3200,
+extended_magazine,Extended Magazine,weapon,1,1548066885,800,
+extra_charge,Extra Charge,spirit,1,3776945997,800,
+extra_health,Extra Health,vitality,1,3633614685,800,
+extra_spirit,Extra Spirit,spirit,1,968099481,800,
+extra_stamina,Extra Stamina,vitality,1,4139877411,800,
+fleetfoot,Fleetfoot,weapon,2,3403085434,1600,
+fortitude,Fortitude,vitality,3,3585132399,3200,
+frenzy,Frenzy,weapon,4,339443430,6400,
+fury_trance,Fury Trance,vitality,3,1409190604,3200,
+glass_cannon,Glass Cannon,weapon,4,365620721,6400,
+golden_goose_egg,Golden Goose Egg,spirit,1,2462046703,800,
+greater_expansion,Greater Expansion,spirit,3,1193964439,3200,
+grit,Grit,vitality,1,1672893796,800,
+guardian_ward,Guardian Ward,vitality,2,857669956,1600,with
+headhunter,Headhunter,weapon,3,4053935515,3200,
+headshot_booster,Headshot Booster,weapon,1,2010028405,800,
+healbane,Healbane,vitality,2,2603935618,1600,
+healing_booster,Healing Booster,vitality,2,2566692615,1600,
+healing_nova,Healing Nova,vitality,3,2956256701,3200,
+healing_rite,Healing Rite,vitality,1,1710079648,800,with
+healing_tempo,Healing Tempo,vitality,4,1427630806,6400,
+heroic_aura,Heroic Aura,weapon,3,2108215830,3200,
+high_velocity_rounds,High-Velocity Rounds,weapon,1,3077079169,800,
+hollow_point,Hollow Point,weapon,3,2678489038,3200,
+hunters_aura,Hunter's Aura,weapon,3,2481177645,3200,
+improved_spirit,Improved Spirit,spirit,2,7409189,1600,
+indomitable,Indomitable,vitality,4,951866250,6400,
+infuser,Infuser,vitality,4,1797283378,6400,
+inhibitor,Inhibitor,vitality,4,2037039379,6400,
+intensifying_magazine,Intensifying Magazine,weapon,2,2407033488,1600,
+juggernaut,Juggernaut,vitality,4,1250307611,6400,
+kinetic_dash,Kinetic Dash,weapon,2,3977876567,1600,
+knockdown,Knockdown,spirit,3,1254091416,3200,against
+leech,Leech,vitality,4,865846625,6400,
+lifestrike,Lifestrike,vitality,3,1252627263,3200,
+lightning_scroll,Lightning Scroll,spirit,4,493591231,6400,
+long_range,Long Range,weapon,2,3331811235,1600,
+lucky_shot,Lucky Shot,weapon,4,1396247347,6400,
+magic_carpet,Magic Carpet,spirit,4,2800629741,6400,
+majestic_leap,Majestic Leap,vitality,3,600033864,3200,
+melee_charge,Melee Charge,weapon,2,26002154,1600,
+melee_lifesteal,Melee Lifesteal,vitality,1,1437614329,800,
+mercurial_magnum,Mercurial Magnum,spirit,4,3919289022,6400,
+metal_skin,Metal Skin,vitality,3,1378931225,3200,
+monster_rounds,Monster Rounds,weapon,1,1009965641,800,
+mystic_burst,Mystic Burst,spirit,1,1998374645,800,
+mystic_expansion,Mystic Expansion,spirit,1,754480263,800,
+mystic_regeneration,Mystic Regeneration,spirit,1,1439347412,800,
+mystic_reverb,Mystic Reverb,spirit,4,3577481646,6400,
+mystic_shot,Mystic Shot,weapon,2,395867183,1600,
+mystic_slow,Mystic Slow,spirit,2,1102081447,1600,
+mystic_vulnerability,Mystic Vulnerability,spirit,2,2081037738,1600,
+opening_rounds,Opening Rounds,weapon,2,2064029594,1600,
+phantom_strike,Phantom Strike,vitality,4,1371725689,6400,against
+plated_armor,Plated Armor,vitality,4,3491236900,6400,
+point_blank,Point Blank,weapon,3,2095565695,3200,
+quicksilver_reload,Quicksilver Reload,spirit,2,84321454,1600,
+radiant_regeneration,Radiant Regeneration,spirit,3,2947183272,3200,
+rapid_recharge,Rapid Recharge,spirit,3,787198704,3200,
+rapid_rounds,Rapid Rounds,weapon,1,668299740,800,
+reactive_barrier,Reactive Barrier,vitality,2,1644605047,1600,
+rebuttal,Rebuttal,vitality,1,4204808176,800,
+recharging_rush,Recharging Rush,weapon,2,1763073141,1600,
+refresher,Refresher,spirit,4,677738769,6400,
+rescue_beam,Rescue Beam,vitality,3,1804594021,3200,with
+restorative_locket,Restorative Locket,vitality,2,2059712766,1600,
+restorative_shot,Restorative Shot,weapon,1,3862866912,800,
+return_fire,Return Fire,vitality,2,3361075077,1600,
+ricochet,Ricochet,weapon,4,2480592370,6400,
+rusted_barrel,Rusted Barrel,spirit,1,2922054143,800,against
+scourge,Scourge,spirit,4,2417568017,6400,
+shadow_weave,Shadow Weave,weapon,3,1798666702,3200,
+sharpshooter,Sharpshooter,weapon,3,2152872419,3200,
+silence_wave,Silence Wave,spirit,3,619484391,3200,
+silencer,Silencer,weapon,4,1113837674,6400,
+siphon_bullets,Siphon Bullets,vitality,4,1282141666,6400,
+slowing_bullets,Slowing Bullets,weapon,2,393974127,1600,
+slowing_hex,Slowing Hex,spirit,2,1813726886,1600,against
+spellbreaker,Spellbreaker,vitality,4,1955841979,6400,
+spellslinger,Spellslinger,weapon,4,2221211450,6400,
+spirit_burn,Spirit Burn,spirit,4,343572757,6400,
+spirit_lifesteal,Spirit Lifesteal,vitality,2,876563814,1600,
+spirit_rend,Spirit Rend,weapon,3,4075861416,3200,
+spirit_resilience,Spirit Resilience,vitality,3,2163598980,3200,
+spirit_sap,Spirit Sap,spirit,2,1219329868,1600,against
+spirit_shielding,Spirit Shielding,vitality,2,112198670,1600,
+spirit_shredder_bullets,Spirit Shredder Bullets,weapon,2,1144549437,1600,
+spirit_snatch,Spirit Snatch,spirit,3,3190916303,3200,
+spirit_strike,Spirit Strike,spirit,1,465043967,800,
+spiritual_overflow,Spiritual Overflow,weapon,4,2226497419,6400,
+split_shot,Split Shot,weapon,2,3647584222,1600,
+sprint_boots,Sprint Boots,vitality,1,3399065363,800,
+stalker,Stalker,weapon,2,98582110,1600,
+stamina_mastery,Stamina Mastery,vitality,3,334300056,3200,
+superior_cooldown,Superior Cooldown,spirit,3,3261353684,3200,
+superior_duration,Superior Duration,spirit,3,2717651715,3200,
+suppressor,Suppressor,spirit,2,1925087134,1600,
+surge_of_power,Surge of Power,spirit,3,1292979587,3200,
+swift_striker,Swift Striker,weapon,2,4104549924,1600,
+tankbuster,Tankbuster,spirit,3,2121044373,3200,
+tesla_bullets,Tesla Bullets,weapon,3,811521119,3200,
+titanic_magazine,Titanic Magazine,weapon,2,2356412290,1600,
+torment_pulse,Torment Pulse,spirit,3,395944548,3200,
+toxic_bullets,Toxic Bullets,weapon,3,3696726732,3200,
+transcendent_cooldown,Transcendent Cooldown,spirit,4,915014646,6400,
+trophy_collector,Trophy Collector,vitality,2,3074274290,1600,
+unstoppable,Unstoppable,vitality,4,3357231760,6400,
+vampiric_burst,Vampiric Burst,vitality,4,1055679805,6400,
+veil_walker,Veil Walker,vitality,3,865958998,3200,
+vortex_web,Vortex Web,spirit,4,1152158042,6400,
+weakening_headshot,Weakening Headshot,weapon,2,1770441818,1600,
+weapon_shielding,Weapon Shielding,vitality,2,805079544,1600,
+weighted_shots,Weighted Shots,weapon,3,3791587546,3200,
+witchmail,Witchmail,vitality,4,3028234315,6400,
+focus_lens,Focus Lens,spirit,4,2142980412,6400,against
+warp_stone,Warp Stone,vitality,3,3270001687,3200,
+extra_regen,Extra Regen,vitality,1,2829638276,800,

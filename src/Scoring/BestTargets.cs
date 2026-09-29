@@ -1,8 +1,8 @@
 namespace DeadlockAdvisor.Scoring;
 
 /// <summary>
-/// Scoring for items cast on one hero at a time (<see cref="Models.Item.SingleTarget"/>: Decay, Knockdown,
-/// Rescue Beam). On each team relation the best target counts in full, the next ×½, then ×¼ and so on,
+/// Scoring for items cast on one hero at a time (<see cref="Models.Item.CastOn"/>: Decay, Knockdown,
+/// Rescue Beam). On the team it's cast on the best target counts in full, the next ×½, then ×¼ and so on,
 /// less what the same measure comes to for a typical team of that size. A plain sum would count "no use
 /// against this hero" once per hero, when you'd just cast it on the best one.
 /// </summary>

@@ -18,7 +18,7 @@ public sealed class SyncReport
     /// <summary>"Long Range: Weapon Damage (conditional) none -> 40%": each stat a patch moved.</summary>
     public List<string> StatChanges { get; } = [];
 
-    /// <summary>Items that started or stopped being scored on their best targets (<see cref="GameSync.IsSingleTarget"/>).</summary>
+    /// <summary>Items that started or stopped being scored on their best targets, or switched sides (<see cref="GameSync.CastOn"/>).</summary>
     public List<string> TargetingChanges { get; } = [];
 
     /// <summary>Items with hand-typed rules whose tooltip changed: the rules may no longer describe the item.</summary>
@@ -71,7 +71,7 @@ public sealed class SyncReport
         if (!AnythingChanged)
             lines.Add("Everything already matches the game -- nothing changed.");
 
-        Section(lines, "Single-target changes -- these items are now scored on their best targets, or no longer:", TargetingChanges);
+        Section(lines, "Single-target changes -- these items are now scored on their best targets on the side they're cast on, or no longer:", TargetingChanges);
         Section(lines, "Tooltip changed on items with hand-typed rules -- check the rules still fit:", ReviewRules);
         Section(lines, "Shown under a scored stat's label but not mapped -- add each to GameSync.Stats or GameSync.Unscored:", UnmappedStats);
         Section(lines, "Overrides in GameSync that no longer match the game:", StaleOverrides);

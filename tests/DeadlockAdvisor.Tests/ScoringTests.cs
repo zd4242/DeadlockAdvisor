@@ -274,7 +274,7 @@ public class ScoringTests
     public void ASingleTargetItemCountsItsBestTargetsAgainstATypicalTeam()
     {
         var store = TestStore.Make();
-        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { SingleTarget = true };
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = Relation.Against };
         var matrix = ItemScoring.BuildWeightMatrix(store);
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
@@ -282,7 +282,7 @@ public class ScoringTests
 
         // Against weights: heavy_spirit (5 - 2) * 2 = 6, low_hp -4, generic -2. The pair counts
         // 6 + -4/2 = 4; a typical pair, (6 - 2 + 6 - 1 - 2 - 2) / 3 = 5/3. Summed it would be 6 - 4 = 2.
-        Assert.Equal(5.0 / 3, matrix.Typical("spirit_resist_t1", Relation.Against, 2), 9);
+        Assert.Equal(5.0 / 3, matrix.Typical("spirit_resist_t1", 2), 9);
         var scored = ItemScoring.ScoreAll(store, matrix, match).Single(item => item.ItemId == "spirit_resist_t1");
         Assert.Equal(4 - 5.0 / 3, scored.Score, 9);
 
@@ -299,6 +299,26 @@ public class ScoringTests
         alone.SetRole("heavy_spirit", Role.Enemy);
         Assert.Equal(6, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(alone)), 9);
         Assert.Single(ItemScoring.ExplainItem(store, alone, "spirit_resist_t1"));
+    }
+
+    [Theory]
+    [InlineData(Relation.Against, Role.Ally)]
+    [InlineData(Relation.With, Role.Enemy)]
+    public void ASingleTargetItemSumsTheTeamItIsNotCastOn(Relation castOn, Role other)
+    {
+        var store = TestStore.Make();
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = castOn };
+        store.ItemCoefficients[new CoefficientKey("spirit_resist_t1", "deals_spirit_damage_general", Relation.With)] = 1.0;
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", other);
+        match.SetRole("low_hp", other);
+
+        // Against weights 6 and -4, with weights 3 and -2: a plain sum either way, nothing ranked or taken off.
+        var expected = other == Role.Enemy ? 6 - 4 : 3 - 2;
+        Assert.Equal(expected, ItemScoring.Total(ItemScoring.BuildWeightMatrix(store), "spirit_resist_t1", ItemScoring.RelevantHeroes(match)), 9);
+        var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
+        Assert.Equal(["heavy_spirit", "low_hp"], explained.Select(contribution => contribution.HeroId));
+        Assert.All(explained, contribution => Assert.Null(contribution.Rank));
     }
 
     [Fact]

@@ -1,8 +1,11 @@
+using DeadlockAdvisor.Enums;
+
 namespace DeadlockAdvisor.Models;
 
 /// <param name="Category">The shop category (weapon / vitality / spirit), unrelated to trait categories.</param>
-/// <param name="SingleTarget">
-/// Its active is cast on one hero (Decay, Knockdown, Rescue Beam), so it's scored on its best targets;
-/// see <see cref="Scoring.BestTargets"/>. Set by the game sync.
+/// <param name="CastOn">
+/// Its active is cast on one hero of this team: <see cref="Relation.Against"/> for an enemy (Decay,
+/// Knockdown), <see cref="Relation.With"/> for an ally (Rescue Beam). Null when it isn't single-target.
+/// Only that relation is scored on its best targets; see <see cref="Scoring.BestTargets"/>. Set by the game sync.
 /// </param>
-public sealed record Item(string ItemId, string ItemName, string Category, int Tier, long GameId = 0, int Cost = 0, bool SingleTarget = false);
+public sealed record Item(string ItemId, string ItemName, string Category, int Tier, long GameId = 0, int Cost = 0, Relation? CastOn = null);

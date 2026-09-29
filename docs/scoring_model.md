@@ -21,8 +21,8 @@ score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) 
 ```
 
 `factor` is 1 unless the scores lean on net worth (see "Net worth" below). A
-single-target item replaces the enemy and ally sums with its best targets (see
-"Best-target items" below).
+single-target item replaces the sum over the team it's cast on with its best
+targets (see "Best-target items" below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
@@ -81,11 +81,12 @@ top 3 in some match.
 
 ### Best-target items
 
-An item whose active is cast on one hero (`Item.SingleTarget`: Decay, Knockdown,
-Slowing Hex, Rescue Beam…) is only as good as its best target. A plain sum counts
-"no use against this hero" once for every such hero. Decay against one big healer
-and five non-healers lost 186 points for each non-healer, when you'd simply cast it
-on the healer. So for these items, the `against` and `with` relations use:
+An item whose active is cast on one hero (`Item.CastOn`: Decay, Knockdown,
+Slowing Hex on an enemy, Rescue Beam on an ally…) is only as good as its best
+target. A plain sum counts "no use against this hero" once for every such hero.
+Decay against one big healer and five non-healers lost 186 points for each
+non-healer, when you'd simply cast it on the healer. So for these items, the
+relation they're cast on (`against` for an enemy, `with` for an ally) uses:
 
 ```
 best-target sum = Σ over the team's profiled heroes, best weight first, of weight × ½^(rank − 1)
@@ -102,15 +103,21 @@ size up to 6. The consequences:
 - A one-hero team (a 1v1 lane) is exactly the plain sum.
 - Net worth factors apply before the sort.
 - `as` always sums: it's one hero.
+- The other team sums as usual. Spirit Sap is cast on one enemy, but every ally
+  with spirit damage hits that enemy through its lowered Spirit Resist.
 
 On the Decay example above, the enemy side goes from −457 to −31.
 
-`GameSync.IsSingleTarget` decides from the API: an active whose tooltip shows
+`GameSync.CastOn` decides from the API: an active whose tooltip shows
 `AbilityCastRange` and no `*Radius` property, except the items in
 `_notSingleTarget`. Silence Wave's projectile hits everyone in its path, and Warp
-Stone's range is how far you teleport. The result goes in `items.csv`'s
-`single_target` column. The sync report lists every item that became or stopped
-being single-target, and flags a `_notSingleTarget` entry that no longer matches.
+Stone's range is how far you teleport. The API doesn't name the target's team,
+but every ally-cast active's text says "Can be self-cast" and no enemy-cast one
+does, so that phrase makes it `with`. The result goes in `items.csv`'s
+`single_target` column (`against`, `with` or empty; an old `1` loads as
+`against` until the next sync). The sync report lists every item that became or
+stopped being single-target or switched sides, and flags a `_notSingleTarget`
+entry that no longer matches.
 The explain panel ranks each hero ("2nd target ×0.5") and takes the typical team
 off as a line of its own.
 

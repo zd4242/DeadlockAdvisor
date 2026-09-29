@@ -11,7 +11,7 @@ public class ExplainViewModelTests
     public void TheTypicalTeamExplainsItselfInTheMatchsNumbers()
     {
         var store = TestStore.Make();
-        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { SingleTarget = true };
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = Relation.Against };
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
         match.SetRole("low_hp", Role.Enemy);
@@ -33,7 +33,7 @@ public class ExplainViewModelTests
     public void OnlyHeroCardsShowAPortrait()
     {
         var store = TestStore.Make();
-        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { SingleTarget = true };
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = Relation.Against };
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);
         match.SetRole("low_hp", Role.Enemy);

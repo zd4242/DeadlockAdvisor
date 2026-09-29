@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.GameApi;
@@ -297,12 +298,15 @@ public class GameApiTests
     {
         var byName = Json("game_api/shop_items.json").AsArray().OfType<JsonNode>().ToDictionary(record => Text(record["name"]));
 
-        // Cast on one hero, enemy or ally.
-        Assert.All(["Decay", "Knockdown", "Slowing Hex", "Rescue Beam", "Divine Barrier"], name => Assert.True(GameSync.IsSingleTarget(byName[name]), name));
+        Assert.All(["Decay", "Knockdown", "Slowing Hex", "Spirit Sap", "Cursed Relic"],
+            name => Assert.Equal(Relation.Against, GameSync.CastOn(byName[name])));
+        // Ally-cast actives say they can be self-cast.
+        Assert.All(["Rescue Beam", "Divine Barrier", "Guardian Ward", "Healing Rite"],
+            name => Assert.Equal(Relation.With, GameSync.CastOn(byName[name])));
         // Scourge's aura and Alchemical Fire's area reach more; Silence Wave's projectile hits everyone in its
         // path and Warp Stone's range is a teleport; Refresher and Toxic Bullets aren't cast at anyone.
         Assert.All(["Scourge", "Alchemical Fire", "Silence Wave", "Warp Stone", "Refresher", "Toxic Bullets"],
-            name => Assert.False(GameSync.IsSingleTarget(byName[name]), name));
+            name => Assert.Null(GameSync.CastOn(byName[name])));
     }
 
     [Fact]

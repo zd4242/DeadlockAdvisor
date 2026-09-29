@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services.Formats;
 
@@ -291,11 +292,21 @@ public static partial class GameSync
     }
 
     /// <summary>
-    /// The active is cast on one hero: its tooltip shows a cast range and no radius (an area or an aura
-    /// reaches more than one), and it isn't one of <see cref="_notSingleTarget"/>.
+    /// The team the active is cast on one hero of, or null when it isn't single-target. It is when its
+    /// tooltip shows a cast range and no radius (an area or an aura reaches more than one) and it isn't
+    /// one of <see cref="_notSingleTarget"/>. Every ally-cast active's text says "Can be self-cast";
+    /// no enemy-cast one does.
     /// </summary>
-    public static bool IsSingleTarget(JsonNode record) =>
-        HasCastRangeAndNoRadius(record) && !(NameOf(record) is { } name && _notSingleTarget.Contains(name));
+    public static Relation? CastOn(JsonNode record)
+    {
+        if (!HasCastRangeAndNoRadius(record) || NameOf(record) is { } name && _notSingleTarget.Contains(name))
+            return null;
+        var selfCast = PyJson.Items(record, "tooltip_sections")
+            .Where(section => PyJson.Text(section, "section_type") == "active")
+            .SelectMany(section => PyJson.Items(section, "section_attributes"))
+            .Any(attribute => PyJson.Text(attribute, "loc_string").Contains("self-cast", StringComparison.OrdinalIgnoreCase));
+        return selfCast ? Relation.With : Relation.Against;
+    }
 
     private static bool HasCastRangeAndNoRadius(JsonNode record)
     {
@@ -566,28 +577,28 @@ public static partial class GameSync
             var tier = (int)PyJson.Int(record, "item_tier");
             var category = PyJson.Text(record, "item_slot_type");
             var cost = (int)PyJson.Int(record, "cost");
-            var singleTarget = IsSingleTarget(record);
+            var castOn = CastOn(record);
 
             if (!ours.TryGetValue(Norm(name), out var current))
             {
                 var itemId = MakeId(name);
                 if (itemId.Length == 0 || store.Items.ContainsKey(itemId))
                     continue;
-                store.Items[itemId] = new Item(itemId, name, category, tier, gameId, cost, singleTarget);
+                store.Items[itemId] = new Item(itemId, name, category, tier, gameId, cost, castOn);
                 matched[itemId] = record;
                 report.AddedItems.Add($"{name} (T{tier})");
-                if (singleTarget)
-                    report.TargetingChanges.Add($"{name}: single-target");
+                if (castOn is not null)
+                    report.TargetingChanges.Add($"{name}: {Targeting(castOn)}");
                 report.ItemsChanged = true;
                 continue;
             }
 
             matched[current.ItemId] = record;
-            var updated = new Item(current.ItemId, current.ItemName, category, tier, gameId, cost, singleTarget);
+            var updated = new Item(current.ItemId, current.ItemName, category, tier, gameId, cost, castOn);
             if (updated == current)
                 continue;
-            if (current.SingleTarget != singleTarget)
-                report.TargetingChanges.Add($"{current.ItemName}: {(singleTarget ? "single-target" : "no longer single-target")}");
+            if (current.CastOn != castOn)
+                report.TargetingChanges.Add($"{current.ItemName}: {Targeting(castOn)}");
             // A missing game id or cost is just the first sync filling columns in; a tier or shop
             // move is a patch, and worth saying out loud.
             var before = report.Changed.Count;
@@ -599,7 +610,7 @@ public static partial class GameSync
                 report.Changed.Add($"{current.ItemName}: cost {current.Cost} -> {cost}");
             if (current.GameId != 0 && current.GameId != gameId)
                 report.Changed.Add($"{current.ItemName}: game id {current.GameId} -> {gameId}");
-            if (report.Changed.Count == before && updated with { SingleTarget = current.SingleTarget } != current)
+            if (report.Changed.Count == before && updated with { CastOn = current.CastOn } != current)
                 report.Filled++;
             store.Items[current.ItemId] = updated;
             report.ItemsChanged = true;
@@ -608,6 +619,13 @@ public static partial class GameSync
         report.NotInGame.AddRange(store.Items.Keys.Where(itemId => !matched.ContainsKey(itemId)).Select(itemId => store.Items[itemId].ItemName));
         return matched;
     }
+
+    private static string Targeting(Relation? castOn) => castOn switch
+    {
+        Relation.Against => "single-target, cast on an enemy",
+        Relation.With => "single-target, cast on an ally",
+        _ => "no longer single-target",
+    };
 
     /// <param name="knownItems">The items before this sync: a new item's stats are news, not changes.</param>
     private static void ApplyStats(

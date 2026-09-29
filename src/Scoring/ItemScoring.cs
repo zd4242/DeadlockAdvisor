@@ -50,8 +50,10 @@ public static class ItemScoring
                 weights[cell] = weights.GetValueOrDefault(cell) + deviation * coefficient;
             }
         }
-        var singleTarget = store.Items.Values.Where(item => item.SingleTarget).Select(item => item.ItemId).ToHashSet();
-        return new WeightMatrix(weights, profiled, singleTarget);
+        var castOn = store.Items.Values
+            .Where(item => item.CastOn is not null)
+            .ToDictionary(item => item.ItemId, item => item.CastOn!.Value);
+        return new WeightMatrix(weights, profiled, castOn);
     }
 
     /// <summary>The match's line-up; without <paramref name="netWorth"/> every hero counts the same.</summary>
@@ -102,28 +104,23 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
-    /// you, each hero's weight times their net worth factor. A single-target item's enemies and allies
-    /// count by <see cref="BestTargets"/> instead of summing.
+    /// you, each hero's weight times their net worth factor. A single-target item's heroes on the team
+    /// it's cast on count by <see cref="BestTargets"/> instead of summing.
     /// </summary>
     public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
-        List<double>? enemies = null;
-        List<double>? allies = null;
+        List<double>? targets = null;
         foreach (var (heroId, relation) in lineUp.Members())
         {
             var weight = lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
-            if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
-                total += weight;
-            else if (relation == Relation.Against)
-                (enemies ??= []).Add(weight);
+            if (matrix.OnBestTargets(itemId, relation) && matrix.IsProfiled(heroId))
+                (targets ??= []).Add(weight);
             else
-                (allies ??= []).Add(weight);
+                total += weight;
         }
-        if (enemies is not null)
-            total += BestTargets.Sum(enemies) - matrix.Typical(itemId, Relation.Against, enemies.Count);
-        if (allies is not null)
-            total += BestTargets.Sum(allies) - matrix.Typical(itemId, Relation.With, allies.Count);
+        if (targets is not null)
+            total += BestTargets.Sum(targets) - matrix.Typical(itemId, targets.Count);
         return total;
     }
 
@@ -132,13 +129,13 @@ public static class ItemScoring
     /// <summary>
     /// One item's score broken down per hero, then per trait, biggest contributor first. Recomputed
     /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's
-    /// enemies and allies are counted at their rank, with a typical team's sum taken off as one more line.
+    /// heroes on the team it's cast on are counted at their rank, with a typical team's sum taken off as one more line.
     /// </summary>
     public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
     {
         var lineUp = RelevantHeroes(match, netWorth);
         var baselines = store.TraitBaselines();
-        var singleTarget = store.Items.TryGetValue(itemId, out var item) && item.SingleTarget;
+        var castOn = store.Items.GetValueOrDefault(itemId)?.CastOn;
         var contributions = new List<HeroContribution>();
         foreach (var relation in new[] { Relation.Against, Relation.With, Relation.As })
         {
@@ -147,7 +144,7 @@ public static class ItemScoring
                 .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId)))
                 .OfType<HeroContribution>()
                 .ToList();
-            contributions.AddRange(singleTarget && relation != Relation.As
+            contributions.AddRange(relation == castOn
                 ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), found)
                 : found);
         }
@@ -155,7 +152,7 @@ public static class ItemScoring
     }
 
     /// <summary>
-    /// A single-target item's heroes on one relation at their <see cref="BestTargets"/> rank, then the
+    /// A single-target item's heroes on the relation it's cast on at their <see cref="BestTargets"/> rank, then the
     /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
     /// no rule touches, exactly as <see cref="Total"/> counts them.
     /// </summary>

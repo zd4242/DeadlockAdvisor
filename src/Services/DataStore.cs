@@ -177,9 +177,15 @@ public sealed class DataStore
                 NumberFormat.ParseInt(row.Required("tier")),
                 NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("game_id"))),
                 (int)NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("cost"))),
-                IsTrue(row.Get("single_target")));
+                CastOn(row.Get("single_target")));
         }
     }
+
+    /// <summary>"against" or "with"; a 1 from before the column named a side is an enemy, until the next sync says.</summary>
+    private static Relation? CastOn(string? text) =>
+        Relations.TryParse(text?.Trim(), out var relation) && relation != Relation.As ? relation
+        : IsTrue(text) ? Relation.Against
+        : null;
 
     internal void LoadCategories()
     {
@@ -747,7 +753,7 @@ public sealed class DataStore
     public void SaveItems()
     {
         var rows = Items.Values.Select(item => Row(
-            item.ItemId, item.ItemName, item.Category, Integer(item.Tier), Integer(item.GameId), Integer(item.Cost), item.SingleTarget ? "1" : "0"));
+            item.ItemId, item.ItemName, item.Category, Integer(item.Tier), Integer(item.GameId), Integer(item.Cost), item.CastOn?.Key() ?? ""));
         WriteCsv(ItemsFile, ["item_id", "item_name", "category", "tier", "game_id", "cost", "single_target"], rows);
     }
 
