@@ -8,7 +8,7 @@
         <TextBlock Classes="section" Text="SHORTCUT"/>
         <Border Classes="settings">
             <StackPanel>
-                <settings:SettingRow Title="F9 detects from any app" Description="{Binding DetectFromAnywhereDescription}">
+                <settings:SettingRow Title="Detect from any app" Description="{Binding DetectFromAnywhereDescription}">
                     <ToggleSwitch IsChecked="{Binding DetectFromAnywhere}"/>
                 </settings:SettingRow>
             </StackPanel>

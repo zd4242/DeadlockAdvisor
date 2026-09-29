@@ -49,7 +49,7 @@
                            Text="{Binding Hint}"
                            ToolTip.Tip="{Binding Hint}"/>
                 <Button Grid.Column="2"
-                        Content="Detect from screen (F9)"
+                        Content="{Binding DetectText}"
                         Command="{Binding DetectCommand}"
                         ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied."/>
                 <ToggleButton Grid.Column="3"
@@ -65,7 +65,7 @@
                             Content="Random"
                             Command="{Binding RandomizeCommand}"
                             CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"
-                            ToolTip.Tip="Fill the match with random heroes, for testing (F6)"/>
+                            ToolTip.Tip="{Binding RandomTip}"/>
                     <Button Classes="ghost"
                             Content="▾"
                             Padding="6,6"
@@ -73,11 +73,11 @@
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                                 <MenuItem Header="Random, keeping your hero"
-                                          InputGesture="F7"
+                                          InputGesture="{Binding RandomKeepSelfGesture}"
                                           Command="{Binding RandomizeCommand}"
                                           CommandParameter="{x:Static enums:RandomizeKeep.Self}"/>
                                 <MenuItem Header="Random enemies, keeping your team"
-                                          InputGesture="F8"
+                                          InputGesture="{Binding RandomKeepTeamGesture}"
                                           Command="{Binding RandomizeCommand}"
                                           CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"/>
                             </MenuFlyout>

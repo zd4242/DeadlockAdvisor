@@ -6,6 +6,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Settings.Detection;
 using DeadlockAdvisor.Features.Settings.General;
+using DeadlockAdvisor.Features.Settings.Shortcuts;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -17,9 +18,14 @@ public sealed record SettingsCategory(string Name, string Summary, Geometry Icon
 /// <summary>The Settings page: a sidebar of categories beside the chosen one's options, all saved as they change.</summary>
 public class SettingsViewModel : ViewModelBase
 {
-    public SettingsViewModel(GeneralSettingsViewModel general, DetectionSettingsViewModel detection, DataSettingsViewModel data)
+    public SettingsViewModel(
+        GeneralSettingsViewModel general,
+        ShortcutsSettingsViewModel shortcuts,
+        DetectionSettingsViewModel detection,
+        DataSettingsViewModel data)
     {
         General = general.DisposeWith(Disposables);
+        Shortcuts = shortcuts.DisposeWith(Disposables);
         Detection = detection.DisposeWith(Disposables);
         Data = data.DisposeWith(Disposables);
         Categories =
@@ -28,7 +34,10 @@ public class SettingsViewModel : ViewModelBase
                 Geometry.Parse("M2,4 H4.7 M8.3,4 H14 M2,8 H9.2 M12.8,8 H14 M2,12 H3.2 M6.8,12 H14 M6.5,4 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 "
                 + "M11,8 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 M5,12 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0"),
                 General),
-            new("Detection", "Reading the match off the game's top bar (F9).",
+            new("Shortcuts", "The keys for Detect and Random. Click one, then press the key you want, or Delete to take it away.",
+                Geometry.Parse("M1.5,3.5 H14.5 V12.5 H1.5 Z M4,6.5 H4.5 M6.5,6.5 H7 M9,6.5 H9.5 M11.5,6.5 H12 M5,9.5 H11"),
+                Shortcuts),
+            new("Detection", "Reading the match off the game's top bar.",
                 Geometry.Parse("M1.5,2.5 H14.5 V11.5 H1.5 Z M5,14.5 H11 M8,11.5 V14.5 "
                                + "M4,6.5 V4.5 H6 M10,4.5 H12 V6.5 M4,7.5 V9.5 H6 M10,9.5 H12 V7.5"),
                 Detection),
@@ -43,6 +52,7 @@ public class SettingsViewModel : ViewModelBase
     }
 
     public GeneralSettingsViewModel General { get; }
+    public ShortcutsSettingsViewModel Shortcuts { get; }
     public DetectionSettingsViewModel Detection { get; }
     public DataSettingsViewModel Data { get; }
 

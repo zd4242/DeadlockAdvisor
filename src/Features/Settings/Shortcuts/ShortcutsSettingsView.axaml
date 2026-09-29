@@ -1,0 +1,65 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:settings="using:DeadlockAdvisor.Features.Settings"
+             xmlns:shortcuts="using:DeadlockAdvisor.Features.Settings.Shortcuts"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.Settings.Shortcuts.ShortcutsSettingsView"
+             x:DataType="shortcuts:ShortcutsSettingsViewModel">
+
+    <UserControl.Styles>
+        <!-- By class: the recorder is styled as the Button it is, so a type selector wouldn't reach it. -->
+        <Style Selector="Button.key">
+            <Setter Property="MinWidth" Value="128"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.key:recording">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.key:recording /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- Reset sits left of the key, so the keys line up whether or not it's showing. -->
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="shortcuts:ShortcutRowViewModel">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <Button Classes="ghost"
+                        Content="Reset"
+                        IsVisible="{Binding !IsDefault}"
+                        Command="{Binding ResetCommand}"
+                        ToolTip.Tip="Back to its usual key"/>
+                <controls:ShortcutRecorder Classes="key"
+                                           Gesture="{Binding Gesture}"
+                                           RecordedCommand="{Binding RecordCommand}"
+                                           IsRecording="{Binding IsRecording, Mode=OneWayToSource}"
+                                           ToolTip.Tip="Click, then press the new key. Delete takes it away; Esc keeps it."/>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <StackPanel>
+        <TextBlock Classes="section" Text="DETECTION"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="{Binding Detect.Title}" Description="{Binding Detect.Description}" Content="{Binding Detect}"/>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="RANDOM"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="{Binding Randomize.Title}" Description="{Binding Randomize.Description}" Content="{Binding Randomize}"/>
+                <settings:SettingRow Title="{Binding RandomizeKeepSelf.Title}" Description="{Binding RandomizeKeepSelf.Description}" Content="{Binding RandomizeKeepSelf}"/>
+                <settings:SettingRow Title="{Binding RandomizeKeepTeam.Title}" Description="{Binding RandomizeKeepTeam.Description}" Content="{Binding RandomizeKeepTeam}"/>
+            </StackPanel>
+        </Border>
+
+        <Button Classes="ghost"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right"
+                Content="Reset all"
+                Command="{Binding ResetAllCommand}"/>
+    </StackPanel>
+</UserControl>

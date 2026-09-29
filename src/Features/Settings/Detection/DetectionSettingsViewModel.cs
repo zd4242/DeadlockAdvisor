@@ -1,28 +1,25 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Avalonia.Input;
+using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Settings.Detection;
 
-/// <summary>Where F9 works, how Detect from screen captures, and the hero strip it remembers per screen size.</summary>
+/// <summary>Where Detect's key works, how Detect from screen captures, and the hero strip it remembers per screen size.</summary>
 public class DetectionSettingsViewModel : SettingsPageViewModel
 {
-    public const string AnywhereDescription =
-        "Press F9 in the game to detect without switching to this window, which comes up once there's something to review. "
-        + "While this is on, other apps don't get F9.";
-
     public DetectionSettingsViewModel(ISettingsService settings, IGlobalHotkeyService hotkey) : base(settings)
     {
-        hotkey.Status
-            .Subscribe(status => DetectFromAnywhereDescription = status switch
-            {
-                HotkeyStatus.Taken => AnywhereDescription + " Another app already has F9, so for now it only works while this window has focus.",
-                HotkeyStatus.Unsupported => "Only available on Windows.",
-                _ => AnywhereDescription,
-            })
+        settings.SettingsChanged
+            .Select(s => s.Gesture(ShortcutAction.Detect))
+            .DistinctUntilChanged()
+            .CombineLatest(hotkey.Status, AnywhereDescription)
+            .Subscribe(description => DetectFromAnywhereDescription = description)
             .DisposeWith(Disposables);
 
         settings.SettingsChanged
@@ -46,7 +43,7 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.DetectFromAnywhere = value);
     }
 
-    [Reactive] public string DetectFromAnywhereDescription { get; private set; } = AnywhereDescription;
+    [Reactive] public string DetectFromAnywhereDescription { get; private set; } = "";
 
     public bool MinimizeToDetect
     {
@@ -64,4 +61,19 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
     [Reactive] public string RememberedLayouts { get; private set; } = "";
 
     public ReactiveCommand<Unit, Unit> ForgetLayoutsCommand { get; }
+
+    public static string AnywhereDescription(KeyGesture? gesture, HotkeyStatus status)
+    {
+        if (status == HotkeyStatus.Unsupported)
+            return "Only available on Windows.";
+        if (gesture is null)
+            return "Detect from screen has no key. Give it one under Shortcuts.";
+
+        var key = ShortcutKeys.Label(gesture);
+        var description = $"Press {key} in the game to detect without switching to this window, which comes up once there's something to review. "
+                          + $"While this is on, other apps don't get {key}.";
+        return status == HotkeyStatus.Taken
+            ? description + $" Another app already has {key}, so for now it only works while this window has focus."
+            : description;
+    }
 }

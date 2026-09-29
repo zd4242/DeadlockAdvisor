@@ -3,6 +3,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
@@ -97,6 +98,46 @@ public class ShortcutTests
         Assert.False(ui.Settings.Current.ShowRandomButtons);
         Assert.False(random.IsEffectivelyVisible);
         Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.Null(slot.HeroId));
+    }
+
+    [AvaloniaFact]
+    public void AMovedKeyRunsItsActionAndTheOldOneNoLongerDoes()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.Window.FocusManager!.ClearFocus();
+        var board = ui.ViewModel.Match.Board;
+        Assert.Contains(ui.Window.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Detect from screen (F9)"));
+
+        ui.Settings.Update(s =>
+        {
+            s.SetGesture(ShortcutAction.Randomize, new KeyGesture(Key.F2));
+            s.SetGesture(ShortcutAction.Detect, null);
+        });
+        UiHarness.Settle();
+        Assert.Contains(ui.Window.GetVisualDescendants().OfType<Button>(), button => Equals(button.Content, "Detect from screen"));
+        Assert.EndsWith("(F2)", board.RandomTip);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.Null(slot.HeroId));
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F2, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.NotNull(slot.HeroId));
+    }
+
+    /// <summary>The fixed keys stay in XAML, so a rebindable one mustn't be allowed onto any of them.</summary>
+    [AvaloniaFact]
+    public void NoShortcutCanBeMovedOntoOneOfTheWindowsFixedKeys()
+    {
+        using var ui = new UiHarness();
+        var rebindable = ui.ViewModel.ShortcutBindings.Select(binding => binding.Command).ToHashSet();
+
+        var fixedKeys = ui.Window.KeyBindings.Where(binding => !rebindable.Contains(binding.Command)).ToList();
+
+        Assert.NotEmpty(fixedKeys);
+        Assert.All(fixedKeys, binding => Assert.NotNull(ShortcutKeys.Problem(binding.Gesture)));
     }
 
     /// <summary>F9 held system-wide: from the game, it detects onto the Match page and brings the window up for what that shows.</summary>

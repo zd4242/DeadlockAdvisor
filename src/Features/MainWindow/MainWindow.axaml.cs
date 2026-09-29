@@ -25,6 +25,7 @@ public partial class MainWindow : Window
     private static readonly Geometry _restoreGlyph = Geometry.Parse("M0.5,2.5 H7.5 V9.5 H0.5 Z M2.5,2.5 V0.5 H9.5 V7.5 H7.5");
 
     private readonly ISettingsService? _settings;
+    private readonly List<KeyBinding> _shortcutBindings = [];
     private ModalWindow? _modalWindow;
     private IDisposable? _modalBoundsSync;
     private IDisposable? _viewActions;
@@ -82,7 +83,22 @@ public partial class MainWindow : Window
                     else if (action == MainWindowViewModel.BringForwardAction)
                         BringForward();
                 }),
-                vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()));
+                vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()),
+                vm.WhenAnyValue(v => v.ShortcutBindings).Subscribe(ApplyShortcuts));
+        }
+    }
+
+    /// <summary>Swap the rebindable keys in beside the fixed ones from XAML.</summary>
+    private void ApplyShortcuts(IReadOnlyList<ShortcutBinding> shortcuts)
+    {
+        foreach (var binding in _shortcutBindings)
+            KeyBindings.Remove(binding);
+        _shortcutBindings.Clear();
+        foreach (var shortcut in shortcuts)
+        {
+            var binding = new KeyBinding { Gesture = shortcut.Gesture, Command = shortcut.Command, CommandParameter = shortcut.Parameter };
+            _shortcutBindings.Add(binding);
+            KeyBindings.Add(binding);
         }
     }
 

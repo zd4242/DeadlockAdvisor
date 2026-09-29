@@ -6,6 +6,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Settings;
 using DeadlockAdvisor.Features.Settings.Data;
@@ -184,15 +185,21 @@ public class SettingsPageTests
     }
 
     [AvaloniaFact]
-    public void TheF9SettingSaysWhenAnotherAppHasTheKey()
+    public void TheDetectFromAnywhereSettingNamesTheKeyAndSaysWhenAnotherAppHasIt()
     {
         using var ui = new UiHarness();
         var detection = ui.ViewModel.Settings.Detection;
         Assert.True(detection.DetectFromAnywhere);
-        Assert.Equal(DetectionSettingsViewModel.AnywhereDescription, detection.DetectFromAnywhereDescription);
+        Assert.StartsWith("Press F9 in the game", detection.DetectFromAnywhereDescription);
+        Assert.DoesNotContain("Another app", detection.DetectFromAnywhereDescription);
 
         ui.Hotkey.SetStatus(HotkeyStatus.Taken);
         Assert.Contains("Another app already has F9", detection.DetectFromAnywhereDescription);
+
+        ui.Settings.Update(s => s.SetGesture(ShortcutAction.Detect, new KeyGesture(Key.G, KeyModifiers.Control | KeyModifiers.Shift)));
+        Assert.Contains("Another app already has Ctrl+Shift+G", detection.DetectFromAnywhereDescription);
+        ui.Settings.Update(s => s.SetGesture(ShortcutAction.Detect, null));
+        Assert.Contains("has no key", detection.DetectFromAnywhereDescription);
 
         detection.DetectFromAnywhere = false;
         Assert.False(ui.Settings.Current.DetectFromAnywhere);

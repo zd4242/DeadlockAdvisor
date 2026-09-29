@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Avalonia.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
@@ -10,6 +11,7 @@ using DeadlockAdvisor.Features.Settings;
 using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Settings.Detection;
 using DeadlockAdvisor.Features.Settings.General;
+using DeadlockAdvisor.Features.Settings.Shortcuts;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Notifications;
@@ -170,6 +172,7 @@ public class MainWindowViewModel : ViewModelBase
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
         Settings = new SettingsViewModel(
             new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
+            new ShortcutsSettingsViewModel(settings, hotkey),
             new DetectionSettingsViewModel(settings, hotkey),
             new DataSettingsViewModel(settings, data, art, dataMenu, ReloadArtCommand)).DisposeWith(Disposables);
         Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
@@ -191,6 +194,14 @@ public class MainWindowViewModel : ViewModelBase
             onMatchPage.CombineLatest(Match.Board.RandomizeCommand.CanExecute, (onPage, canRandomize) => onPage && canRandomize));
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => ShortcutKeys.Defaults.Keys.Select(action => (action, gesture: s.Gesture(action))).ToEquatableList())
+            .DistinctUntilChanged()
+            .Subscribe(keys => ShortcutBindings = keys
+                .Where(key => key.gesture is not null)
+                .Select(key => ShortcutBindingFor(key.action, key.gesture!))
+                .ToList())
+            .DisposeWith(Disposables);
 
         RefreshStatus();
     }
@@ -250,13 +261,16 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
-    /// <summary>Alt+1/2/3 (which open the hero picker), F6–F8 and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
+    /// <summary>Alt+1/2/3 (which open the hero picker), Random and Detect, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 
-    /// <summary>F9 while it's held system-wide, pressed here or in the game, on whichever page is showing.</summary>
+    /// <summary>Detect's key while it's held system-wide, pressed here or in the game, on whichever page is showing.</summary>
     public ReactiveCommand<Unit, Unit> DetectFromAnywhereCommand { get; }
+
+    /// <summary>The rebindable keys (F6–F9 unless Settings → Shortcuts moves them), for the window to bind.</summary>
+    [Reactive] public IReadOnlyList<ShortcutBinding> ShortcutBindings { get; private set; } = [];
 
     /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
     public void OnOpened() => DataMenu.OnStartup();
@@ -291,6 +305,15 @@ public class MainWindowViewModel : ViewModelBase
         });
         return true;
     }
+
+    private ShortcutBinding ShortcutBindingFor(ShortcutAction action, KeyGesture gesture) => action switch
+    {
+        ShortcutAction.Detect => new(gesture, DetectCommand, Unit.Default),
+        ShortcutAction.Randomize => new(gesture, RandomizeCommand, RandomizeKeep.Nothing),
+        ShortcutAction.RandomizeKeepSelf => new(gesture, RandomizeCommand, RandomizeKeep.Self),
+        ShortcutAction.RandomizeKeepTeam => new(gesture, RandomizeCommand, RandomizeKeep.OwnTeam),
+        _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
+    };
 
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 

@@ -23,6 +23,9 @@ public class AppSettings
     public bool MinimizeToDetect { get; set; } = true;
     public bool KeepUnreadCaptures { get; set; } = true;
 
+    // Only the keys moved from their defaults; read them through ShortcutKeys.Gesture.
+    public Dictionary<ShortcutAction, string> Shortcuts { get; set; } = [];
+
     // View
     public int ZoomIndex { get; set; } = ZoomLevels.DefaultIndex;
     public WindowGeometry? WindowGeometry { get; set; }

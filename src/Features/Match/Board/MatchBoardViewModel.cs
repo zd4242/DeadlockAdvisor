@@ -3,6 +3,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
+using Avalonia.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
@@ -44,6 +45,15 @@ public class MatchBoardViewModel : ViewModelBase
             .DistinctUntilChanged()
             .Subscribe(show => ShowsRandom = show)
             .DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Subscribe(s =>
+            {
+                DetectText = ShortcutKeys.WithKey("Detect from screen", s.Gesture(ShortcutAction.Detect));
+                RandomTip = ShortcutKeys.WithKey("Fill the match with random heroes, for testing", s.Gesture(ShortcutAction.Randomize));
+                RandomKeepSelfGesture = s.Gesture(ShortcutAction.RandomizeKeepSelf);
+                RandomKeepTeamGesture = s.Gesture(ShortcutAction.RandomizeKeepTeam);
+            })
+            .DisposeWith(Disposables);
 
         SetModeCommand = ReactiveCommand.Create<Role>(SetMode);
         ClearCommand = ReactiveCommand.Create(() =>
@@ -84,8 +94,14 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>Whether the hero picker is showing. It starts hidden, on the assumption detection gets the match right.</summary>
     [Reactive] public bool IsPickerOpen { get; set; }
 
-    /// <summary>Whether the match bar offers Random, which a setting can hide; F6–F8 go with it, so a stray key can't wipe a detected match.</summary>
+    /// <summary>Whether the match bar offers Random, which a setting can hide; its keys go with it, so a stray one can't wipe a detected match.</summary>
     [Reactive] public bool ShowsRandom { get; private set; }
+
+    /// <summary>The match bar's names for Detect and Random, with the keys Settings → Shortcuts has them on.</summary>
+    [Reactive] public string DetectText { get; private set; } = "";
+    [Reactive] public string RandomTip { get; private set; } = "";
+    [Reactive] public KeyGesture? RandomKeepSelfGesture { get; private set; }
+    [Reactive] public KeyGesture? RandomKeepTeamGesture { get; private set; }
 
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";
@@ -112,7 +128,7 @@ public class MatchBoardViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ClearCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
 
-    /// <summary>Screen detection, owned by the Match tab (F9 or the button).</summary>
+    /// <summary>Screen detection, owned by the Match tab (its key or the button).</summary>
     public System.Windows.Input.ICommand? DetectCommand { get; set; }
 
     public void SetMode(Role role)
