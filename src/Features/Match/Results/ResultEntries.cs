@@ -10,7 +10,8 @@ namespace DeadlockAdvisor.Features.Match.Results;
 /// <summary>A row's bars: fractions of a full bar, below 0 for a negative one.</summary>
 /// <param name="Data">A second bar, the data's part, when the ranking adds both opinions.</param>
 /// <param name="Tip">How the bars were worked out, when that isn't just the score.</param>
-public readonly record struct Bars(double Fraction, double? Data = null, string? Tip = null);
+/// <param name="Color">The first bar's colour, when it isn't the formula's.</param>
+public readonly record struct Bars(double Fraction, double? Data = null, string? Tip = null, Color? Color = null);
 
 /// <summary>
 /// One recommendation. Built once per item and updated in place: the list is re-sorted and
@@ -44,7 +45,7 @@ public class ResultRowViewModel : ViewModelBase
 
     public Color ShopColor => Palette.ShopColor(ShopCategory);
 
-    /// <summary>The number on the right: the formula score, or the blend when ranking by formula and data together.</summary>
+    /// <summary>The number on the right: what the list is ranked by, the formula score, the data strength or the blend.</summary>
     [Reactive] public DisplayAmount Score { get; private set; }
 
     /// <summary>As printed, so a score that rounds to 0.0 reads as zero rather than a red ▼0.0.</summary>
@@ -53,6 +54,9 @@ public class ResultRowViewModel : ViewModelBase
 
     /// <summary>The bar: the ranking's measure over the largest one on screen (the formula's part, ranking by both), below 0 for a negative one.</summary>
     [Reactive] public double Fraction { get; private set; }
+
+    /// <summary>The data's colour when the bar is the data strength, so it matches the data bar ranking by both.</summary>
+    [Reactive] public Color BarColor { get; private set; } = Palette.Formula;
 
     /// <summary>A second bar under it, the data's part, when ranking by formula and data together.</summary>
     [Reactive] public double DataFraction { get; private set; }
@@ -79,6 +83,7 @@ public class ResultRowViewModel : ViewModelBase
         IsNegative = Score.Shown < 0;
         IsZero = Score.Shown == 0;
         Fraction = bars.Fraction;
+        BarColor = bars.Color ?? Palette.Formula;
         DataFraction = bars.Data ?? 0;
         HasDataBar = bars.Data is not null;
         BarTip = bars.Tip;

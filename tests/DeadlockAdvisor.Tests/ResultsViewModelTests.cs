@@ -94,6 +94,13 @@ public class ResultsViewModelTests
         // b: 1.8, c: 1.5, a: 3 / 3 = 1; d nets below 0 and e has none.
         Assert.Equal(["b", "c", "a"], Rows(results));
         Assert.DoesNotContain(results.Entries, entry => entry is SectionHeaderViewModel);
+        // The number and the bar are the data strength, not the formula score, in the data's colour.
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
+        Assert.Equal(["1.8", "1.5", "1.0"], rows.Select(row => row.Score.Text));
+        Assert.All(rows, row => Assert.Equal(Palette.Data, row.BarColor));
+
+        results.SetDisplay(RankBy.Formula, false, 0);
+        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.Equal(Palette.Formula, row.BarColor));
     }
 
     [Fact]

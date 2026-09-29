@@ -119,7 +119,7 @@
                                         </Panel>
                                     </Grid>
                                     <StackPanel Spacing="2" Background="Transparent" ToolTip.Tip="{Binding BarTip}">
-                                        <controls:ScoreBar Classes.pair="{Binding HasDataBar}" Fraction="{Binding Fraction}"/>
+                                        <controls:ScoreBar Classes.pair="{Binding HasDataBar}" Fraction="{Binding Fraction}" Color="{Binding BarColor}"/>
                                         <controls:ScoreBar Classes="pair"
                                                            Color="{x:Static theme:Palette.Data}"
                                                            Fraction="{Binding DataFraction}"

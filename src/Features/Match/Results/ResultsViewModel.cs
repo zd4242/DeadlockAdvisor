@@ -215,17 +215,19 @@ public class ResultsViewModel : ViewModelBase
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
 
-    /// <summary>A listed row: blending, it shows the blend rather than the formula score, and whether the two disagree.</summary>
-    private ResultRowViewModel RankedRow(ScoredItem item, double measure, double scale, BlendScale blend) =>
-        _rankBy == RankBy.Both
-            ? Row(item, BlendBars(item, measure, scale, blend), shown: measure, disagrees: blend.Disagree(item))
-            : Row(item, BarsFor(item, measure, scale));
+    /// <summary>A listed row, showing the measure it's ranked by; blending, also whether the two opinions disagree.</summary>
+    private ResultRowViewModel RankedRow(ScoredItem item, double measure, double scale, BlendScale blend) => _rankBy switch
+    {
+        RankBy.Both => Row(item, BlendBars(item, measure, scale, blend), shown: measure, disagrees: blend.Disagree(item)),
+        RankBy.MatchData => Row(item, DataBars(item, measure, scale), shown: measure),
+        _ => Row(item, new Bars(Share(measure, scale))),
+    };
 
-    /// <summary>A row's bar: the ranking's measure against the largest on screen.</summary>
-    private Bars BarsFor(ScoredItem item, double measure, double scale) =>
-        _rankBy == RankBy.MatchData
-            ? new Bars(Share(measure, scale), Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}\n\n{DataStrengthNote}")
-            : new Bars(Share(measure, scale));
+    /// <summary>The data strength against the largest on screen, in the data's colour.</summary>
+    private static Bars DataBars(ScoredItem item, double measure, double scale) =>
+        new(Share(measure, scale),
+            Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}\n\n{DataStrengthNote}",
+            Color: Palette.Data);
 
     /// <summary>The formula's part and the data's, on one scale and below 0 when negative, so it shows which one carries the item.</summary>
     private static Bars BlendBars(ScoredItem item, double measure, double scale, BlendScale blend)
@@ -282,7 +284,7 @@ public class ResultsViewModel : ViewModelBase
         RankBy.MatchData =>
             "Ranked by the match data: how much more often players win with each item in real matches.\n"
             + DataStrengthNote + "\n"
-            + "The bar shows that; the number on the right is still the formula score.",
+            + "The bar and the number on the right show that; click an item to see its formula score.",
         RankBy.Both =>
             "Ranked by the formula and the match data added together.\n"
             + ExplainText.BlendScaleNote + "\n"
