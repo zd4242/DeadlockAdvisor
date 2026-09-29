@@ -31,6 +31,10 @@
         <TextBlock Classes="section" Text="HERO STRIP"/>
         <Border Classes="settings">
             <StackPanel>
+                <settings:SettingRow Title="Remember my corrections as reference art"
+                                     Description="When you correct a hero in the review, save that portrait under assets/topbar so the same look is recognised next time, such as a skin.">
+                    <ToggleSwitch IsChecked="{Binding RememberCorrections}"/>
+                </settings:SettingRow>
                 <settings:SettingRow Title="Remembered positions" Description="{Binding RememberedLayouts}">
                     <Button Content="Forget" Command="{Binding ForgetLayoutsCommand}"
                             ToolTip.Tip="Search the whole top bar again on the next Detect, e.g. after changing the HUD scale"/>

@@ -22,6 +22,7 @@ public class AppSettings
     public bool DetectFromAnywhere { get; set; } = true;
     public bool MinimizeToDetect { get; set; } = true;
     public bool KeepUnreadCaptures { get; set; } = true;
+    public bool RememberCorrections { get; set; } = true;
 
     // Only the keys moved from their defaults; read them through ShortcutKeys.Gesture.
     public Dictionary<ShortcutAction, string> Shortcuts { get; set; } = [];

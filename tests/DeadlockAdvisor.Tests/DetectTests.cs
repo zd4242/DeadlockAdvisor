@@ -180,17 +180,22 @@ public sealed class DetectTests : IDisposable
         Assert.Equal(Role.None, _page.Match.RoleOf("silver"));
     }
 
+    /// <summary>The choice only comes up once there's a correction, and it sticks, as the setting it's shared with.</summary>
     [AvaloniaFact]
     public async Task CorrectionsAreNotKeptWhenAskedNotTo()
     {
         var review = await DetectAsync();
+        Assert.False(review.HasCorrections);
         review.Slots[3].SelectedHero = review.Slots[3].Choices.Single(choice => choice.HeroId == "haze");
+        Assert.True(review.HasCorrections);
         review.RememberCorrections = false;
 
         await review.ApplyCommand.Execute();
 
         Assert.False(Directory.Exists(Path.Combine(_detect.TopbarDir, "haze")));
         Assert.False(_fixture.Modals.IsModalOpen);
+        Assert.False(_fixture.Settings.Current.RememberCorrections);
+        Assert.False((await DetectAsync()).RememberCorrections);
     }
 
     [AvaloniaFact]

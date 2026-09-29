@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
@@ -6,6 +7,7 @@ using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Vision;
+using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Match.Detect;
 
@@ -116,7 +118,13 @@ public class DetectAction
                 Apply(match, result, capturedAt, directory);
                 applied();
             },
-            () => Close(review!));
+            () => Close(review!))
+        {
+            RememberCorrections = _settings.Current.RememberCorrections,
+        };
+        review.WhenAnyValue(vm => vm.RememberCorrections)
+            .Skip(1)
+            .Subscribe(remember => _settings.Update(s => s.RememberCorrections = remember));
         _modals.ShowModal(review);
     }
 

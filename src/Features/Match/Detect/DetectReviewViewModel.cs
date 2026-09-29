@@ -1,4 +1,5 @@
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Vision;
@@ -38,6 +39,10 @@ public class DetectReviewViewModel : ViewModelBase
             .ToList();
         SelfSlot = detection.SelfSlot;
         Relabel();
+        Slots.Select(slot => slot.WhenAnyValue(s => s.SelectedHero))
+            .Merge()
+            .Subscribe(_ => HasCorrections = Slots.Any(slot => slot.WasCorrected))
+            .DisposeWith(Disposables);
 
         ApplyCommand = ReactiveCommand.Create(() => apply(Result()), this.WhenAnyValue(vm => vm.SelfSlot).Select(self => self is not null));
         CancelCommand = ReactiveCommand.Create(cancel);
@@ -52,7 +57,11 @@ public class DetectReviewViewModel : ViewModelBase
     [Reactive] public string OwnHeading { get; private set; } = "";
     [Reactive] public string FoeHeading { get; private set; } = "";
     [Reactive] public string Summary { get; private set; } = "";
+    /// <summary>Starts from the setting, and changing it here changes the setting too.</summary>
     [Reactive] public bool RememberCorrections { get; set; } = true;
+
+    /// <summary>A slot has been corrected, so there's something to remember.</summary>
+    [Reactive] public bool HasCorrections { get; private set; }
 
     public ReactiveCommand<Unit, Unit> ApplyCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }

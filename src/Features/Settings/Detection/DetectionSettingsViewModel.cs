@@ -57,6 +57,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.KeepUnreadCaptures = value);
     }
 
+    public bool RememberCorrections
+    {
+        get => Current.RememberCorrections;
+        set => Change(s => s.RememberCorrections = value);
+    }
+
     [Reactive] public bool HasRememberedLayouts { get; private set; }
     [Reactive] public string RememberedLayouts { get; private set; } = "";
 

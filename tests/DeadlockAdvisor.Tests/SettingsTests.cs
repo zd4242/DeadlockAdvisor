@@ -66,6 +66,7 @@ public class SettingsTests
         Assert.True(settings.DetectFromAnywhere);
         Assert.True(settings.MinimizeToDetect);
         Assert.True(settings.KeepUnreadCaptures);
+        Assert.True(settings.RememberCorrections);
     }
 
     private static async Task WaitForFile(string path)
