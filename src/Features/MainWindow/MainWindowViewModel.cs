@@ -67,9 +67,9 @@ public class MainWindowViewModel : ViewModelBase
         + "matches (Data → Fetch Match Stats): win-rate points the item gains\n"
         + "against your enemies, and on your own hero. They're never added\n"
         + "into the score, but 'Rank by match data' orders the list by them\n"
-        + "instead, and 'Formula + data' adds the two, each measured by how far\n"
-        + "it typically strays from 0, so an item one of them has nothing to say\n"
-        + "about still ranks on the other.\n"
+        + "instead, and 'Formula + match data' (the default) adds the two, each\n"
+        + "measured by how far it typically strays from 0, so an item one of them\n"
+        + "has nothing to say about still ranks on the other.\n"
         + "DATA ★ marks an item that stands out in real matches, and 'Match\n"
         + "data also likes' lists standouts the formula scores 0 or below.";
 
