@@ -26,7 +26,7 @@ public class MatchBoardViewModel : ViewModelBase
     public const string RosterHint = "Click a portrait to change its role · × removes · an empty slot adds to that team";
     public const string NoSelfHint = "You're not set yet -- detect the match, or click an empty ally slot to pick your hero";
 
-    public static readonly IReadOnlyList<Role> ModeOrder = [Role.Enemy, Role.Ally, Role.Self];
+    public static readonly IReadOnlyList<Role> ModeOrder = [Role.Self, Role.Enemy, Role.Ally];
 
     private readonly MatchState _match;
     private readonly Func<DataStore> _store;
@@ -67,7 +67,7 @@ public class MatchBoardViewModel : ViewModelBase
             .DisposeWith(Disposables);
 
         BuildTiles();
-        SetMode(Role.Enemy);
+        SetMode(Role.Self);
         RefreshRosters();
     }
 

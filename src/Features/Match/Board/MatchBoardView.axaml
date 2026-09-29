@@ -12,6 +12,12 @@
                 <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center" Margin="0,0,10,0"/>
                 <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
                     <StackPanel>
+                        <ToggleButton Classes="self"
+                                      Content="You"
+                                      IsChecked="{Binding IsSelfMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Self}"
+                                      ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
                         <ToggleButton Classes="enemy"
                                       Content="Enemy"
                                       IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
@@ -24,12 +30,6 @@
                                       Command="{Binding SetModeCommand}"
                                       CommandParameter="{x:Static enums:Role.Ally}"
                                       ToolTip.Tip="Click heroes to mark them as Ally (Alt+2)"/>
-                        <ToggleButton Classes="self"
-                                      Content="You"
-                                      IsChecked="{Binding IsSelfMode, Mode=OneWay}"
-                                      Command="{Binding SetModeCommand}"
-                                      CommandParameter="{x:Static enums:Role.Self}"
-                                      ToolTip.Tip="Click heroes to mark them as You (Alt+3)"/>
                     </StackPanel>
                 </Border>
                 <controls:SearchBox Grid.Column="2"

@@ -196,7 +196,7 @@ public class MatchPageTests
         ui.Window.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         UiHarness.Settle();
 
-        Assert.Equal(Role.Enemy, match.Match.RoleOf("haze"));
+        Assert.Equal(Role.Self, match.Match.RoleOf("haze"));
         Assert.Equal("", match.Board.SearchText);
         Assert.Equal(["haze"], ui.Settings.Current.LastMatch!.Roles.Keys);
     }
