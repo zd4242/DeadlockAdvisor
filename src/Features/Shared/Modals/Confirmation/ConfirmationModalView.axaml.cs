@@ -5,6 +5,7 @@ namespace DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 public partial class ConfirmationModalView : ReactiveUserControl<ConfirmationModalViewModel>
 {
     public static readonly string ConfirmButtonName = "ConfirmButton";
+    public static readonly string CancelButtonName = "CancelButton";
 
     public ConfirmationModalView()
     {
@@ -17,7 +18,8 @@ public partial class ConfirmationModalView : ReactiveUserControl<ConfirmationMod
         // Small delay to ensure the modal has been rendered before taking focus.
         await Task.Delay(50);
 
-        if (this.FindControl<Button>(ConfirmButtonName) is { } button)
+        var focused = ViewModel?.IsDestructive == true ? CancelButtonName : ConfirmButtonName;
+        if (this.FindControl<Button>(focused) is { } button)
             button.Focus();
     }
 }

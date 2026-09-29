@@ -15,6 +15,9 @@ public class ConfirmationModalViewModel : ViewModelBase
     // a third button labeled SecondaryConfirmText is shown alongside Confirm/Cancel.
     [Reactive] public string? SecondaryConfirmText { get; set; }
 
+    /// <summary>Confirming loses something: the confirm button is drawn as a warning and Cancel takes the focus.</summary>
+    [Reactive] public bool IsDestructive { get; set; }
+
     public ICommand? ConfirmCommand { get; set; }
     public ICommand? CancelCommand { get; set; }
     public ICommand? SecondaryConfirmCommand { get; set; }

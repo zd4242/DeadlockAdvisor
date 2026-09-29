@@ -285,21 +285,17 @@ public class MainWindowViewModel : ViewModelBase
             return false;
 
         var running = DataMenu.Jobs.Where(job => job.IsRunning).Select(job => $"  • {job.Title}: {job.StatusText}");
-        _modals.ShowModal(new ConfirmationModalViewModel
-        {
-            Prompt = "Still downloading:\n" + string.Join("\n", running)
-                     + "\n\nQuit anyway? Match stats stopped part-way keep nothing; art that has arrived is kept.",
-            ConfirmText = "Quit",
-            CancelText = "Keep downloading",
-            ConfirmCommand = ReactiveCommand.Create(() =>
+        _modals.Confirm(
+            "Still downloading:\n" + string.Join("\n", running)
+            + "\n\nQuit anyway? Match stats stopped part-way keep nothing; art that has arrived is kept.",
+            "Quit",
+            () =>
             {
                 _closeConfirmed = true;
-                _modals.CloseModal();
                 DataMenu.CancelJobs();
                 RequestViewAction(CloseAction);
-            }),
-            CancelCommand = ReactiveCommand.Create(_modals.CloseModal),
-        });
+            },
+            cancelText: "Keep downloading");
         return true;
     }
 

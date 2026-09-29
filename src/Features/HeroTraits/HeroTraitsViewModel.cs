@@ -5,7 +5,9 @@ using Avalonia.Input;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Theme;
 using ReactiveUI;
@@ -23,6 +25,7 @@ namespace DeadlockAdvisor.Features.HeroTraits;
 /// <item>Backspace rubs out the last digit typed, or blanks the cell back to 0 when nothing is pending.</item>
 /// <item>"Copy from..." clones an already-rated hero's whole profile as a starting point.</item>
 /// <item>Clicking a trait's header sorts the heroes by it: highest first, then lowest, then back to by name.</item>
+/// <item>Ctrl+Z undoes the last edit, a cleared or copied hero included; Ctrl+Y or Ctrl+Shift+Z redoes it.</item>
 /// </list>
 /// Every edit writes straight through to the store; the data service debounces the CSV save.
 /// </summary>
@@ -32,10 +35,13 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public const string Hint =
         "Type 0–100: it commits as soon as no more digits fit (space or Tab ends a short one).\n"
-        + "\"-\" first for ± traits.\nBackspace clears.\nEnter moves down a hero.";
+        + "\"-\" first for ± traits.\nBackspace clears.\nEnter moves down a hero.\nCtrl+Z undoes, Ctrl+Y redoes.";
 
     private readonly IDataService _data;
     private readonly IModalService _modals;
+    private readonly Stack<ScoreEdit> _undo = new();
+    private readonly Stack<ScoreEdit> _redo = new();
+    private DataStore? _historyStore;
     private string _pendingDigits = "";
     private bool _pendingNegative;
 
@@ -46,6 +52,8 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
         CopyFromCommand = ReactiveCommand.Create(CopyFrom);
         ClearHeroCommand = ReactiveCommand.Create(ClearHero);
+        UndoCommand = ReactiveCommand.Create(Undo, this.WhenAnyValue(vm => vm.CanUndo));
+        RedoCommand = ReactiveCommand.Create(Redo, this.WhenAnyValue(vm => vm.CanRedo));
         SortCommand = ReactiveCommand.Create<int>(CycleSort);
 
         Reload();
@@ -87,6 +95,9 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     [Reactive] public string ProgressText { get; private set; } = "";
 
+    [Reactive] public bool CanUndo { get; private set; }
+    [Reactive] public bool CanRedo { get; private set; }
+
     /// <summary>The footer: what the focused cell means, or what the last action did.</summary>
     [Reactive] public IReadOnlyList<TextSpan> ContextSpans { get; private set; } = [];
 
@@ -97,6 +108,8 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public ReactiveCommand<Unit, Unit> CopyFromCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearHeroCommand { get; }
+    public ReactiveCommand<Unit, Unit> UndoCommand { get; }
+    public ReactiveCommand<Unit, Unit> RedoCommand { get; }
     public ReactiveCommand<int, Unit> SortCommand { get; }
 
     public void FocusSearch() => RequestViewAction(FocusSearchAction);
@@ -112,13 +125,10 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     {
         if (row < 0 || row >= Heroes.Count || column < 0 || column >= Categories.Count)
             return;
-        var category = Categories[column];
+        var (hero, category) = (Heroes[row], Categories[column]);
         var number = Math.Max(category.ScaleMin, Math.Min(category.ScaleMax, value));
-        if (!_data.Store.SetHeroScore(Heroes[row].HeroId, category.CategoryId, number))
-            return;
-        _data.MarkEdited(DataFiles.HeroScores);
-        Revision++;
-        RefreshProgress();
+        RecordEdit($"setting {category.CategoryName} on {hero.HeroName} to {Format.Num(number)}", hero, category, [category],
+            () => _data.Store.SetHeroScore(hero.HeroId, category.CategoryId, number));
     }
 
     /// <summary>Typed characters: digits build the pending number, "-" flips its sign on ± traits.</summary>
@@ -180,6 +190,18 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         if (key == Key.Escape && HasPending)
         {
             ClearPending();
+            return true;
+        }
+
+        if (control && key is Key.Z or Key.Y)
+        {
+            // Mid-number, undo only takes back the typing, as it does in a spreadsheet.
+            if (HasPending)
+                ClearPending();
+            else if (key == Key.Y || shift)
+                Redo();
+            else
+                Undo();
             return true;
         }
 
@@ -394,7 +416,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     private void CopyFrom()
     {
-        if (CurrentHero is not { } target)
+        if (CurrentHero is not { } target || CurrentCategory is not { } focused)
             return;
         var store = _data.Store;
         // Only already-rated heroes: copying from a blank one is never what you meant.
@@ -414,27 +436,105 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
             index =>
             {
                 var source = rated[index];
-                if (!_data.Store.CopyHeroScores(source.HeroId, target.HeroId))
-                    return;
-                AfterBulkEdit();
-                ShowMessage($"Copied {source.HeroName}'s profile onto {target.HeroName} — adjust from there.");
+                if (RecordEdit($"copying {source.HeroName}'s profile onto {target.HeroName}", target, focused, Categories,
+                        () => _data.Store.CopyHeroScores(source.HeroId, target.HeroId)))
+                    ShowMessage($"Copied {source.HeroName}'s profile onto {target.HeroName} — adjust from there.");
             }));
     }
 
     private void ClearHero()
     {
-        if (CurrentHero is not { } hero || !_data.Store.ClearHeroScores(hero.HeroId))
+        if (CurrentHero is not { } hero || CurrentCategory is not { } focused)
             return;
-        AfterBulkEdit();
-        ShowMessage($"Cleared every trait on {hero.HeroName}.");
+        var filled = _data.Store.HeroFilledCount(hero.HeroId);
+        if (filled == 0)
+        {
+            ShowMessage($"{hero.HeroName} has no traits to clear.");
+            return;
+        }
+
+        _modals.Confirm(
+            $"Reset every trait on {hero.HeroName} to 0?\n\n{filled} of {Categories.Count} are rated. Ctrl+Z on the grid undoes this.",
+            "Clear hero",
+            () =>
+            {
+                if (RecordEdit($"clearing {hero.HeroName}", hero, focused, Categories, () => _data.Store.ClearHeroScores(hero.HeroId)))
+                    ShowMessage($"Cleared every trait on {hero.HeroName}. Ctrl+Z undoes it.");
+            },
+            destructive: true);
     }
 
-    private void AfterBulkEdit()
+    // -- undo ---------------------------------------------------------------------
+
+    /// <summary>
+    /// Run an edit to one hero's scores and remember what it changed, for Ctrl+Z. The focused cell
+    /// is where undoing it lands you. False when the edit changed nothing.
+    /// </summary>
+    private bool RecordEdit(string description, Hero hero, Category focused, IReadOnlyList<Category> categories, Func<bool> edit)
+    {
+        var store = _data.Store;
+        var before = categories.Select(category => store.HeroScore(hero.HeroId, category.CategoryId)).ToList();
+        if (!edit())
+            return false;
+        var changes = categories
+            .Select((category, index) => new ScoreChange(category.CategoryId, before[index], store.HeroScore(hero.HeroId, category.CategoryId)))
+            .Where(change => change.Before != change.After)
+            .ToList();
+        _undo.Push(new ScoreEdit(description, hero.HeroId, focused.CategoryId, changes));
+        _redo.Clear();
+        AfterEdit();
+        return true;
+    }
+
+    private void Undo() => Replay(_undo, _redo, change => change.Before, "Undid");
+
+    private void Redo() => Replay(_redo, _undo, change => change.After, "Redid");
+
+    /// <summary>Put one edit's values back (or forward again), then show the cell it was made from.</summary>
+    private void Replay(Stack<ScoreEdit> from, Stack<ScoreEdit> to, Func<ScoreChange, double> valueOf, string verb)
+    {
+        ClearPending();
+        if (!from.TryPop(out var edit))
+            return;
+        var store = _data.Store;
+        foreach (var change in edit.Changes)
+        {
+            // A sync since may have dropped the hero or the trait.
+            if (store.Heroes.ContainsKey(edit.HeroId) && store.Categories.ContainsKey(change.CategoryId))
+                store.SetHeroScore(edit.HeroId, change.CategoryId, valueOf(change));
+        }
+        to.Push(edit);
+        AfterEdit();
+
+        var row = Heroes.ToList().FindIndex(hero => hero.HeroId == edit.HeroId);
+        var column = Categories.ToList().FindIndex(category => category.CategoryId == edit.CategoryId);
+        if (row >= 0)
+            MoveTo(row, column >= 0 ? column : CurrentColumn);
+        ShowMessage($"{verb} {edit.Description}.");
+    }
+
+    private void AfterEdit()
     {
         _data.MarkEdited(DataFiles.HeroScores);
         Revision++;
         RefreshProgress();
+        (CanUndo, CanRedo) = (_undo.Count > 0, _redo.Count > 0);
     }
+
+    /// <summary>The history only makes sense against the store it was recorded on: a reload from disk or another data folder starts it afresh.</summary>
+    private void ResetHistoryIfStoreChanged()
+    {
+        if (ReferenceEquals(_historyStore, _data.Store))
+            return;
+        _historyStore = _data.Store;
+        _undo.Clear();
+        _redo.Clear();
+        (CanUndo, CanRedo) = (false, false);
+    }
+
+    private sealed record ScoreEdit(string Description, string HeroId, string CategoryId, IReadOnlyList<ScoreChange> Changes);
+
+    private readonly record struct ScoreChange(string CategoryId, double Before, double After);
 
     private void ShowMessage(string text) => ContextSpans = [new TextSpan(text)];
 
@@ -472,6 +572,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     /// <summary>Adopt a reloaded store: heroes and traits may have changed.</summary>
     private void Reload()
     {
+        ResetHistoryIfStoreChanged();
         var store = _data.Store;
         Heroes = store.HeroesSorted();
         Categories = store.CategoriesOrdered();

@@ -1,6 +1,7 @@
 using Avalonia.Input;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Support;
 
@@ -237,16 +238,42 @@ public sealed class HeroTraitsTests : IDisposable
     }
 
     [Fact]
-    public void CopyFromOffersOnlyRatedHeroesAndClearHeroBlanksOne()
+    public void ClearHeroAsksFirstAndOnlyClearsOnConfirm()
+    {
+        ConfirmationModalViewModel? confirm = null;
+        using var _ = _fixture.Modals.ShowModalObservable.Subscribe(shown => confirm = shown as ConfirmationModalViewModel);
+        var store = _fixture.Data.Store;
+        var hero = _vm.Heroes[0];
+        var filled = store.HeroFilledCount(hero.HeroId);
+        Assert.True(filled > 0);
+
+        _vm.ClearHeroCommand.Execute().Subscribe();
+        Assert.NotNull(confirm);
+        Assert.True(confirm.IsDestructive);
+        Assert.Contains(hero.HeroName, confirm.Prompt);
+        confirm.CancelCommand!.Execute(null);
+        Assert.Equal(filled, store.HeroFilledCount(hero.HeroId));
+        Assert.False(_fixture.Modals.IsModalOpen);
+
+        _vm.ClearHeroCommand.Execute().Subscribe();
+        confirm.ConfirmCommand!.Execute(null);
+        Assert.Equal(0, store.HeroFilledCount(hero.HeroId));
+        Assert.StartsWith($"Cleared every trait on {hero.HeroName}.", _vm.ContextSpans.Single().Text);
+
+        // Nothing left to lose, so nothing to ask.
+        confirm = null;
+        _vm.ClearHeroCommand.Execute().Subscribe();
+        Assert.Null(confirm);
+    }
+
+    [Fact]
+    public void CopyFromOffersOnlyRatedHeroes()
     {
         ChoiceModalViewModel? modal = null;
         using var _ = _fixture.Modals.ShowModalObservable.Subscribe(shown => modal = shown as ChoiceModalViewModel);
         var store = _fixture.Data.Store;
         var target = _vm.Heroes[0];
-
-        _vm.ClearHeroCommand.Execute().Subscribe();
-        Assert.Equal(0, store.HeroFilledCount(target.HeroId));
-        Assert.Equal($"Cleared every trait on {target.HeroName}.", _vm.ContextSpans.Single().Text);
+        store.ClearHeroScores(target.HeroId);
 
         _vm.CopyFromCommand.Execute().Subscribe();
         Assert.NotNull(modal);
@@ -258,6 +285,91 @@ public sealed class HeroTraitsTests : IDisposable
         Assert.All(_vm.Categories, category =>
             Assert.Equal(store.HeroScore(source.HeroId, category.CategoryId), store.HeroScore(target.HeroId, category.CategoryId)));
         Assert.StartsWith($"Copied {source.HeroName}'s profile onto {target.HeroName}", _vm.ContextSpans.Single().Text);
+    }
+
+    [Fact]
+    public void CtrlZUndoesAnEditAndCtrlYRedoesItLandingOnTheCell()
+    {
+        var (before, beforeBelow) = (Score(0, 0), Score(1, 0));
+        Type("54");
+        Type("7");
+        Press(Key.Space);
+        Assert.Equal((54.0, 7.0), (Score(0, 0), Score(1, 0)));
+        Assert.True(_vm.CanUndo);
+
+        Press(Key.Z, KeyModifiers.Control);
+        Assert.Equal((54.0, beforeBelow), (Score(0, 0), Score(1, 0)));
+        Press(Key.Z, KeyModifiers.Control);
+        Assert.Equal(before, Score(0, 0));
+        Assert.Equal((0, 0), (_vm.CurrentRow, _vm.CurrentColumn));
+        Assert.StartsWith("Undid setting", _vm.ContextSpans.Single().Text);
+        Assert.False(_vm.CanUndo);
+
+        Press(Key.Y, KeyModifiers.Control);
+        Assert.Equal(54, Score(0, 0));
+        Press(Key.Z, KeyModifiers.Control | KeyModifiers.Shift);
+        Assert.Equal(7, Score(1, 0));
+        Assert.Equal((1, 0), (_vm.CurrentRow, _vm.CurrentColumn));
+        Assert.False(_vm.CanRedo);
+    }
+
+    [Fact]
+    public void ANewEditDropsTheRedoHistory()
+    {
+        Type("54");
+        _vm.UndoCommand.Execute().Subscribe();
+        Assert.True(_vm.CanRedo);
+
+        Type("33");
+        Assert.Equal(33, Score(0, 0));
+        Assert.False(_vm.CanRedo);
+    }
+
+    [Fact]
+    public void CtrlZMidNumberOnlyTakesBackTheTyping()
+    {
+        Type("54");
+        _vm.CurrentRow = 0;
+        Type("1");
+        Press(Key.Z, KeyModifiers.Control);
+        Assert.Null(_vm.PendingText);
+        Assert.Equal(54, Score(0, 0));
+    }
+
+    [Fact]
+    public void AClearedHeroComesBackWithOneUndo()
+    {
+        var store = _fixture.Data.Store;
+        var hero = _vm.Heroes[0];
+        var profile = _vm.Categories.Select(category => store.HeroScore(hero.HeroId, category.CategoryId)).ToList();
+        ConfirmationModalViewModel? confirm = null;
+        using var _ = _fixture.Modals.ShowModalObservable.Subscribe(shown => confirm = shown as ConfirmationModalViewModel);
+
+        _vm.ClearHeroCommand.Execute().Subscribe();
+        confirm!.ConfirmCommand!.Execute(null);
+        Assert.Equal(0, store.HeroFilledCount(hero.HeroId));
+
+        _vm.CurrentRow = 3;
+        Press(Key.Z, KeyModifiers.Control);
+        Assert.Equal(profile, _vm.Categories.Select(category => store.HeroScore(hero.HeroId, category.CategoryId)));
+        Assert.Equal(0, _vm.CurrentRow);
+        Assert.Equal($"Undid clearing {hero.HeroName}.", _vm.ContextSpans.Single().Text);
+
+        // The undo is saved like any other edit.
+        _fixture.Clock.AdvanceBy(DataService.SaveDebounce);
+        Assert.Equal(profile.Count(score => score != 0), DataStore.Load(_fixture.Data.DataDir).HeroFilledCount(hero.HeroId));
+    }
+
+    [Fact]
+    public void TheHistorySurvivesASyncButNotAReloadFromDisk()
+    {
+        Type("54");
+        _fixture.Data.NotifyReplaced();
+        Assert.True(_vm.CanUndo);
+
+        _fixture.Data.Reload();
+        Assert.False(_vm.CanUndo);
+        Assert.Equal(54, Score(0, 0));
     }
 
     [Fact]

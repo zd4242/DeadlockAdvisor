@@ -129,7 +129,7 @@ public class DataMenuViewModel : ViewModelBase
         if (_settings.Current.ArtDownloadOffered || _art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0)
             return;
         _settings.Update(s => s.ArtDownloadOffered = true);
-        Confirm(
+        _modals.Confirm(
             $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
             + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB and downloads in the background, "
             + "and Data → Download Art… does it any time.",
@@ -234,7 +234,7 @@ public class DataMenuViewModel : ViewModelBase
     private async Task FetchMatchStatsAsync()
     {
         _data.FlushSaves();
-        var job = new BackgroundJobViewModel("Match stats", _clock, cancel => Confirm(
+        var job = new BackgroundJobViewModel("Match stats", _clock, cancel => _modals.Confirm(
             "Stop fetching match stats? Nothing fetched so far is kept, and the match data stays as it was.",
             "Stop", cancel, cancelText: "Keep going"));
         IsFetchingMatchStats = true;
@@ -414,7 +414,7 @@ public class DataMenuViewModel : ViewModelBase
     // -- art ------------------------------------------------------------------------
 
     private void OfferArtDownload() =>
-        Confirm(
+        _modals.Confirm(
             $"Fetch hero portraits, item icons and the top-bar art that Detect from screen matches against, from deadlock-api.com into {_data.AssetsDir}?\n\n"
             + "Files already there are kept unless you re-download everything. It downloads in the background, and art shows up as it arrives.",
             "Download missing", () => Launch(() => DownloadArtAsync(force: false)),
@@ -542,29 +542,4 @@ public class DataMenuViewModel : ViewModelBase
     // -- modals ---------------------------------------------------------------------
 
     private void ShowMessage(string title, IEnumerable<string> lines) => _modals.ShowMessage(title, string.Join("\n", lines));
-
-    private void Confirm(string prompt, string confirmText, Action confirmed, string? secondaryText = null, Action? secondary = null,
-        string cancelText = "Cancel")
-    {
-        _modals.ShowModal(new ConfirmationModalViewModel
-        {
-            Prompt = prompt,
-            ConfirmText = confirmText,
-            CancelText = cancelText,
-            SecondaryConfirmText = secondaryText,
-            ConfirmCommand = ReactiveCommand.Create(() =>
-            {
-                _modals.CloseModal();
-                confirmed();
-            }),
-            SecondaryConfirmCommand = secondary is null
-                ? null
-                : ReactiveCommand.Create(() =>
-                {
-                    _modals.CloseModal();
-                    secondary();
-                }),
-            CancelCommand = ReactiveCommand.Create(_modals.CloseModal),
-        });
-    }
 }
