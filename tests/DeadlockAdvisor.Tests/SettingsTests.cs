@@ -61,6 +61,7 @@ public class SettingsTests
         Assert.True(settings.ReopenLastPage);
         Assert.True(settings.ReopenLastMatch);
         Assert.True(settings.CheckForNewerPatch);
+        Assert.True(settings.DetectFromAnywhere);
         Assert.True(settings.MinimizeToDetect);
         Assert.True(settings.KeepUnreadCaptures);
     }

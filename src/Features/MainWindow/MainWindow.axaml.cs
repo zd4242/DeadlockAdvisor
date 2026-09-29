@@ -30,6 +30,7 @@ public partial class MainWindow : Window
     private IDisposable? _viewActions;
     private PixelPoint _normalPosition;
     private Size _normalSize;
+    private WindowState _stateBeforeMinimize = WindowState.Normal;
 
     public MainWindow()
     {
@@ -78,6 +79,8 @@ public partial class MainWindow : Window
                         Close();
                     else if (action == MainWindowViewModel.ArtChangedAction)
                         ArtHost.SetRevision(this, ArtHost.GetRevision(this) + 1);
+                    else if (action == MainWindowViewModel.BringForwardAction)
+                        BringForward();
                 }),
                 vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()));
         }
@@ -119,6 +122,8 @@ public partial class MainWindow : Window
         }
         else if (change.Property == WindowStateProperty)
         {
+            if (change.GetNewValue<WindowState>() == WindowState.Minimized)
+                _stateBeforeMinimize = change.GetOldValue<WindowState>();
             var maximized = WindowState == WindowState.Maximized;
             MaximizeGlyph.Data = maximized ? _restoreGlyph : _maximizeGlyph;
             ToolTip.SetTip(MaximizeButton, maximized ? "Restore Down" : "Maximize");
@@ -246,6 +251,15 @@ public partial class MainWindow : Window
         var roomRight = CaptionButtons.Bounds.Left - 16;
         var fits = titleBounds.Left >= roomLeft && titleBounds.Right <= roomRight;
         WindowTitle.Opacity = fits ? 1 : 0;
+    }
+
+    /// <summary>Up from the taskbar or from behind the game, with the modal on top if one is open.</summary>
+    private void BringForward()
+    {
+        if (WindowState == WindowState.Minimized)
+            WindowState = _stateBeforeMinimize;
+        Activate();
+        _modalWindow?.Activate();
     }
 
     private void ToggleMaximized() =>

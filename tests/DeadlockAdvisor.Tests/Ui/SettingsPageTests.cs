@@ -12,6 +12,7 @@ using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Settings.Detection;
 using DeadlockAdvisor.Features.Settings.General;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Services.Contracts;
 using static DeadlockAdvisor.Tests.Support.VisionData;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -149,6 +150,21 @@ public class SettingsPageTests
         Assert.Empty(ui.Settings.Current.VisionGeometry);
         Assert.Contains("None remembered yet.", detection.RememberedLayouts);
         Assert.False(((System.Windows.Input.ICommand)detection.ForgetLayoutsCommand).CanExecute(null));
+    }
+
+    [AvaloniaFact]
+    public void TheF9SettingSaysWhenAnotherAppHasTheKey()
+    {
+        using var ui = new UiHarness();
+        var detection = ui.ViewModel.Settings.Detection;
+        Assert.True(detection.DetectFromAnywhere);
+        Assert.Equal(DetectionSettingsViewModel.AnywhereDescription, detection.DetectFromAnywhereDescription);
+
+        ui.Hotkey.SetStatus(HotkeyStatus.Taken);
+        Assert.Contains("Another app already has F9", detection.DetectFromAnywhereDescription);
+
+        detection.DetectFromAnywhere = false;
+        Assert.False(ui.Settings.Current.DetectFromAnywhere);
     }
 
     [AvaloniaFact]

@@ -29,6 +29,7 @@ public class MainWindowViewModel : ViewModelBase
 {
     public const string CloseAction = "Close";
     public const string ArtChangedAction = DataMenuViewModel.ArtChangedAction;
+    public const string BringForwardAction = "BringForward";
 
     public const string HowScoringWorks =
         "Every hero is rated 0-100 on a list of traits (Hero Traits tab).\n"
@@ -86,7 +87,8 @@ public class MainWindowViewModel : ViewModelBase
         ISettingsService settings,
         INotificationService notifications,
         IModalService modals,
-        IArtService art)
+        IArtService art,
+        IGlobalHotkeyService hotkey)
     {
         NotificationOverlay = notificationOverlay;
         Match = match;
@@ -152,7 +154,7 @@ public class MainWindowViewModel : ViewModelBase
         ReloadArtCommand = ReactiveCommand.Create(ReloadArt);
         Settings = new SettingsViewModel(
             new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
-            new DetectionSettingsViewModel(settings),
+            new DetectionSettingsViewModel(settings, hotkey),
             new DataSettingsViewModel(settings, data, art, dataMenu, ReloadArtCommand)).DisposeWith(Disposables);
         Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
         // A new data folder, or new art, changes what the Data settings show.
@@ -169,6 +171,8 @@ public class MainWindowViewModel : ViewModelBase
         SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.StartAssigning, onMatchPage);
         DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
         RandomizeCommand = ReactiveCommand.CreateFromObservable<RandomizeKeep, Unit>(Match.Board.RandomizeCommand.Execute, onMatchPage);
+        DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
+        hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
 
         RefreshStatus();
     }
@@ -226,6 +230,9 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
+
+    /// <summary>F9 while it's held system-wide, pressed here or in the game, on whichever page is showing.</summary>
+    public ReactiveCommand<Unit, Unit> DetectFromAnywhereCommand { get; }
 
     /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
     public void OnOpened() => DataMenu.OnStartup();
@@ -296,6 +303,24 @@ public class MainWindowViewModel : ViewModelBase
         }
         ShowPage(CurrentPage);
         page.FocusSearch();
+    }
+
+    /// <summary>
+    /// Detect onto the Match page, bringing the window forward only once there's something to see (the
+    /// progress, the review or what went wrong): before the capture, it would cover the game.
+    /// </summary>
+    private async Task DetectFromAnywhereAsync()
+    {
+        // The review from the last press, or anything else holding detection up, is what you came for.
+        if (_modals.IsModalOpen)
+        {
+            RequestViewAction(BringForwardAction);
+            return;
+        }
+
+        ShowPage(0);
+        using var surface = _modals.ShowModalObservable.Take(1).Subscribe(_ => RequestViewAction(BringForwardAction));
+        await Match.DetectCommand.Execute();
     }
 
     private void ReloadArt()

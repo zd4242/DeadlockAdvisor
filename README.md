@@ -93,7 +93,7 @@ the Match page rescores as you go.
 | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | next / previous page |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search |
 | <kbd>Ctrl</kbd>+<kbd>R</kbd> | reload the data from disk |
-| <kbd>F9</kbd> | detect the match from the screen |
+| <kbd>F9</kbd> | detect the match from the screen, from the game too (see below) |
 | middle click | autoscroll |
 
 ## Data folder
@@ -195,6 +195,12 @@ Press <kbd>F9</kbd> (or **Detect from screen**) while Deadlock is in a
 match on the primary monitor. The advisor minimises itself, captures the
 top of the screen, and reads the scoreboard strip: all twelve heroes, and
 which one is you (off the coloured backplate behind your slot).
+
+F9 works from inside the game as well, without switching windows first:
+the advisor holds it system-wide (no admin needed), captures, then comes
+up on the Match page with the review. While it's running, other apps
+don't get F9; turn that off under **Settings → Detection** and F9 only
+works while the advisor has focus.
 
 **Nothing is applied until you say so.** The review shows each slot's
 crop, what it was read as and how sure that was, with a dropdown to

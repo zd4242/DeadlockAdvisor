@@ -5,6 +5,15 @@
              x:Class="DeadlockAdvisor.Features.Settings.Detection.DetectionSettingsView"
              x:DataType="detection:DetectionSettingsViewModel">
     <StackPanel>
+        <TextBlock Classes="section" Text="SHORTCUT"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="F9 detects from any app" Description="{Binding DetectFromAnywhereDescription}">
+                    <ToggleSwitch IsChecked="{Binding DetectFromAnywhere}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
         <TextBlock Classes="section" Text="CAPTURE"/>
         <Border Classes="settings">
             <StackPanel>

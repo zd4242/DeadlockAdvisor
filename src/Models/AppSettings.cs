@@ -17,6 +17,7 @@ public class AppSettings
     public bool ReopenLastPage { get; set; } = true;
     public bool ReopenLastMatch { get; set; } = true;
     public bool CheckForNewerPatch { get; set; } = true;
+    public bool DetectFromAnywhere { get; set; } = true;
     public bool MinimizeToDetect { get; set; } = true;
     public bool KeepUnreadCaptures { get; set; } = true;
 

@@ -39,6 +39,7 @@ public sealed class UiHarness : IDisposable
         services.AddSingleton<ILoggingService>(new FakeLoggingService());
         services.AddSingleton<IDeadlockApi>(Api);
         services.AddSingleton<IScreenCaptureService>(Capture);
+        services.AddSingleton<IGlobalHotkeyService>(Hotkey);
         overrides?.Invoke(services);
         _services = services.BuildServiceProvider();
 
@@ -63,6 +64,7 @@ public sealed class UiHarness : IDisposable
     public FakeDeadlockApi Api { get; } = new();
 
     public FakeScreenCapture Capture { get; } = new();
+    public FakeGlobalHotkey Hotkey { get; } = new();
     public IDataService Data { get; }
     public IArtService Art { get; }
     public MainWindowViewModel ViewModel { get; }

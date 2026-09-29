@@ -41,6 +41,7 @@ public partial class App : Application
         services.AddSingleton<IArtDownloadService, ArtDownloadService>();
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
+        services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
         services.AddTransient<DetectAction>();
 
         services.AddTransient<MainWindowViewModel>();
@@ -85,6 +86,7 @@ public partial class App : Application
                 {
                     DataContext = services.GetRequiredService<MainWindowViewModel>(),
                 };
+                services.GetRequiredService<IGlobalHotkeyService>().Attach(desktop.MainWindow);
             }
             catch (Exception ex)
             {

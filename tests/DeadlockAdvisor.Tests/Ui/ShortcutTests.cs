@@ -1,10 +1,14 @@
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Tests.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -72,5 +76,50 @@ public class ShortcutTests
         ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
         UiHarness.Settle();
         Assert.Equal(team, Team());
+    }
+
+    /// <summary>F9 held system-wide: from the game, it detects onto the Match page and brings the window up for what that shows.</summary>
+    [AvaloniaFact]
+    public async Task F9FromAnotherAppDetectsOntoTheMatchPageAndBringsTheWindowUp()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
+        ui.Show();
+        var broughtForward = 0;
+        using var _ = ui.ViewModel.ViewInteraction
+            .Subscribe(action => broughtForward += action == MainWindowViewModel.BringForwardAction ? 1 : 0);
+        bool MessageShown() =>
+            ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: MessageModalViewModel };
+
+        ui.Hotkey.Press();
+
+        // No screen in tests, so the capture fails and says so: that's the thing to come up for.
+        Assert.True(await UiHarness.WaitUntilAsync(MessageShown));
+        Assert.True(ui.ViewModel.IsMatchPage);
+        Assert.Equal(1, ui.Capture.Captures);
+        Assert.Equal(1, broughtForward);
+
+        // Pressed again with that still up, it brings it back rather than detecting behind it.
+        ui.Hotkey.Press();
+        UiHarness.Settle();
+        Assert.Equal(1, ui.Capture.Captures);
+        Assert.Equal(2, broughtForward);
+    }
+
+    /// <summary>Tests must never take F9 from the desktop; a window without a native handle doesn't try.</summary>
+    [AvaloniaFact]
+    public void TheHotkeyServiceStandsDownWithoutANativeWindow()
+    {
+        var settings = new FakeSettingsService();
+        using var hotkey = new GlobalHotkeyService(settings, new FakeLoggingService());
+        var window = new Window();
+        var statuses = new List<HotkeyStatus>();
+        using var _ = hotkey.Status.Subscribe(statuses.Add);
+
+        hotkey.Attach(window);
+        settings.Update(s => s.DetectFromAnywhere = true);
+
+        Assert.Equal([HotkeyStatus.Unsupported], statuses);
+        window.Close();
     }
 }
