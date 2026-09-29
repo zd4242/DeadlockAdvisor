@@ -30,7 +30,7 @@ public class ShortcutTests
         bool MessageShown() =>
             ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: MessageModalViewModel };
 
-        ui.Window.KeyPressQwerty(PhysicalKey.Digit2, RawInputModifiers.Alt);
+        ui.Window.KeyPressQwerty(PhysicalKey.Digit3, RawInputModifiers.Alt);
         UiHarness.Settle();
         Assert.Equal(Role.Ally, board.Mode);
 

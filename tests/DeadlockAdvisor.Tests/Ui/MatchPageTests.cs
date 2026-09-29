@@ -208,7 +208,7 @@ public class MatchPageTests
         ui.Show();
         var board = ui.ViewModel.Match.Board;
 
-        ui.Window.KeyPressQwerty(PhysicalKey.Digit2, RawInputModifiers.Alt);
+        ui.Window.KeyPressQwerty(PhysicalKey.Digit3, RawInputModifiers.Alt);
         UiHarness.Settle();
         Assert.True(Picker(ui).IsEffectivelyVisible);
         Assert.Equal(Role.Ally, board.Mode);

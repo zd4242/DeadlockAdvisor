@@ -37,7 +37,7 @@ see **Detecting the match from the screen** below.
 
 To set or correct heroes by hand, open the hero picker with **Edit heroes**
 (or <kbd>Ctrl</kbd>+<kbd>F</kbd>, Alt+1/2/3, or a click on an empty slot in
-the match bar). Pick what you're assigning with the Enemy / Ally / You
+the match bar). Pick what you're assigning with the You / Enemy / Ally
 buttons (or Alt+1/2/3), then click heroes. Clicking a hero who already has
 that role clears them; double-click sets You; right-click opens the role
 menu. The search box keeps focus, so `hay` <kbd>Enter</kbd> drops Haze onto

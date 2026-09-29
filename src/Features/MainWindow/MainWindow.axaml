@@ -39,9 +39,9 @@
         <!-- The Match page's own shortcuts: live whenever it's showing, wherever focus is. The
              rebindable ones (Random and Detect) are added from ShortcutBindings; Core/ShortcutKeys.cs
              keeps a fixed key here from being given to them too. -->
-        <KeyBinding Gesture="Alt+D1" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
-        <KeyBinding Gesture="Alt+D2" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
-        <KeyBinding Gesture="Alt+D3" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
+        <KeyBinding Gesture="Alt+D1" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
+        <KeyBinding Gesture="Alt+D2" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
+        <KeyBinding Gesture="Alt+D3" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
     </Window.KeyBindings>
 
     <Window.Styles>

@@ -16,7 +16,7 @@ namespace DeadlockAdvisor.Features.Match.Board;
 
 /// <summary>
 /// Who's in the match. Detection normally fills it; the hero picker, hidden until opened, sets or
-/// corrects it by hand. Click-to-assign: pick what you're assigning (Enemy / Ally / You), then click
+/// corrects it by hand. Click-to-assign: pick what you're assigning (You / Enemy / Ally), then click
 /// heroes in the picker; clicking a hero who already has that role clears them. The fast path is
 /// the keyboard: the search box keeps focus, so "gt" Enter puts Grey Talon on the current side and
 /// clears the field for the next name.
