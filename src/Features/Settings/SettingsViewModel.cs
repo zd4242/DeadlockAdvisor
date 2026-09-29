@@ -30,7 +30,7 @@ public class SettingsViewModel : ViewModelBase
         Data = data.DisposeWith(Disposables);
         Categories =
         [
-            new("General", "Zoom, what the app reopens on, and the model editors.",
+            new("General", "Zoom, what the app reopens on, your Steam account, and the model editors.",
                 Geometry.Parse("M2,4 H4.7 M8.3,4 H14 M2,8 H9.2 M12.8,8 H14 M2,12 H3.2 M6.8,12 H14 M6.5,4 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 "
                 + "M11,8 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0 M5,12 m-1.8,0 a1.8,1.8 0 1,0 3.6,0 a1.8,1.8 0 1,0 -3.6,0"),
                 General),

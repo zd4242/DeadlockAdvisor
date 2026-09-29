@@ -5,6 +5,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
+using DeadlockAdvisor.Features.Match.Import;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
@@ -34,7 +35,9 @@ public sealed class DetectTests : IDisposable
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, _capture, new FakeLoggingService());
         var dataRanks = new DataRanksViewModel(_fixture.Data, new MatchStatsService(new FakeDeadlockApi()), new NotificationService(new FakeLoggingService()));
-        _page = new MatchViewModel(_fixture.Data, _fixture.Settings, _detect, dataRanks);
+        var import = new ImportMatchAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new MatchLookupService(new FakeDeadlockApi()),
+            new FakeLoggingService());
+        _page = new MatchViewModel(_fixture.Data, _fixture.Settings, _detect, import, dataRanks);
     }
 
     public void Dispose()

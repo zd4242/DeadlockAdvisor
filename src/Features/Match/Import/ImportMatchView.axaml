@@ -1,0 +1,143 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:import="using:DeadlockAdvisor.Features.Match.Import"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
+             x:Class="DeadlockAdvisor.Features.Match.Import.ImportMatchView"
+             x:DataType="import:ImportMatchViewModel">
+
+    <UserControl.Styles>
+        <Style Selector="Border.player">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="Padding" Value="6"/>
+        </Style>
+        <Style Selector="Border.player.you">
+            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.role.you">
+            <Setter Property="Foreground" Value="{DynamicResource SelfBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.rows > ItemsControl">
+            <Setter Property="ItemsPanel">
+                <ItemsPanelTemplate>
+                    <StackPanel Spacing="6"/>
+                </ItemsPanelTemplate>
+            </Setter>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="import:ImportPlayerViewModel">
+            <Border Classes="player" Classes.you="{Binding IsYou}">
+                <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                    <art:ArtImage Width="36"
+                                  Height="36"
+                                  Kind="Hero"
+                                  ArtId="{Binding HeroId}"
+                                  ArtName="{Binding HeroName}"
+                                  VerticalAlignment="Center"/>
+                    <StackPanel Grid.Column="1" Margin="10,0" VerticalAlignment="Center" Spacing="2">
+                        <TextBlock Text="{Binding HeroName}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Classes="faint"
+                                   Text="{Binding PlayerName}"
+                                   TextTrimming="CharacterEllipsis"
+                                   IsVisible="{Binding PlayerName, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
+                    <TextBlock Grid.Column="2"
+                               Classes="role"
+                               Classes.you="{Binding IsYou}"
+                               Margin="0,0,8,0"
+                               Text="{Binding RoleText}"/>
+                    <ToggleButton Grid.Column="3"
+                                  Classes="pill self"
+                                  Content="You"
+                                  VerticalAlignment="Center"
+                                  IsChecked="{Binding IsYou, Mode=OneWay}"
+                                  Command="{Binding SetSelfCommand}"
+                                  ToolTip.Tip="This player is you: the teams follow from it"/>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <StackPanel Margin="20" Spacing="12" Width="620">
+        <TextBlock Classes="h2" Text="Import a match"/>
+        <TextBlock TextWrapping="Wrap"
+                   Foreground="{DynamicResource TextDimBrush}"
+                   Text="Look up a finished match by its ID, or paste a link with the ID in it. A match can only be looked up once it's over."/>
+
+        <Grid ColumnDefinitions="*,Auto">
+            <TextBox x:Name="MatchId"
+                     Watermark="Match ID"
+                     Text="{Binding MatchIdText}"/>
+            <Button Grid.Column="1"
+                    Margin="8,0,0,0"
+                    MinWidth="90"
+                    HorizontalContentAlignment="Center"
+                    Content="Look up"
+                    Command="{Binding LookUpCommand}"
+                    ToolTip.Tip="Fetch the match's heroes from deadlock-api.com (Enter)"/>
+        </Grid>
+
+        <TextBlock Classes="hint"
+                   Text="Looking up the match…"
+                   IsVisible="{Binding IsLookingUp}"/>
+        <TextBlock TextWrapping="Wrap"
+                   Foreground="{DynamicResource ErrorBrush}"
+                   Text="{Binding Error}"
+                   IsVisible="{Binding Error, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+
+        <StackPanel Spacing="12" IsVisible="{Binding HasMatch}">
+            <StackPanel Spacing="2">
+                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap"/>
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           Text="{Binding Prompt}"
+                           IsVisible="{Binding Prompt, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                <TextBlock TextWrapping="Wrap"
+                           FontSize="11"
+                           Foreground="{DynamicResource WarningBrush}"
+                           Text="{Binding Warning}"
+                           IsVisible="{Binding Warning, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+            </StackPanel>
+
+            <Grid ColumnDefinitions="*,14,*">
+                <StackPanel Classes="rows" Spacing="6">
+                    <TextBlock Classes="section" Classes.ally="{Binding HasSelf}" Text="{Binding OwnHeading}"/>
+                    <ItemsControl x:Name="OwnRows" ItemsSource="{Binding OwnRows}"/>
+                </StackPanel>
+                <StackPanel Grid.Column="2" Classes="rows" Spacing="6">
+                    <TextBlock Classes="section" Classes.enemy="{Binding HasSelf}" Text="{Binding FoeHeading}"/>
+                    <ItemsControl x:Name="FoeRows" ItemsSource="{Binding FoeRows}"/>
+                </StackPanel>
+            </Grid>
+
+            <CheckBox Content="{Binding RememberText}"
+                      IsChecked="{Binding RememberMe}"
+                      IsVisible="{Binding ShowsRememberMe}"
+                      ToolTip.Tip="Saved under Settings → General, where it can be changed or cleared"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+            <Button x:Name="ApplyButton"
+                    Classes="primary"
+                    Content="Apply to match"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    Command="{Binding ApplyCommand}"/>
+            <Button Content="Cancel"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsCancel="True"
+                    Command="{Binding CancelCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

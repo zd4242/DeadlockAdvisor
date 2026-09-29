@@ -29,7 +29,7 @@ public class MatchBoardViewModel : ViewModelBase
     public const string PickerHint =
         "Left click assigns a hero to the role chosen here.\nRight click picks a role for it.\nDouble click sets it as You.\n"
         + "Type a name and press Enter to assign the best match.\nEsc closes the picker.";
-    public const string NoSelfHint = "You're not set yet — detect the match, or click an empty ally slot to pick your hero";
+    public const string NoSelfHint = "You're not set yet — detect or import the match, or click an empty ally slot to pick your hero";
 
     public static readonly IReadOnlyList<Role> ModeOrder = [Role.Self, Role.Enemy, Role.Ally];
 
@@ -135,6 +135,9 @@ public class MatchBoardViewModel : ViewModelBase
 
     /// <summary>Screen detection, owned by the Match tab (its key or the button).</summary>
     public System.Windows.Input.ICommand? DetectCommand { get; set; }
+
+    /// <summary>Importing a finished match by its ID, owned by the Match tab.</summary>
+    public System.Windows.Input.ICommand? ImportCommand { get; set; }
 
     public void SetMode(Role role)
     {

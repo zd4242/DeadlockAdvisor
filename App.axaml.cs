@@ -7,6 +7,7 @@ using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Detect;
+using DeadlockAdvisor.Features.Match.Import;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -42,7 +43,9 @@ public partial class App : Application
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
         services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
+        services.AddSingleton<IMatchLookupService, MatchLookupService>();
         services.AddTransient<DetectAction>();
+        services.AddTransient<ImportMatchAction>();
 
         services.AddTransient<MainWindowViewModel>();
         services.AddTransient<DataMenuViewModel>();

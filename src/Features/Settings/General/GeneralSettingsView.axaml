@@ -6,6 +6,9 @@
              x:DataType="general:GeneralSettingsViewModel">
 
     <UserControl.Styles>
+        <Style Selector="TextBlock.hint.invalid">
+            <Setter Property="Foreground" Value="{DynamicResource ErrorBrush}"/>
+        </Style>
         <!-- The zoom stepper: − and + either side of the level, on a recessed track -->
         <Style Selector="Border.segmented Button">
             <Setter Property="Width" Value="30"/>
@@ -63,6 +66,24 @@
                 <settings:SettingRow Title="Reopen the last match"
                                      Description="Start with the heroes you had picked, rather than an empty match.">
                     <ToggleSwitch IsChecked="{Binding ReopenLastMatch}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="YOUR ACCOUNT"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Steam account"
+                                     Description="Picks you out when you import a match by its ID. Paste your account ID, SteamID64 or steamcommunity.com/profiles/ link, or tick Remember when you import a match.">
+                    <StackPanel Spacing="4" Width="240">
+                        <TextBox x:Name="SteamAccount"
+                                 Watermark="Account ID or profile link"
+                                 Text="{Binding SteamAccountText}"/>
+                        <TextBlock Classes="hint"
+                                   TextWrapping="Wrap"
+                                   Classes.invalid="{Binding IsSteamAccountInvalid}"
+                                   Text="{Binding SteamAccountStatus}"/>
+                    </StackPanel>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

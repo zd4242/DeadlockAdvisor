@@ -6,6 +6,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
+using DeadlockAdvisor.Features.Match.Import;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
@@ -61,12 +62,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private readonly ISettingsService _settings;
     private readonly Func<double> _now;
 
-    public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, DataRanksViewModel dataRanks)
-        : this(data, settings, detect, dataRanks, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
+    public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, ImportMatchAction import, DataRanksViewModel dataRanks)
+        : this(data, settings, detect, import, dataRanks, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
     {
     }
 
-    internal MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, DataRanksViewModel dataRanks, Func<double> now)
+    internal MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, ImportMatchAction import, DataRanksViewModel dataRanks,
+        Func<double> now)
     {
         _data = data;
         _settings = settings;
@@ -87,12 +89,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ByNetWorth = settings.Current.ResultsByNetWorth;
         ApplyDisplay();
 
-        DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, () =>
-        {
-            Board.Refresh();
-            OnMatchChanged();
-        }));
+        DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, OnMatchReplaced));
         Board.DetectCommand = DetectCommand;
+        ImportCommand = ReactiveCommand.Create(() => import.Run(Match, OnMatchReplaced));
+        Board.ImportCommand = ImportCommand;
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
 
@@ -169,6 +169,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public IReadOnlyList<RankPreset> Ranks => RankPresets;
 
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
+    public ReactiveCommand<Unit, Unit> ImportCommand { get; }
 
     public void FocusSearch() => Board.OpenPicker();
 
@@ -199,6 +200,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>The formula-and-data ranking's units for the current line-up.</summary>
     private BlendScale Scale() => _data.Scales.For(LineUpShape.Of(ItemScoring.RelevantHeroes(Match)));
+
+    /// <summary>A detection or an import wrote the match from outside the board.</summary>
+    private void OnMatchReplaced()
+    {
+        Board.Refresh();
+        OnMatchChanged();
+    }
 
     private void OnMatchChanged()
     {

@@ -24,6 +24,9 @@ public class AppSettings
     public bool KeepUnreadCaptures { get; set; } = true;
     public bool RememberCorrections { get; set; } = true;
 
+    // Your Steam account ID (SteamID3's number), which picks you out of an imported match.
+    public long? SteamAccountId { get; set; }
+
     // Only the keys moved from their defaults; read them through ShortcutKeys.Gesture.
     public Dictionary<ShortcutAction, string> Shortcuts { get; set; } = [];
 

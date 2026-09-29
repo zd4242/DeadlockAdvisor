@@ -52,10 +52,14 @@
                            Text="{x:Static board:MatchBoardViewModel.NoSelfHint}"
                            ToolTip.Tip="{x:Static board:MatchBoardViewModel.NoSelfHint}"
                            IsVisible="{Binding IsSelfMissing}"/>
-                <Button Grid.Column="2"
-                        Content="{Binding DetectText}"
-                        Command="{Binding DetectCommand}"
-                        ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied."/>
+                <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
+                    <Button Content="{Binding DetectText}"
+                            Command="{Binding DetectCommand}"
+                            ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied."/>
+                    <Button Content="Import match…"
+                            Command="{Binding ImportCommand}"
+                            ToolTip.Tip="Look up a finished match by its ID and bring in its heroes"/>
+                </StackPanel>
                 <ToggleButton Grid.Column="3"
                               Content="Edit heroes"
                               Margin="6,0,0,0"
