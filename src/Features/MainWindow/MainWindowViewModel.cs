@@ -131,17 +131,17 @@ public class MainWindowViewModel : ViewModelBase
                 ShowsEditors = show;
                 if (!show)
                     CurrentPage = 0;
-                RefreshStatus();
             })
             .DisposeWith(Disposables);
 
+        // The zoom only takes room on the status bar while it's off its default.
         settings.SettingsChanged
             .Select(s => ZoomLevels.Clamp(s.ZoomIndex))
             .DistinctUntilChanged()
             .Subscribe(index =>
             {
                 UiScale = ZoomLevels.Steps[index];
-                ZoomText = $"{Math.Round(UiScale * 100):0}%  ";
+                ZoomText = index == ZoomLevels.DefaultIndex ? "" : $"{Math.Round(UiScale * 100):0}%";
             })
             .DisposeWith(Disposables);
 
@@ -154,8 +154,7 @@ public class MainWindowViewModel : ViewModelBase
                 _ => "",
             })
             .DisposeWith(Disposables);
-        data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
-        dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => RefreshStatus()).DisposeWith(Disposables);
+        DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
@@ -202,8 +201,6 @@ public class MainWindowViewModel : ViewModelBase
                 .Select(key => ShortcutBindingFor(key.action, key.gesture!))
                 .ToList())
             .DisposeWith(Disposables);
-
-        RefreshStatus();
     }
 
     public NotificationOverlayViewModel NotificationOverlay { get; }
@@ -241,10 +238,10 @@ public class MainWindowViewModel : ViewModelBase
     [Reactive] public double UiScale { get; private set; } = 1.0;
 
     [Reactive] public string ZoomText { get; private set; } = "";
-    [Reactive] public string CoverageText { get; private set; } = "";
-    [Reactive] public string DataStatusText { get; private set; } = "";
-    [Reactive] public bool DataStatusAlert { get; private set; }
     [Reactive] public string SaveText { get; private set; } = "";
+
+    /// <summary>The status bar's match data chip and its card.</summary>
+    public DataStatusViewModel DataStatus { get; }
 
     public ReactiveCommand<Unit, Unit> ZoomInCommand { get; }
     public ReactiveCommand<Unit, Unit> ZoomOutCommand { get; }
@@ -383,34 +380,5 @@ public class MainWindowViewModel : ViewModelBase
         _notifications.ShowInformation(
             $"Found {_art.Count(ArtKind.Hero)} portrait file(s) in {_art.FolderOf(ArtKind.Hero)}. Heroes without one keep their initials tile.",
             TimeSpan.FromSeconds(5));
-    }
-
-    private void RefreshStatus()
-    {
-        // How much of the model is filled in only matters to someone filling it in.
-        var coverage = _data.Store.Coverage();
-        CoverageText = ShowsEditors
-            ? $"  {coverage.ScoresFilled}/{coverage.ScoresTotal} hero traits rated"
-              + $"   ·   {coverage.ItemsTagged}/{coverage.ItemsTotal} items tagged"
-              + $"   ·   {coverage.Rules} formula rules + {coverage.DerivedRules} from stats"
-            : "";
-        var lead = ShowsEditors ? "   ·   " : "  ";
-
-        var summary = MatchStatsMath.Summary(_data.Store.MatchMeta, DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0);
-        if (summary.Length == 0)
-        {
-            DataStatusText = $"{lead}no match data (Data → Fetch Match Stats)";
-            DataStatusAlert = false;
-        }
-        else if (DataMenu.NewerPatch is { } newer)
-        {
-            DataStatusText = $"{lead}match data: {summary} — patch {newer.Label} is out, refetch";
-            DataStatusAlert = true;
-        }
-        else
-        {
-            DataStatusText = $"{lead}match data: {summary}";
-            DataStatusAlert = false;
-        }
     }
 }

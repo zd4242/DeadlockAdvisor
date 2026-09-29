@@ -126,12 +126,8 @@
             <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <!-- a newer patch is out than the match data was fetched under -->
         <Style Selector="Border#StatusBar TextBlock.saving">
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
-        </Style>
-        <Style Selector="Border#StatusBar TextBlock.alert">
-            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
         </Style>
     </Window.Styles>
 
@@ -251,12 +247,8 @@
                 </Border>
 
                 <Border x:Name="StatusBar" DockPanel.Dock="Bottom">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
-                        <TextBlock Text="{Binding CoverageText}"/>
-                        <TextBlock Grid.Column="1"
-                                   Text="{Binding DataStatusText}"
-                                   TextTrimming="CharacterEllipsis"
-                                   Classes.alert="{Binding DataStatusAlert}"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto">
+                        <mainWindow:DataStatusView x:Name="DataStatus" VerticalAlignment="Center" DataContext="{Binding DataStatus}"/>
                         <!-- Background downloads; the negative margin keeps a chip from making the bar taller. -->
                         <ItemsControl x:Name="Jobs"
                                       Grid.Column="2"
@@ -269,11 +261,15 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
-                        <TextBlock Grid.Column="3"
-                                   Margin="0,0,12,0"
-                                   Classes="saving"
-                                   Text="{Binding SaveText}"/>
-                        <TextBlock Grid.Column="4" Text="{Binding ZoomText}"/>
+                        <StackPanel Grid.Column="3" Orientation="Horizontal" Spacing="12" Margin="12,0,0,0">
+                            <TextBlock Classes="saving"
+                                       Text="{Binding SaveText}"
+                                       IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                            <TextBlock Background="Transparent"
+                                       Text="{Binding ZoomText}"
+                                       IsVisible="{Binding ZoomText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                                       ToolTip.Tip="Zoom (Ctrl+0 resets it)"/>
+                        </StackPanel>
                     </Grid>
                 </Border>
 

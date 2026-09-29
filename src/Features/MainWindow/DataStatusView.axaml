@@ -1,0 +1,114 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.MainWindow.DataStatusView"
+             x:DataType="mainWindow:DataStatusViewModel">
+
+    <!-- A chip in the status bar: a dot for how current the match data is and a few words on it.
+         Hovering or clicking opens the card with the rest. -->
+    <UserControl.Styles>
+        <!-- The negative margin keeps the chip from making the bar taller, and lines its text up with the bar's padding. -->
+        <Style Selector="Button.chip">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="6,2"/>
+            <Setter Property="Margin" Value="-6,-3,0,-3"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+        </Style>
+        <Style Selector="Button.chip:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        </Style>
+        <Style Selector="Button.chip TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        </Style>
+        <Style Selector="Button.chip:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="Button.chip TextBlock.outdated">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+
+        <Style Selector="Ellipse.dot">
+            <Setter Property="Width" Value="7"/>
+            <Setter Property="Height" Value="7"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="Fill" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.current">
+            <Setter Property="Fill" Value="{DynamicResource DataBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.outdated">
+            <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+
+        <!-- The card hangs off the status bar, whose dim text style would otherwise reach into it. -->
+        <Style Selector="StackPanel.card TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.dim, StackPanel.card TextBlock.section">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.faint">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.warning">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="mainWindow:StatusFact">
+            <Grid Margin="0,0,0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="FactLabel"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Classes="dim" Margin="0,0,16,0" Text="{Binding Label}"/>
+                <TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}"/>
+            </Grid>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Button x:Name="Chip" Classes="chip" controls:HoverFlyout.IsEnabled="True">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Classes="dot" Classes.current="{Binding HasData}" Classes.outdated="{Binding IsOutdated}"/>
+            <TextBlock VerticalAlignment="Center" Classes.outdated="{Binding IsOutdated}" Text="{Binding Label}"/>
+        </StackPanel>
+        <Button.Flyout>
+            <Flyout Placement="TopEdgeAlignedLeft" ShowMode="TransientWithDismissOnPointerMoveAway">
+                <StackPanel Classes="card" Width="300" Spacing="8" Grid.IsSharedSizeScope="True">
+                    <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA"/>
+                    <TextBlock Classes="warning"
+                               TextWrapping="Wrap"
+                               Text="{Binding Warning}"
+                               IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    <TextBlock Classes="dim"
+                               TextWrapping="Wrap"
+                               Text="{x:Static mainWindow:DataStatusViewModel.NoDataText}"
+                               IsVisible="{Binding !HasData}"/>
+                    <ItemsControl ItemsSource="{Binding Facts}" IsVisible="{Binding HasData}"/>
+                    <ItemsControl ItemsSource="{Binding Families}" IsVisible="{Binding HasData}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="x:String">
+                                <TextBlock Classes="faint" TextWrapping="Wrap" Margin="0,0,0,2" Text="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button HorizontalAlignment="Left"
+                            Content="{Binding FetchText}"
+                            Command="{Binding FetchCommand}"
+                            ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (about 20 minutes, in the background)"/>
+
+                    <StackPanel Spacing="8" IsVisible="{Binding ShowsCoverage}">
+                        <Border Classes="hline" Margin="0,4"/>
+                        <TextBlock Classes="section" Text="SCORING MODEL"/>
+                        <ItemsControl ItemsSource="{Binding Coverage}"/>
+                    </StackPanel>
+                </StackPanel>
+            </Flyout>
+        </Button.Flyout>
+    </Button>
+</UserControl>

@@ -616,13 +616,17 @@ public static partial class MatchStatsMath
     /// <summary>"patch 09-16 · fetched 2d ago", or "" without data.</summary>
     public static string Summary(JsonObject meta, double now)
     {
-        var fetched = Number(meta["fetched_at"]);
-        if (fetched is null or 0)
+        if (FetchedAt(meta) is not { } fetched)
             return "";
-        var latest = Text((meta["latest_patch"] as JsonObject)?["label"]) ?? "?";
         var rank = RankLabel(meta) is { } label ? $" · {label}" : "";
-        return $"patch {latest}{rank} · fetched {Age(now - fetched.Value)}";
+        return $"patch {PatchLabel(meta)}{rank} · fetched {Age(now - fetched)}";
     }
+
+    /// <summary>When the match data was fetched, in Unix seconds; null without data.</summary>
+    public static double? FetchedAt(JsonObject meta) => Number(meta["fetched_at"]) is { } fetched and not 0 ? fetched : null;
+
+    /// <summary>The patch that was current when the match data was fetched, "09-16".</summary>
+    public static string PatchLabel(JsonObject meta) => Text((meta["latest_patch"] as JsonObject)?["label"]) ?? "?";
 
     /// <summary>The rank range the lifts were worked out for, "Mystic+"; null for every match.</summary>
     public static string? RankLabel(JsonObject meta) => (meta["rank"] as JsonObject)?["label"] is { } label ? Text(label) : null;
@@ -690,7 +694,7 @@ public static partial class MatchStatsMath
         return string.Join("\n", lines);
     }
 
-    private static bool IsFetched(JsonObject meta) => Number(meta["fetched_at"]) is not (null or 0);
+    private static bool IsFetched(JsonObject meta) => FetchedAt(meta) is not null;
 
     private static bool IsTrue(JsonNode? node) => node is JsonValue value && value.TryGetValue<bool>(out var flag) && flag;
 

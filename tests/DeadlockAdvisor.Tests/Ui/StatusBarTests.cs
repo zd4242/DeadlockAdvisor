@@ -1,5 +1,9 @@
 using System.Text.Json.Nodes;
+using Avalonia;
+using Avalonia.Controls;
+using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
@@ -21,9 +25,33 @@ public class StatusBarTests
 
         ui.Show();
 
-        Assert.True(ui.ViewModel.DataStatusAlert);
-        Assert.EndsWith("— patch 10-01 is out, refetch", ui.ViewModel.DataStatusText);
+        var status = ui.ViewModel.DataStatus;
+        Assert.True(status.IsOutdated);
+        Assert.EndsWith("· 10-01 is out", status.Label);
+        Assert.StartsWith("Patch 10-01 is out since these were fetched.", status.Warning);
+        OpenCard(ui);
         ui.Screenshot("status_newer_patch.png");
+    }
+
+    /// <summary>The chip opens its card when the pointer rests on it, not as it passes over.</summary>
+    [AvaloniaFact]
+    public async Task RestingOnTheMatchDataChipOpensItsCard()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        ui.Show();
+        var chip = Chip(ui);
+        var center = chip.TranslatePoint(new Point(chip.Bounds.Width / 2, chip.Bounds.Height / 2), ui.Window)!.Value;
+
+        ui.Window.MouseMove(center);
+        UiHarness.Settle();
+        Assert.False(chip.Flyout!.IsOpen);
+
+        Assert.True(await UiHarness.WaitUntilAsync(() => chip.Flyout.IsOpen));
+        var card = (Control)((Flyout)chip.Flyout).Content!;
+        var facts = card.GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
+        Assert.Contains("Every match, ranked or not", facts);
+        Assert.Contains("Fetch again", card.GetLogicalDescendants().OfType<Button>().Select(button => button.Content as string));
+        ui.Screenshot("status_card.png");
     }
 
     [AvaloniaFact]
@@ -72,8 +100,27 @@ public class StatusBarTests
 
         ui.Show();
 
-        Assert.False(ui.ViewModel.DataStatusAlert);
-        Assert.StartsWith("  match data: patch ", ui.ViewModel.DataStatusText);
+        Assert.False(ui.ViewModel.DataStatus.IsOutdated);
+        Assert.Null(ui.ViewModel.DataStatus.Warning);
+        Assert.StartsWith("Match data · patch 09-16 · ", ui.ViewModel.DataStatus.Label);
+    }
+
+    [AvaloniaFact]
+    public void WithoutMatchDataTheCardOffersToFetchIt()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        ui.Data.Store.MatchMeta.Clear();
+        ui.Data.NotifyReplaced();
+        ui.Show();
+
+        var status = ui.ViewModel.DataStatus;
+        Assert.False(status.HasData);
+        Assert.Equal("No match data", status.Label);
+        Assert.Empty(status.Facts);
+        Assert.Equal("Fetch Match Stats", status.FetchText);
+        Assert.Same(ui.ViewModel.DataMenu.FetchMatchStatsCommand, status.FetchCommand);
+        OpenCard(ui);
+        ui.Screenshot("status_card_no_data.png");
     }
 
     /// <summary>How much of the model is filled in, which only someone filling it in needs.</summary>
@@ -82,11 +129,37 @@ public class StatusBarTests
     {
         using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
         ui.Show();
-        Assert.Equal("", ui.ViewModel.CoverageText);
+        Assert.False(ui.ViewModel.DataStatus.ShowsCoverage);
+        Assert.Empty(ui.ViewModel.DataStatus.Coverage);
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
 
-        Assert.Contains("hero traits rated", ui.ViewModel.CoverageText);
-        Assert.StartsWith("   ·   match data: patch ", ui.ViewModel.DataStatusText);
+        Assert.True(ui.ViewModel.DataStatus.ShowsCoverage);
+        Assert.Equal(["Hero traits rated", "Items tagged", "Formula rules"], ui.ViewModel.DataStatus.Coverage.Select(fact => fact.Label));
+        OpenCard(ui);
+        ui.Screenshot("status_card_editors.png");
+    }
+
+    [AvaloniaFact]
+    public void TheZoomOnlyShowsWhileItsOffItsDefault()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        ui.Show();
+        Assert.Equal("", ui.ViewModel.ZoomText);
+
+        ui.ViewModel.ZoomInCommand.Execute().Subscribe();
+        Assert.Equal("115%", ui.ViewModel.ZoomText);
+        ui.ViewModel.ResetZoomCommand.Execute().Subscribe();
+        Assert.Equal("", ui.ViewModel.ZoomText);
+    }
+
+    private static Button Chip(UiHarness ui) =>
+        ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Chip");
+
+    private static void OpenCard(UiHarness ui)
+    {
+        var chip = Chip(ui);
+        chip.Flyout!.ShowAt(chip);
+        UiHarness.Settle();
     }
 }
