@@ -18,6 +18,12 @@ public static class ExplainText
     /// <summary>How the data numbers name each relation: "enemies" for the counters, "you" for your hero.</summary>
     public static string DataWord(string relation) => relation == "against" ? "enemies" : "you";
 
+    /// <summary>How to read one of the match data card's lines, for its info badge.</summary>
+    public const string DataLinesTip =
+        "Each line: \"raw\" is the gain measured in matches with that hero, ± how uncertain it is, and how many "
+        + "matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
+        + "toward 0, and they're what the totals at the top add up.";
+
     /// <summary>"Vindicta builds this 1/12 as often as the average player, so the enemy lifts count ×0.33."</summary>
     public static string RarelyBuilt(string who, double ratio) =>
         ratio <= 0

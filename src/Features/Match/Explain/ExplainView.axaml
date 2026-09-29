@@ -146,9 +146,16 @@
                         <DataTemplate x:DataType="explain:MatchDataCard">
                             <Border Classes="inset">
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="*,Auto">
-                                        <TextBlock Text="Match data" FontWeight="Bold" Foreground="{DynamicResource DataBrush}"/>
-                                        <ItemsControl Grid.Column="1" ItemsSource="{Binding Totals}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto">
+                                        <TextBlock Text="Match data" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource DataBrush}"/>
+                                        <controls:InfoBadge Grid.Column="1"
+                                                            Margin="6,0,0,0"
+                                                            HorizontalAlignment="Left"
+                                                            VerticalAlignment="Center"
+                                                            ToolTip.Tip="{Binding Info}"
+                                                            ToolTip.ShowDelay="100"
+                                                            IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <ItemsControl Grid.Column="2" ItemsSource="{Binding Totals}">
                                             <ItemsControl.ItemsPanel>
                                                 <ItemsPanelTemplate>
                                                     <StackPanel Orientation="Horizontal" Spacing="12"/>
@@ -209,7 +216,7 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <TextBlock Classes="faintText" TextWrapping="Wrap" Text="{Binding Note}"/>
+                                    <TextBlock Classes="faintText" TextWrapping="Wrap" Text="{Binding Source}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

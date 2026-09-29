@@ -95,7 +95,7 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
-    public void ASingleTargetItemsTypicalTeamCarriesAnInfoBadge()
+    public void TheTypicalTeamAndTheMatchDataExplainThemselvesBehindInfoBadges()
     {
         using var ui = new UiHarness();
         SetUpMatch(ui);
@@ -106,8 +106,14 @@ public class MatchPageTests
         match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown"));
         ui.Screenshot("match_typical_team_info.png");
 
-        var badge = ui.Window.MatchPage.GetVisualDescendants().OfType<InfoBadge>().Single(badge => badge.IsVisible);
-        Assert.Contains("Knockdown is cast on one enemy at a time", ToolTip.GetTip(badge) as string);
+        var tips = ui.Window.MatchPage.GetVisualDescendants().OfType<InfoBadge>()
+            .Where(badge => badge.IsVisible)
+            .Select(badge => ToolTip.GetTip(badge) as string)
+            .ToList();
+        Assert.Equal(2, tips.Count);
+        Assert.Contains(tips, tip => tip!.StartsWith("Knockdown is cast on one enemy at a time", StringComparison.Ordinal));
+        Assert.Contains(tips, tip => tip!.StartsWith("Second opinion from real matches", StringComparison.Ordinal));
+        Assert.StartsWith("Fetched ", match.Explain.MatchData!.Source);
     }
 
     [AvaloniaFact]

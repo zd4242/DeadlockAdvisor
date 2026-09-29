@@ -645,13 +645,16 @@ public static partial class MatchStatsMath
     }
 
     /// <summary>
-    /// What the data numbers are and where they came from, for tooltips and the explain panel's
-    /// footnote; "" without data.
+    /// What the data numbers are and where they came from, for tooltips: <see cref="DataMeaning"/>
+    /// then <see cref="DataSource"/>; "" without data.
     /// </summary>
-    public static string DataNote(JsonObject meta, double now)
+    public static string DataNote(JsonObject meta, double now) =>
+        IsFetched(meta) ? DataMeaning(meta) + "\n" + DataSource(meta, now) : "";
+
+    /// <summary>What the data numbers measure, and each family's patch window; "" without data.</summary>
+    public static string DataMeaning(JsonObject meta)
     {
-        var fetched = Number(meta["fetched_at"]);
-        if (fetched is null or 0)
+        if (!IsFetched(meta))
             return "";
 
         var lines = new List<string>
@@ -659,17 +662,29 @@ public static partial class MatchStatsMath
             "Second opinion from real matches (deadlock-api.com): how many win-rate points the item gains, "
             + "with each hero's own strength taken out and small samples pulled toward 0. Not part of the score.",
         };
-        if (RankLabel(meta) is { } rank)
-            lines.Add($"Ranked matches only: {rank}.");
         var against = FamilyMeta(meta, "against");
         if (IsTrue(against["kept"]))
             lines.Add($"Enemies: counters, since patch {Text(against["since_patch"]) ?? "?"}. Real effects here are small -- +1 is a standout.");
         var mine = FamilyMeta(meta, "as");
         if (IsTrue(mine["kept"]))
             lines.Add($"You: on your hero, since patch {Text(mine["since_patch"]) ?? "?"}. Partly reflects who builds it on this hero, not only what it does.");
-        lines.Add($"Fetched {Age(now - fetched.Value)} (Data → Fetch Match Stats).");
         return string.Join("\n", lines);
     }
+
+    /// <summary>Which matches the data comes from and how old it is: "Ranked matches only: Mystic+.\nFetched 2h ago…"; "" without data.</summary>
+    public static string DataSource(JsonObject meta, double now)
+    {
+        if (!IsFetched(meta))
+            return "";
+
+        var lines = new List<string>();
+        if (RankLabel(meta) is { } rank)
+            lines.Add($"Ranked matches only: {rank}.");
+        lines.Add($"Fetched {Age(now - Number(meta["fetched_at"])!.Value)} (Data → Fetch Match Stats).");
+        return string.Join("\n", lines);
+    }
+
+    private static bool IsFetched(JsonObject meta) => Number(meta["fetched_at"]) is not (null or 0);
 
     private static bool IsTrue(JsonNode? node) => node is JsonValue value && value.TryGetValue<bool>(out var flag) && flag;
 
