@@ -2,6 +2,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
@@ -38,8 +39,20 @@ public class DetectReviewTests
         Assert.All(portraits, portrait => Assert.NotNull(ArtHost.GetService(portrait)));
         ui.ScreenshotModal("detect_review.png");
 
+        // Typing on a slot's dropdown opens it on a search: the best match is picked, the misses hidden, and Enter closes it.
         var corrected = review.Slots[3];
-        corrected.SelectedHero = corrected.Choices.Single(choice => choice.HeroId == "haze");
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var dropdown = modal.GetVisualDescendants().OfType<SearchComboBox>().Single(box => box.DataContext == corrected);
+        dropdown.Focus();
+        modal.KeyTextInput("haz");
+        UiHarness.Settle();
+        Assert.True(dropdown.IsDropDownOpen);
+        Assert.Equal("haze", corrected.HeroId);
+        Assert.False(dropdown.ContainerFromItem(corrected.Choices.Single(choice => choice.HeroId == "abrams"))!.IsVisible);
+        ui.ScreenshotModal("detect_review_search.png");
+        modal.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.False(dropdown.IsDropDownOpen);
         Assert.Equal("corrected from Mirage", corrected.Detail);
         review.ToggleSelf(1);
         ui.ScreenshotModal("detect_review_no_self.png");

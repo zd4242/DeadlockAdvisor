@@ -61,7 +61,7 @@
                         </Grid>
                         <!-- A portrait beside each choice, to set against the crop on the left. "Not
                              detected" has none but keeps the gap, so the names stay in line. -->
-                        <controls:NoWheelComboBox HorizontalAlignment="Stretch"
+                        <controls:SearchComboBox HorizontalAlignment="Stretch"
                                                   ItemsSource="{Binding Choices}"
                                                   SelectedItem="{Binding SelectedHero}">
                             <ComboBox.ItemTemplate>
@@ -77,7 +77,7 @@
                                     </StackPanel>
                                 </DataTemplate>
                             </ComboBox.ItemTemplate>
-                        </controls:NoWheelComboBox>
+                        </controls:SearchComboBox>
                         <TextBlock Classes="hint detail"
                                    Classes.uncertain="{Binding IsUncertain}"
                                    Classes.corrected="{Binding WasCorrected}"
