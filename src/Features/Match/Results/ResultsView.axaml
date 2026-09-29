@@ -17,152 +17,143 @@
         </Style>
     </UserControl.Styles>
 
-    <DockPanel>
-        <controls:RichText DockPanel.Dock="Top"
-                           Classes="faint"
-                           Margin="0,0,0,6"
-                           Spans="{Binding Summary, Converter={x:Static controls:OpinionTerms.Converter}}"
-                           ToolTip.Tip="{Binding SummaryTip}"
-                           IsVisible="{Binding !IsEmpty}"/>
+    <Panel>
+        <TextBlock Classes="hint"
+                   Text="{Binding EmptyHint}"
+                   IsVisible="{Binding IsEmpty}"
+                   TextWrapping="Wrap"
+                   TextAlignment="Center"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   MaxWidth="460"/>
 
-        <Panel>
-            <TextBlock Classes="hint"
-                       Text="{Binding EmptyHint}"
-                       IsVisible="{Binding IsEmpty}"
-                       TextWrapping="Wrap"
-                       TextAlignment="Center"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"
-                       MaxWidth="460"/>
-
-            <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
-                <ItemsControl x:Name="List" ItemsSource="{Binding Entries}" Margin="0,0,4,0">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <VirtualizingStackPanel/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.DataTemplates>
-                        <DataTemplate DataType="results:ResultRowViewModel">
-                            <Border Classes="result"
-                                    Classes.selected="{Binding IsSelected}"
-                                    Margin="0,0,0,4"
-                                    Padding="8,7,10,7">
-                                <Border.ContextMenu>
-                                    <ContextMenu>
-                                        <MenuItem Header="Go to Item Formula"
-                                                  Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
-                                                  CommandParameter="{Binding ItemId}"/>
-                                    </ContextMenu>
-                                </Border.ContextMenu>
-                                <Grid ColumnDefinitions="Auto,*">
-                                    <art:ArtImage Width="34"
-                                                  Height="34"
-                                                  Kind="Item"
-                                                  ArtId="{Binding ItemId}"
-                                                  ArtName="{Binding Name}"
-                                                  Tint="{Binding ShopColor}"
-                                                  VerticalAlignment="Center"
-                                                  card:ItemCardHover.ItemId="{Binding ItemId}"/>
-                                    <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
-                                        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
-                                            <TextBlock Text="{Binding Name}"
-                                                       FontWeight="Bold"
-                                                       TextTrimming="CharacterEllipsis"
-                                                       VerticalAlignment="Center"/>
-                                            <controls:Badge Grid.Column="1"
-                                                            Margin="8,0,0,0"
-                                                            VerticalAlignment="Center"
-                                                            Text="DATA ★"
-                                                            Color="{x:Static theme:Palette.Data}"
-                                                            IsVisible="{Binding IsStandout}"
-                                                            ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>
-                                            <controls:Badge Grid.Column="2"
-                                                            Margin="8,0,0,0"
-                                                            VerticalAlignment="Center"
-                                                            Text="DISAGREE"
-                                                            Color="{x:Static theme:Palette.TextDim}"
-                                                            IsVisible="{Binding Disagrees}"
-                                                            ToolTip.Tip="{x:Static results:ResultRowViewModel.DisagreeTip}"/>
-                                            <controls:DataText Grid.Column="4"
-                                                               Margin="8,0,10,0"
-                                                               VerticalAlignment="Center"
-                                                               Data="{Binding Data}"
-                                                               IsRarelyBuilt="{Binding IsRarelyBuilt}"
-                                                               IsVisible="{Binding HasData}"
-                                                               ToolTip.Tip="{Binding DataTip}"/>
-                                            <Border Grid.Column="5"
-                                                    Classes="vline"
-                                                    Height="18"
-                                                    VerticalAlignment="Center"
-                                                    IsVisible="{Binding HasData}"/>
-                                            <!-- A fixed width, so the scores line up down the list whatever their length. -->
-                                            <Panel Grid.Column="6"
-                                                   MinWidth="58"
-                                                   Margin="10,0,0,0"
-                                                   VerticalAlignment="Center"
-                                                   Background="Transparent"
-                                                   ToolTip.Tip="{Binding Score.Tip}">
-                                                <TextBlock Classes="value"
-                                                           Classes.zero="{Binding IsZero}"
-                                                           HorizontalAlignment="Right"
-                                                           Text="{Binding Score.Text}"
-                                                           IsVisible="{Binding !IsNegative}"/>
-                                                <controls:SignedAmount HorizontalAlignment="Right"
-                                                                       VerticalAlignment="Center"
-                                                                       FontSize="15"
-                                                                       IsBold="True"
-                                                                       Value="{Binding Score.Shown}"
-                                                                       Text="{Binding Score.Text}"
-                                                                       IsVisible="{Binding IsNegative}"/>
-                                            </Panel>
-                                        </Grid>
-                                        <StackPanel Spacing="2" Background="Transparent" ToolTip.Tip="{Binding BarTip}">
-                                            <controls:ScoreBar Classes.pair="{Binding HasDataBar}" Fraction="{Binding Fraction}"/>
-                                            <controls:ScoreBar Classes="pair"
-                                                               Color="{x:Static theme:Palette.Data}"
-                                                               Fraction="{Binding DataFraction}"
-                                                               IsVisible="{Binding HasDataBar}"/>
-                                        </StackPanel>
+        <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
+            <ItemsControl x:Name="List" ItemsSource="{Binding Entries}" Margin="0,0,4,0">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel/>
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.DataTemplates>
+                    <DataTemplate DataType="results:ResultRowViewModel">
+                        <Border Classes="result"
+                                Classes.selected="{Binding IsSelected}"
+                                Margin="0,0,0,4"
+                                Padding="8,7,10,7">
+                            <Border.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Go to Item Formula"
+                                              Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
+                                              CommandParameter="{Binding ItemId}"/>
+                                </ContextMenu>
+                            </Border.ContextMenu>
+                            <Grid ColumnDefinitions="Auto,*">
+                                <art:ArtImage Width="34"
+                                              Height="34"
+                                              Kind="Item"
+                                              ArtId="{Binding ItemId}"
+                                              ArtName="{Binding Name}"
+                                              Tint="{Binding ShopColor}"
+                                              VerticalAlignment="Center"
+                                              card:ItemCardHover.ItemId="{Binding ItemId}"/>
+                                <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto,Auto,Auto">
+                                        <TextBlock Text="{Binding Name}"
+                                                   FontWeight="Bold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   VerticalAlignment="Center"/>
+                                        <controls:Badge Grid.Column="1"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Text="DATA ★"
+                                                        Color="{x:Static theme:Palette.Data}"
+                                                        IsVisible="{Binding IsStandout}"
+                                                        ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>
+                                        <controls:Badge Grid.Column="2"
+                                                        Margin="8,0,0,0"
+                                                        VerticalAlignment="Center"
+                                                        Text="DISAGREE"
+                                                        Color="{x:Static theme:Palette.TextDim}"
+                                                        IsVisible="{Binding Disagrees}"
+                                                        ToolTip.Tip="{x:Static results:ResultRowViewModel.DisagreeTip}"/>
+                                        <controls:DataText Grid.Column="4"
+                                                           Margin="8,0,10,0"
+                                                           VerticalAlignment="Center"
+                                                           Data="{Binding Data}"
+                                                           IsRarelyBuilt="{Binding IsRarelyBuilt}"
+                                                           IsVisible="{Binding HasData}"
+                                                           ToolTip.Tip="{Binding DataTip}"/>
+                                        <Border Grid.Column="5"
+                                                Classes="vline"
+                                                Height="18"
+                                                VerticalAlignment="Center"
+                                                IsVisible="{Binding HasData}"/>
+                                        <!-- A fixed width, so the scores line up down the list whatever their length. -->
+                                        <Panel Grid.Column="6"
+                                               MinWidth="58"
+                                               Margin="10,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Background="Transparent"
+                                               ToolTip.Tip="{Binding Score.Tip}">
+                                            <TextBlock Classes="value"
+                                                       Classes.zero="{Binding IsZero}"
+                                                       HorizontalAlignment="Right"
+                                                       Text="{Binding Score.Text}"
+                                                       IsVisible="{Binding !IsNegative}"/>
+                                            <controls:SignedAmount HorizontalAlignment="Right"
+                                                                   VerticalAlignment="Center"
+                                                                   FontSize="15"
+                                                                   IsBold="True"
+                                                                   Value="{Binding Score.Shown}"
+                                                                   Text="{Binding Score.Text}"
+                                                                   IsVisible="{Binding IsNegative}"/>
+                                        </Panel>
+                                    </Grid>
+                                    <StackPanel Spacing="2" Background="Transparent" ToolTip.Tip="{Binding BarTip}">
+                                        <controls:ScoreBar Classes.pair="{Binding HasDataBar}" Fraction="{Binding Fraction}"/>
+                                        <controls:ScoreBar Classes="pair"
+                                                           Color="{x:Static theme:Palette.Data}"
+                                                           Fraction="{Binding DataFraction}"
+                                                           IsVisible="{Binding HasDataBar}"/>
                                     </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
+                                </StackPanel>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
 
-                        <DataTemplate DataType="results:SectionHeaderViewModel">
-                            <StackPanel Classes="tierHeader"
-                                        Margin="0,10,0,6"
-                                        Spacing="2"
-                                        Background="Transparent"
-                                        Cursor="Hand"
-                                        ToolTip.Tip="{Binding ToolTipText}">
-                                <Grid ColumnDefinitions="12,Auto,Auto,*">
-                                    <TextBlock Text="{Binding Chevron}"
-                                               Foreground="{Binding Brush}"
-                                               FontSize="16"
-                                               VerticalAlignment="Center"/>
-                                    <TextBlock Grid.Column="1"
-                                               Classes="section"
-                                               Margin="8,0,0,0"
-                                               Text="{Binding Title}"
-                                               Foreground="{Binding Brush}"
-                                               VerticalAlignment="Center"/>
-                                    <controls:Badge Grid.Column="2"
-                                                    Margin="8,0,0,0"
-                                                    VerticalAlignment="Center"
-                                                    Text="{Binding CountText}"
-                                                    Color="{Binding Color}"/>
-                                </Grid>
-                                <TextBlock Classes="faint"
-                                           Margin="20,0,0,0"
-                                           TextWrapping="Wrap"
-                                           Text="{Binding Note}"
-                                           IsVisible="{Binding HasNote}"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ItemsControl.DataTemplates>
-                </ItemsControl>
-            </ScrollViewer>
-        </Panel>
-    </DockPanel>
+                    <DataTemplate DataType="results:SectionHeaderViewModel">
+                        <StackPanel Classes="tierHeader"
+                                    Margin="0,10,0,6"
+                                    Spacing="2"
+                                    Background="Transparent"
+                                    Cursor="Hand"
+                                    ToolTip.Tip="{Binding ToolTipText}">
+                            <Grid ColumnDefinitions="12,Auto,Auto,*">
+                                <TextBlock Text="{Binding Chevron}"
+                                           Foreground="{Binding Brush}"
+                                           FontSize="16"
+                                           VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="1"
+                                           Classes="section"
+                                           Margin="8,0,0,0"
+                                           Text="{Binding Title}"
+                                           Foreground="{Binding Brush}"
+                                           VerticalAlignment="Center"/>
+                                <controls:Badge Grid.Column="2"
+                                                Margin="8,0,0,0"
+                                                VerticalAlignment="Center"
+                                                Text="{Binding CountText}"
+                                                Color="{Binding Color}"/>
+                            </Grid>
+                            <TextBlock Classes="faint"
+                                       Margin="20,0,0,0"
+                                       TextWrapping="Wrap"
+                                       Text="{Binding Note}"
+                                       IsVisible="{Binding HasNote}"/>
+                        </StackPanel>
+                    </DataTemplate>
+                </ItemsControl.DataTemplates>
+            </ItemsControl>
+        </ScrollViewer>
+    </Panel>
 </UserControl>

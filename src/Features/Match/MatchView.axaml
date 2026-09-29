@@ -59,7 +59,15 @@
                 <DockPanel>
                     <!-- What ranks the list stays in view; the rest sits behind Filters. -->
                     <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
-                        <TextBlock Classes="section" VerticalAlignment="Center" Text="RECOMMENDED ITEMS"/>
+                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                            <TextBlock Classes="section" TextTrimming="CharacterEllipsis" Text="RECOMMENDED ITEMS"/>
+                            <TextBlock Classes="faint"
+                                       TextTrimming="CharacterEllipsis"
+                                       Background="Transparent"
+                                       Text="{Binding Results.Summary}"
+                                       ToolTip.Tip="{Binding Results.SummaryTip}"
+                                       IsVisible="{Binding !Results.IsEmpty}"/>
+                        </StackPanel>
                         <ComboBox Grid.Column="1"
                                   VerticalAlignment="Center"
                                   ItemsSource="{Binding Ranks}"

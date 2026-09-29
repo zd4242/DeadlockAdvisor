@@ -50,7 +50,7 @@ public class ResultsViewModelTests
         var header = Assert.IsType<SectionHeaderViewModel>(results.Entries[2]);
         Assert.Equal(ResultsViewModel.DataPicksKey, header.Key);
         Assert.Equal("1", header.CountText);
-        Assert.Equal("2 items scoring above 0", results.Summary);
+        Assert.Equal("2 items above 0", results.Summary);
 
         results.ToggleSection(ResultsViewModel.DataPicksKey);
         Assert.Equal(["a", "b"], Rows(results));
@@ -69,7 +69,7 @@ public class ResultsViewModelTests
         Assert.True(c.IsNegative);
         Assert.Equal("3.0", c.Score.Text);
         Assert.True(c.IsStandout);
-        Assert.Equal("All 5 items  ·  2 scoring above 0", results.Summary);
+        Assert.Equal("All 5 items  ·  2 above 0", results.Summary);
     }
 
     [Fact]
@@ -97,7 +97,7 @@ public class ResultsViewModelTests
         Assert.Equal(-0.3, rows[2].Fraction, 9);
         Assert.Equal(0.75, rows[2].DataFraction, 9);
         Assert.Equal("3.0", rows[0].Score.Text);
-        Assert.Equal("3 items the formula and the data together rate above 0", results.Summary);
+        Assert.Equal("3 items above 0", results.Summary);
     }
 
     [Fact]

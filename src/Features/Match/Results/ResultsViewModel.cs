@@ -237,22 +237,15 @@ public class ResultsViewModel : ViewModelBase
             placed.AddRange(rows);
     }
 
+    /// <summary>Counts only: the rank picker beside it names what they're rated by.</summary>
     private string SummaryText(int positive, int shown, double cutoff, bool everyItem)
     {
         if (everyItem)
-            return $"All {shown} item{(shown != 1 ? "s" : "")}  ·  {positive} {RankNoun()}";
-        var noun = $"item{(positive != 1 ? "s" : "")} {RankNoun()}";
+            return $"All {shown} item{(shown != 1 ? "s" : "")}  ·  {positive} above 0";
         return shown < positive
-            ? $"{shown} of {positive} {noun}  ·  cutoff {MeasureText(cutoff)}"
-            : $"{positive} {noun}";
+            ? $"{shown} of {positive} above 0  ·  cutoff {MeasureText(cutoff)}"
+            : $"{positive} item{(positive != 1 ? "s" : "")} above 0";
     }
-
-    private string RankNoun() => _rankBy switch
-    {
-        RankBy.MatchData => "the match data rates above 0",
-        RankBy.Both => "the formula and the data together rate above 0",
-        _ => "scoring above 0",
-    };
 
     private string MeasureText(double measure) => _rankBy switch
     {
