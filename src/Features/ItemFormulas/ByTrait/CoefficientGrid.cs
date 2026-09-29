@@ -2,6 +2,7 @@ using Avalonia.Data;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Controls.Grids;
 using DeadlockAdvisor.Core;
@@ -145,9 +146,18 @@ public class CoefficientGrid : ScrollingGrid
     {
         base.OnPointerPressed(e);
         UpdateCard(null);
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-            return;
+        var properties = e.GetCurrentPoint(this).Properties;
         var (row, column, header) = HitTest(e.GetPosition(this));
+        if (properties.IsRightButtonPressed && !header && row >= 0)
+        {
+            SetCurrentValue(CurrentRowProperty, Rows[row]);
+            Focus();
+            WikiMenuItem.ShowMenu(this, Rows[row].Name);
+            e.Handled = true;
+            return;
+        }
+        if (!properties.IsLeftButtonPressed)
+            return;
         if (header)
         {
             if (column >= 0)

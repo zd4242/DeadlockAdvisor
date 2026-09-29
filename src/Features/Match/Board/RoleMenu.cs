@@ -3,7 +3,7 @@ using DeadlockAdvisor.Enums;
 
 namespace DeadlockAdvisor.Features.Match.Board;
 
-/// <summary>The explicit role menu, from a right click on a palette tile or a click on a match bar slot.</summary>
+/// <summary>The explicit role menu, from a right click on a palette tile or a click on a match bar slot, with the hero's wiki page.</summary>
 public static class RoleMenu
 {
     public static void Show(MatchBoardViewModel? vm, HeroEventArgs e)
@@ -23,6 +23,8 @@ public static class RoleMenu
             items.Add(new Separator());
             items.Add(MenuItem("Remove from match", null, () => vm.SetRole(heroId, Role.None)));
         }
+        items.Add(new Separator());
+        items.Add(new WikiMenuItem(vm.HeroName(heroId)));
 
         var menu = new ContextMenu { ItemsSource = items, Placement = PlacementMode.Pointer };
         menu.Open(target);

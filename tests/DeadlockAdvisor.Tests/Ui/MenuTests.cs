@@ -5,6 +5,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
@@ -149,29 +150,103 @@ public class MenuTests
     }
 
     [AvaloniaFact]
-    public void OnlyTheEditorsBringTheFormulaMenus()
+    public void OnlyTheEditorsBringTheFormulaEntries()
     {
         using var ui = new UiHarness();
         foreach (var hero in new[] { "haze", "infernus", "abrams" })
             ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
         ui.Show();
         var results = ui.ViewModel.Match.Results;
-        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+        var first = results.Entries.OfType<ResultRowViewModel>().First();
+        results.Select(first);
         UiHarness.Settle();
         var header = ui.Window.GetVisualDescendants().OfType<Grid>().Single(grid => grid.Classes.Contains("itemHeader"));
         List<Border> Rows() => ui.Window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("result")).Take(2).ToList();
+        List<string> Shown(Control owner) => RightClick(ui.Window, owner).Select(item => (string)item.Header!).ToList();
 
-        Assert.Null(header.ContextMenu);
-        Assert.All(Rows(), row => Assert.Null(row.ContextMenu));
+        Assert.Equal([WikiMenuItem.Text], Shown(header));
+        Assert.All(Rows(), row => Assert.Equal([WikiMenuItem.Text], Shown(row)));
         Assert.False(((System.Windows.Input.ICommand)results.OpenFormulaCommand).CanExecute(results.SelectedItemId));
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
         UiHarness.Settle();
 
         var rows = Rows();
-        Assert.NotNull(header.ContextMenu);
-        Assert.All(rows, row => Assert.NotNull(row.ContextMenu));
+        Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(header));
+        Assert.All(rows, row => Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(row)));
         Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
+    }
+
+    [AvaloniaFact]
+    public void TheMatchMenusLinkTheWikiPages()
+    {
+        using var ui = new UiHarness();
+        foreach (var hero in new[] { "haze", "infernus", "abrams" })
+            ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
+        ui.Show();
+
+        var slot = ui.Window.GetVisualDescendants().OfType<Controls.RosterSlot>().First(s => s.HeroId == "infernus");
+        Assert.Equal("Infernus", RightClickForWiki(ui.Window, slot).Page);
+
+        var row = ui.Window.GetVisualDescendants().OfType<Border>().First(border => border.Classes.Contains("result"));
+        var item = RightClickForWiki(ui.Window, row);
+        Assert.Equal(((ResultRowViewModel)row.DataContext!).Name, item.Page);
+        Assert.Equal(Core.Wiki.PageUrl(item.Page!), item.Url);
+    }
+
+    [AvaloniaFact]
+    public void TheHeroTraitNamesLinkTheirWikiPages()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        var page = ui.ViewModel.HeroTraits;
+        ui.Show();
+        var grid = ui.Window.HeroTraitsPage.Grid;
+
+        var nameOfSecond = new Point(40, grid.HeaderHeight + Features.HeroTraits.TraitGrid.RowHeight * 1.5);
+
+        Assert.Equal(page.Heroes[page.VisibleRows[1]].HeroName, RightClickForWiki(ui.Window, grid, nameOfSecond).Page);
+    }
+
+    [AvaloniaFact]
+    public void TheItemFormulaListsLinkTheirItemsWikiPages()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
+        var formulas = ui.ViewModel.ItemFormulas;
+        ui.Show();
+
+        var list = ui.Window.ItemFormulasPage.ByItemPanel.GetVisualDescendants().OfType<ListBox>()
+            .Single(candidate => candidate.ItemsSource == formulas.ByItem.Items);
+        var listed = list.ContainerFromIndex(1)!;
+        Assert.Equal(formulas.ByItem.Items[1].Name, RightClickForWiki(ui.Window, listed).Page);
+
+        formulas.SelectedTab = 1;
+        UiHarness.Settle();
+        var byTrait = formulas.ByTrait;
+        var grid = ui.Window.ItemFormulasPage.ByTraitPanel.Grid;
+        var secondRow = new Point(100, Features.ItemFormulas.ByTrait.CoefficientGrid.HeaderHeight + Features.ItemFormulas.ByTrait.CoefficientGrid.RowHeight * 1.5);
+
+        Assert.Equal(byTrait.Rows[1].Name, RightClickForWiki(ui.Window, grid, secondRow).Page);
+        Assert.Same(byTrait.Rows[1], byTrait.CurrentRow);
+    }
+
+    private static WikiMenuItem RightClickForWiki(Window window, Control target, Point? at = null) =>
+        RightClick(window, target, at).OfType<WikiMenuItem>().Single();
+
+    /// <summary>
+    /// Right-clicks <paramref name="target"/> (at its centre, or <paramref name="at"/> within it) and
+    /// returns the shown entries of the menu that opens, closing it again.
+    /// </summary>
+    private static List<MenuItem> RightClick(Window window, Control target, Point? at = null)
+    {
+        var point = target.TranslatePoint(at ?? new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), window)!.Value;
+        window.MouseDown(point, MouseButton.Right);
+        window.MouseUp(point, MouseButton.Right);
+        UiHarness.Settle();
+        var menu = window.GetVisualDescendants().OfType<ContextMenu>().Single(candidate => candidate.IsOpen);
+        var shown = menu.GetVisualDescendants().OfType<MenuItem>().Where(item => item.IsVisible).ToList();
+        menu.Close();
+        UiHarness.Settle();
+        return shown;
     }
 
     /// <summary>Wholly inside the scroll viewer showing it.</summary>

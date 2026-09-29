@@ -18,13 +18,15 @@
             <Setter Property="Margin" Value="0,0,6,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <!-- Only with an item, so the idle title offers nothing to go to, and while the editors are shown. -->
-        <Style Selector="Grid.itemHeader.hasItem.offersFormula">
+        <!-- Only with an item, so the idle title offers nothing to go to. The formula only while the editors are shown. -->
+        <Style Selector="Grid.itemHeader.hasItem">
             <Setter Property="ContextMenu">
                 <ContextMenu x:DataType="explain:ExplainViewModel">
                     <MenuItem Header="Go to Item Formula"
                               Command="{Binding OpenFormulaCommand}"
-                              CommandParameter="{Binding ItemId}"/>
+                              CommandParameter="{Binding ItemId}"
+                              IsVisible="{Binding ShowsEditors}"/>
+                    <controls:WikiMenuItem Page="{Binding ItemName}"/>
                 </ContextMenu>
             </Setter>
         </Style>
@@ -36,7 +38,6 @@
         <Grid DockPanel.Dock="Top"
               Classes="itemHeader"
               Classes.hasItem="{Binding HasItem}"
-              Classes.offersFormula="{Binding ShowsEditors}"
               ColumnDefinitions="Auto,*,Auto"
               Margin="0,8,0,0"
               Background="Transparent">

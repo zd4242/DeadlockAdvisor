@@ -202,6 +202,7 @@ public class MatchBoardViewModel : ViewModelBase
 
     public Role RoleOf(string heroId) => _match.RoleOf(heroId);
     public bool HasHero(string heroId) => _store().Heroes.ContainsKey(heroId);
+    public string HeroName(string heroId) => _store().Heroes[heroId].HeroName;
 
     /// <summary>
     /// An empty slot on the match bar was clicked: open the picker aimed at that team. An empty ally

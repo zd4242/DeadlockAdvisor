@@ -249,9 +249,16 @@ public class TraitGrid : ScrollingGrid
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
-        if (!e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
-            return;
+        var properties = e.GetCurrentPoint(this).Properties;
         var (region, row, column) = HitTest(e.GetPosition(this));
+        if (properties.IsRightButtonPressed && region == Region.RowHeader)
+        {
+            WikiMenuItem.ShowMenu(this, Heroes[row].HeroName);
+            e.Handled = true;
+            return;
+        }
+        if (!properties.IsLeftButtonPressed)
+            return;
         switch (region)
         {
             case Region.Cell:

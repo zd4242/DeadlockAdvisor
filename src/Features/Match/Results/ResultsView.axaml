@@ -15,14 +15,16 @@
         <Style Selector="controls|ScoreBar.pair">
             <Setter Property="Height" Value="4"/>
         </Style>
-        <!-- Only while the editors are shown. A template, so every row gets a menu of its own. -->
-        <Style Selector="ItemsControl.offersFormula Border.result">
+        <!-- A template, so every row gets a menu of its own. The formula only while the editors are shown. -->
+        <Style Selector="Border.result">
             <Setter Property="ContextMenu">
                 <Template>
                     <ContextMenu x:DataType="results:ResultRowViewModel">
                         <MenuItem Header="Go to Item Formula"
                                   Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
-                                  CommandParameter="{Binding ItemId}"/>
+                                  CommandParameter="{Binding ItemId}"
+                                  IsVisible="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).ShowsEditors}"/>
+                        <controls:WikiMenuItem Page="{Binding Name}"/>
                     </ContextMenu>
                 </Template>
             </Setter>
@@ -42,7 +44,6 @@
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
             <ItemsControl x:Name="List"
                           ItemsSource="{Binding Entries}"
-                          Classes.offersFormula="{Binding ShowsEditors}"
                           Margin="0,0,4,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
