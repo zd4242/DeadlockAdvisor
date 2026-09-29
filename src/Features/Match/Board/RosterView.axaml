@@ -62,7 +62,7 @@
                             Content="Random"
                             Command="{Binding RandomizeCommand}"
                             CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"
-                            ToolTip.Tip="Fill the match with random heroes (for testing)"/>
+                            ToolTip.Tip="Fill the match with random heroes, for testing (F6)"/>
                     <Button Classes="ghost"
                             Content="▾"
                             Padding="6,6"
@@ -70,9 +70,11 @@
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
                                 <MenuItem Header="Random, keeping your hero"
+                                          InputGesture="F7"
                                           Command="{Binding RandomizeCommand}"
                                           CommandParameter="{x:Static enums:RandomizeKeep.Self}"/>
                                 <MenuItem Header="Random enemies, keeping your team"
+                                          InputGesture="F8"
                                           Command="{Binding RandomizeCommand}"
                                           CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"/>
                             </MenuFlyout>

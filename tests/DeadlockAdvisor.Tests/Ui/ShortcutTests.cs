@@ -42,4 +42,35 @@ public class ShortcutTests
         Assert.Equal(Role.Ally, board.Mode);
         Assert.Equal(1, ui.Capture.Captures);
     }
+
+    [AvaloniaFact]
+    public void FunctionKeysRandomizeTheMatchKeepingWhatTheyName()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.Window.FocusManager!.ClearFocus();
+        var board = ui.ViewModel.Match.Board;
+        string? Self() => board.AllySlots.SingleOrDefault(slot => slot.IsSelf)?.HeroId;
+        HashSet<string?> Team() => board.AllySlots.Select(slot => slot.HeroId).ToHashSet();
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.NotNull(slot.HeroId));
+
+        var self = Self();
+        ui.Window.KeyPressQwerty(PhysicalKey.F7, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal(self, Self());
+
+        var team = Team();
+        ui.Window.KeyPressQwerty(PhysicalKey.F8, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal(team, Team());
+
+        ui.ViewModel.CurrentPage = 1;
+        UiHarness.Settle();
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal(team, Team());
+    }
 }

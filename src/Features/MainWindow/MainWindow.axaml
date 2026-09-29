@@ -40,6 +40,9 @@
         <KeyBinding Gesture="Alt+D1" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Enemy}"/>
         <KeyBinding Gesture="Alt+D2" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Ally}"/>
         <KeyBinding Gesture="Alt+D3" Command="{Binding SetModeCommand}" CommandParameter="{x:Static enums:Role.Self}"/>
+        <KeyBinding Gesture="F6" Command="{Binding RandomizeCommand}" CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"/>
+        <KeyBinding Gesture="F7" Command="{Binding RandomizeCommand}" CommandParameter="{x:Static enums:RandomizeKeep.Self}"/>
+        <KeyBinding Gesture="F8" Command="{Binding RandomizeCommand}" CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"/>
         <KeyBinding Gesture="F9" Command="{Binding DetectCommand}"/>
     </Window.KeyBindings>
 

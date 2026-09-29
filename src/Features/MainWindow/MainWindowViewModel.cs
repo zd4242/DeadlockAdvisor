@@ -168,6 +168,7 @@ public class MainWindowViewModel : ViewModelBase
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
         SetModeCommand = ReactiveCommand.Create<Role>(Match.Board.StartAssigning, onMatchPage);
         DetectCommand = ReactiveCommand.CreateFromObservable(() => Match.DetectCommand.Execute(), onMatchPage);
+        RandomizeCommand = ReactiveCommand.CreateFromObservable<RandomizeKeep, Unit>(Match.Board.RandomizeCommand.Execute, onMatchPage);
 
         RefreshStatus();
     }
@@ -221,8 +222,9 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
-    /// <summary>Alt+1/2/3 (which open the hero picker) and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
+    /// <summary>Alt+1/2/3 (which open the hero picker), F6–F8 and F9, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
+    public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
 
     /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
