@@ -6,6 +6,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Board;
@@ -91,6 +92,22 @@ public class MatchPageTests
         results.Select(pick);
         Assert.True(ui.ViewModel.Match.Explain.HasItem);
         ui.Screenshot("match_data_pick_explained.png");
+    }
+
+    [AvaloniaFact]
+    public void ASingleTargetItemsTypicalTeamCarriesAnInfoBadge()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+        ui.Show();
+
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown"));
+        ui.Screenshot("match_typical_team_info.png");
+
+        var badge = ui.Window.MatchPage.GetVisualDescendants().OfType<InfoBadge>().Single(badge => badge.IsVisible);
+        Assert.Contains("Knockdown is cast on one enemy at a time", ToolTip.GetTip(badge) as string);
     }
 
     [AvaloniaFact]

@@ -13,6 +13,7 @@ namespace DeadlockAdvisor.Features.Match.Explain;
 public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share);
 
 /// <param name="Note">Beside the name: the hero's best-target rank and net worth standing, when they scale its share.</param>
+/// <param name="Info">Behind an info badge: a plain explanation of a line that isn't a hero, such as the typical team.</param>
 public sealed record ContributionCard(
     string HeroName,
     string RelationText,
@@ -20,7 +21,8 @@ public sealed record ContributionCard(
     DisplayAmount Amount,
     IReadOnlyList<TraitLine> Traits,
     string? Note = null,
-    string? NoteTip = null);
+    string? NoteTip = null,
+    string? Info = null);
 
 public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
 
@@ -83,7 +85,7 @@ public class ExplainViewModel : ViewModelBase
         ShopColor = Palette.ShopColor(item.Category);
         Total = new DisplayAmount(total);
         NoContributions = contributions.Count == 0;
-        Contributions = contributions.Select(Card).ToList();
+        Contributions = contributions.Select(contribution => Card(contribution, TypicalInfo(item.ItemName, contribution, contributions))).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId);
         var self = match.SelfHero;
         MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
@@ -105,13 +107,24 @@ public class ExplainViewModel : ViewModelBase
         Verdict = null;
     }
 
-    private static ContributionCard Card(HeroContribution contribution)
+    /// <summary>The typical team's explanation, against what the same relation's ranked heroes come to; null for a hero.</summary>
+    private static string? TypicalInfo(string itemName, HeroContribution contribution, IReadOnlyList<HeroContribution> contributions)
+    {
+        if (contribution.TypicalOf is not { } count)
+            return null;
+        var targets = contributions
+            .Where(other => other.Relation == contribution.Relation && other.Rank is not null)
+            .Sum(other => other.Amount);
+        return ExplainText.TypicalInfo(itemName, contribution.Relation, count, -contribution.Amount, targets);
+    }
+
+    private static ContributionCard Card(HeroContribution contribution, string? info)
     {
         var notes = new[] { ExplainText.Rank(contribution.Rank), ExplainText.NetWorth(contribution.NetWorth) }.OfType<string>().ToList();
         if (contribution.TypicalOf is { } count)
             notes.Add(ExplainText.Typical(count));
         var tips = new List<string>();
-        if (contribution.Rank is not null || contribution.TypicalOf is not null)
+        if (contribution.Rank is not null)
             tips.Add(ExplainText.BestTargetsTip);
         if (contribution.NetWorth is { Factor: not 1.0 } standing)
             tips.Add(ExplainText.NetWorthTooltip(standing));
@@ -128,7 +141,8 @@ public class ExplainViewModel : ViewModelBase
                 ExplainText.Arithmetic(part),
                 new DisplayAmount(part.Amount))).ToList(),
             notes.Count > 0 ? string.Join(" · ", notes) : null,
-            tips.Count > 0 ? string.Join("\n\n", tips) : null);
+            tips.Count > 0 ? string.Join("\n\n", tips) : null,
+            info);
     }
 
     /// <summary>

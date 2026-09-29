@@ -69,21 +69,27 @@
                         <DataTemplate x:DataType="explain:ContributionCard">
                             <Border Classes="inset" Margin="0,0,0,4">
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="Auto,Auto,*,Auto">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
                                         <TextBlock Text="{Binding HeroName}" FontWeight="Bold" VerticalAlignment="Center"/>
                                         <controls:Badge Grid.Column="1"
                                                         Margin="6,0,0,0"
                                                         VerticalAlignment="Center"
                                                         Text="{Binding RelationText}"
                                                         Color="{Binding RelationColor}"/>
-                                        <TextBlock Grid.Column="2"
+                                        <controls:InfoBadge Grid.Column="2"
+                                                            Margin="6,0,0,0"
+                                                            VerticalAlignment="Center"
+                                                            ToolTip.Tip="{Binding Info}"
+                                                            ToolTip.ShowDelay="100"
+                                                            IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <TextBlock Grid.Column="3"
                                                    Classes="faintText"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
                                                    Text="{Binding Note}"
                                                    ToolTip.Tip="{Binding NoteTip}"/>
-                                        <controls:SignedAmount Grid.Column="3"
+                                        <controls:SignedAmount Grid.Column="4"
                                                                VerticalAlignment="Center"
                                                                IsBold="True"
                                                                Value="{Binding Amount.Shown}"
