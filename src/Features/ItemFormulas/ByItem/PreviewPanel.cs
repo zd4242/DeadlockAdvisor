@@ -1,6 +1,8 @@
 using Avalonia.Layout;
 using Avalonia.Media;
 using DeadlockAdvisor.Controls;
+using DeadlockAdvisor.Controls.Art;
+using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Features.ItemFormulas.ByItem;
@@ -71,7 +73,18 @@ public class PreviewPanel : StackPanel
         {
             var row = group.Rows[index];
             grid.RowDefinitions.Add(new RowDefinition(GridLength.Auto));
-            Place(grid, new TextBlock { Text = row.HeroName, Classes = { "dim" }, VerticalAlignment = VerticalAlignment.Center }, index, 0);
+            var hero = new StackPanel { Orientation = Orientation.Horizontal, Spacing = 6 };
+            hero.Children.Add(new ArtImage
+            {
+                Kind = ArtKind.Hero,
+                ArtId = row.HeroId,
+                ArtName = row.HeroName,
+                Width = 20,
+                Height = 20,
+                VerticalAlignment = VerticalAlignment.Center,
+            });
+            hero.Children.Add(new TextBlock { Text = row.HeroName, Classes = { "dim" }, VerticalAlignment = VerticalAlignment.Center });
+            Place(grid, hero, index, 0);
 
             for (var column = 0; column < row.Pieces.Count; column++)
             {

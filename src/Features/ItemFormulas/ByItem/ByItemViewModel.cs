@@ -310,6 +310,7 @@ public class ByItemViewModel : ViewModelBase
                         : null)
                     .ToList();
                 return new PreviewRow(
+                    contribution.HeroId,
                     contribution.HeroName,
                     pieces,
                     FormulaText.Amount(contribution.Amount, signed: true),

@@ -1,6 +1,8 @@
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
+using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using static DeadlockAdvisor.Tests.Support.VisionData;
@@ -29,6 +31,11 @@ public class DetectReviewTests
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, review.SelfSlot);
         Assert.Contains(review.Slots, slot => slot.IsUncertain);
+        UiHarness.Settle();
+        // The modal is a window of its own: its portraits need the art service handed on to it.
+        var portraits = ui.Window.OwnedWindows.OfType<ModalWindow>().Single().GetVisualDescendants().OfType<ArtImage>().ToList();
+        Assert.NotEmpty(portraits);
+        Assert.All(portraits, portrait => Assert.NotNull(ArtHost.GetService(portrait)));
         ui.ScreenshotModal("detect_review.png");
 
         var corrected = review.Slots[3];

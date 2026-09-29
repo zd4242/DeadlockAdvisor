@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:detect="using:DeadlockAdvisor.Features.Match.Detect"
              xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:art="using:DeadlockAdvisor.Controls.Art"
              x:Class="DeadlockAdvisor.Features.Match.Detect.DetectReviewView"
              x:DataType="detect:DetectReviewViewModel">
 
@@ -58,9 +59,25 @@
                                           Command="{Binding SetSelfCommand}"
                                           ToolTip.Tip="This slot is you: the teams follow from it"/>
                         </Grid>
+                        <!-- A portrait beside each choice, to set against the crop on the left. "Not
+                             detected" has none but keeps the gap, so the names stay in line. -->
                         <controls:NoWheelComboBox HorizontalAlignment="Stretch"
                                                   ItemsSource="{Binding Choices}"
-                                                  SelectedItem="{Binding SelectedHero}"/>
+                                                  SelectedItem="{Binding SelectedHero}">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="detect:HeroChoice">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <art:ArtImage Width="20"
+                                                      Height="20"
+                                                      Kind="Hero"
+                                                      ArtId="{Binding HeroId}"
+                                                      ArtName="{Binding Name}"
+                                                      VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </controls:NoWheelComboBox>
                         <TextBlock Classes="hint detail"
                                    Classes.uncertain="{Binding IsUncertain}"
                                    Classes.corrected="{Binding WasCorrected}"

@@ -278,6 +278,8 @@ public partial class MainWindow : Window
         var modalVm = new ModalViewModel();
         _modalWindow = new ModalWindow { DataContext = modalVm };
         _modalWindow.BackdropPressed += OnModalBackdropPressed;
+        // The modal is its own visual root, so the art service isn't inherited into it.
+        ArtHost.SetService(_modalWindow, ArtHost.GetService(this));
 
         SyncModalBounds();
         _modalBoundsSync = new CompositeDisposable(
