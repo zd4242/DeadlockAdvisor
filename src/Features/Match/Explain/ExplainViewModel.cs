@@ -15,9 +15,11 @@ namespace DeadlockAdvisor.Features.Match.Explain;
 
 public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share);
 
+/// <param name="HeroId">The portrait beside the name; null for a line that isn't a hero, such as the typical team.</param>
 /// <param name="Note">Beside the name: the hero's best-target rank and net worth standing, when they scale its share.</param>
 /// <param name="Info">Behind an info badge: a plain explanation of a line that isn't a hero, such as the typical team.</param>
 public sealed record ContributionCard(
+    string? HeroId,
     string HeroName,
     string RelationText,
     Color RelationColor,
@@ -27,7 +29,7 @@ public sealed record ContributionCard(
     string? NoteTip = null,
     string? Info = null);
 
-public sealed record DataLine(string HeroName, string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
+public sealed record DataLine(string HeroId, string HeroName,string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
 
 /// <summary>"enemies ▲1.3": one relation's summed lift.</summary>
 public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
@@ -154,6 +156,7 @@ public class ExplainViewModel : ViewModelBase
             tips.Add(ExplainText.NetWorthTooltip(standing));
 
         return new ContributionCard(
+            contribution.TypicalOf is null ? contribution.HeroId : null,
             contribution.HeroName,
             ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
             Palette.RelationColor(contribution.Relation),
@@ -198,6 +201,7 @@ public class ExplainViewModel : ViewModelBase
             var relation = Relations.TryParse(part.Relation, out var parsed) ? parsed : Relation.As;
             var heroName = store.Heroes.TryGetValue(part.HeroId, out var hero) ? hero.HeroName : part.HeroId;
             return new DataLine(
+                part.HeroId,
                 heroName,
                 ExplainText.RelationWord(relation).ToUpperInvariant(),
                 Palette.RelationColor(relation),

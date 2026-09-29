@@ -28,4 +28,21 @@ public class ExplainViewModelTests
         Assert.Null(typical.NoteTip);
         Assert.All(explain.Contributions.Where(card => card != typical), card => Assert.NotNull(card.NoteTip));
     }
+
+    [Fact]
+    public void OnlyHeroCardsShowAPortrait()
+    {
+        var store = TestStore.Make();
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { SingleTarget = true };
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        var explain = new ExplainViewModel();
+
+        explain.ShowItem(store, match, "spirit_resist_t1", now: 0);
+
+        Assert.Null(explain.Contributions.Single(card => card.Info is not null).HeroId);
+        Assert.Equal(["heavy_spirit", "low_hp"],
+            explain.Contributions.Where(card => card.Info is null).Select(card => card.HeroId).Order());
+    }
 }

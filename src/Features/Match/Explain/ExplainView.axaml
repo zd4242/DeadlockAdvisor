@@ -12,6 +12,12 @@
         <Style Selector="TextBlock.faintText">
             <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
         </Style>
+        <Style Selector="art|ArtImage.heroIcon">
+            <Setter Property="Width" Value="20"/>
+            <Setter Property="Height" Value="20"/>
+            <Setter Property="Margin" Value="0,0,6,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
         <!-- Only with an item, so the idle title offers nothing to go to, and while the editors are shown. -->
         <Style Selector="Grid.itemHeader.hasItem.offersFormula">
             <Setter Property="ContextMenu">
@@ -85,27 +91,32 @@
                         <DataTemplate x:DataType="explain:ContributionCard">
                             <Border Classes="inset" Margin="0,0,0,4">
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
-                                        <TextBlock Text="{Binding HeroName}" FontWeight="Bold" VerticalAlignment="Center"/>
-                                        <controls:Badge Grid.Column="1"
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+                                        <art:ArtImage Classes="heroIcon"
+                                                      Kind="Hero"
+                                                      ArtId="{Binding HeroId}"
+                                                      ArtName="{Binding HeroName}"
+                                                      IsVisible="{Binding HeroId, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                        <TextBlock Grid.Column="1" Text="{Binding HeroName}" FontWeight="Bold" VerticalAlignment="Center"/>
+                                        <controls:Badge Grid.Column="2"
                                                         Margin="6,0,0,0"
                                                         VerticalAlignment="Center"
                                                         Text="{Binding RelationText}"
                                                         Color="{Binding RelationColor}"/>
-                                        <controls:InfoBadge Grid.Column="2"
+                                        <controls:InfoBadge Grid.Column="3"
                                                             Margin="6,0,0,0"
                                                             VerticalAlignment="Center"
                                                             ToolTip.Tip="{Binding Info}"
                                                             ToolTip.ShowDelay="100"
                                                             IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                        <TextBlock Grid.Column="3"
+                                        <TextBlock Grid.Column="4"
                                                    Classes="faintText"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
                                                    Text="{Binding Note}"
                                                    ToolTip.Tip="{Binding NoteTip}"/>
-                                        <controls:SignedAmount Grid.Column="4"
+                                        <controls:SignedAmount Grid.Column="5"
                                                                VerticalAlignment="Center"
                                                                IsBold="True"
                                                                Value="{Binding Amount.Shown}"
@@ -203,24 +214,29 @@
                                             <DataTemplate x:DataType="explain:DataLine">
                                                 <Grid Margin="0,0,0,3">
                                                     <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="DataHero"/>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="DataShare"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Classes="dim" Text="{Binding HeroName}" VerticalAlignment="Center"/>
-                                                    <controls:Badge Grid.Column="1"
+                                                    <art:ArtImage Classes="heroIcon"
+                                                                  Kind="Hero"
+                                                                  ArtId="{Binding HeroId}"
+                                                                  ArtName="{Binding HeroName}"/>
+                                                    <TextBlock Grid.Column="1" Classes="dim" Text="{Binding HeroName}" VerticalAlignment="Center"/>
+                                                    <controls:Badge Grid.Column="2"
                                                                     Margin="10,0,0,0"
                                                                     HorizontalAlignment="Left"
                                                                     VerticalAlignment="Center"
                                                                     Text="{Binding RelationText}"
                                                                     Color="{Binding RelationColor}"/>
-                                                    <TextBlock Grid.Column="2"
+                                                    <TextBlock Grid.Column="3"
                                                                Classes="faintText"
                                                                Margin="10,0,0,0"
                                                                VerticalAlignment="Center"
                                                                Text="{Binding Detail}"/>
-                                                    <controls:SignedAmount Grid.Column="3"
+                                                    <controls:SignedAmount Grid.Column="4"
                                                                            Margin="10,0,0,0"
                                                                            HorizontalAlignment="Right"
                                                                            VerticalAlignment="Center"
