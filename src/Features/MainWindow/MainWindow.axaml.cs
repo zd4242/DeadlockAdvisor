@@ -247,7 +247,7 @@ public partial class MainWindow : Window
     private void PlaceTitle()
     {
         var titleBounds = WindowTitle.Bounds;
-        var roomLeft = PageTabs.Bounds.Right + 16;
+        var roomLeft = (PageTabs.IsVisible ? (Control)PageTabs : MainMenu).Bounds.Right + 16;
         var roomRight = CaptionButtons.Bounds.Left - 16;
         var fits = titleBounds.Left >= roomLeft && titleBounds.Right <= roomRight;
         WindowTitle.Opacity = fits ? 1 : 0;

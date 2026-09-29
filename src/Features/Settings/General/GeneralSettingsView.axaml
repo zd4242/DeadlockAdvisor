@@ -54,13 +54,25 @@
         <TextBlock Classes="section" Text="STARTUP"/>
         <Border Classes="settings">
             <StackPanel>
+                <!-- Match is the only page without the editors. -->
                 <settings:SettingRow Title="Reopen on the last page"
-                                     Description="Start on the page you were on when you closed the app, rather than on Match.">
+                                     Description="Start on the page you were on when you closed the app, rather than on Match."
+                                     IsVisible="{Binding ShowModelEditors}">
                     <ToggleSwitch IsChecked="{Binding ReopenLastPage}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Reopen the last match"
                                      Description="Start with the heroes you had picked, rather than an empty match.">
                     <ToggleSwitch IsChecked="{Binding ReopenLastMatch}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="SCORING MODEL"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Edit the scoring model"
+                                     Description="Show the Hero Traits and Item Formulas tabs, where you rate heroes and write the rules items score by, and Go to Item Formula when you right-click a recommendation.">
+                    <ToggleSwitch IsChecked="{Binding ShowModelEditors}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

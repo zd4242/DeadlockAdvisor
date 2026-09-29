@@ -7,7 +7,7 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Settings.General;
 
-/// <summary>Zoom, and what the app reopens on.</summary>
+/// <summary>Zoom, what the app reopens on, and the model editors.</summary>
 public class GeneralSettingsViewModel : SettingsPageViewModel
 {
     public GeneralSettingsViewModel(ISettingsService settings, ICommand zoomIn, ICommand zoomOut, ICommand resetZoom) : base(settings)
@@ -45,5 +45,11 @@ public class GeneralSettingsViewModel : SettingsPageViewModel
     {
         get => Current.ShowRandomButtons;
         set => Change(s => s.ShowRandomButtons = value);
+    }
+
+    public bool ShowModelEditors
+    {
+        get => Current.ShowModelEditors;
+        set => Change(s => s.ShowModelEditors = value);
     }
 }

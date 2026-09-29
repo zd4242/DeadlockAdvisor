@@ -34,7 +34,8 @@ public class MainWindowViewModel : ViewModelBase
     public const string HowScoringWorks =
         "Every hero is rated 0-100 on a list of traits (Hero Traits tab).\n"
         + "Every item gets rules saying which traits it responds to, and how\n"
-        + "strongly (Item Formulas tab).\n\n"
+        + "strongly (Item Formulas tab). Both tabs show with Settings →\n"
+        + "Edit the scoring model.\n\n"
         + "An item's weight for one hero is:\n"
         + "    sum over traits of\n"
         + "        (hero's trait score − the roster's average) × item's coefficient\n"
@@ -102,7 +103,8 @@ public class MainWindowViewModel : ViewModelBase
         _art = art;
         Pages = [Match, HeroTraits, ItemFormulas];
 
-        CurrentPage = settings.Current.ReopenLastPage ? Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1) : 0;
+        ShowsEditors = settings.Current.ShowModelEditors;
+        CurrentPage = settings.Current.ReopenLastPage && ShowsEditors ? Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1) : 0;
         this.WhenAnyValue(vm => vm.CurrentPage)
             .Skip(1)
             .Subscribe(page => _settings.Update(s => s.LastPage = page))
@@ -115,6 +117,18 @@ public class MainWindowViewModel : ViewModelBase
                 this.RaisePropertyChanged(nameof(IsMatchPage));
                 this.RaisePropertyChanged(nameof(IsHeroTraitsPage));
                 this.RaisePropertyChanged(nameof(IsItemFormulasPage));
+            })
+            .DisposeWith(Disposables);
+
+        // Hidden from Settings, so the page underneath goes back to Match for when it closes.
+        settings.SettingsChanged
+            .Select(s => s.ShowModelEditors)
+            .DistinctUntilChanged()
+            .Subscribe(show =>
+            {
+                ShowsEditors = show;
+                if (!show)
+                    CurrentPage = 0;
             })
             .DisposeWith(Disposables);
 
@@ -194,6 +208,9 @@ public class MainWindowViewModel : ViewModelBase
 
     [Reactive] public bool IsSettingsOpen { get; private set; }
 
+    /// <summary>The Hero Traits and Item Formulas pages, which a setting hides for anyone not tuning the model: Match is then the only page.</summary>
+    [Reactive] public bool ShowsEditors { get; private set; }
+
     /// <summary>The highlighted tab: none while Settings is open, and picking one, even the current page's, closes it.</summary>
     public int SelectedTab
     {
@@ -272,10 +289,14 @@ public class MainWindowViewModel : ViewModelBase
 
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 
-    private void CyclePage(int step) => ShowPage(((CurrentPage + step) % Pages.Count + Pages.Count) % Pages.Count);
+    private int PageCount => ShowsEditors ? Pages.Count : 1;
+
+    private void CyclePage(int step) => ShowPage(((CurrentPage + step) % PageCount + PageCount) % PageCount);
 
     private void ShowPage(int page)
     {
+        if (page >= PageCount)
+            return;
         CurrentPage = page;
         IsSettingsOpen = false;
     }
@@ -290,6 +311,8 @@ public class MainWindowViewModel : ViewModelBase
 
     private void ShowFormula(string itemId)
     {
+        if (!ShowsEditors)
+            return;
         ShowPage(2);
         ItemFormulas.OpenItem(itemId);
     }

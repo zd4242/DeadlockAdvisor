@@ -60,6 +60,13 @@ public sealed class UiHarness : IDisposable
     public FakeSettingsService Settings { get; }
     public IServiceProvider Services => _services;
 
+    /// <summary>With the model editors shown, opening on <paramref name="page"/>.</summary>
+    public static void Editing(FakeSettingsService settings, int page = 0)
+    {
+        settings.Current.ShowModelEditors = true;
+        settings.Current.LastPage = page;
+    }
+
     /// <summary>No network in tests: every call fails as if the site were down, unless a test says otherwise.</summary>
     public FakeDeadlockApi Api { get; } = new();
 

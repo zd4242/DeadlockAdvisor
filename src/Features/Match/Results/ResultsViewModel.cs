@@ -47,7 +47,7 @@ public class ResultsViewModel : ViewModelBase
     {
         _nothingPickedHint = emptyHint;
         EmptyHint = emptyHint;
-        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext);
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.OffersFormula));
     }
 
     /// <summary>Section headers and rows, in display order.</summary>
@@ -74,6 +74,9 @@ public class ResultsViewModel : ViewModelBase
     private readonly Subject<string> _formulaRequested = new();
 
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
+
+    /// <summary>Rows offer Go to Item Formula on right-click, which needs the model editors shown.</summary>
+    [Reactive] public bool OffersFormula { get; set; }
 
     /// <summary>Every item the tab could list, scored for the line-up (<see cref="ItemScoring.ScoreAll"/>).</summary>
     /// <param name="blendScale">

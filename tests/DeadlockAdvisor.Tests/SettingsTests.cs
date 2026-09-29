@@ -61,6 +61,7 @@ public class SettingsTests
         Assert.True(settings.ReopenLastPage);
         Assert.True(settings.ReopenLastMatch);
         Assert.True(settings.ShowRandomButtons);
+        Assert.False(settings.ShowModelEditors);
         Assert.True(settings.CheckForNewerPatch);
         Assert.True(settings.DetectFromAnywhere);
         Assert.True(settings.MinimizeToDetect);

@@ -17,7 +17,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public void ByItemPanelRenders()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.ItemFormulas.ByItem;
         page.SelectedRow = page.Items.Single(row => row.ItemId == Item);
         ui.Show();
@@ -32,7 +32,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public void TheDividerStopsBeforeEitherPaneIsSquashed()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.ItemFormulas.ByItem;
         page.SelectedRow = page.Items.Single(row => row.ItemId == Item);
         ui.Show();
@@ -59,7 +59,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public void ByTraitPanelRenders()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         ui.ViewModel.ItemFormulas.SelectedTab = 1;
         var page = ui.ViewModel.ItemFormulas.ByTrait;
         page.SelectedCategory = page.Categories.Single(category => category.CategoryId == Trait);
@@ -73,7 +73,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public void TypingDownTheCoefficientColumnSetsEachItem()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         ui.ViewModel.ItemFormulas.SelectedTab = 1;
         var page = ui.ViewModel.ItemFormulas.ByTrait;
         page.SelectedCategory = page.Categories.Single(category => category.CategoryId == Trait);
@@ -106,7 +106,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public async Task HoveringAnIconInTheGridShowsItsCard()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         ui.ViewModel.ItemFormulas.SelectedTab = 1;
         var page = ui.ViewModel.ItemFormulas.ByTrait;
         ui.Show();
@@ -126,7 +126,7 @@ public class ItemFormulasPageTests
     [AvaloniaFact]
     public void HeaderClicksSortAscendingThenDescendingThenClear()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         ui.ViewModel.ItemFormulas.SelectedTab = 1;
         var page = ui.ViewModel.ItemFormulas.ByTrait;
         ui.Show();

@@ -202,17 +202,22 @@
 
                             <!-- The rule between the menus and the page tabs: they look alike, but one is
                                  commands and the other is where you are. -->
-                            <Border Grid.Column="1" Width="21" Background="Transparent">
+                            <Border Grid.Column="1"
+                                    Width="21"
+                                    Background="Transparent"
+                                    IsVisible="{Binding ShowsEditors}">
                                 <Border Width="1" Height="16" Background="{DynamicResource BorderBrush}"/>
                             </Border>
 
                             <!-- Clicking a tab doesn't pull focus out of the page: you usually switch
-                                 pages to start typing into one. -->
+                                 pages to start typing into one. Without the editors, Match is the only
+                                 page, so there's nothing to switch between. -->
                             <ListBox Grid.Column="2"
                                      x:Name="PageTabs"
                                      Classes="tabs"
                                      Focusable="False"
                                      VerticalAlignment="Center"
+                                     IsVisible="{Binding ShowsEditors}"
                                      ItemsSource="{Binding PageNames}"
                                      SelectedIndex="{Binding SelectedTab}"/>
 

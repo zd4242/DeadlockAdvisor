@@ -13,7 +13,7 @@ public class AutoScrollTests
     {
         var ui = new UiHarness(settings =>
         {
-            settings.Current.LastPage = 1;
+            UiHarness.Editing(settings, 1);
             settings.Current.ArtDownloadOffered = true;
         });
         ui.Show();

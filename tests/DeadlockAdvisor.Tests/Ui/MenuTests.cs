@@ -65,7 +65,7 @@ public class MenuTests
     [AvaloniaFact]
     public void TheResultMenuOpensTheItemsFormula()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
         var formulas = ui.ViewModel.ItemFormulas;
         formulas.SelectedTab = 1;
         formulas.ByItem.SearchText = "no item is called this";
@@ -98,7 +98,7 @@ public class MenuTests
     [AvaloniaFact]
     public void TheExplanationMenuOpensTheItemsFormula()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
         var formulas = ui.ViewModel.ItemFormulas;
         foreach (var hero in new[] { "haze", "infernus", "abrams" })
             ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
@@ -120,6 +120,31 @@ public class MenuTests
         Assert.True(ui.ViewModel.IsItemFormulasPage);
         Assert.True(formulas.IsByItem);
         Assert.Equal(row.ItemId, formulas.ByItem.CurrentItem?.ItemId);
+    }
+
+    [AvaloniaFact]
+    public void OnlyTheEditorsBringTheFormulaMenus()
+    {
+        using var ui = new UiHarness();
+        foreach (var hero in new[] { "haze", "infernus", "abrams" })
+            ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
+        ui.Show();
+        var results = ui.ViewModel.Match.Results;
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+        UiHarness.Settle();
+        var header = ui.Window.GetVisualDescendants().OfType<Grid>().Single(grid => grid.Classes.Contains("itemHeader"));
+        var rows = ui.Window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("result")).Take(2).ToList();
+
+        Assert.Null(header.ContextMenu);
+        Assert.All(rows, row => Assert.Null(row.ContextMenu));
+        Assert.False(((System.Windows.Input.ICommand)results.OpenFormulaCommand).CanExecute(results.SelectedItemId));
+
+        ui.ViewModel.Settings.General.ShowModelEditors = true;
+        UiHarness.Settle();
+
+        Assert.NotNull(header.ContextMenu);
+        Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
+        Assert.All(rows, row => Assert.NotNull(row.ContextMenu));
     }
 
     /// <summary>Wholly inside the scroll viewer showing it.</summary>

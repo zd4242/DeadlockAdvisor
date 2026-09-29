@@ -20,7 +20,7 @@ public class ShortcutTests
     [AvaloniaFact]
     public async Task MatchShortcutsWorkWithoutFocusOnlyOnTheMatchPage()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
         // With art to match against, F9 goes as far as asking for a capture (which fails: no screen in tests).
         Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
         ui.Show();
@@ -51,7 +51,7 @@ public class ShortcutTests
     [AvaloniaFact]
     public void FunctionKeysRandomizeTheMatchKeepingWhatTheyName()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
         ui.Show();
         ui.Window.FocusManager!.ClearFocus();
         var board = ui.ViewModel.Match.Board;
@@ -103,7 +103,7 @@ public class ShortcutTests
     [AvaloniaFact]
     public async Task F9FromAnotherAppDetectsOntoTheMatchPageAndBringsTheWindowUp()
     {
-        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
         Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
         ui.Show();
         var broughtForward = 0;

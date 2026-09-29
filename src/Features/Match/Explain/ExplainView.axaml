@@ -12,8 +12,8 @@
         <Style Selector="TextBlock.faintText">
             <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
         </Style>
-        <!-- Only with an item, so the idle title offers nothing to go to. -->
-        <Style Selector="Grid.itemHeader.hasItem">
+        <!-- Only with an item, so the idle title offers nothing to go to, and while the editors are shown. -->
+        <Style Selector="Grid.itemHeader.hasItem.offersFormula">
             <Setter Property="ContextMenu">
                 <ContextMenu x:DataType="explain:ExplainViewModel">
                     <MenuItem Header="Go to Item Formula"
@@ -30,6 +30,7 @@
         <Grid DockPanel.Dock="Top"
               Classes="itemHeader"
               Classes.hasItem="{Binding HasItem}"
+              Classes.offersFormula="{Binding OffersFormula}"
               ColumnDefinitions="Auto,*,Auto"
               Margin="0,8,0,0"
               Background="Transparent">

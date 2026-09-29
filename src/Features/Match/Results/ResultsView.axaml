@@ -15,6 +15,18 @@
         <Style Selector="controls|ScoreBar.pair">
             <Setter Property="Height" Value="4"/>
         </Style>
+        <!-- Only while the editors are shown. A template, so every row gets a menu of its own. -->
+        <Style Selector="ItemsControl.offersFormula Border.result">
+            <Setter Property="ContextMenu">
+                <Template>
+                    <ContextMenu x:DataType="results:ResultRowViewModel">
+                        <MenuItem Header="Go to Item Formula"
+                                  Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
+                                  CommandParameter="{Binding ItemId}"/>
+                    </ContextMenu>
+                </Template>
+            </Setter>
+        </Style>
     </UserControl.Styles>
 
     <Panel>
@@ -28,7 +40,10 @@
                    MaxWidth="460"/>
 
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
-            <ItemsControl x:Name="List" ItemsSource="{Binding Entries}" Margin="0,0,4,0">
+            <ItemsControl x:Name="List"
+                          ItemsSource="{Binding Entries}"
+                          Classes.offersFormula="{Binding OffersFormula}"
+                          Margin="0,0,4,0">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
                         <VirtualizingStackPanel/>
@@ -40,13 +55,6 @@
                                 Classes.selected="{Binding IsSelected}"
                                 Margin="0,0,0,4"
                                 Padding="8,7,10,7">
-                            <Border.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Go to Item Formula"
-                                              Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).OpenFormulaCommand}"
-                                              CommandParameter="{Binding ItemId}"/>
-                                </ContextMenu>
-                            </Border.ContextMenu>
                             <Grid ColumnDefinitions="Auto,*">
                                 <art:ArtImage Width="34"
                                               Height="34"

@@ -97,6 +97,11 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
 
         Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.ShowModelEditors)
+            .DistinctUntilChanged()
+            .Subscribe(show => Results.OffersFormula = Explain.OffersFormula = show)
+            .DisposeWith(Disposables);
 
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData)
             .Skip(1)

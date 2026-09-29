@@ -262,7 +262,7 @@ public class MatchPageTests
     [AvaloniaFact]
     public void CtrlTabCyclesPagesAndZoomKeysStep()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
         ui.Show();
 
         ui.Window.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.Control);
