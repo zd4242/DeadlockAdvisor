@@ -75,7 +75,7 @@ public class MatchPageTests
     [AvaloniaFact]
     public void TheFormulaListEndsWithTheDataPicksAndTheIdleExplainPointsToIt()
     {
-        using var ui = new UiHarness();
+        using var ui = new UiHarness(settings => settings.Current.ResultsRankBy = RankBy.Formula);
         SetUpMatch(ui);
         ui.Show();
         var results = ui.ViewModel.Match.Results;

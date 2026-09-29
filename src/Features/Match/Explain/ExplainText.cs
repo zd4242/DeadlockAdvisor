@@ -24,7 +24,7 @@ public static class ExplainText
         + "many matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
         + "toward 0, and they're what the totals at the top add up.";
 
-    /// <summary>How "Formula + data" puts its two opinions on one footing, for its tooltips.</summary>
+    /// <summary>How "Formula + match data" puts its two opinions on one footing, for its tooltips.</summary>
     public const string BlendScaleNote =
         "Each is scaled by how big it usually gets in line-ups like this one, so the two count equally.";
 

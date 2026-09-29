@@ -37,7 +37,7 @@ public interface IDataService
     DataStore Store { get; }
     WeightMatrix Matrix { get; }
 
-    /// <summary>The "Formula + data" ranking's units for this version of the data; rebuilt with <see cref="Matrix"/>.</summary>
+    /// <summary>The "Formula + match data" ranking's units for this version of the data; rebuilt with <see cref="Matrix"/>.</summary>
     ScoreScales Scales { get; }
 
     /// <summary>A different store was loaded (reload, sync, data folder change): heroes and items may differ.</summary>

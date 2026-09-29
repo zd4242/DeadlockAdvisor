@@ -3,7 +3,7 @@ using DeadlockAdvisor.Services;
 namespace DeadlockAdvisor.Scoring;
 
 /// <summary>
-/// The units the "Formula + data" ranking adds the two opinions in: how far a formula score and a data
+/// The units the "Formula + match data" ranking adds the two opinions in: how far a formula score and a data
 /// strength each typically stray from 0 over random line-ups shaped like the one being scored. One unit
 /// of either is then as unusual as one of the other, and an opinion with nothing to say adds 0.
 /// </summary>

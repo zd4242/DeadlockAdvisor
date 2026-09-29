@@ -120,14 +120,14 @@ The real-match lifts (`DataScores`) are **never added into the formula score**,
 because they're in different units and are partly about who buys the item. They
 change the list in three ways only:
 
-- **Rank by** (`AppSettings.ResultsRankBy`, `ResultsViewModel.Ranked`) can order
-  the list by `DataStrength` instead of the score, or by **Formula + data**, the two
-  added in common units (below).
+- **Rank by** (`AppSettings.ResultsRankBy`, `ResultsViewModel.Ranked`) orders the
+  list by **Formula + match data** by default, the two added in common units (below),
+  or by the score or `DataStrength` alone. Without match data it ranks by the score.
 - **DATA ★** marks a row whose `DataStrength` is 1 or more.
 - **"Match data also likes"** lists the items with a strength of 1 or more that the
   formula scores 0 or below (`DataOnlyPicks`), at the end of the formula-ranked list.
 
-### Formula + data
+### Formula + match data
 
 ```
 blend(item) = score ÷ σF + DataStrength ÷ σD
