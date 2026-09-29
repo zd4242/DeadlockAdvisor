@@ -247,7 +247,6 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
-                                    <TextBlock Classes="faintText" TextWrapping="Wrap" Text="{Binding Source}"/>
                                 </StackPanel>
                             </Border>
                         </DataTemplate>

@@ -42,13 +42,14 @@ public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
 /// <param name="Data">Null when the match data has nothing on the item for these heroes.</param>
 public sealed record BlendVerdict(double? Formula, double? Data, double Total);
 
-/// <param name="Source">Beneath the lines: which matches the data comes from and how old it is.</param>
-/// <param name="Info">Behind the title's info badge: what the numbers measure and how to read a line.</param>
+/// <param name="Info">
+/// Behind the title's info badge: what the numbers measure, how to read a line, and which matches the
+/// data comes from and how old it is.
+/// </param>
 /// <param name="Relevance">Why the enemy lifts count for less, when your hero rarely builds the item.</param>
 public sealed record MatchDataCard(
     IReadOnlyList<DataTotal> Totals,
     IReadOnlyList<DataLine> Lines,
-    string Source,
     string? Info,
     string? Relevance = null);
 
@@ -213,8 +214,7 @@ public class ExplainViewModel : ViewModelBase
         return new MatchDataCard(
             totals,
             lines,
-            MatchStatsMath.DataSource(store.MatchMeta, now),
-            meaning.Length > 0 ? meaning + "\n\n" + ExplainText.DataLinesTip : null,
+            meaning.Length > 0 ? $"{meaning}\n\n{ExplainText.DataLinesTip}\n\n{MatchStatsMath.DataSource(store.MatchMeta, now)}" : null,
             relevanceNote);
     }
 }

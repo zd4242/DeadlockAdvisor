@@ -114,8 +114,8 @@ public class MatchPageTests
             .ToList();
         Assert.Equal(2, tips.Count);
         Assert.Contains(tips, tip => tip!.StartsWith("Knockdown is cast on one enemy at a time", StringComparison.Ordinal));
-        Assert.Contains(tips, tip => tip!.StartsWith("Second opinion from real matches", StringComparison.Ordinal));
-        Assert.StartsWith("Fetched ", match.Explain.MatchData!.Source);
+        Assert.Contains(tips, tip => tip!.StartsWith("Second opinion from real matches", StringComparison.Ordinal)
+                                     && tip.Contains("\n\nFetched ", StringComparison.Ordinal));
     }
 
     /// <summary>How to use the match bar sits behind its heading's info badge; only "you're not set" stays in view, until you are.</summary>
