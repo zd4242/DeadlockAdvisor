@@ -45,6 +45,7 @@ public class ResultsViewModel : ViewModelBase
     private RankBy _rankBy;
     private bool _byTier;
     private double? _minFraction;
+    private bool _hideRarelyBuilt;
     private string? _topItemId;
 
     public ResultsViewModel(string emptyHint)
@@ -112,13 +113,15 @@ public class ResultsViewModel : ViewModelBase
     /// What ranks the list, flat or in tier sections, and the share of the best item's measure an item
     /// needs to be kept: 0 keeps everything above 0, null keeps every item however it scores. The
     /// cutoff is measured against the best item overall either way, so switching layout only
-    /// rearranges the same items.
+    /// rearranges the same items. Hidden rarely built items are left out before any of that, so the
+    /// cutoff and the counts are over what can be listed.
     /// </summary>
-    public void SetDisplay(RankBy rankBy, bool byTier, double? minFraction)
+    public void SetDisplay(RankBy rankBy, bool byTier, double? minFraction, bool hideRarelyBuilt = false)
     {
         _rankBy = rankBy;
         _byTier = byTier;
         _minFraction = minFraction;
+        _hideRarelyBuilt = hideRarelyBuilt;
         Render();
     }
 
@@ -152,7 +155,7 @@ public class ResultsViewModel : ViewModelBase
         var best = ranked.Count > 0 ? ranked[0].Measure : 0.0;
         var cutoff = best > 0 ? best * (_minFraction ?? 0) : 0.0;
         var shown = everyItem ? ranked : ranked.Where(entry => entry.Measure > 0 && entry.Measure >= cutoff).ToList();
-        var picks = _rankBy == RankBy.Formula && !everyItem ? ItemScoring.DataOnlyPicks(_scored) : [];
+        var picks = _rankBy == RankBy.Formula && !everyItem ? ItemScoring.DataOnlyPicks(Listable()) : [];
 
         // With no heroes picked, "every item" would be the whole shop at 0.
         var nothingScored = _scored.All(item => item.Score == 0 && item.Data.Count == 0);
@@ -201,7 +204,7 @@ public class ResultsViewModel : ViewModelBase
 
     /// <summary>Every item with the measure the list is ranked by, best first.</summary>
     private List<(ScoredItem Item, double Measure)> Ranked(BlendScale blend) =>
-        _scored
+        Listable()
             .Select(item => (Item: item, Measure: _rankBy switch
             {
                 RankBy.MatchData => item.DataStrength,
@@ -212,6 +215,9 @@ public class ResultsViewModel : ViewModelBase
             .ThenByDescending(entry => entry.Item.Score)
             .ThenBy(entry => entry.Item.ItemName, StringComparer.Ordinal)
             .ToList();
+
+    private IEnumerable<ScoredItem> Listable() =>
+        _hideRarelyBuilt ? _scored.Where(item => !item.RarelyBuilt) : _scored;
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
 

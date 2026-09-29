@@ -40,6 +40,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 {
     public const int DefaultCutoffPercent = 40;
 
+    public static readonly string HideRarelyBuiltTip =
+        $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
+        + "Needs your hero picked and match stats fetched (Data → Fetch Match Stats).";
+
     // Relative to the best item rather than a fixed count or score, so the cutoff adapts to how many
     // heroes are picked and to a match where one item runs away with it.
     public static readonly IReadOnlyList<CutoffPreset> CutoffPresets =
@@ -87,6 +91,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         HasMatchData = data.Store.MatchLift.Count > 0;
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
+        HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
         ApplyDisplay();
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
@@ -105,7 +110,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             .Subscribe(show => Results.ShowsEditors = Explain.ShowsEditors = show)
             .DisposeWith(Disposables);
 
-        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData)
+        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData, vm => vm.HideRarelyBuilt)
             .Skip(1)
             .Subscribe(_ =>
             {
@@ -114,6 +119,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                     s.ResultsMinPercent = SelectedCutoff.Percent;
                     s.ResultsByTier = ByTier;
                     s.ResultsRankBy = SelectedRank.RankBy;
+                    s.ResultsHideRarelyBuilt = HideRarelyBuilt;
                 });
                 ApplyDisplay();
                 // Trimming can drop the selected item, which clears the explanation.
@@ -129,7 +135,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             })
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.ByNetWorth, vm => vm.Board.HasNetWorth,
-                vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter)
+                vm => vm.HideRarelyBuilt, vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter)
             .Select(_ => ChangedFilterCount())
             .Subscribe(changed =>
             {
@@ -163,6 +169,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }
 
+    /// <summary>Leave out the items your hero rarely builds (<see cref="ScoredItem.RarelyBuilt"/>).</summary>
+    [Reactive] public bool HideRarelyBuilt { get; set; }
+
     /// <summary>The options changed from their defaults, counted on the filters button since they're out of sight.</summary>
     [Reactive] public int ChangedFilters { get; private set; }
     [Reactive] public bool HasChangedFilters { get; private set; }
@@ -192,6 +201,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             SelectedCutoff.Percent != DefaultCutoffPercent,
             ByTier,
             ByNetWorth && Board.HasNetWorth,
+            HideRarelyBuilt,
             DataRanks.RankedOnly && DataRanks.CanFilter,
         }.Count(changed => changed);
 
@@ -245,7 +255,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyDisplay()
     {
-        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction);
+        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt);
     }
 
     private void RefreshExplain() => ShowExplain(Results.SelectedItemId);

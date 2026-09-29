@@ -186,6 +186,19 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void HidingRarelyBuiltItemsLeavesThemOutBeforeTheCutoff()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults([Scored("a", 10, against: 0.4) with { BuildRatio = 0.1 }, Scored("b", 5, against: 1.0), Scored("c", 3)], "note");
+
+        results.SetDisplay(RankBy.Formula, false, 0.5, hideRarelyBuilt: true);
+
+        // "b" is the best listed item, so the cutoff is half of its score rather than of the hidden "a"'s.
+        Assert.Equal(["b", "c"], results.Entries.OfType<ResultRowViewModel>().Select(row => row.ItemId));
+        Assert.Equal("2 items above 0", results.Summary);
+    }
+
+    [Fact]
     public void NoHeroesPickedShowsTheHintEvenForEveryItem()
     {
         var results = new ResultsViewModel("hint");

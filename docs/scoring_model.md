@@ -200,7 +200,8 @@ Build ratios come from the `as` download over the lifts' rank range
 cache whenever the counts, the meta or the items change. Relevance is 1 when there's
 no self hero, no counts file, or no purchases by your hero in that tier at all. It is
 0 when your hero never buys the item. The row shows a RARELY BUILT badge, and its tip
-and the explain panel say how much the enemy lifts count. `DataStrength` and DATA ★
+and the explain panel say how much the enemy lifts count. The Match tab's "Hide items
+your hero rarely builds" filter drops them from the list; it never changes a score. `DataStrength` and DATA ★
 use the reduced sum.
 
 ### Which ranks the data comes from

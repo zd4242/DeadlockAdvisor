@@ -364,5 +364,9 @@ public class MatchPageTests
         Assert.Equal(2, match.ChangedFilters);
         SetUpMatch(ui);
         Assert.Equal(3, match.ChangedFilters);
+
+        match.HideRarelyBuilt = true;
+        Assert.Equal(4, match.ChangedFilters);
+        Assert.True(ui.Settings.Current.ResultsHideRarelyBuilt);
     }
 }

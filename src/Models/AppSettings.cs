@@ -44,6 +44,7 @@ public class AppSettings
 
     public bool ResultsByTier { get; set; }
     public bool ResultsByNetWorth { get; set; } = true;
+    public bool ResultsHideRarelyBuilt { get; set; }
 
     // Item Formulas tab
     public double? ByItemSplitterPosition { get; set; }
