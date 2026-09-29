@@ -192,9 +192,10 @@ To add art by hand, name the file after the id (`grey_talon.png`) and use
 ## Detecting the match from the screen
 
 Press <kbd>F9</kbd> (or **Detect from screen**) while Deadlock is in a
-match on the primary monitor. The advisor minimises itself, captures the
-top of the screen, and reads the scoreboard strip: all twelve heroes, and
-which one is you (off the coloured backplate behind your slot).
+match, on any monitor and in any window mode. The advisor finds the game's
+window, minimises itself if it's covering it, captures the top of the
+game, and reads the scoreboard strip: all twelve heroes, and which one is
+you (off the coloured backplate behind your slot).
 
 F9 works from inside the game as well, without switching windows first:
 the advisor holds it system-wide (no admin needed), captures, then comes

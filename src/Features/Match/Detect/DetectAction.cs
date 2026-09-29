@@ -79,7 +79,8 @@ public class DetectAction
         var netWorth = detection is null
             ? NetWorthReading.Empty
             : await Task.Run(() => NetWorthReader.Read(capture.Band, detection.Geometry, NetWorthGlyphs.Bundled));
-        _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} screen, "
+        var source = capture.FoundGame ? "Deadlock window" : "primary monitor (Deadlock's window not found)";
+        _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} {source} at {capture.Origin.X},{capture.Origin.Y}, "
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
                          + (detection is null
                              ? "no strip found"

@@ -7,7 +7,7 @@ using DeadlockAdvisor.Vision;
 namespace DeadlockAdvisor.Services;
 
 /// <summary>
-/// GDI screen capture of the monitor Deadlock's window is on, falling back to the primary one. Avalonia
+/// GDI screen capture of Deadlock's window as it shows on screen, falling back to the primary monitor. Avalonia
 /// makes the process per-monitor DPI aware, so sizes, positions and pixels are physical: display scaling
 /// would otherwise hand back a stretched copy of the game and put every measurement out by the scale factor.
 /// </summary>
@@ -28,9 +28,9 @@ public class ScreenCaptureService : IScreenCaptureService
         if (!OperatingSystem.IsWindows())
             throw new CaptureException("Screen capture is only supported on Windows.");
 
-        var (monitor, foundGame) = GameMonitor();
-        var height = monitor.Bottom - monitor.Top;
-        var band = monitor with { Bottom = monitor.Top + Math.Min(height, Math.Max(MinBandHeight, (int)(height * BandFraction))) };
+        var (area, foundGame) = GameArea();
+        var height = area.Bottom - area.Top;
+        var band = area with { Bottom = area.Top + Math.Min(height, Math.Max(MinBandHeight, (int)(height * BandFraction))) };
 
         var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
         var restoreTo = minimize && window is { IsVisible: true } && window.WindowState != WindowState.Minimized && Overlaps(window, band)
@@ -45,7 +45,7 @@ public class ScreenCaptureService : IScreenCaptureService
 
         try
         {
-            return new ScreenCapture(Grab(band), monitor.Right - monitor.Left, height, foundGame);
+            return new ScreenCapture(Grab(band), area.Right - area.Left, height, foundGame, new PixelPoint(area.Left, area.Top));
         }
         finally
         {
@@ -57,17 +57,40 @@ public class ScreenCaptureService : IScreenCaptureService
         }
     }
 
-    /// <summary>The bounds of the monitor showing most of the game, or of the primary one when it isn't running.</summary>
-    private static (Native.Bounds Monitor, bool FoundGame) GameMonitor()
+    /// <summary>
+    /// Where the game draws, on the virtual screen: its window's content area, which is the whole monitor
+    /// when it runs fullscreen or borderless, or the primary monitor when it isn't running.
+    /// </summary>
+    private static (Native.Bounds Area, bool FoundGame) GameArea()
     {
         var game = FindGameWindow();
-        var monitor = game != IntPtr.Zero
-            ? Native.MonitorFromWindow(game, Native.MonitorDefaultToPrimary)
-            : Native.MonitorFromPoint(default, Native.MonitorDefaultToPrimary);
+        if (game == IntPtr.Zero)
+            return (PrimaryMonitor(), false);
+        if (Native.IsIconic(game))
+            throw new CaptureException("Deadlock is minimized, so its top bar isn't on screen to read.\n\n"
+                                       + "In exclusive fullscreen the game minimizes when you switch away from it; "
+                                       + "borderless windowed keeps it on screen.");
+
+        // Mapping both corners, rather than offsetting the size, keeps the area in physical pixels
+        // even when Windows scales the game's window for display DPI.
+        if (!Native.GetClientRect(game, out var client))
+            throw new CaptureException("Couldn't read the size of Deadlock's window.");
+        var topLeft = new Native.ScreenPoint { X = client.Left, Y = client.Top };
+        var bottomRight = new Native.ScreenPoint { X = client.Right, Y = client.Bottom };
+        if (!Native.ClientToScreen(game, ref topLeft) || !Native.ClientToScreen(game, ref bottomRight)
+            || bottomRight.X <= topLeft.X || bottomRight.Y <= topLeft.Y)
+            throw new CaptureException("Couldn't read the size of Deadlock's window.");
+        return (new Native.Bounds(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y), true);
+    }
+
+    private static Native.Bounds PrimaryMonitor()
+    {
+        // The primary monitor is the one at the virtual screen's origin.
+        var monitor = Native.MonitorFromPoint(default, Native.MonitorDefaultToPrimary);
         var info = new Native.MonitorInfo { Size = (uint)Marshal.SizeOf<Native.MonitorInfo>() };
         if (!Native.GetMonitorInfo(monitor, ref info) || info.Monitor.Right <= info.Monitor.Left || info.Monitor.Bottom <= info.Monitor.Top)
-            throw new CaptureException("Couldn't read the size of the game's monitor.");
-        return (info.Monitor, game != IntPtr.Zero);
+            throw new CaptureException("Couldn't read the size of the primary monitor.");
+        return info.Monitor;
     }
 
     private static IntPtr FindGameWindow()
@@ -203,7 +226,16 @@ public class ScreenCaptureService : IScreenCaptureService
         }
 
         [DllImport("user32.dll")]
-        public static extern IntPtr MonitorFromWindow(IntPtr window, uint flags);
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool IsIconic(IntPtr window);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool GetClientRect(IntPtr window, out Bounds bounds);
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ClientToScreen(IntPtr window, ref ScreenPoint point);
 
         [DllImport("user32.dll")]
         public static extern IntPtr MonitorFromPoint(ScreenPoint point, uint flags);
