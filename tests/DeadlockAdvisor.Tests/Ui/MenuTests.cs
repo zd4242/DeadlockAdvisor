@@ -95,6 +95,33 @@ public class MenuTests
         Assert.True(InView(list.ContainerFromItem(formulas.ByItem.SelectedRow!)!));
     }
 
+    [AvaloniaFact]
+    public void TheExplanationMenuOpensTheItemsFormula()
+    {
+        using var ui = new UiHarness();
+        var formulas = ui.ViewModel.ItemFormulas;
+        foreach (var hero in new[] { "haze", "infernus", "abrams" })
+            ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
+        ui.Show();
+        var header = ui.Window.GetVisualDescendants().OfType<Grid>().Single(grid => grid.Classes.Contains("itemHeader"));
+        Assert.Null(header.ContextMenu);
+
+        var results = ui.ViewModel.Match.Results;
+        var row = results.Entries.OfType<ResultRowViewModel>().Last();
+        results.Select(row);
+        UiHarness.Settle();
+        var at = header.TranslatePoint(new Point(header.Bounds.Width / 2, header.Bounds.Height / 2), ui.Window)!.Value;
+        ui.Window.MouseDown(at, MouseButton.Right);
+        ui.Window.MouseUp(at, MouseButton.Right);
+        UiHarness.Settle();
+        var goTo = TopLevel.GetTopLevel(header)!.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "Go to Item Formula"));
+        Click(TopLevel.GetTopLevel(goTo)!, goTo);
+
+        Assert.True(ui.ViewModel.IsItemFormulasPage);
+        Assert.True(formulas.IsByItem);
+        Assert.Equal(row.ItemId, formulas.ByItem.CurrentItem?.ItemId);
+    }
+
     /// <summary>Wholly inside the scroll viewer showing it.</summary>
     private static bool InView(Control control)
     {

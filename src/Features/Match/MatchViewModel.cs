@@ -143,8 +143,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public ExplainViewModel Explain { get; } = new();
     public DataRanksViewModel DataRanks { get; }
 
-    /// <summary>An item whose rules a recommendation's context menu asked to open.</summary>
-    public IObservable<string> FormulaRequested => Results.FormulaRequested;
+    /// <summary>An item whose rules a recommendation's or the explanation's context menu asked to open.</summary>
+    public IObservable<string> FormulaRequested => Results.FormulaRequested.Merge(Explain.FormulaRequested);
 
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
     [Reactive] public RankPreset SelectedRank { get; set; }

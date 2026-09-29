@@ -1,3 +1,5 @@
+using System.Reactive;
+using System.Reactive.Subjects;
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
@@ -6,6 +8,7 @@ using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
+using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
@@ -70,6 +73,17 @@ public class ExplainViewModel : ViewModelBase
 
     /// <summary>Ranking by formula and data together: each one's part in the item's rank, and their sum.</summary>
     [Reactive] public BlendVerdict? Verdict { get; private set; }
+
+    /// <summary>The header's context menu asked to open the item's rules on the Item Formulas page.</summary>
+    public IObservable<string> FormulaRequested => _formulaRequested;
+    private readonly Subject<string> _formulaRequested = new();
+
+    public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
+
+    public ExplainViewModel()
+    {
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext);
+    }
 
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
