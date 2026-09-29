@@ -2430,6 +2430,23 @@
         -0.873
        ]
       ]
+     },
+     {
+      "item_id": "divine_barrier",
+      "item_name": "Divine Barrier",
+      "tier": 4,
+      "score": 11.684064774235026,
+      "shop_category": "vitality",
+      "data": [
+       [
+        "against",
+        0.0009999999999999037
+       ],
+       [
+        "as",
+        0.74
+       ]
+      ]
      }
     ]
    },
@@ -8053,6 +8070,14 @@
       "score": 118.94736842105263,
       "shop_category": "vitality",
       "data": []
+     },
+     {
+      "item_id": "divine_barrier",
+      "item_name": "Divine Barrier",
+      "tier": 4,
+      "score": 11.684064774235026,
+      "shop_category": "vitality",
+      "data": []
      }
     ]
    },
@@ -9443,7 +9468,7 @@
       "item_id": "divine_barrier",
       "item_name": "Divine Barrier",
       "tier": 4,
-      "score": 190.5263157894737,
+      "score": 191.684064774235,
       "shop_category": "vitality",
       "data": [
        [

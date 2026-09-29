@@ -16,7 +16,7 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
     private readonly Dictionary<MatrixKey, double> _weights;
     private readonly HashSet<string> _profiled;
     private readonly IReadOnlyDictionary<string, Relation> _castOn;
-    private readonly Dictionary<string, double[]> _typical = [];
+    private readonly Dictionary<(string ItemId, Relation Relation), double[]> _typical = [];
 
     /// <param name="castOn">Each single-target item's relation (<see cref="Models.Item.CastOn"/>).</param>
     public WeightMatrix(Dictionary<MatrixKey, double> weights, IReadOnlyCollection<string> profiled, IReadOnlyDictionary<string, Relation> castOn)
@@ -24,25 +24,29 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
         _weights = weights;
         _profiled = profiled.ToHashSet();
         _castOn = castOn;
-        foreach (var (itemId, relation) in castOn)
+        foreach (var (itemId, cast) in castOn)
         {
-            var roster = profiled.Select(heroId => weights.GetValueOrDefault(new MatrixKey(itemId, heroId, relation))).ToList();
-            // One hero's typical value is the roster's average weight, which is 0 by construction.
-            var typical = new double[Math.Min(BestTargets.MaxTeam, roster.Count) + 1];
-            for (var count = 2; count < typical.Length; count++)
-                typical[count] = BestTargets.Expected(roster, count);
-            _typical[itemId] = typical;
+            foreach (var relation in new[] { Relation.Against, Relation.With }.Where(relation => BestTargets.AppliesTo(cast, relation)))
+            {
+                var roster = profiled.Select(heroId => weights.GetValueOrDefault(new MatrixKey(itemId, heroId, relation))).ToList();
+                // One hero's typical value is the roster's average weight, which is 0 by construction.
+                var typical = new double[Math.Min(BestTargets.MaxTeam, roster.Count) + 1];
+                for (var count = 2; count < typical.Length; count++)
+                    typical[count] = BestTargets.Expected(roster, count);
+                _typical[(itemId, relation)] = typical;
+            }
         }
     }
 
     public bool IsProfiled(string heroId) => _profiled.Contains(heroId);
 
     /// <summary>Whether this item's weights on this relation go through <see cref="BestTargets"/> rather than a plain sum.</summary>
-    public bool OnBestTargets(string itemId, Relation relation) => _castOn.TryGetValue(itemId, out var castOn) && castOn == relation;
+    public bool OnBestTargets(string itemId, Relation relation) =>
+        _castOn.TryGetValue(itemId, out var castOn) && BestTargets.AppliesTo(castOn, relation);
 
-    /// <summary><see cref="BestTargets.Sum"/> on the item's cast-on relation for a team of this many profiled heroes on average; 0 for no heroes.</summary>
-    public double Typical(string itemId, int count) =>
-        _typical.TryGetValue(itemId, out var typical) && count > 0 ? typical[Math.Min(count, typical.Length - 1)] : 0.0;
+    /// <summary><see cref="BestTargets.Sum"/> on one of the item's best-target relations for a team of this many profiled heroes on average; 0 for no heroes.</summary>
+    public double Typical(string itemId, Relation relation, int count) =>
+        _typical.TryGetValue((itemId, relation), out var typical) && count > 0 ? typical[Math.Min(count, typical.Length - 1)] : 0.0;
 
     public double this[MatrixKey key] => _weights[key];
     public IEnumerable<MatrixKey> Keys => _weights.Keys;

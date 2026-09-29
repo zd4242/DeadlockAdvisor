@@ -1,8 +1,10 @@
+using DeadlockAdvisor.Enums;
+
 namespace DeadlockAdvisor.Scoring;
 
 /// <summary>
 /// Scoring for items cast on one hero at a time (<see cref="Models.Item.CastOn"/>: Decay, Knockdown,
-/// Rescue Beam). On the team it's cast on the best target counts in full, the next ×½, then ×¼ and so on,
+/// Rescue Beam). On the teams <see cref="AppliesTo"/> names the best target counts in full, the next ×½, then ×¼ and so on,
 /// less what the same measure comes to for a typical team of that size. A plain sum would count "no use
 /// against this hero" once per hero, when you'd just cast it on the best one.
 /// </summary>
@@ -13,6 +15,15 @@ public static class BestTargets
 
     /// <summary>The most heroes a relation can count: six enemies.</summary>
     public const int MaxTeam = 6;
+
+    /// <summary>
+    /// Whether an item cast on one hero of <paramref name="castOn"/>'s team scores <paramref name="relation"/>
+    /// on its best targets. The team it's cast on always does. An ally-cast save also answers one enemy
+    /// threat per cast, so its enemies do too; an enemy-cast debuff helps every ally who hits the target, so
+    /// its allies sum.
+    /// </summary>
+    public static bool AppliesTo(Relation castOn, Relation relation) =>
+        relation == castOn || castOn == Relation.With && relation == Relation.Against;
 
     /// <summary>1 for the best target, ½ for the second, ¼ for the third…</summary>
     public static double RankFactor(int rank) => Math.Pow(Decay, rank - 1);

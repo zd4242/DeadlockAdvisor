@@ -21,8 +21,9 @@ score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) 
 ```
 
 `factor` is 1 unless the scores lean on net worth (see "Net worth" below). A
-single-target item replaces the sum over the team it's cast on with its best
-targets (see "Best-target items" below).
+single-target item replaces the sum over the team it's cast on (and, for an
+ally-cast item, the enemies too) with its best targets (see "Best-target items"
+below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
@@ -103,8 +104,11 @@ size up to 6. The consequences:
 - A one-hero team (a 1v1 lane) is exactly the plain sum.
 - Net worth factors apply before the sort.
 - `as` always sums: it's one hero.
-- The other team sums as usual. Spirit Sap is cast on one enemy, but every ally
-  with spirit damage hits that enemy through its lowered Spirit Resist.
+- An enemy-cast item's allies sum as usual. Spirit Sap is cast on one enemy, but
+  every ally with spirit damage hits that enemy through its lowered Spirit Resist.
+- An ally-cast item's enemies are best-target too (`BestTargets.AppliesTo`).
+  Rescue Beam pulls one ally out of one pick per cooldown, so it's worth what the
+  worst picker is worth, not the sum over every enemy that can pick.
 
 On the Decay example above, the enemy side goes from −457 to −31.
 

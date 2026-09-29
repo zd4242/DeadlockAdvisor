@@ -6,6 +6,6 @@ namespace DeadlockAdvisor.Models;
 /// <param name="CastOn">
 /// Its active is cast on one hero of this team: <see cref="Relation.Against"/> for an enemy (Decay,
 /// Knockdown), <see cref="Relation.With"/> for an ally (Rescue Beam). Null when it isn't single-target.
-/// Only that relation is scored on its best targets; see <see cref="Scoring.BestTargets"/>. Set by the game sync.
+/// <see cref="Scoring.BestTargets.AppliesTo"/> says which relations are scored on their best targets. Set by the game sync.
 /// </param>
 public sealed record Item(string ItemId, string ItemName, string Category, int Tier, long GameId = 0, int Cost = 0, Relation? CastOn = null);

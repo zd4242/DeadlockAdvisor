@@ -104,23 +104,28 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
-    /// you, each hero's weight times their net worth factor. A single-target item's heroes on the team
-    /// it's cast on count by <see cref="BestTargets"/> instead of summing.
+    /// you, each hero's weight times their net worth factor. A single-target item's heroes on the teams
+    /// <see cref="BestTargets.AppliesTo"/> names count by <see cref="BestTargets"/> instead of summing.
     /// </summary>
     public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
-        List<double>? targets = null;
+        Dictionary<Relation, List<double>>? targets = null;
         foreach (var (heroId, relation) in lineUp.Members())
         {
             var weight = lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
-            if (matrix.OnBestTargets(itemId, relation) && matrix.IsProfiled(heroId))
-                (targets ??= []).Add(weight);
-            else
+            if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
+            {
                 total += weight;
+                continue;
+            }
+            targets ??= [];
+            if (!targets.TryGetValue(relation, out var team))
+                targets[relation] = team = [];
+            team.Add(weight);
         }
-        if (targets is not null)
-            total += BestTargets.Sum(targets) - matrix.Typical(itemId, targets.Count);
+        foreach (var (relation, team) in targets ?? [])
+            total += BestTargets.Sum(team) - matrix.Typical(itemId, relation, team.Count);
         return total;
     }
 
@@ -128,8 +133,8 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score broken down per hero, then per trait, biggest contributor first. Recomputed
-    /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's
-    /// heroes on the team it's cast on are counted at their rank, with a typical team's sum taken off as one more line.
+    /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's heroes
+    /// on its best-target teams are counted at their rank, with a typical team's sum taken off as one more line.
     /// </summary>
     public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
     {
@@ -144,7 +149,7 @@ public static class ItemScoring
                 .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId)))
                 .OfType<HeroContribution>()
                 .ToList();
-            contributions.AddRange(relation == castOn
+            contributions.AddRange(castOn is { } cast && BestTargets.AppliesTo(cast, relation)
                 ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), found)
                 : found);
         }
@@ -152,7 +157,7 @@ public static class ItemScoring
     }
 
     /// <summary>
-    /// A single-target item's heroes on the relation it's cast on at their <see cref="BestTargets"/> rank, then the
+    /// A single-target item's heroes on one best-target relation at their <see cref="BestTargets"/> rank, then the
     /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
     /// no rule touches, exactly as <see cref="Total"/> counts them.
     /// </summary>
