@@ -199,7 +199,7 @@ Build ratios come from the `as` download over the lifts' rank range
 (`MatchStatsMath.BuildRatios`). `DataStore.BuildRatios` caches them and clears the
 cache whenever the counts, the meta or the items change. Relevance is 1 when there's
 no self hero, no counts file, or no purchases by your hero in that tier at all. It is
-0 when your hero never buys the item. The row shows "you rarely built" and its tip
+0 when your hero never buys the item. The row shows a RARELY BUILT badge, and its tip
 and the explain panel say how much the enemy lifts count. `DataStrength` and DATA ★
 use the reduced sum.
 

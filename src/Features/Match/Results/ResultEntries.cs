@@ -72,6 +72,7 @@ public class ResultRowViewModel : ViewModelBase
 
     /// <summary>Your hero rarely builds the item, so its gains against the enemies count for less.</summary>
     [Reactive] public bool IsRarelyBuilt { get; private set; }
+    [Reactive] public string? RarelyBuiltTip { get; private set; }
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
@@ -92,12 +93,8 @@ public class ResultRowViewModel : ViewModelBase
             Data = scored.Data;
         HasData = scored.Data.Count > 0;
         IsRarelyBuilt = HasData && scored.RarelyBuilt;
-        var tips = new List<string>();
-        if (IsRarelyBuilt)
-            tips.Add(ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value));
-        if (!string.IsNullOrEmpty(dataTip))
-            tips.Add(dataTip);
-        DataTip = tips.Count > 0 ? string.Join("\n\n", tips) : null;
+        RarelyBuiltTip = IsRarelyBuilt ? ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value) : null;
+        DataTip = string.IsNullOrEmpty(dataTip) ? null : dataTip;
     }
 }
 
