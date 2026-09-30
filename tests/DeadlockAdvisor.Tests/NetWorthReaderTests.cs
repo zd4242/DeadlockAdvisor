@@ -21,14 +21,12 @@ public class NetWorthReaderTests
             spec["team_totals"]!.AsArray().Select(value => (string)value!).ToArray());
     }
 
-    /// <summary>The grid detection settles on for an image: from the vision goldens where they have it, so most of these tests don't search.</summary>
-    private static Geometry GridOf(string image)
-    {
-        var golden = Golden.Items(Golden.Json("vision/detections.json")).SingleOrDefault(entry => (string)entry["image"]! == image);
-        return golden is not null
-            ? Geometry.FromJson(golden["detection"]!["geometry"]!.AsObject())!
-            : DetectFixture(Path.GetFileNameWithoutExtension(image))!.Geometry;
-    }
+    /// <summary>
+    /// The grid saved beside an image, so reading net worth is tested apart from finding the strip,
+    /// and a change to hero detection can't move the pills out from under these tests.
+    /// </summary>
+    private static Geometry GridOf(string image) =>
+        Geometry.Parse(Golden.Json("vision/" + Path.ChangeExtension(image, ".json"))["grid"]!.AsObject())!;
 
     private static NetWorthReading Read(string image) => NetWorthReader.Read(Image(image), GridOf(image), NetWorthGlyphs.Bundled);
 
