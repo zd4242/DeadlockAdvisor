@@ -75,7 +75,7 @@ public class StatusBarTests
         menu.FetchMatchStatsCommand.Execute().Subscribe();
         matchStats.Progress!.Report(new FetchProgress(812, 2600, "as/full: Haze · Emissary"));
         var artRun = menu.DownloadArtAsync(force: false);
-        art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 38, 0, [])]));
+        art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 38, 0, [], [])]));
         await artRun;
         UiHarness.Settle();
 

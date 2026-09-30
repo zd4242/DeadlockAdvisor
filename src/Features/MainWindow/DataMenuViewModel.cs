@@ -416,8 +416,9 @@ public class DataMenuViewModel : ViewModelBase
     private void OfferArtDownload() =>
         _modals.Confirm(
             $"Fetch hero portraits, item icons and the top-bar art that Detect from screen matches against, from deadlock-api.com into {_data.AssetsDir}?\n\n"
-            + "Files already there are kept unless you re-download everything. It downloads in the background, and art shows up as it arrives.",
-            "Download missing", () => Launch(() => DownloadArtAsync(force: false)),
+            + "Files already there are kept, apart from art downloaded here that deadlock-api.com has changed since, unless you re-download everything. "
+            + "It downloads in the background, and art shows up as it arrives.",
+            "Download new and changed", () => Launch(() => DownloadArtAsync(force: false)),
             "Re-download all", () => Launch(() => DownloadArtAsync(force: true)));
 
     internal async Task DownloadArtAsync(bool force)
@@ -441,8 +442,11 @@ public class DataMenuViewModel : ViewModelBase
                 "Stopped downloading art. What arrived is kept.");
             if (report is not null)
             {
-                Succeeded(job, report.Downloaded == 0 ? "nothing new" : $"{report.Downloaded} downloaded", "Art downloaded", report.Lines(),
-                    $"Art downloaded: {report.Downloaded} new file(s).");
+                var changes = string.Join(", ", new[] { (report.Downloaded, "downloaded"), (report.Updated, "updated") }
+                    .Where(count => count.Item1 > 0)
+                    .Select(count => $"{count.Item1} {count.Item2}"));
+                Succeeded(job, changes.Length == 0 ? "nothing new" : changes, "Art downloaded", report.Lines(),
+                    $"Art downloaded: {report.Downloaded} new file(s), {report.Updated} updated.");
             }
         }
         finally

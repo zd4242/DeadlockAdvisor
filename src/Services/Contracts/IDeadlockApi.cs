@@ -12,4 +12,14 @@ public interface IDeadlockApi
     Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default);
 
     Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// A file, unless the copy tagged <paramref name="etag"/> is still current, in which case the server
+    /// answers "not modified" and <see cref="ChangedFile.Bytes"/> is null.
+    /// </summary>
+    Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default);
 }
+
+/// <param name="Bytes">The file, or null when the copy asked about is still current.</param>
+/// <param name="ETag">The server's tag for this version of the file, to ask about next time.</param>
+public sealed record ChangedFile(byte[]? Bytes, string? ETag);

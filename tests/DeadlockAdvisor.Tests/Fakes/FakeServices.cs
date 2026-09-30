@@ -29,6 +29,23 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     public Dictionary<string, byte[]> Bytes { get; } = [];
     public List<string> Asked { get; } = [];
 
+    /// <summary>The URLs a "not modified" came back for.</summary>
+    public List<string> NotModified { get; } = [];
+
+    /// <summary>A file's tag is its contents, so changing the bytes changes it, as a real server's would.</summary>
+    public static string ETagOf(byte[] bytes) => $"\"{Convert.ToHexString(bytes)}\"";
+
+    public async Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default)
+    {
+        var bytes = await GetBytesAsync(url, userAgent, cancellationToken);
+        if (etag == ETagOf(bytes))
+        {
+            NotModified.Add(url);
+            return new ChangedFile(null, etag);
+        }
+        return new ChangedFile(bytes, ETagOf(bytes));
+    }
+
     public Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
     {
         Asked.Add(url);

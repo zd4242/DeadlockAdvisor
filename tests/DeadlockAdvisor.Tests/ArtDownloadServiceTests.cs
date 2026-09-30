@@ -44,9 +44,12 @@ public sealed class ArtDownloadServiceTests : IDisposable
 
         Assert.Equal([1, 2, 3], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
         Assert.Equal([4], File.ReadAllBytes(Asset("topbar", "heavy_spirit.webp")));
+        // The card again, for cutting portraits from, where the template bank doesn't look.
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(Asset(Path.Combine("topbar", "_cards", "normal"), "heavy_spirit.png")));
         // The shop tile, not the white glyph.
         Assert.Equal([5, 6], File.ReadAllBytes(Asset("items", "spirit_resist_t1.png")));
-        Assert.Equal(3, report.Downloaded);
+        Assert.Equal(4, report.Downloaded);
+        Assert.Contains("heavy_spirit (Heavy Spirit) -- matched, but has no image", report.Groups.Single(group => group.Label == "Critical cards").Unmatched);
 
         var heroes = report.Groups[0];
         Assert.Contains("generic (Generic)", heroes.Unmatched);
@@ -79,9 +82,62 @@ public sealed class ArtDownloadServiceTests : IDisposable
         var steps = new List<FetchProgress>();
         await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, new SyncProgress(steps.Add), CancellationToken.None);
 
-        Assert.Equal(3 + 3 + 3 + 1, steps.Count);
-        Assert.Equal((9, 9, "done"), (steps[^1].Done, steps[^1].Total, steps[^1].Text));
+        // Three heroes in five hero groups, three items, and done.
+        Assert.Equal(3 * 5 + 3 + 1, steps.Count);
+        Assert.Equal((18, 18, "done"), (steps[^1].Done, steps[^1].Total, steps[^1].Text));
         Assert.Equal("Hero portraits: Generic", steps[0].Text);
+    }
+
+    [Fact]
+    public async Task DownloadingAgainOnlyAsksWhetherAnythingChanged()
+    {
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+        _api.NotModified.Clear();
+
+        var again = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal((0, 0), (again.Downloaded, again.Updated));
+        Assert.Contains("https://cdn/hs_top.webp", _api.NotModified);
+        Assert.Contains("https://cdn/srt.png", _api.NotModified);
+        Assert.True(File.Exists(Path.Combine(_assets.Path, ArtManifest.FileName)));
+    }
+
+    [Fact]
+    public async Task ArtTheApiChangedIsReplacedAndNamed()
+    {
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+        _api.Bytes["https://cdn/hs_top.webp"] = [7, 7];
+        _api.Bytes["https://cdn/srt.png"] = [8];
+
+        var again = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal([7, 7], File.ReadAllBytes(Asset("topbar", "heavy_spirit.webp")));
+        Assert.Equal(["heavy_spirit"], again.Groups.Single(group => group.Label == "Top-bar portraits").Updated);
+        // Downloaded by this app, so kept current even in a folder that can hold art put there by hand.
+        Assert.Equal([8], File.ReadAllBytes(Asset("items", "spirit_resist_t1.png")));
+        Assert.Equal(2, again.Updated);
+    }
+
+    [Fact]
+    public async Task TopBarArtFromBeforeTheManifestIsCheckedAgainstTheApis()
+    {
+        Directory.CreateDirectory(Path.Combine(_assets.Path, "topbar"));
+        Directory.CreateDirectory(Path.Combine(_assets.Path, "heroes"));
+        File.WriteAllBytes(Asset("topbar", "heavy_spirit.webp"), [9]);
+        File.WriteAllBytes(Asset("heroes", "heavy_spirit.png"), [9]);
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        // The top-bar folder is the app's, so a stale copy is replaced; a portrait could be anyone's.
+        Assert.Equal([4], File.ReadAllBytes(Asset("topbar", "heavy_spirit.webp")));
+        Assert.Equal([9], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
+        Assert.Equal(["heavy_spirit"], report.Groups.Single(group => group.Label == "Top-bar portraits").Updated);
+        _api.NotModified.Clear();
+
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Contains("https://cdn/hs_top.webp", _api.NotModified);
+        Assert.Equal([9], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
     }
 
     private sealed class SyncProgress(Action<FetchProgress> report) : IProgress<FetchProgress>

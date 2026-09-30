@@ -173,7 +173,7 @@ public sealed class DataMenuTests : IDisposable
         // Art that has arrived shows without waiting for the rest.
         Assert.Equal(1, artShown);
 
-        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 2, 2, 2, 0, [])]));
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 2, 2, 2, 0, [], [])]));
         await run;
 
         Assert.False(menu.IsDownloadingArt);

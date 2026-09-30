@@ -73,6 +73,9 @@ public class MatchStatsServiceTests
         public Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         private static JsonArray RankAssets() =>
             new(new[] { "Obscurus", "Initiate", "Seeker", "Acolyte", "Sentinel", "Mystic", "Ritualist", "Emissary", "Oracle", "Phantom", "Ascendant", "Eternus" }
                 .Select((name, tier) => (JsonNode)new JsonObject { ["tier"] = tier, ["name"] = name })

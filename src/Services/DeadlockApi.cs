@@ -29,15 +29,22 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         return JsonNode.Parse(bytes);
     }
 
-    public async Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default)
+    public async Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default) =>
+        (await GetBytesIfChangedAsync(url, userAgent, null, cancellationToken)).Bytes!;
+
+    public async Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default)
     {
         using var request = new HttpRequestMessage(HttpMethod.Get, url);
         request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+        if (etag is not null)
+            request.Headers.TryAddWithoutValidation("If-None-Match", etag);
         try
         {
             using var response = await _http.SendAsync(request, cancellationToken);
+            if (etag is not null && response.StatusCode == System.Net.HttpStatusCode.NotModified)
+                return new ChangedFile(null, etag);
             response.EnsureSuccessStatusCode();
-            return await response.Content.ReadAsByteArrayAsync(cancellationToken);
+            return new ChangedFile(await response.Content.ReadAsByteArrayAsync(cancellationToken), response.Headers.ETag?.ToString());
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
