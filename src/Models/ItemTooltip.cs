@@ -11,7 +11,9 @@ namespace DeadlockAdvisor.Models;
 /// </summary>
 /// <param name="Negative">A drawback, e.g. Weighted Shots' -0.5 m Move Speed.</param>
 /// <param name="SpiritScale">What each point of spirit power adds to the value, e.g. Scourge's 0.0055; 0 when it doesn't scale.</param>
-public sealed record TooltipStat(string Value, string Label, bool Conditional = false, bool Negative = false, double SpiritScale = 0);
+/// <param name="BoonScale">What each boon (level up) adds to the value, e.g. Headhunter's 4; 0 when it doesn't scale.</param>
+public sealed record TooltipStat(string Value, string Label, bool Conditional = false, bool Negative = false,
+    double SpiritScale = 0, double BoonScale = 0);
 
 /// <summary>
 /// A description and the numbers printed under it. <see cref="Elevated"/> is the big headline stat,
@@ -99,6 +101,8 @@ public sealed partial record ItemTooltip(
             // Most stats don't scale, so the key is left out rather than written as 0 everywhere.
             if (stat.SpiritScale != 0)
                 json["spirit_scale"] = stat.SpiritScale;
+            if (stat.BoonScale != 0)
+                json["boon_scale"] = stat.BoonScale;
             return (JsonNode)json;
         }).ToArray());
 
@@ -135,6 +139,6 @@ public sealed partial record ItemTooltip(
     private static EquatableList<TooltipStat> StatsFromJson(JsonObject block, string key) =>
         Children(block, key)
             .Select(stat => new TooltipStat(Text(stat, "value"), Text(stat, "label"), Flag(stat, "conditional"), Flag(stat, "negative"),
-                Number(stat, "spirit_scale")))
+                Number(stat, "spirit_scale"), Number(stat, "boon_scale")))
             .ToEquatableList();
 }

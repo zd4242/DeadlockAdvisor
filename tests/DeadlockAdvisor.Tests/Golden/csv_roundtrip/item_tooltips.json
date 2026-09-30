@@ -1483,13 +1483,15 @@
         "value": "+10%",
         "label": "Weapon Damage",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 0.8
        },
        {
         "value": "+50",
         "label": "Bonus Health",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 4.0
        },
        {
         "value": "+12%",
@@ -2351,13 +2353,15 @@
         "value": "+125%",
         "label": "Weapon Damage",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 2.0
        },
        {
         "value": "+40%",
         "label": "Secondary Fire Weapon Damage",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 1.3
        }
       ],
       "stats": [
@@ -3240,13 +3244,15 @@
         "value": "+75",
         "label": "Head Shot Bonus Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 4.0
        },
        {
         "value": "4%",
         "label": "Heal Per Headshot",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 0.06
        }
       ],
       "stats": [
@@ -3460,7 +3466,8 @@
         "value": "325",
         "label": "Total HP Regen",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 6.0
        }
       ],
       "stats": [
@@ -4436,13 +4443,15 @@
         "value": "120",
         "label": "Heal on Melee Hit",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 1.75
        },
        {
         "value": "35%",
         "label": "Melee Hit Heal",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 0.5
        }
       ],
       "stats": [
@@ -4755,7 +4764,8 @@
         "value": "200",
         "label": "Barrier",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 12.0
        },
        {
         "value": "5s",
@@ -5737,7 +5747,8 @@
         "value": "65",
         "label": "Healing on Ability Cast",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 1.7
        },
        {
         "value": "+1.75 m",
@@ -6116,7 +6127,8 @@
         "value": "16",
         "label": "Heal Per Stack",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 0.45
        }
       ],
       "stats": [
@@ -7420,7 +7432,8 @@
         "value": "300",
         "label": "Barrier",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 5.0
        },
        {
         "value": "+18%",
@@ -8671,7 +8684,8 @@
         "value": "85",
         "label": "Heal",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "boon_scale": 8.0
        }
       ],
       "stats": [
@@ -8878,7 +8892,8 @@
         "value": "300",
         "label": "Barrier",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "boon_scale": 5.0
        },
        {
         "value": "+18%",

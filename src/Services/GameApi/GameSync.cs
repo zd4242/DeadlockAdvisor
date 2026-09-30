@@ -459,24 +459,31 @@ public static partial class GameSync
         if (prefix == "{s:sign}")
             prefix = number > 0 ? "+" : "-";
         var value = prefix is "+" or "-" ? prefix + Format.Num(Math.Abs(number)) : Format.Num(number);
+        var (spiritScale, boonScale) = Scaling(property);
         return new TooltipStat(
             value + PyJson.Text(property, "postfix"),
             PyJson.Str(PyJson.Get(property, "label")),
             PyJson.Contains(property, "usage_flags", "ConditionallyApplied"),
             PyJson.Truthy(PyJson.Get(property, "negative_attribute")),
-            SpiritScale(property));
+            spiritScale,
+            boonScale);
     }
 
     /// <summary>
-    /// What each point of spirit power adds to a property. Most properties carry a scale function that
-    /// only names what can modify them (cooldown reduction, duration...); the spirit ones have a stat_scale.
+    /// What each point of spirit power, or each boon, adds to a property. Most properties carry a scale
+    /// function that only names what can modify them (cooldown reduction, duration...); the spirit and
+    /// boon ones have a stat_scale. The healing ones name their stat in the class instead.
     /// </summary>
-    private static double SpiritScale(JsonNode property)
+    private static (double Spirit, double Boons) Scaling(JsonNode property)
     {
         var function = PyJson.Get(property, "scale_function");
-        var scalesWithSpirit = PyJson.Text(function, "specific_stat_scale_type") == "ETechPower"
-            || PyJson.Text(function, "class_name") == "scale_function_healing_spirit_scale";
-        return scalesWithSpirit ? Number(PyJson.Get(function, "stat_scale")) ?? 0 : 0;
+        var scale = Number(PyJson.Get(function, "stat_scale")) ?? 0;
+        return (PyJson.Text(function, "specific_stat_scale_type"), PyJson.Text(function, "class_name")) switch
+        {
+            ("ETechPower", _) or (_, "scale_function_healing_spirit_scale") => (scale, 0),
+            ("ELevelUpBoons", _) or (_, "scale_function_healing_boon_scale") => (0, scale),
+            _ => (0, 0),
+        };
     }
 
     /// <summary>

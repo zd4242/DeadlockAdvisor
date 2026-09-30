@@ -80,7 +80,7 @@ public class FileFormatTests
                     new TooltipBlock("Deals <span style=\"color:#CE90FF\">Spirit</span> – café &amp; \"more\"",
                         new[] { new TooltipStat("+20%", "Max ⚡ Ammo", SpiritScale: 0.0055) }.ToEquatableList(),
                         new[] { new TooltipStat("", "Silenced", true, false) }.ToEquatableList(),
-                        new[] { new TooltipStat("-0.5 m", "Move Speed", false, true) }.ToEquatableList()),
+                        new[] { new TooltipStat("-0.5 m", "Move Speed", false, true, BoonScale: 4) }.ToEquatableList()),
                     TooltipBlock.Empty,
                 }.ToEquatableList()),
             }.ToEquatableList(),

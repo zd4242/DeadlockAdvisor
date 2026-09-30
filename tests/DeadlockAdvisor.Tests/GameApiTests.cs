@@ -395,12 +395,13 @@ public class GameApiTests
     }
 
     [Theory]
-    [InlineData("Scourge", "MaxHealthPercentAsDPS", 0.0055)]
-    [InlineData("Healing Rite", "TotalHealthRegen", 1.1)]
-    [InlineData("Alchemical Fire", "BulletArmorReduction", -0.055)]
-    [InlineData("Weapon Shielding", "CombatBarrier", 0)]
-    [InlineData("Scourge", "AbilityDuration", 0)]
-    public void TooltipStatsCarryOnlyTheirSpiritScaling(string itemName, string property, double expected)
+    [InlineData("Scourge", "MaxHealthPercentAsDPS", 0.0055, 0)]
+    [InlineData("Healing Rite", "TotalHealthRegen", 1.1, 0)]
+    [InlineData("Alchemical Fire", "BulletArmorReduction", -0.055, 0)]
+    [InlineData("Weapon Shielding", "CombatBarrier", 0, 5)]
+    [InlineData("Healing Nova", "TotalHealthRegen", 0, 6)]
+    [InlineData("Scourge", "AbilityDuration", 0, 0)]
+    public void TooltipStatsCarryTheirSpiritAndBoonScaling(string itemName, string property, double spirit, double boons)
     {
         var record = Json("game_api/shop_items.json").AsArray().OfType<JsonNode>().Single(r => Text(r["name"]) == itemName);
         var label = Text(record["properties"]![property]!["label"]);
@@ -408,7 +409,7 @@ public class GameApiTests
         var tooltip = GameSync.ExtractTooltip("item", record, new Dictionary<string, string>())!;
 
         var stat = tooltip.Sections.SelectMany(s => s.Blocks).SelectMany(b => b.Elevated.Concat(b.Important).Concat(b.Stats)).Single(s => s.Label == label);
-        Assert.Equal(expected, stat.SpiritScale);
+        Assert.Equal((spirit, boons), (stat.SpiritScale, stat.BoonScale));
     }
 
     [Fact]

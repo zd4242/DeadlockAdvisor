@@ -29,7 +29,8 @@
         "value": "-0.5 m",
         "label": "Move Speed",
         "conditional": false,
-        "negative": true
+        "negative": true,
+        "boon_scale": 4.0
        }
       ]
      },

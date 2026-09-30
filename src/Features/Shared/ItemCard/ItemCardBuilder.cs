@@ -210,18 +210,25 @@ public static class ItemCardBuilder
             new Run(stat.Value) { Foreground = Brush(stat.Negative ? Palette.Negative : Palette.Text), FontWeight = FontWeight.Bold },
             new Run("  " + stat.Label) { Foreground = Brush(Palette.TextDim) },
         };
-        if (stat.SpiritScale != 0)
-            inlines.Add(new Run("  " + SpiritScaleText(stat)) { Foreground = Brush(Palette.ShopSpirit), FontWeight = FontWeight.Bold });
+        foreach (var (text, color) in Scalings(stat))
+            inlines.Add(new Run("  " + text) { Foreground = Brush(color), FontWeight = FontWeight.Bold });
         if (stat.Conditional)
             inlines.Add(new Run(" · conditional") { Foreground = Brush(Palette.TextFaint) });
         return new TextBlock { FontSize = size, TextWrapping = TextWrapping.Wrap, Inlines = inlines };
     }
 
     /// <summary>
-    /// "×0.0055 Spirit", as the game prints a spirit-power multiplier. It's a magnitude: a reduction
-    /// like Alchemical Fire's -7% Bullet Resist scales by -0.055, i.e. it deepens with spirit.
+    /// "×0.0055 Spirit", "×4 Boons": what the value grows by per point of spirit power or per boon, in
+    /// the spirit colour and the souls gold. Each is a magnitude: a reduction like Alchemical Fire's
+    /// -7% Bullet Resist scales by -0.055, i.e. it deepens with spirit.
     /// </summary>
-    private static string SpiritScaleText(TooltipStat stat) => $"×{Format.Num(Math.Abs(stat.SpiritScale))} Spirit";
+    private static IEnumerable<(string Text, Color Color)> Scalings(TooltipStat stat)
+    {
+        if (stat.SpiritScale != 0)
+            yield return ($"×{Format.Num(Math.Abs(stat.SpiritScale))} Spirit", Palette.ShopSpirit);
+        if (stat.BoonScale != 0)
+            yield return ($"×{Format.Num(Math.Abs(stat.BoonScale))} Boons", Palette.Accent);
+    }
 
     /// <summary>One of the headline numbers: value on top, what it is underneath.</summary>
     private static Border StatBox(TooltipStat stat)
@@ -233,9 +240,9 @@ public static class ItemCardBuilder
             value.HorizontalAlignment = HorizontalAlignment.Center;
             layout.Children.Add(value);
         }
-        if (stat.SpiritScale != 0)
+        foreach (var (text, color) in Scalings(stat))
         {
-            var scale = Label(SpiritScaleText(stat), 11, Palette.ShopSpirit, bold: true);
+            var scale = Label(text, 11, color, bold: true);
             scale.HorizontalAlignment = HorizontalAlignment.Center;
             layout.Children.Add(scale);
         }

@@ -275,7 +275,7 @@ public class DataStoreTests
                     new TooltipSection("active", "16s", new[]
                     {
                         new TooltipBlock("<b>Go</b>", EquatableList<TooltipStat>.Empty,
-                            new[] { new TooltipStat("11m", "Range", true), new TooltipStat("2.3%", "Max Health per second", SpiritScale: 0.0055) }.ToEquatableList(),
+                            new[] { new TooltipStat("11m", "Range", true, BoonScale: 4),new TooltipStat("2.3%", "Max Health per second", SpiritScale: 0.0055) }.ToEquatableList(),
                             EquatableList<TooltipStat>.Empty),
                     }.ToEquatableList()),
                 }.ToEquatableList(),
