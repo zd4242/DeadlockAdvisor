@@ -268,6 +268,26 @@ public class MatchPageTests
         Assert.Empty(ui.ViewModel.Match.Match.OwnTeam);
     }
 
+    [AvaloniaFact]
+    public void ThePickerOpensInsideTheMatchCardAndItsDoneButtonClosesIt()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+
+        ui.ViewModel.Match.FocusSearch();
+        UiHarness.Settle();
+        var picker = Picker(ui);
+        Assert.True(picker.IsEffectivelyVisible);
+        Assert.NotNull(picker.FindAncestorOfType<RosterView>());
+
+        var done = picker.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Done"));
+        done.Command!.Execute(null);
+        UiHarness.Settle();
+        Assert.False(board.IsPickerOpen);
+        Assert.False(picker.IsEffectivelyVisible);
+    }
+
     private static MatchBoardView Picker(UiHarness ui) =>
         ui.Window.MatchPage.GetVisualDescendants().OfType<MatchBoardView>().Single();
 

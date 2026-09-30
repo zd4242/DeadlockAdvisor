@@ -60,6 +60,7 @@ public class MatchBoardViewModel : ViewModelBase
             .DisposeWith(Disposables);
 
         SetModeCommand = ReactiveCommand.Create<Role>(SetMode);
+        ClosePickerCommand = ReactiveCommand.Create(() => { IsPickerOpen = false; });
         ClearCommand = ReactiveCommand.Create(() =>
         {
             _match.Clear();
@@ -130,6 +131,7 @@ public class MatchBoardViewModel : ViewModelBase
     [Reactive] public bool IsBehind { get; private set; }
 
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
+    public ReactiveCommand<Unit, Unit> ClosePickerCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
 

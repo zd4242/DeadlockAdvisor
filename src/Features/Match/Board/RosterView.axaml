@@ -156,6 +156,8 @@
                               HorizontalAlignment="Left"
                               ItemsSource="{Binding EnemySlots}"/>
             </Grid>
+
+            <board:MatchBoardView IsVisible="{Binding IsPickerOpen}"/>
         </StackPanel>
     </Border>
 </UserControl>

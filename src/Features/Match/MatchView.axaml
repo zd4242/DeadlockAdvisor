@@ -41,14 +41,10 @@
         </Style>
     </UserControl.Styles>
 
-    <Grid RowDefinitions="Auto,Auto,12,*" Margin="12">
+    <Grid RowDefinitions="Auto,12,*" Margin="12">
         <board:RosterView DataContext="{Binding Board}"/>
 
-        <Panel Grid.Row="1" Margin="0,12,0,0" IsVisible="{Binding Board.IsPickerOpen}">
-            <board:MatchBoardView DataContext="{Binding Board}"/>
-        </Panel>
-
-        <Grid Grid.Row="3">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="3*" MinWidth="420"/>
                 <ColumnDefinition Width="12"/>

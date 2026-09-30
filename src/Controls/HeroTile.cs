@@ -14,7 +14,7 @@ namespace DeadlockAdvisor.Controls;
 /// </summary>
 public class HeroTile : Control
 {
-    private const double _portrait = 60;
+    private const double _portrait = 54;
     private const double _pad = 6;
     private const double _nameHeight = 16;
     private const double _radius = 8;
