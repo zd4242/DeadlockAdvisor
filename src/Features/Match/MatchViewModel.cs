@@ -40,6 +40,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 {
     public const int DefaultCutoffPercent = 40;
 
+    public const string HideRarelyBuiltLabel = "Hide items your hero rarely builds";
+
     public static readonly string HideRarelyBuiltTip =
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
         + "Needs your hero picked and match stats fetched (Data → Fetch Match Stats).";

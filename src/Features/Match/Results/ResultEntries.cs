@@ -25,6 +25,9 @@ public class ResultRowViewModel : ViewModelBase
         + $"Its win-rate gain against the enemies, plus a third of the gain on your hero, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
         + "(gains on your own hero usually run about three times bigger).";
 
+    public const string HideRarelyBuiltHint =
+        $"Filters → \"{MatchViewModel.HideRarelyBuiltLabel}\" leaves these items out of the list.";
+
     /// <param name="formulaLikes">Whether the formula is the one rating the item well.</param>
     public static string DisagreeText(bool formulaLikes)
     {
@@ -99,7 +102,7 @@ public class ResultRowViewModel : ViewModelBase
             Data = scored.Data;
         HasData = scored.Data.Count > 0;
         IsRarelyBuilt = HasData && scored.RarelyBuilt;
-        RarelyBuiltTip = IsRarelyBuilt ? ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value) : null;
+        RarelyBuiltTip = IsRarelyBuilt ? ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value) + "\n" + HideRarelyBuiltHint : null;
         DataTip = string.IsNullOrEmpty(dataTip) ? null : dataTip;
     }
 }

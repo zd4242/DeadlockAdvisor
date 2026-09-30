@@ -180,7 +180,8 @@ public class ResultsViewModelTests
         var rows = results.Entries.OfType<ResultRowViewModel>().ToList();
         Assert.True(rows[0].IsRarelyBuilt);
         Assert.Equal("Your hero builds this 1/10 as often as the average player, so the gains against the enemies count ×0.40: "
-                     + "they mostly come from other heroes' players.", rows[0].RarelyBuiltTip);
+                     + "they mostly come from other heroes' players.\n"
+                     + "Filters → \"Hide items your hero rarely builds\" leaves these items out of the list.", rows[0].RarelyBuiltTip);
         Assert.Equal("note", rows[0].DataTip);
         // Without data there's nothing that counts for less.
         Assert.False(rows[2].IsRarelyBuilt);
