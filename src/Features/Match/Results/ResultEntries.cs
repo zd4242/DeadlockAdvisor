@@ -25,10 +25,14 @@ public class ResultRowViewModel : ViewModelBase
         + $"Its win-rate gain against the enemies, plus a third of the gain on your hero, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
         + "(gains on your own hero usually run about three times bigger).";
 
-    public const string DisagreeTip =
-        "The formula and the match data clearly disagree: one rates this item well, the other poorly.\n"
-        + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
-        + "who buys the item more than what it does.";
+    /// <param name="formulaLikes">Whether the formula is the one rating the item well.</param>
+    public static string DisagreeText(bool formulaLikes)
+    {
+        var (likes, dislikes) = formulaLikes ? ("formula", "match data") : ("match data", "formula");
+        return $"The formula and the match data clearly disagree: the {likes} rates this item well, the {dislikes} poorly.\n"
+            + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
+            + "who buys the item more than what it does.";
+    }
 
     public ResultRowViewModel(string itemId, string name, string shopCategory, int tier)
     {
@@ -67,6 +71,7 @@ public class ResultRowViewModel : ViewModelBase
 
     /// <summary>Ranking by both, the formula and the data point clearly opposite ways (<see cref="BlendScale.Disagree"/>).</summary>
     [Reactive] public bool Disagrees { get; private set; }
+    [Reactive] public string? DisagreeTip { get; private set; }
     [Reactive] public OrderedDictionary<string, double>? Data { get; private set; }
     [Reactive] public bool HasData { get; private set; }
 
@@ -81,6 +86,7 @@ public class ResultRowViewModel : ViewModelBase
     {
         Score = new DisplayAmount(shown ?? scored.Score);
         Disagrees = disagrees;
+        DisagreeTip = disagrees ? DisagreeText(formulaLikes: scored.Score > 0) : null;
         IsNegative = Score.Shown < 0;
         IsZero = Score.Shown == 0;
         Fraction = bars.Fraction;

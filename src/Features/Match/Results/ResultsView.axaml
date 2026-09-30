@@ -84,7 +84,7 @@
                                                         Text="DISAGREE"
                                                         Color="{x:Static theme:Palette.TextDim}"
                                                         IsVisible="{Binding Disagrees}"
-                                                        ToolTip.Tip="{x:Static results:ResultRowViewModel.DisagreeTip}"/>
+                                                        ToolTip.Tip="{Binding DisagreeTip}"/>
                                         <controls:Badge Grid.Column="3"
                                                         Margin="8,0,0,0"
                                                         VerticalAlignment="Center"

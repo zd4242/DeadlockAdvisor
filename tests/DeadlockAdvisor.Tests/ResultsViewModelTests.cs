@@ -153,6 +153,8 @@ public class ResultsViewModelTests
         // c: formula -3 against data +1.5; a: 10 and 1, the same way; d: -2 and -0.5, also the same way.
         var rows = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId);
         Assert.Equal(["c"], rows.Values.Where(row => row.Disagrees).Select(row => row.ItemId));
+        Assert.Contains("the match data rates this item well, the formula poorly", rows["c"].DisagreeTip);
+        Assert.Null(rows["a"].DisagreeTip);
 
         results.SetDisplay(RankBy.Formula, false, null);
         Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.Disagrees);
