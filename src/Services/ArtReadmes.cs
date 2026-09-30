@@ -50,17 +50,20 @@ public static class ArtReadmes
     public const string Topbar = """
         Reference art for screen detection.
 
-        Data -> Download Art... fills this folder with one <hero_id>.png per hero,
-        taken from the API's `top_bar_vertical_image` -- the same art Deadlock
-        draws in the scoreboard strip.
+        Data -> Download Art... fetches each hero's cards into _cards/ and cuts
+        them where the top bar crops them, into the hero's folder:
 
-        A hero can also have a folder of alternates, which the matcher scores
-        alongside the main image and takes the best of:
+            haze/card_normal.png       the portrait as usually drawn
+            haze/state_critical.png    on critical health
+            haze/state_gloat.png       on a kill streak
 
-            haze.png
-            haze/on_fire_01.png
+        <hero_id>.png is the API's own top-bar art, used only for a hero with no
+        cut portraits.
 
-        The review dialog writes those for you whenever you correct a detection.
+        Correcting a detection in the review can keep that portrait too, as
+        haze/variant_01.png and so on: that's how a skin gets recognised. A hero
+        keeps their newest three; older ones move to _quarantine/, which detection
+        ignores, and can be moved back.
 
         """;
 

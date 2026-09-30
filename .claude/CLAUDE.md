@@ -8,6 +8,11 @@ Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_ru
 - Every property the tooltip shows under a scored stat's label must be an alias in `GameSync.Stats` or listed, with a reason, in `GameSync.Unscored`. `GameApiTests.TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides` enforces this.
 - After a deliberate scoring or sync change, regenerate the goldens with `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter ...` and review the diff. Use Data → Model Health Report (`Scoring/ModelHealth.cs`) to check the effect on the whole model.
 
+# Detection model
+Read `docs/detection_model.md` before touching `src/Vision`, the detect flow (`Features/Match/Detect`) or the art download. The rules to follow:
+- Every portrait is cut from the hero's card at `TopbarDerivation.InGameFrame`, so it sits in the slot's box, and the final read only looks there. Don't widen that search to rescue one hero: fix the art or the grid.
+- Detection may not read the labelled corpus any worse (`VisionCorpusTests`, `Golden/vision/corpus_report.json`), and must never read anything confidently wrong: a confident read is applied without review. After a deliberate change, regenerate with `-e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenVisionTests|FullyQualifiedName~VisionCorpusTests"` and review the diff, including `mockups/detection_report.md`.
+
 # Testing
 The full suite takes a minute or two, so don't run it after every change. Run tests with `-c Release`, because the app may be running from a Debug build.
 - For most changes, run only the tests for the area you touched, with `--filter "FullyQualifiedName~ResultsViewModel|FullyQualifiedName~MatchPage"` and so on. The test files are named after the features they cover.
