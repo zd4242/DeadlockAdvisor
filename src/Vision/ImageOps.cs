@@ -171,6 +171,32 @@ public static class ImageOps
         return result;
     }
 
+    /// <summary>
+    /// How much a portrait's brightness varies over its upper two thirds (the art, above the pill), 0-1.
+    /// A faded portrait is washed into the world behind it: 0.09 typically, against 0.23 for one drawn
+    /// in full, and on the labelled captures no portrait drawn in full was under 0.14.
+    /// </summary>
+    public static double Contrast(RgbImage portrait)
+    {
+        double sum = 0, squares = 0;
+        var count = 0;
+        for (var y = 0; y < portrait.Height * 2 / 3; y++)
+        {
+            for (var x = 0; x < portrait.Width; x++)
+            {
+                var at = (y * portrait.Width + x) * 3;
+                var value = Math.Max(portrait.Pixels[at], Math.Max(portrait.Pixels[at + 1], portrait.Pixels[at + 2])) / 255.0;
+                sum += value;
+                squares += value * value;
+                count++;
+            }
+        }
+        if (count == 0)
+            return 0;
+        var mean = sum / count;
+        return Math.Sqrt(Math.Max(0, squares / count - mean * mean));
+    }
+
     /// <summary>An RGB colour (0-255) as hue in degrees, and saturation and brightness from 0 to 1.</summary>
     public static (double Hue, double Saturation, double Value) Hsv(IReadOnlyList<float> rgb)
     {

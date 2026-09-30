@@ -12,8 +12,10 @@ namespace DeadlockAdvisor.Features.Match.Detect;
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
 /// <param name="SlotSouls">Each slot's net worth, where it was read and its side added up.</param>
 /// <param name="CorrectedSlots">Every slot whose hero was corrected, whether or not the crops are kept.</param>
+/// <param name="TooFaded">Corrections not kept as reference art because the portrait was too faded to learn from.</param>
 public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot,
-    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls, IReadOnlyList<int> CorrectedSlots);
+    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls, IReadOnlyList<int> CorrectedSlots,
+    int TooFaded = 0);
 
 /// <summary>
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette
@@ -104,11 +106,11 @@ public class DetectReviewViewModel : ViewModelBase
 
     private DetectReviewResult Result()
     {
-        var corrections = RememberCorrections
-            ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).Select(slot => (slot.HeroId!, slot.Crop!)).ToList()
-            : [];
+        var corrected = RememberCorrections ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).ToList() : [];
+        var learnable = corrected.Where(slot => TemplateBank.CanLearnFrom(slot.Crop!)).ToList();
         return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value,
-            corrections, _netWorth.Souls, Slots.Where(slot => slot.WasCorrected).Select(slot => slot.Index).ToList());
+            learnable.Select(slot => (slot.HeroId!, slot.Crop!)).ToList(), _netWorth.Souls,
+            Slots.Where(slot => slot.WasCorrected).Select(slot => slot.Index).ToList(), corrected.Count - learnable.Count);
     }
 
     protected override void Dispose(bool disposing)

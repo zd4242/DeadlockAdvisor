@@ -234,8 +234,52 @@ public sealed class TemplateBank
             index++;
         var path = Path.Combine(folder, $"{label}_{index:00}.png");
         Png.Save(image, path);
+        RetireLearned(directory, heroId, MaxLearned);
         InvalidatePythonCache(directory);
         return path;
+    }
+
+    /// <summary>
+    /// A hero keeps this many learned portraits, the newest: every image is another chance for a
+    /// wrong hero to score well somewhere, so old ones go before they pile up.
+    /// </summary>
+    public const int MaxLearned = 3;
+
+    /// <summary>A portrait flatter than this (<see cref="ImageOps.Contrast"/>) was faded or dead when captured, and teaches nothing.</summary>
+    public const double LearnMinContrast = 0.13;
+
+    /// <summary>Where retired images go: the bank doesn't look in folders whose names start with "_", and they can be moved back.</summary>
+    public const string QuarantineFolder = "_quarantine";
+
+    /// <summary>Whether a corrected crop shows enough of the hero to be worth keeping as reference art.</summary>
+    public static bool CanLearnFrom(RgbImage crop) => ImageOps.Contrast(crop) >= LearnMinContrast;
+
+    /// <summary>Move all but the newest <paramref name="keep"/> of a hero's learned images to the quarantine; returns where they went.</summary>
+    public static IReadOnlyList<string> RetireLearned(string directory, string heroId, int keep)
+    {
+        var folder = Path.Combine(directory, heroId);
+        if (!Directory.Exists(folder))
+            return [];
+        var retired = Directory.EnumerateFiles(folder)
+            .Where(IsImage)
+            .Where(path => TemplateSource.Of(heroId, path, isAlternate: true).Kind == TemplateKind.Learned)
+            .OrderByDescending(File.GetLastWriteTimeUtc)
+            .ThenByDescending(LowerName, StringComparer.Ordinal)
+            .Skip(keep)
+            .ToList();
+        return retired.Select(path => Quarantine(directory, heroId, path)).ToList();
+    }
+
+    /// <summary>Move one of a hero's images to the quarantine, under a name that doesn't clash with one already there.</summary>
+    public static string Quarantine(string directory, string heroId, string path)
+    {
+        var folder = Path.Combine(directory, QuarantineFolder, heroId);
+        Directory.CreateDirectory(folder);
+        var target = Path.Combine(folder, Path.GetFileName(path));
+        for (var copy = 2; File.Exists(target); copy++)
+            target = Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(path)}_{copy}{Path.GetExtension(path)}");
+        File.Move(path, target);
+        return target;
     }
 
     /// <summary>Drop the Python app's descriptor cache after adding art, so it rebuilds from what's on disk.</summary>

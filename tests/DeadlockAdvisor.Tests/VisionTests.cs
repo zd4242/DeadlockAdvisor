@@ -335,6 +335,40 @@ public class VisionTests
         Assert.Equal(2, TemplateBank.Load(temp.Path).Vectors.Count);
     }
 
+    [Fact]
+    public void AHeroKeepsOnlyTheirNewestLearnedPortraits()
+    {
+        using var temp = new TempDirectory();
+        var crop = Image("fixtures/cropped_strip_1769.png").Crop(10, 5, 70, 105);
+        Directory.CreateDirectory(Path.Combine(temp.Path, "haze"));
+        File.Copy(Path.Combine(TopbarDir, "haze", "card_normal.png"), Path.Combine(temp.Path, "haze", "card_normal.png"));
+        var saved = new List<string>();
+        for (var i = 0; i < TemplateBank.MaxLearned + 1; i++)
+        {
+            saved.Add(TemplateBank.SaveVariant(temp.Path, "haze", crop));
+            File.SetLastWriteTimeUtc(saved[^1], new DateTime(2026, 9, 30, 12, i, 0, DateTimeKind.Utc));
+        }
+        TemplateBank.RetireLearned(temp.Path, "haze", TemplateBank.MaxLearned);
+
+        // The oldest went to the quarantine, where the bank doesn't look; the cut portrait isn't learned, so it stays.
+        Assert.False(File.Exists(saved[0]));
+        Assert.True(File.Exists(Path.Combine(temp.Path, TemplateBank.QuarantineFolder, "haze", "variant_01.png")));
+        Assert.Equal(1 + TemplateBank.MaxLearned, TemplateBank.Load(temp.Path).Vectors.Count);
+    }
+
+    [Fact]
+    public void AFadedPortraitIsNotLearnedFrom()
+    {
+        var corpus = Golden.PathOf("vision", "corpus");
+        var capture = LabeledCapture.FromJson(JsonNode.Parse(File.ReadAllText(Path.Combine(corpus, "networth_20260927_213643_023.json")))!);
+        var image = ImageFile.Load(Path.Combine(corpus, "networth_20260927_213643_023.png"));
+        var boxes = capture.Grid!.Boxes();
+
+        Assert.All(new[] { 0, 1, 2, 3, 5 }, slot => Assert.True(TemplateBank.CanLearnFrom(Layout.Crop(image, boxes[slot])!), $"slot {slot}"));
+        // The enemy team is out of sight, faded into the city behind.
+        Assert.All(new[] { 6, 7, 8, 10, 11 }, slot => Assert.False(TemplateBank.CanLearnFrom(Layout.Crop(image, boxes[slot])!), $"slot {slot}"));
+    }
+
     // -- end to end, against real captures -------------------------------------
 
     public static TheoryData<string> Fixtures() =>

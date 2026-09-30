@@ -212,8 +212,11 @@ public class DetectAction
         }
         if (learned > 0)
         {
+            var faded = result.TooFaded > 0
+                ? $"\n\n{result.TooFaded} other correction(s) weren't kept: the portrait was too faded (out of sight, or dead) to learn from."
+                : "";
             _modals.ShowMessage("Saved as reference art",
-                $"Kept {learned} corrected portrait(s) in {directory}.\nThose heroes should be recognised directly next time.");
+                $"Kept {learned} corrected portrait(s) in {directory}.\nThose heroes should be recognised directly next time.{faded}");
         }
     }
 
