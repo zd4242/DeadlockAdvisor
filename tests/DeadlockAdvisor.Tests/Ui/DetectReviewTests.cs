@@ -1,6 +1,7 @@
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Art;
@@ -49,6 +50,15 @@ public class DetectReviewTests
         Assert.True(dropdown.IsDropDownOpen);
         Assert.Equal("haze", corrected.HeroId);
         Assert.False(dropdown.ContainerFromItem(corrected.Choices.Single(choice => choice.HeroId == "abrams"))!.IsVisible);
+        // Keys typed into the search stay unhandled, or Windows drops the characters they type, and Space doesn't
+        // pick an entry.
+        var keysHandled = new List<bool>();
+        modal.AddHandler(InputElement.KeyDownEvent, (_, e) => keysHandled.Add(e.Handled), RoutingStrategies.Bubble, handledEventsToo: true);
+        modal.KeyPressQwerty(PhysicalKey.E, RawInputModifiers.None);
+        modal.KeyPressQwerty(PhysicalKey.Space, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal([false, false], keysHandled);
+        Assert.True(dropdown.IsDropDownOpen);
         ui.ScreenshotModal("detect_review_search.png");
         modal.KeyPressQwerty(PhysicalKey.Enter, RawInputModifiers.None);
         UiHarness.Settle();

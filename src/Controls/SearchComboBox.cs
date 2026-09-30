@@ -23,9 +23,6 @@ public class SearchComboBox : NoWheelComboBox
 
         _search.TextChanged += (_, _) => Filter();
         _search.AddHandler(KeyDownEvent, OnSearchKeyDown, RoutingStrategies.Tunnel);
-        // The search box has the keyboard while the dropdown is open: nothing it types should reach the combo
-        // box, which would take Space as picking the focused entry.
-        _search.KeyDown += (_, e) => e.Handled = e.Key != Key.Tab;
 
         DropDownOpened += (_, _) => Dispatcher.UIThread.Post(() =>
         {
@@ -53,6 +50,16 @@ public class SearchComboBox : NoWheelComboBox
         frame.Child = null;
         DockPanel.SetDock(_search, Dock.Top);
         frame.Child = new DockPanel { Children = { _search, list } };
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        // Keys typed into the search bubble up here from the popup: they're the search's, not the combo box's,
+        // which would take Space as picking the focused entry. Marking them handled in the search instead would
+        // also stop Windows from delivering the characters they type.
+        if (_search.IsKeyboardFocusWithin && e.Key != Key.Tab)
+            return;
+        base.OnKeyDown(e);
     }
 
     protected override void OnTextInput(TextInputEventArgs e)
