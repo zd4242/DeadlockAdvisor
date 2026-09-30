@@ -1,6 +1,9 @@
 using System.IO;
+using System.Reactive;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text.Json;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
@@ -30,6 +33,8 @@ public class DetectAction
 
     private static readonly JsonSerializerOptions _captureJson = new() { WriteIndented = true };
 
+    private readonly Subject<Unit> _artWanted = new();
+
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
     private readonly IModalService _modals;
@@ -47,6 +52,9 @@ public class DetectAction
 
     public string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
 
+    /// <summary>Asked for when there's no art to match against and the offer to download it is taken.</summary>
+    public IObservable<Unit> ArtWanted => _artWanted;
+
     /// <summary>Run a detection into <paramref name="match"/>; <paramref name="applied"/> is called if the review is applied.</summary>
     public async Task RunAsync(MatchState match, Action applied)
     {
@@ -59,8 +67,9 @@ public class DetectAction
         if (bank.IsEmpty)
         {
             _log.Warning($"Detect: no reference art in {directory}");
-            _modals.ShowMessage("No reference art",
-                $"There's no hero art to match against yet.\n\nData → Download Art… fetches it into {directory}.");
+            _modals.Confirm($"There's no hero art to match against yet.\n\nDownload it from deadlock-api.com into {directory} now? "
+                            + "It downloads in the background; press Detect again once it's done.",
+                "Download", () => _artWanted.OnNext(Unit.Default), cancelText: "Not now");
             return;
         }
 

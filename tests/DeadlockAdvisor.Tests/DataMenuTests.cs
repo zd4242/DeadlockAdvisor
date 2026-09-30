@@ -254,6 +254,68 @@ public sealed class DataMenuTests : IDisposable
         Assert.Single(_shown);
     }
 
+    private string TopbarDir => Path.Combine(_fixture.Data.AssetsDir, "topbar");
+
+    /// <summary>An install with top-bar art, as the art download leaves it.</summary>
+    private void HaveTopbarArt(bool derivedByThisVersion)
+    {
+        _fixture.Settings.Current.ArtDownloadOffered = true;
+        Directory.CreateDirectory(TopbarDir);
+        File.WriteAllBytes(Path.Combine(TopbarDir, "haze.png"), [1]);
+        if (derivedByThisVersion)
+            Vision.TopbarDerivation.Run(TopbarDir, []);
+    }
+
+    [Fact]
+    public async Task TopBarArtIsCheckedQuietlyWhenItsDue()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Top-bar portraits", 1, 1, 0, 1, [], [])], 0, new([], [], [])));
+        await Task.Yield();
+
+        // Nothing changed, so there's nothing to say.
+        Assert.Empty(menu.Jobs);
+        Assert.Empty(_shown);
+        Assert.Equal(_fixture.Clock.Now, _fixture.Settings.Current.ArtCheckedAt);
+
+        using var again = Menu(artDownload: download);
+        again.OnStartup();
+        Assert.Equal(1, download.Started);
+    }
+
+    [Fact]
+    public void PortraitsCutByAnOlderVersionAreCutAgainAtOnce()
+    {
+        HaveTopbarArt(derivedByThisVersion: false);
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now;
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], 0, new([], [], [])));
+    }
+
+    [Fact]
+    public async Task AQuietCheckThatChangedSomethingSaysSo()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero cards", 1, 1, 0, 0, [], ["haze"])], 0, new(["haze"], [], [])));
+        await Task.Yield();
+
+        Assert.Equal(BackgroundJobState.Succeeded, Assert.Single(menu.Jobs).State);
+    }
+
     [Fact]
     public void ThePatchCheckFlagsANewerPatchQuietly()
     {

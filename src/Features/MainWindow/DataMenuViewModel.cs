@@ -15,6 +15,7 @@ using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Vision;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -122,19 +123,38 @@ public class DataMenuViewModel : ViewModelBase
 
     public string ExportPath => Path.Combine(_data.DataRoot, ExcelExportService.FileName);
 
-    /// <summary>Once the window is up: check for a newer patch in the background, and offer art on a first run without any.</summary>
+    /// <summary>How often the art is checked against deadlock-api.com's, which costs one "not modified" per file.</summary>
+    public static readonly TimeSpan ArtCheckInterval = TimeSpan.FromDays(7);
+
+    private string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
+
+    /// <summary>
+    /// Once the window is up: check for a newer patch in the background, offer art on a first run
+    /// without any, and otherwise keep the top-bar art detection matches against current: quietly,
+    /// about weekly, and at once when this version cuts portraits differently from the last.
+    /// </summary>
     public void OnStartup()
     {
         CheckForNewerPatch();
-        if (_settings.Current.ArtDownloadOffered || _art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0)
+        if (!_settings.Current.ArtDownloadOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
+        {
+            _settings.Update(s => s.ArtDownloadOffered = true);
+            _modals.Confirm(
+                $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
+                + "Download the portraits and icons from deadlock-api.com now? It's about 22 MB and downloads in the background, "
+                + "and Data → Download Art… does it any time.",
+                "Download", DownloadArt, cancelText: "Not now");
             return;
-        _settings.Update(s => s.ArtDownloadOffered = true);
-        _modals.Confirm(
-            $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
-            + "Download the portraits and icons from deadlock-api.com now? It's about 13 MB and downloads in the background, "
-            + "and Data → Download Art… does it any time.",
-            "Download", () => Launch(() => DownloadArtAsync(force: false)), cancelText: "Not now");
+        }
+        var hasTopbarArt = Directory.Exists(TopbarDir)
+                           && Directory.EnumerateFiles(TopbarDir).Any(file => ImageFile.Suffixes.Contains(Path.GetExtension(file).ToLowerInvariant()));
+        var due = _settings.Current.ArtCheckedAt is not { } checkedAt || _clock.Now - checkedAt >= ArtCheckInterval;
+        if (hasTopbarArt && (due || !TopbarDerivation.IsCurrent(TopbarDir)))
+            Launch(() => DownloadArtAsync(force: false, quiet: true));
     }
+
+    /// <summary>Download what art is missing or changed, in the background: what Detect asks for when it has nothing to match.</summary>
+    public void DownloadArt() => Launch(() => DownloadArtAsync(force: false));
 
     private void CheckForNewerPatch()
     {
@@ -421,8 +441,11 @@ public class DataMenuViewModel : ViewModelBase
             "Download new and changed", () => Launch(() => DownloadArtAsync(force: false)),
             "Re-download all", () => Launch(() => DownloadArtAsync(force: true)));
 
-    internal async Task DownloadArtAsync(bool force)
+    /// <param name="quiet">A routine check: it only speaks up if something changed.</param>
+    internal async Task DownloadArtAsync(bool force, bool quiet = false)
     {
+        if (IsDownloadingArt)
+            return;
         var job = new BackgroundJobViewModel("Art", _clock);
         var shown = _clock.Now;
         using var showAsItArrives = job.WhenAnyValue(vm => vm.Done)
@@ -437,16 +460,32 @@ public class DataMenuViewModel : ViewModelBase
         {
             var report = await RunInBackgroundAsync(job,
                 () => _artDownload.DownloadAsync(_data.Store, _data.AssetsDir, force, job, job.Token),
-                failure => Failed(job, "Art download failed",
-                    ["Couldn't download the art from deadlock-api.com:", "", failure.Message, "", "Whatever arrived before that is kept."]),
+                failure =>
+                {
+                    // Like the patch check, a routine check that can't reach the site isn't worth interrupting anyone over.
+                    if (quiet)
+                        Remove(job);
+                    else
+                        Failed(job, "Art download failed",
+                            ["Couldn't download the art from deadlock-api.com:", "", failure.Message, "", "Whatever arrived before that is kept."]);
+                },
                 "Stopped downloading art. What arrived is kept.");
             if (report is not null)
             {
+                _settings.Update(s => s.ArtCheckedAt = _clock.Now);
                 var changes = string.Join(", ", new[] { (report.Downloaded, "downloaded"), (report.Updated, "updated") }
                     .Where(count => count.Item1 > 0)
                     .Select(count => $"{count.Item1} {count.Item2}"));
-                Succeeded(job, changes.Length == 0 ? "nothing new" : changes, "Art downloaded", report.Lines(),
-                    $"Art downloaded: {report.Downloaded} new file(s), {report.Updated} updated.");
+                var recut = report.Derivation?.Derived ?? [];
+                if (quiet && changes.Length == 0 && recut.Count == 0)
+                {
+                    Remove(job);
+                    return;
+                }
+                var toast = quiet && recut.Count > 0
+                    ? $"Updated the art Detect from screen matches against for {Names(recut)}."
+                    : $"Art downloaded: {report.Downloaded} new file(s), {report.Updated} updated.";
+                Succeeded(job, changes.Length == 0 ? "nothing new" : changes, "Art downloaded", report.Lines(), toast);
             }
         }
         finally
@@ -456,6 +495,9 @@ public class DataMenuViewModel : ViewModelBase
             ShowNewArt();
         }
     }
+
+    private string Names(IEnumerable<string> heroIds) =>
+        string.Join(", ", heroIds.Select(id => _data.Store.Heroes.TryGetValue(id, out var hero) ? hero.HeroName : id));
 
     private void ShowNewArt()
     {

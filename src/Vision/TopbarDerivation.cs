@@ -70,6 +70,9 @@ public static class TopbarDerivation
     /// <param name="Failed">"haze: ...": heroes whose images couldn't be read.</param>
     public sealed record Outcome(IReadOnlyList<string> Derived, IReadOnlyList<string> Fallbacks, IReadOnlyList<string> Failed);
 
+    /// <summary>Whether the portraits in <paramref name="topbarDir"/> were cut by this version of the derivation, if any were.</summary>
+    public static bool IsCurrent(string topbarDir) => LoadState(topbarDir) is { } state && state.Version == Version && state.Background == Background;
+
     /// <summary>
     /// Cut every hero's portraits whose images changed since last time (all of them when
     /// <paramref name="force"/>), and remove any whose card has gone.

@@ -193,6 +193,7 @@ public class MainWindowViewModel : ViewModelBase
             onMatchPage.CombineLatest(Match.Board.RandomizeCommand.CanExecute, (onPage, canRandomize) => onPage && canRandomize));
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
+        Match.ArtWanted.Subscribe(_ => DataMenu.DownloadArt()).DisposeWith(Disposables);
         settings.SettingsChanged
             .Select(s => ShortcutKeys.Defaults.Keys.Select(action => (action, gesture: s.Gesture(action))).ToEquatableList())
             .DistinctUntilChanged()

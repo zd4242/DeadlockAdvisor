@@ -13,6 +13,9 @@ public class AppSettings
     // Asked once, on a first run with no art, whether to download it.
     public bool ArtDownloadOffered { get; set; }
 
+    // When the art was last checked against deadlock-api.com's, which is done about weekly.
+    public DateTimeOffset? ArtCheckedAt { get; set; }
+
     // Preferences (the Settings page)
     public bool ReopenLastPage { get; set; } = true;
     public bool ReopenLastMatch { get; set; } = true;

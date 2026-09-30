@@ -98,6 +98,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
         Board.DetectCommand = DetectCommand;
+        ArtWanted = detect.ArtWanted;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
 
@@ -182,6 +183,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public IReadOnlyList<RankPreset> Ranks => RankPresets;
 
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
+
+    /// <summary>Detect found no art to match against and was asked to download it.</summary>
+    public IObservable<Unit> ArtWanted { get; }
     public ReactiveCommand<Unit, Unit> ImportCommand { get; }
 
     public void FocusSearch() => Board.OpenPicker();

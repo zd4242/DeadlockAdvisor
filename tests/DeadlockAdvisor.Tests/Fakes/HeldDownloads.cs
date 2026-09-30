@@ -27,9 +27,12 @@ public sealed class HeldArtDownload : IArtDownloadService
 
     public IProgress<FetchProgress>? Progress { get; private set; }
 
+    public int Started { get; private set; }
+
     public Task<ArtDownloadReport> DownloadAsync(DataStore store, string assetsDir, bool force, IProgress<FetchProgress>? progress,
         CancellationToken cancellationToken)
     {
+        Started++;
         Progress = progress;
         return _finish.Task.WaitAsync(cancellationToken);
     }

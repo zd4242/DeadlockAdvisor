@@ -7,6 +7,7 @@ using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Import;
 using DeadlockAdvisor.Features.Match.Results;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Fakes;
@@ -281,14 +282,19 @@ public sealed class DetectTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task NoReferenceArtSaysWhereToGetIt()
+    public async Task NoReferenceArtOffersToDownloadIt()
     {
         _capture.Next = Capture();
+        var wanted = 0;
+        using var watch = _page.ArtWanted.Subscribe(_ => wanted++);
 
         await _page.DetectCommand.Execute();
 
-        Assert.Equal("No reference art", Assert.IsType<MessageModalViewModel>(_shown[^1]).Title);
+        var offer = Assert.IsType<ConfirmationModalViewModel>(_shown[^1]);
+        Assert.Contains("no hero art to match against", offer.Prompt);
         Assert.Equal(0, _capture.Captures);
+        offer.ConfirmCommand!.Execute(null);
+        Assert.Equal(1, wanted);
     }
 
     [AvaloniaFact]
