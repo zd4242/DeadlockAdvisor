@@ -357,6 +357,12 @@
     "postfix": "%"
    },
    "BonusHealth": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Health_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 4
+    },
     "value": "50",
     "label": "Bonus Health",
     "prefix": "{s:sign}",
@@ -366,6 +372,12 @@
     ]
    },
    "BaseAttackDamagePercent": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "WeaponDamage_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 0.8
+    },
     "value": "10",
     "label": "Weapon Damage",
     "prefix": "{s:sign}",
@@ -500,11 +512,23 @@
     "tooltip_section": "passive"
    },
    "DamagePerChain": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DamagePerChain_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.19
+    },
     "value": "33",
     "label": "Shock Damage",
     "tooltip_section": "passive"
    },
    "BonusPerChain": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "BonusPerChain_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.19
+    },
     "value": "33",
     "label": "Damage on Jump"
    },
@@ -657,11 +681,23 @@
     "tooltip_section": "passive"
    },
    "DamagePerChain": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DamagePerChain_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.19
+    },
     "value": "43",
     "label": "Shock Damage",
     "tooltip_section": "passive"
    },
    "BonusPerChain": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "BonusPerChain_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.19
+    },
     "value": "43",
     "label": "Damage on Jump"
    },
@@ -2663,6 +2699,12 @@
     "value": "5.0m"
    },
    "Damage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "SpiritDamage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.7
+    },
     "value": "75",
     "label": "Damage",
     "tooltip_section": "active"
@@ -3833,6 +3875,12 @@
     "postfix": "%"
    },
    "HeadShotBonusDamage": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 4
+    },
     "value": "75",
     "label": "Head Shot Bonus Damage",
     "prefix": "{s:sign}",
@@ -3852,6 +3900,11 @@
     "tooltip_section": "innate"
    },
    "HealPercentPerHeadshot": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "HealPercentAmount_scale_function",
+     "stat_scale": 0.06
+    },
     "value": "4",
     "label": "Heal Per Headshot",
     "postfix": "%",
@@ -4317,6 +4370,12 @@
     "postfix": "s"
    },
    "ProcBonusMagicDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.9
+    },
     "value": "40",
     "label": "Spirit Damage",
     "prefix": "{s:sign}"
@@ -4692,6 +4751,12 @@
     "postfix": "%"
    },
    "DotHealthPercent": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DamagePerChain_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.006
+    },
     "value": "1.9",
     "label": "Bleed Damage",
     "postfix": "%/sec"
@@ -7211,6 +7276,12 @@
     "tooltip_section": "passive"
    },
    "CombatBarrier": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Health_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 5
+    },
     "value": "300",
     "label": "Barrier",
     "tooltip_section": "passive",
@@ -7360,6 +7431,12 @@
     "tooltip_section": "passive"
    },
    "CombatBarrier": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Health_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 5
+    },
     "value": "300",
     "label": "Barrier",
     "tooltip_section": "passive",
@@ -11108,6 +11185,13 @@
     "tooltip_section": "active"
    },
    "AbilityCastRange": {
+    "scale_function": {
+     "class_name": "scale_function_multi_stats",
+     "subclass_name": "AbilityCastRange_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "scaling_stats": ["ETechPower","ETechRange"],
+     "stat_scale": 0.1
+    },
     "value": "20m",
     "label": "Cast Range",
     "postfix": "m",
@@ -11180,6 +11264,12 @@
     "value": "1.0"
    },
    "DotHealthPercent": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.003
+    },
     "value": "1.95",
     "label": "Bleed Damage",
     "postfix": "%/sec",
@@ -11302,6 +11392,12 @@
     "value": "0.25"
    },
    "MaxHealthPercentAsDPS": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.0055
+    },
     "value": "2.3",
     "label": "Max Health per second",
     "postfix": "%",
@@ -11632,6 +11728,12 @@
     "tooltip_section": "active"
    },
    "ImpactDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "ImpactDamage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.93
+    },
     "value": "75",
     "label": "Impact Damage",
     "tooltip_section": "active"
@@ -12257,6 +12359,12 @@
     "tooltip_section": "innate"
    },
    "DamagePulseAmount": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DamagePulseAmount_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.23
+    },
     "value": "25",
     "label": "Pulse Damage",
     "tooltip_section": "passive"
@@ -12802,6 +12910,12 @@
     "value": "30"
    },
    "CombatBarrier": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Health_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 12
+    },
     "value": "200",
     "label": "Barrier",
     "tooltip_section": "active",
@@ -12922,6 +13036,11 @@
     "postfix": "%"
    },
    "TotalHealthRegen": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "TotalHealthRegen_scale_function",
+     "stat_scale": 6
+    },
     "value": "325",
     "label": "Total HP Regen",
     "tooltip_section": "active"
@@ -13085,6 +13204,11 @@
     "postfix": "m"
    },
    "HealPerStack": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "TotalHealthRegen_scale_function",
+     "stat_scale": 0.45
+    },
     "value": "16",
     "label": "Heal Per Stack",
     "tooltip_section": "active"
@@ -13198,6 +13322,11 @@
     "postfix": "%"
    },
    "TotalHealthRegen": {
+    "scale_function": {
+     "class_name": "scale_function_healing_spirit_scale",
+     "subclass_name": "TotalHealthRegen_scale_function",
+     "stat_scale": 1.1
+    },
     "value": "300",
     "label": "Total HP Regen",
     "tooltip_section": "active"
@@ -13792,6 +13921,13 @@
     "postfix": "%"
    },
    "DPS": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DPS_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.2,
+     "street_brawl_stat_scale": 0.12
+    },
     "value": "45",
     "label": "Damage Per Second",
     "prefix": "",
@@ -13799,9 +13935,23 @@
     "tooltip_section": "active"
    },
    "DPSIncrease": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DPSIncrease_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.04,
+     "street_brawl_stat_scale": 0.025
+    },
     "value": "7"
    },
    "DPSMax": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "DPSMax_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.4,
+     "street_brawl_stat_scale": 0.25
+    },
     "value": "95",
     "label": "Max DPS",
     "tooltip_section": "active"
@@ -13822,6 +13972,12 @@
     "value": "0.5"
    },
    "BulletArmorReduction": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "BulletArmorReduction_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": -0.055
+    },
     "value": "-7",
     "label": "Bullet Resist",
     "prefix": "{s:sign}",
@@ -14937,6 +15093,12 @@
     ]
    },
    "Damage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.465
+    },
     "value": "95",
     "label": "Damage",
     "tooltip_section": "active"
@@ -15087,6 +15249,12 @@
     "postfix": "s"
    },
    "Damage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.6975
+    },
     "value": "175",
     "label": "Damage",
     "tooltip_section": "active"
@@ -16222,11 +16390,21 @@
     "tooltip_section": "innate"
    },
    "LifestealHeal": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "HealFixedAmount_scale_function",
+     "stat_scale": 1.75
+    },
     "value": "120",
     "label": "Heal on Melee Hit",
     "tooltip_section": "passive"
    },
    "LifestealHealPercent": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "HealPercentAmount_scale_function",
+     "stat_scale": 0.5
+    },
     "value": "35",
     "label": "Melee Hit Heal",
     "postfix": "%",
@@ -16338,6 +16516,12 @@
     "value": "2"
    },
    "SpiritDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "SpiritDamage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.372
+    },
     "value": "40",
     "label": "Spirit Damage",
     "tooltip_section": "passive"
@@ -16464,6 +16648,12 @@
     "value": "30"
    },
    "SpiritDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "SpiritDamage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.84
+    },
     "value": "50",
     "label": "Spirit Damage",
     "tooltip_section": "passive"
@@ -17114,6 +17304,11 @@
     "postfix": "%"
    },
    "HealingPerCast": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "HealPercentAmount_scale_function",
+     "stat_scale": 1.7
+    },
     "value": "65",
     "label": "Healing on Ability Cast"
    },
@@ -17127,6 +17322,11 @@
     ]
    },
    "Regeneration": {
+    "scale_function": {
+     "class_name": "scale_function_healing_spirit_scale",
+     "subclass_name": "TotalHealthRegen_scale_function",
+     "stat_scale": 0.04
+    },
     "value": "4",
     "label": "Regeneration",
     "postfix": " HP/s",
@@ -17866,6 +18066,12 @@
     "postfix": "s"
    },
    "Damage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.16
+    },
     "value": "44",
     "label": "Damage",
     "tooltip_section": "passive"
@@ -18002,6 +18208,12 @@
     "postfix": "s"
    },
    "Damage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.16
+    },
     "value": "60",
     "label": "Damage",
     "tooltip_section": "passive"
@@ -18019,6 +18231,12 @@
     "tooltip_section": "passive"
    },
    "BulletsBonusMagicDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "BonusDamage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.38
+    },
     "value": "20",
     "label": "Base Bullet Damage",
     "prefix": "+",
@@ -18615,6 +18833,11 @@
     ]
    },
    "HealOnVeil": {
+    "scale_function": {
+     "class_name": "scale_function_healing_boon_scale",
+     "subclass_name": "HealPercentAmount_scale_function",
+     "stat_scale": 8
+    },
     "value": "85",
     "label": "Heal",
     "postfix": "",
@@ -18726,6 +18949,12 @@
     "postfix": "%"
    },
    "VexBarrierCombatBarrier": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "CombatBarrier_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 1.8
+    },
     "value": "325",
     "label": "Barrier",
     "tooltip_section": "passive",
@@ -18867,6 +19096,12 @@
     "postfix": "s"
    },
    "VexBarrierCombatBarrier": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "CombatBarrier_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 2
+    },
     "value": "325",
     "label": "Barrier",
     "usage_flags": [
@@ -19692,6 +19927,11 @@
     "value": "5"
    },
    "ExplosionDamage": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "corpse_explosion_damage_sf",
+     "stat_scale": 0
+    },
     "value": "50",
     "label": "Explosion Damage",
     "postfix": "",
@@ -19703,6 +19943,12 @@
     "postfix": "m"
    },
    "DPS": {
+    "scale_function": {
+     "class_name": "scale_function_tech_damage",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ETechPower",
+     "stat_scale": 0.06
+    },
     "value": "24",
     "label": "Damage Per Second",
     "prefix": "",
@@ -21180,6 +21426,12 @@
     ]
    },
    "ProcBaseAttackDamagePercent": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "Damage_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 2
+    },
     "value": "125",
     "label": "Weapon Damage",
     "prefix": "{s:sign}",
@@ -21190,6 +21442,12 @@
     ]
    },
    "ProcBaseAttackDamagePercentAltFire": {
+    "scale_function": {
+     "class_name": "scale_function_single_stat",
+     "subclass_name": "SecondaryDamage_scale_function",
+     "specific_stat_scale_type": "ELevelUpBoons",
+     "stat_scale": 1.3
+    },
     "value": "40",
     "label": "Secondary Fire Weapon Damage",
     "prefix": "{s:sign}",

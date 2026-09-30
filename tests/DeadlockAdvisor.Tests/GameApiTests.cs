@@ -394,6 +394,23 @@ public class GameApiTests
         Assert.Equal(["base_item"], tooltip.Components);
     }
 
+    [Theory]
+    [InlineData("Scourge", "MaxHealthPercentAsDPS", 0.0055)]
+    [InlineData("Healing Rite", "TotalHealthRegen", 1.1)]
+    [InlineData("Alchemical Fire", "BulletArmorReduction", -0.055)]
+    [InlineData("Weapon Shielding", "CombatBarrier", 0)]
+    [InlineData("Scourge", "AbilityDuration", 0)]
+    public void TooltipStatsCarryOnlyTheirSpiritScaling(string itemName, string property, double expected)
+    {
+        var record = Json("game_api/shop_items.json").AsArray().OfType<JsonNode>().Single(r => Text(r["name"]) == itemName);
+        var label = Text(record["properties"]![property]!["label"]);
+
+        var tooltip = GameSync.ExtractTooltip("item", record, new Dictionary<string, string>())!;
+
+        var stat = tooltip.Sections.SelectMany(s => s.Blocks).SelectMany(b => b.Elevated.Concat(b.Important).Concat(b.Stats)).Single(s => s.Label == label);
+        Assert.Equal(expected, stat.SpiritScale);
+    }
+
     [Fact]
     public void MakeIdMatchesExistingConventions()
     {

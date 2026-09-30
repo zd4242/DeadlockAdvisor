@@ -12,7 +12,8 @@
         "value": "+20%",
         "label": "Max ⚡ Ammo",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.0055
        }
       ],
       "important": [

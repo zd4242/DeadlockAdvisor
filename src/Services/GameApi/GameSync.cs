@@ -463,7 +463,20 @@ public static partial class GameSync
             value + PyJson.Text(property, "postfix"),
             PyJson.Str(PyJson.Get(property, "label")),
             PyJson.Contains(property, "usage_flags", "ConditionallyApplied"),
-            PyJson.Truthy(PyJson.Get(property, "negative_attribute")));
+            PyJson.Truthy(PyJson.Get(property, "negative_attribute")),
+            SpiritScale(property));
+    }
+
+    /// <summary>
+    /// What each point of spirit power adds to a property. Most properties carry a scale function that
+    /// only names what can modify them (cooldown reduction, duration...); the spirit ones have a stat_scale.
+    /// </summary>
+    private static double SpiritScale(JsonNode property)
+    {
+        var function = PyJson.Get(property, "scale_function");
+        var scalesWithSpirit = PyJson.Text(function, "specific_stat_scale_type") == "ETechPower"
+            || PyJson.Text(function, "class_name") == "scale_function_healing_spirit_scale";
+        return scalesWithSpirit ? Number(PyJson.Get(function, "stat_scale")) ?? 0 : 0;
     }
 
     /// <summary>

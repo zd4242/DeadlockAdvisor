@@ -94,13 +94,15 @@
         "value": "45",
         "label": "Damage Per Second",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.2
        },
        {
         "value": "-7%",
         "label": "Bullet Resist",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "spirit_scale": -0.055
        }
       ],
       "stats": [
@@ -108,7 +110,8 @@
         "value": "95",
         "label": "Max DPS",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.4
        },
        {
         "value": "10m",
@@ -232,7 +235,8 @@
         "value": "175",
         "label": "Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.6975
        },
        {
         "value": "1s",
@@ -836,7 +840,8 @@
         "value": "43",
         "label": "Shock Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.19
        },
        {
         "value": "20%",
@@ -1050,7 +1055,8 @@
         "value": "95",
         "label": "Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.465
        },
        {
         "value": "-48%",
@@ -1639,7 +1645,8 @@
         "value": "1.95%/sec",
         "label": "Bleed Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.003
        },
        {
         "value": "-50%",
@@ -1651,7 +1658,8 @@
         "value": "20m",
         "label": "Cast Range",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.1
        }
       ],
       "stats": [
@@ -1659,7 +1667,8 @@
         "value": "20m",
         "label": "Cast Range",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.1
        },
        {
         "value": "12s",
@@ -3490,7 +3499,8 @@
         "value": "300",
         "label": "Total HP Regen",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 1.1
        },
        {
         "value": "+2m",
@@ -3918,7 +3928,8 @@
         "value": "325",
         "label": "Barrier",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 2.0
        }
       ],
       "stats": [
@@ -4911,13 +4922,15 @@
         "value": "+20%",
         "label": "Base Bullet Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.38
        },
        {
         "value": "60",
         "label": "Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.16
        },
        {
         "value": "+22%",
@@ -5246,7 +5259,8 @@
         "value": "+40",
         "label": "Spirit Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.9
        }
       ],
       "stats": []
@@ -5476,7 +5490,8 @@
         "value": "75",
         "label": "Impact Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.93
        }
       ],
       "stats": [
@@ -5632,7 +5647,8 @@
         "value": "44",
         "label": "Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.16
        },
        {
         "value": "+10%",
@@ -5694,7 +5710,8 @@
         "value": "4 HP/s",
         "label": "Regeneration",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.04
        }
       ],
       "stats": [
@@ -5847,7 +5864,8 @@
         "value": "325",
         "label": "Barrier",
         "conditional": true,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 1.8
        }
       ],
       "stats": [
@@ -6383,7 +6401,8 @@
         "value": "2.3%",
         "label": "Max Health per second",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.0055
        },
        {
         "value": "+40%",
@@ -6649,7 +6668,8 @@
         "value": "75",
         "label": "Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.7
        }
       ],
       "stats": [
@@ -7099,7 +7119,8 @@
         "value": "24",
         "label": "Damage Per Second",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.06
        }
       ],
       "stats": [
@@ -7512,7 +7533,8 @@
         "value": "50",
         "label": "Spirit Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.84
        },
        {
         "value": "12%",
@@ -7557,7 +7579,8 @@
         "value": "40",
         "label": "Spirit Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.372
        },
        {
         "value": "-6%",
@@ -8167,7 +8190,8 @@
         "value": "33",
         "label": "Shock Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.19
        },
        {
         "value": "15%",
@@ -8274,7 +8298,8 @@
         "value": "25",
         "label": "Pulse Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.23
        }
       ],
       "stats": [
@@ -8305,7 +8330,8 @@
         "value": "1.9%/sec",
         "label": "Bleed Damage",
         "conditional": false,
-        "negative": false
+        "negative": false,
+        "spirit_scale": 0.006
        },
        {
         "value": "-35%",

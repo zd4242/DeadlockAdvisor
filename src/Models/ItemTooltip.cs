@@ -10,7 +10,8 @@ namespace DeadlockAdvisor.Models;
 /// reads <see cref="ItemStat"/>, never this.
 /// </summary>
 /// <param name="Negative">A drawback, e.g. Weighted Shots' -0.5 m Move Speed.</param>
-public sealed record TooltipStat(string Value, string Label, bool Conditional = false, bool Negative = false);
+/// <param name="SpiritScale">What each point of spirit power adds to the value, e.g. Scourge's 0.0055; 0 when it doesn't scale.</param>
+public sealed record TooltipStat(string Value, string Label, bool Conditional = false, bool Negative = false, double SpiritScale = 0);
 
 /// <summary>
 /// A description and the numbers printed under it. <see cref="Elevated"/> is the big headline stat,
@@ -86,12 +87,19 @@ public sealed partial record ItemTooltip(
     };
 
     private static JsonArray StatsToJson(IEnumerable<TooltipStat> stats) =>
-        new(stats.Select(stat => (JsonNode)new JsonObject
+        new(stats.Select(stat =>
         {
-            ["value"] = stat.Value,
-            ["label"] = stat.Label,
-            ["conditional"] = stat.Conditional,
-            ["negative"] = stat.Negative,
+            var json = new JsonObject
+            {
+                ["value"] = stat.Value,
+                ["label"] = stat.Label,
+                ["conditional"] = stat.Conditional,
+                ["negative"] = stat.Negative,
+            };
+            // Most stats don't scale, so the key is left out rather than written as 0 everywhere.
+            if (stat.SpiritScale != 0)
+                json["spirit_scale"] = stat.SpiritScale;
+            return (JsonNode)json;
         }).ToArray());
 
     public static ItemTooltip FromJson(string itemId, JsonObject data)
@@ -121,8 +129,12 @@ public sealed partial record ItemTooltip(
     private static bool Flag(JsonObject parent, string key) =>
         parent[key] is JsonValue value && value.TryGetValue<bool>(out var flag) && flag;
 
+    private static double Number(JsonObject parent, string key) =>
+        parent[key] is JsonValue value && value.TryGetValue<double>(out var number) ? number : 0;
+
     private static EquatableList<TooltipStat> StatsFromJson(JsonObject block, string key) =>
         Children(block, key)
-            .Select(stat => new TooltipStat(Text(stat, "value"), Text(stat, "label"), Flag(stat, "conditional"), Flag(stat, "negative")))
+            .Select(stat => new TooltipStat(Text(stat, "value"), Text(stat, "label"), Flag(stat, "conditional"), Flag(stat, "negative"),
+                Number(stat, "spirit_scale")))
             .ToEquatableList();
 }
