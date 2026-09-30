@@ -54,13 +54,13 @@ public class GoldenVisionTests
         Assert.Equal(Items(golden["heroes"]).Select(Text), bank.Heroes);
         Assert.Equal(Items(golden["rows_hero"]).Select(node => (int)node), bank.RowsHero);
         Assert.Equal(Items(golden["sources"]).Select(Text),
-            bank.Sources.Select(source => Path.GetRelativePath(TopbarDir, source).Replace('\\', '/')));
+            bank.Sources.Select(source => Path.GetRelativePath(TopbarDir, source.Path).Replace('\\', '/')));
 
         var dim = (int)golden["dim"]!;
         Assert.Equal(ImageOps.Dimensions, dim);
         var vectors = Floats(golden["vectors"]);
         for (var row = 0; row < bank.Vectors.Count; row++)
-            AssertVectorClose(vectors.AsSpan(row * dim, dim).ToArray(), bank.Vectors[row], bank.Sources[row]);
+            AssertVectorClose(vectors.AsSpan(row * dim, dim).ToArray(), bank.Vectors[row], bank.Sources[row].Path);
     }
 
     public static TheoryData<string> DetectionImages() =>

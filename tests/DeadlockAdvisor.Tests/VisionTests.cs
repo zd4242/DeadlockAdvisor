@@ -189,10 +189,47 @@ public class VisionTests
     public void ScoresCollapseVariantsToAHerosBest()
     {
         // Two heroes; the first has two variants, the second one.
-        var bank = new TemplateBank(["a", "b"], [0, 0, 1], [[1f, 0f], [0f, 1f], [-1f, 0f]], ["", "", ""]);
-        var scores = bank.Scores([0f, 1f]);
+        var bank = new TemplateBank(["a", "b"], [0, 0, 1], [[1f, 0f], [0f, 1f], [-1f, 0f]],
+            [new("a", "a.png", TemplateKind.Api), new("a", "a/variant_01.png", TemplateKind.Learned), new("b", "b.png", TemplateKind.Api)]);
+        var bestRows = new int[2];
+        var scores = bank.Scores([0f, 1f], bestRows);
         Assert.Equal(1.0f, scores[0], 6);
         Assert.Equal(0.0f, scores[1], 6);
+        Assert.Equal([1, 2], bestRows);
+    }
+
+    [Fact]
+    public void AnAlternatesNameSaysWhereItCameFrom()
+    {
+        Assert.Equal(TemplateKind.Api, TemplateSource.Of("haze", "haze.png", isAlternate: false).Kind);
+        Assert.Equal(TemplateKind.Bundled, TemplateSource.Of("seven", "seven/bundled_01.png", isAlternate: true).Kind);
+        Assert.Equal(TemplateKind.Bundled, TemplateSource.Of("seven", "seven/ingame_01.png", isAlternate: true).Kind);
+        Assert.Equal((TemplateKind.Derived, PortraitState.Normal), Describe("haze/card_normal.png"));
+        Assert.Equal((TemplateKind.Derived, PortraitState.Critical), Describe("haze/state_critical.png"));
+        Assert.Equal((TemplateKind.Derived, PortraitState.Gloat), Describe("haze/state_gloat.png"));
+        Assert.Equal((TemplateKind.Learned, PortraitState.Normal), Describe("haze/variant_03.png"));
+        Assert.Equal((TemplateKind.Learned, PortraitState.Normal), Describe("haze/on_fire_01.png"));
+
+        static (TemplateKind, PortraitState) Describe(string path)
+        {
+            var source = TemplateSource.Of("haze", path, isAlternate: true);
+            return (source.Kind, source.State);
+        }
+    }
+
+    [Fact]
+    public void ABankCanBeNarrowedToTheImagesItWasGiven()
+    {
+        var clean = Bank.Where(source => source.Kind == TemplateKind.Api);
+
+        Assert.Equal(Bank.Heroes, clean.Heroes);
+        Assert.Equal(Bank.Heroes.Count, clean.Vectors.Count);
+        Assert.All(clean.Sources, source => Assert.Equal(TemplateKind.Api, source.Kind));
+        Assert.Contains(Bank.Sources, source => source.Kind != TemplateKind.Api);
+
+        var onlyHaze = Bank.Where(source => source.Hero == "haze");
+        Assert.Equal(["haze"], onlyHaze.Heroes);
+        Assert.All(onlyHaze.RowsHero, hero => Assert.Equal(0, hero));
     }
 
     [Fact]
