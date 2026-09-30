@@ -1,10 +1,14 @@
 namespace DeadlockAdvisor.Vision;
 
 /// <param name="Ranked">The five best heroes for the slot, with their scores.</param>
+/// <param name="Kept">The hero wasn't read off the portrait but kept from the match already applied (see <see cref="RosterContinuity"/>).</param>
 public sealed record SlotReading(int Index, string? HeroId, double Score, double Margin, string? RunnerUp, Box Box,
-    IReadOnlyList<(string HeroId, double Score)> Ranked)
+    IReadOnlyList<(string HeroId, double Score)> Ranked, bool Kept = false)
 {
-    public bool IsConfident => Matcher.IsConfident(HeroId is not null, Score, Margin);
+    public bool IsConfident => !Kept && Matcher.IsConfident(HeroId is not null, Score, Margin);
+
+    /// <summary>Known without anyone checking: read confidently, or kept from the match.</summary>
+    public bool IsSettled => IsConfident || Kept;
 }
 
 /// <summary>What a screenshot says: a reading per slot, the grid it was read with, and which slot is you.</summary>
@@ -29,6 +33,9 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
     public RgbImage? CropOf(int slot) => Image is { } image ? Layout.Crop(image, Geometry.Boxes()[slot]) : null;
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
+
+    /// <summary>Every slot's hero and which one is you, known well enough to apply without anyone checking.</summary>
+    public bool IsSettled => SelfSlot is not null && Slots.Count == Layout.SlotCount && Slots.All(slot => slot.IsSettled);
 
     /// <summary>
     /// How well the grid fits: the mean of its best slots' top scores, ignoring the worst third (the

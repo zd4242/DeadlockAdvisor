@@ -63,6 +63,32 @@ public class VisionCorpusTests
 
     private static IEnumerable<int> Slots(JsonNode? node) => node?.AsArray().Select(slot => (int)slot!) ?? [];
 
+    /// <summary>
+    /// Detecting again later in a match that's been applied: each match's first capture is applied as
+    /// labelled, and every later one of the same match then reads with nothing left to check: the
+    /// dead, the faded and Silver's wolf form kept from the match, and you found or carried over.
+    /// </summary>
+    [Fact]
+    public void LaterCapturesOfAnAppliedMatchNeedNoChecking()
+    {
+        var replayed = 0;
+        foreach (var match in _outcomes.Value.GroupBy(outcome => outcome.Capture.Match).Where(group => group.Count() > 1))
+        {
+            var first = match.First().Capture.Labels;
+            foreach (var later in match.Skip(1))
+            {
+                var kept = RosterContinuity.Apply(later.Detection, first.Heroes, first.SelfSlot);
+                var labels = later.Capture.Labels;
+                Assert.All(labels.Heroes, pair => Assert.Equal(pair.Value, kept.HeroAt(pair.Key)));
+                Assert.All(kept.Slots, slot => Assert.True(slot.IsSettled, $"{later.Capture.Name} slot {slot.Index} unsettled"));
+                if (labels.SelfSlot is { } self && first.SelfSlot is not null)
+                    Assert.Equal(self, kept.SelfSlot);
+                replayed++;
+            }
+        }
+        Assert.True(replayed >= 8, $"only {replayed} captures replayed");
+    }
+
     /// <summary>Every labelled capture: the corpus, and the fixtures (which label only the slots they're sure of).</summary>
     public static List<CorpusCapture> Labelled() =>
         [.. CorpusCapture.LoadAll(Golden.PathOf("vision", "corpus")), .. CorpusCapture.LoadAll(Golden.PathOf("vision", "fixtures"))];

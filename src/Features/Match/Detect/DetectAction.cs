@@ -90,6 +90,12 @@ public class DetectAction
         var cached = _settings.Current.VisionGeometry.TryGetValue(screenKey, out var saved) ? Geometry.FromJson(saved) : null;
         var clock = System.Diagnostics.Stopwatch.StartNew();
         var detection = await DetectWithProgressAsync(progress => Detect(capture, bank, cached, progress));
+        if (detection is not null)
+        {
+            var roster = match.Slots.ToDictionary(pair => pair.Value, pair => pair.Key);
+            int? rosterSelf = match.SelfHero is { } self && match.Slots.TryGetValue(self, out var selfSlot) ? selfSlot : null;
+            detection = RosterContinuity.Apply(detection, roster, rosterSelf);
+        }
         var netWorth = detection is null
             ? NetWorthReading.Empty
             : await Task.Run(() => NetWorthReader.Read(capture.Band, detection.Geometry, NetWorthGlyphs.Bundled));
@@ -98,7 +104,8 @@ public class DetectAction
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
                          + (detection is null
                              ? "no strip found"
-                             : $"{detection.ConfidentCount}/12 confident, you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, "
+                             : $"{detection.ConfidentCount}/12 confident, {detection.Slots.Count(slot => slot.Kept)} kept from the match, "
+                               + $"you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, fit {detection.Fit:0.00}, "
                                + NetWorthLog(netWorth))
                          + $", {clock.ElapsedMilliseconds} ms");
         if (_settings.Current.KeepUnreadCaptures && detection is not null && !(netWorth.Agrees(0) && netWorth.Agrees(1)))

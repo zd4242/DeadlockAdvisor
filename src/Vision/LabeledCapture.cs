@@ -35,6 +35,9 @@ public enum LabelSource
     Unsure,
 
     Corrected,
+
+    /// <summary>Not read off the portrait, but kept from the match already applied.</summary>
+    Kept,
 }
 
 /// <param name="Hero">The hero the slot was read as, or null.</param>
@@ -93,6 +96,8 @@ public sealed class LabeledCapture
             labels[slot] = hero;
             if (corrected.Contains(slot))
                 sources[slot] = LabelSource.Corrected;
+            else if (detection.Slots[slot].Kept)
+                sources[slot] = LabelSource.Kept;
             else if (!detection.Slots[slot].IsConfident)
                 sources[slot] = LabelSource.Unsure;
         }

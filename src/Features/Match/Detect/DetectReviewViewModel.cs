@@ -97,9 +97,11 @@ public class DetectReviewViewModel : ViewModelBase
         this.RaisePropertyChanged(nameof(HasSelf));
 
         var confident = _detection.ConfidentCount;
+        var kept = _detection.Slots.Count(slot => slot.Kept);
+        var keptText = kept > 0 ? $" (and kept {kept} from your current match)" : "";
         Summary = (SelfSlot is null
-            ? $"Read {confident} of 12 heroes, but couldn't tell which one is you, so the teams can't be split."
-            : $"Read {confident} of 12 heroes confidently. Check anything marked uncertain before applying — "
+            ? $"Read {confident} of 12 heroes{keptText}, but couldn't tell which one is you, so the teams can't be split."
+            : $"Read {confident} of 12 heroes confidently{keptText}. Check anything marked uncertain before applying — "
               + "a slot whose player was dead at the moment of capture can't be identified from the portrait.")
             + $" Net worth read for {_netWorth.ReadCount} of 12.";
     }

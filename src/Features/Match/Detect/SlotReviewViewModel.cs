@@ -68,7 +68,7 @@ public class SlotReviewViewModel : ViewModelBase
     [Reactive] public string Detail { get; private set; } = "";
 
     /// <summary>Worth a second look: nothing read, or a read without a clear lead, and not yet corrected.</summary>
-    public bool IsUncertain => !Reading.IsConfident && !WasCorrected;
+    public bool IsUncertain => !Reading.IsSettled && !WasCorrected;
 
     [Reactive] public SlotRole Role { get; private set; }
     [Reactive] public string RoleText { get; private set; } = "";
@@ -98,6 +98,8 @@ public class SlotReviewViewModel : ViewModelBase
 
     private static string DetailFor(SlotReading reading, string? runnerUp)
     {
+        if (reading.Kept)
+            return "kept from your current match";
         if (reading.HeroId is null)
             return "No confident match — likely dead at capture, or wearing a skin.";
         if (reading.IsConfident)

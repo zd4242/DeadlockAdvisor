@@ -205,6 +205,29 @@ public sealed class DetectTests : IDisposable
     }
 
     [AvaloniaFact]
+    public async Task DetectingAgainKeepsTheHeroAPortraitNoLongerShows()
+    {
+        await (await DetectAsync()).ApplyCommand.Execute();
+        var grid = Geometry.FromJson(_fixture.Settings.Current.VisionGeometry["2560x1440"])!;
+        var band = Capture().Band;
+        var dead = grid.Boxes()[3];
+        var blacked = new RgbImage(band.Width, band.Height, (byte[])band.Pixels.Clone());
+        for (var y = (int)dead.Y; y < (int)(dead.Y + dead.H); y++)
+            Array.Clear(blacked.Pixels, (y * band.Width + (int)dead.X) * 3, (int)dead.W * 3);
+
+        _capture.Next = new(blacked, 2560, 1440);
+        await _page.DetectCommand.Execute();
+        var review = Assert.IsType<DetectReviewViewModel>(_shown[^1]);
+
+        Assert.Equal(_band2Heroes, review.Slots.Select(slot => slot.HeroId));
+        Assert.True(review.Slots[3].Reading.Kept);
+        Assert.Equal("kept from your current match", review.Slots[3].Detail);
+        Assert.False(review.Slots[3].IsUncertain);
+        Assert.Matches(@"\(and kept \d+ from your current match\)", review.Summary);
+        Assert.DoesNotContain(review.Slots, slot => slot.IsUncertain);
+    }
+
+    [AvaloniaFact]
     public async Task ASecondDetectionReusesTheCachedGrid()
     {
         var first = await DetectAsync();
