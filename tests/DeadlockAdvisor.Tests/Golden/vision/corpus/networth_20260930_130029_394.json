@@ -1,0 +1,37 @@
+{
+  "notes": [
+    "You're Holliday. Yamato's and Dynamo's API art is out of date, so both read",
+    "weakly off it; Dynamo is also faded."
+  ],
+  "source": "networth_20260930_130029_394.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-30a",
+  "phase": "mid",
+  "self_slot": 0,
+  "heroes": {
+    "0": "holliday",
+    "1": "infernus",
+    "2": "mcginnis",
+    "3": "lady_geist",
+    "4": "yamato",
+    "5": "pocket",
+    "6": "lash",
+    "7": "vindicta",
+    "8": "shiv",
+    "9": "drifter",
+    "10": "haze",
+    "11": "dynamo"
+  },
+  "states": {
+    "11": "faded"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 960.399952310632,
+    "pitch": 114.64234242967258,
+    "top": 16.8,
+    "gap_ratio": 1.7545909633632821,
+    "width_ratio": 0.5297498646468756
+  }
+}

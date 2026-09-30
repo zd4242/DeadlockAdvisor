@@ -1,0 +1,37 @@
+{
+  "notes": [
+    "The first seconds of a match, everyone on 600 souls. You're Doorman."
+  ],
+  "source": "networth_20260930_140659_629.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-30b",
+  "phase": "laning",
+  "self_slot": 1,
+  "heroes": {
+    "0": "venator",
+    "1": "doorman",
+    "2": "drifter",
+    "3": "calico",
+    "4": "paige",
+    "5": "mina",
+    "6": "pocket",
+    "7": "silver",
+    "8": "infernus",
+    "9": "mcginnis",
+    "10": "ivy",
+    "11": "bebop"
+  },
+  "states": {
+    "10": "faded",
+    "11": "faded"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 959.5520112734575,
+    "pitch": 118.15717246639718,
+    "top": 17.8,
+    "gap_ratio": 1.6220817618404784,
+    "width_ratio": 0.5528535750152367
+  }
+}

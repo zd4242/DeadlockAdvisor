@@ -1,0 +1,42 @@
+{
+  "notes": [
+    "You're Kelvin. The whole enemy team is out of sight, so faded over the",
+    "city behind the strip; Apollo and Rem are so faint that only buildings show."
+  ],
+  "source": "networth_20260927_004129_407.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-27a",
+  "phase": "mid",
+  "self_slot": 5,
+  "heroes": {
+    "0": "infernus",
+    "1": "shiv",
+    "2": "mina",
+    "3": "grey_talon",
+    "4": "bebop",
+    "5": "kelvin",
+    "6": "victor",
+    "7": "apollo",
+    "8": "rem",
+    "9": "ivy",
+    "10": "drifter",
+    "11": "seven"
+  },
+  "states": {
+    "6": "faded",
+    "7": "dead",
+    "8": "dead",
+    "9": "faded",
+    "10": "faded",
+    "11": "faded"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 959.6774145236263,
+    "pitch": 115.43889258563904,
+    "top": 16.8,
+    "gap_ratio": 1.7101192940029974,
+    "width_ratio": 0.5656930005953272
+  }
+}

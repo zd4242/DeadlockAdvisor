@@ -1,0 +1,42 @@
+{
+  "notes": [
+    "Sixteen seconds in, you're Paige. None of the enemy team has been seen yet,",
+    "so all six are faded."
+  ],
+  "source": "networth_20260927_213643_023.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-27c",
+  "phase": "laning",
+  "self_slot": 1,
+  "heroes": {
+    "0": "shiv",
+    "1": "paige",
+    "2": "vyper",
+    "3": "bebop",
+    "4": "lady_geist",
+    "5": "lash",
+    "6": "graves",
+    "7": "billy",
+    "8": "holliday",
+    "9": "venator",
+    "10": "kelvin",
+    "11": "mirage"
+  },
+  "states": {
+    "6": "faded",
+    "7": "faded",
+    "8": "faded",
+    "9": "faded",
+    "10": "faded",
+    "11": "faded"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 959.9582836258226,
+    "pitch": 115.77650601191259,
+    "top": 16.8,
+    "gap_ratio": 1.7138238242818356,
+    "width_ratio": 0.5245603575104515
+  }
+}

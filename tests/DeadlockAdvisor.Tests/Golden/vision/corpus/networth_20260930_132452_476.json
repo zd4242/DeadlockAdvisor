@@ -1,0 +1,42 @@
+{
+  "notes": [
+    "Holliday still on her streak. Shiv and Drifter are gone from the strip",
+    "altogether (Drifter leaves only a CRITICAL label). The player corrected Haze",
+    "here (haze/variant_04)."
+  ],
+  "source": "networth_20260930_132452_476.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-30a",
+  "phase": "late",
+  "self_slot": 0,
+  "heroes": {
+    "0": "holliday",
+    "1": "infernus",
+    "2": "mcginnis",
+    "3": "lady_geist",
+    "4": "yamato",
+    "5": "pocket",
+    "6": "lash",
+    "7": "vindicta",
+    "8": "shiv",
+    "9": "drifter",
+    "10": "haze",
+    "11": "dynamo"
+  },
+  "states": {
+    "0": "gloat",
+    "3": "faded",
+    "7": "faded",
+    "8": "dead",
+    "9": "dead"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 959.6570527015488,
+    "pitch": 116.16649104714966,
+    "top": 16.8,
+    "gap_ratio": 1.6876659265934904,
+    "width_ratio": 0.4541586974257659
+  }
+}

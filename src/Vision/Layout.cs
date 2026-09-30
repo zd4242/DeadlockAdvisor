@@ -54,6 +54,12 @@ public sealed record Geometry(double CenterX, double Pitch, double Top,
     {
         if (payload?["version"] is not JsonValue version || !version.TryGetValue<int>(out var number) || number != Layout.CacheVersion)
             return null;
+        return Parse(payload);
+    }
+
+    /// <summary>A grid whatever search wrote it, or null when it doesn't parse.</summary>
+    public static Geometry? Parse(JsonObject payload)
+    {
         try
         {
             return new Geometry(

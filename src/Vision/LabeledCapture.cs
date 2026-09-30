@@ -16,8 +16,11 @@ public enum SlotState
     /// <summary>On a kill streak ("on fire"): the hero's gloat art.</summary>
     Gloat,
 
-    /// <summary>A black silhouette under a respawn timer, which carries nothing of the hero.</summary>
+    /// <summary>A black silhouette under a respawn timer, or nothing at all: none of the hero shows.</summary>
     Dead,
+
+    /// <summary>An ultimate that changes how the hero looks (Silver's wolf form), which no reference art shows.</summary>
+    Transformed,
 
     /// <summary>Covered by something else on screen, such as a chat bubble or an ability callout.</summary>
     Occluded,
@@ -165,7 +168,8 @@ public sealed class LabeledCapture
             States = Slots<SlotState>(json["states"]),
             Sources = Slots<LabelSource>(json["sources"]),
             Reviewed = (bool?)json["reviewed"] ?? true,
-            Grid = Geometry.FromJson(json["grid"] as JsonObject),
+            // Whichever search found it, it's where this capture's heroes are.
+            Grid = json["grid"] is JsonObject grid ? Geometry.Parse(grid) : null,
             Read = read?.Select(slot => new SlotRead((string?)slot!["hero"], (double?)slot["score"] ?? 0, (double?)slot["margin"] ?? 0,
                 (bool?)slot["confident"] ?? false)).ToList(),
             ReadSelfSlot = (int?)json["read"]?["self_slot"],

@@ -1,0 +1,39 @@
+{
+  "notes": [
+    "Before the match starts. The player corrected the faded Haze in slot 9",
+    "(haze/variant_02). Which slot is you isn't known."
+  ],
+  "source": "networth_20260927_234003_182.png",
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "2026-09-27f",
+  "phase": "pregame",
+  "heroes": {
+    "0": "vindicta",
+    "1": "graves",
+    "2": "paige",
+    "3": "billy",
+    "4": "venator",
+    "5": "shiv",
+    "6": "bebop",
+    "7": "yamato",
+    "8": "dynamo",
+    "9": "haze",
+    "10": "infernus",
+    "11": "calico"
+  },
+  "states": {
+    "6": "faded",
+    "9": "faded",
+    "10": "faded",
+    "11": "faded"
+  },
+  "grid": {
+    "version": 2,
+    "center_x": 960.1069831241673,
+    "pitch": 117.80367142606501,
+    "top": 22.8,
+    "gap_ratio": 1.6359532428716168,
+    "width_ratio": 0.5155337236075515
+  }
+}
