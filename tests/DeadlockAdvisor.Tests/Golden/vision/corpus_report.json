@@ -1,0 +1,524 @@
+{
+ "summary": {
+  "all": {
+   "slots": 192,
+   "correct": 171,
+   "confident_correct": 162,
+   "confident_wrong": 3,
+   "unread": 16
+  },
+  "visible": {
+   "slots": 131,
+   "correct": 124,
+   "confident_correct": 119,
+   "confident_wrong": 3,
+   "unread": 3
+  },
+  "faded": {
+   "slots": 48,
+   "correct": 45,
+   "confident_correct": 41,
+   "confident_wrong": 0,
+   "unread": 2
+  },
+  "critical": {
+   "slots": 3,
+   "correct": 2,
+   "confident_correct": 2,
+   "confident_wrong": 0,
+   "unread": 1
+  },
+  "gloat": {
+   "slots": 2,
+   "correct": 0,
+   "confident_correct": 0,
+   "confident_wrong": 0,
+   "unread": 2
+  },
+  "dead": {
+   "slots": 7,
+   "correct": 0,
+   "confident_correct": 0,
+   "confident_wrong": 0,
+   "unread": 7
+  },
+  "transformed": {
+   "slots": 1,
+   "correct": 0,
+   "confident_correct": 0,
+   "confident_wrong": 0,
+   "unread": 1
+  },
+  "captures_needing_no_correction": 8,
+  "captures": 16
+ },
+ "captures": {
+  "networth_20260927_004129_407": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260927_011158_900": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260927_011909_465": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": null
+  },
+  "networth_20260927_213643_023": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260927_221825_009": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": null
+  },
+  "networth_20260927_224350_757": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": null
+  },
+  "networth_20260927_234003_182": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": null
+  },
+  "networth_20260930_130029_394": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260930_130853_445": {
+   "correct": [
+    0,
+    2,
+    3,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    2,
+    3,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "confident_wrong": [
+    4
+   ],
+   "self_correct": false
+  },
+  "networth_20260930_130930_472": {
+   "correct": [
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11
+   ],
+   "confident_correct": [
+    0,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+   ],
+   "confident_wrong": [],
+   "self_correct": false
+  },
+  "networth_20260930_131053_287": {
+   "correct": [
+    2,
+    5,
+    6,
+    9,
+    10
+   ],
+   "confident_correct": [
+    2,
+    5,
+    6,
+    9,
+    10
+   ],
+   "confident_wrong": [
+    4
+   ],
+   "self_correct": null
+  },
+  "networth_20260930_132410_942": {
+   "correct": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260930_132452_476": {
+   "correct": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    10,
+    11
+   ],
+   "confident_correct": [
+    1,
+    2,
+    3,
+    5,
+    6,
+    7,
+    10
+   ],
+   "confident_wrong": [
+    4
+   ],
+   "self_correct": true
+  },
+  "networth_20260930_140659_629": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260930_141118_533": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": false
+  },
+  "networth_20260930_142030_907": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  }
+ }
+}

@@ -29,6 +29,12 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
     public RgbImage? CropOf(int slot) => Image is { } image ? Layout.Crop(image, Geometry.Boxes()[slot]) : null;
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
+
+    /// <summary>The heroes the scores are for, in the bank's order.</summary>
+    public IReadOnlyList<string> Heroes { get; init; } = [];
+
+    /// <summary>Every hero's score in every slot, before any hero was assigned.</summary>
+    public IReadOnlyList<float[]> Scores { get; init; } = [];
 }
 
 /// <summary>
@@ -94,7 +100,7 @@ public static class Detector
 
         var values = SelfSlotScores(image, geometry);
         var (selfSlot, selfScore) = FindSelfSlot(values);
-        return new Detection(readings, geometry, selfSlot, selfScore, image, values);
+        return new Detection(readings, geometry, selfSlot, selfScore, image, values) { Heroes = bank.Heroes, Scores = scores };
     }
 
     /// <summary>
