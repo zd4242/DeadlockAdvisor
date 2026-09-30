@@ -34,7 +34,7 @@ public class WikiMenuItem : MenuItem
 
     /// <summary>A menu of just this entry at the pointer, for drawn controls with no element per row to hang a menu on.</summary>
     public static void ShowMenu(Control target, string page) =>
-        new ContextMenu { ItemsSource = new[] { new WikiMenuItem(page) }, Placement = PlacementMode.Pointer }.Open(target);
+        PointerMenu.Show(target, [new WikiMenuItem(page)]);
 
     protected override void OnClick(RoutedEventArgs e)
     {

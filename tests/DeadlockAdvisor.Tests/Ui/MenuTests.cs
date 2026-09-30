@@ -235,6 +235,29 @@ public class MenuTests
         Assert.Same(byTrait.Rows[1], byTrait.CurrentRow);
     }
 
+    /// <summary>
+    /// Headless popups sit in an overlay whose dismiss layer takes any press, but desktop ones are windows the
+    /// slot's handled press never reaches, so the requests are raised straight from the slots.
+    /// </summary>
+    [AvaloniaFact]
+    public void OpeningAHerosRoleMenuClosesTheOneAlreadyOpen()
+    {
+        using var ui = new UiHarness();
+        foreach (var hero in new[] { "haze", "infernus", "abrams" })
+            ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
+        ui.Show();
+        var slots = ui.Window.GetVisualDescendants().OfType<Controls.RosterSlot>().Where(s => s.HeroId is not null).ToList();
+
+        foreach (var slot in slots)
+        {
+            slot.RaiseEvent(new HeroEventArgs(Controls.RosterSlot.MenuRequestedEvent, slot.HeroId!));
+            UiHarness.Settle();
+        }
+
+        Assert.Equal(3, slots.Count);
+        Assert.Single(ui.Window.GetVisualDescendants().OfType<ContextMenu>(), menu => menu.IsOpen);
+    }
+
     private static WikiMenuItem RightClickForWiki(Window window, Control target, Point? at = null) =>
         RightClick(window, target, at).OfType<WikiMenuItem>().Single();
 

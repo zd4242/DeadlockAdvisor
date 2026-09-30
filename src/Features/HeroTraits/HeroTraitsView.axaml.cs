@@ -63,6 +63,6 @@ public partial class HeroTraitsView : ReactiveUserControl<HeroTraitsViewModel>
             new Separator(),
             new WikiMenuItem(vm.Heroes[row].HeroName),
         ];
-        new ContextMenu { ItemsSource = items, Placement = PlacementMode.Pointer }.Open(Grid);
+        PointerMenu.Show(Grid, items);
     }
 }

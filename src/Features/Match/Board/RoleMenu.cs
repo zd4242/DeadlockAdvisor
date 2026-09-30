@@ -26,8 +26,7 @@ public static class RoleMenu
         items.Add(new Separator());
         items.Add(new WikiMenuItem(vm.HeroName(heroId)));
 
-        var menu = new ContextMenu { ItemsSource = items, Placement = PlacementMode.Pointer };
-        menu.Open(target);
+        PointerMenu.Show(target, items);
     }
 
     private static MenuItem MenuItem(string header, bool? isChecked, Action action)
