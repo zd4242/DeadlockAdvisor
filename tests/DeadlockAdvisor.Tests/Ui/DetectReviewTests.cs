@@ -45,9 +45,22 @@ public class DetectReviewTests
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
         var dropdown = modal.GetVisualDescendants().OfType<SearchComboBox>().Single(box => box.DataContext == corrected);
         dropdown.Focus();
-        modal.KeyTextInput("haz");
+        modal.KeyTextInput("h");
         UiHarness.Settle();
         Assert.True(dropdown.IsDropDownOpen);
+        // The search keeps the keyboard as each keystroke and arrow key selects a new match.
+        var search = Assert.IsType<SearchBox>(modal.FocusManager!.GetFocusedElement());
+        var firstMatch = corrected.HeroId;
+        modal.KeyPressQwerty(PhysicalKey.ArrowDown, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.NotEqual(firstMatch, corrected.HeroId);
+        Assert.Same(search, modal.FocusManager.GetFocusedElement());
+        modal.KeyTextInput("a");
+        UiHarness.Settle();
+        modal.KeyTextInput("z");
+        UiHarness.Settle();
+        Assert.Same(search, modal.FocusManager.GetFocusedElement());
+        Assert.Equal("haz", search.Text);
         Assert.Equal("haze", corrected.HeroId);
         Assert.False(dropdown.ContainerFromItem(corrected.Choices.Single(choice => choice.HeroId == "abrams"))!.IsVisible);
         // Keys typed into the search stay unhandled, or Windows drops the characters they type, and Space doesn't

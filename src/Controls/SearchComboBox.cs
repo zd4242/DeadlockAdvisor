@@ -52,6 +52,13 @@ public class SearchComboBox : NoWheelComboBox
         frame.Child = new DockPanel { Children = { _search, list } };
     }
 
+    protected override void PrepareContainerForItemOverride(Control container, object? item, int index)
+    {
+        base.PrepareContainerForItemOverride(container, item, index);
+        // ComboBox focuses each entry it selects while open, which would take the typing away from the search.
+        container.Focusable = false;
+    }
+
     protected override void OnKeyDown(KeyEventArgs e)
     {
         // Keys typed into the search bubble up here from the popup: they're the search's, not the combo box's,
