@@ -369,7 +369,7 @@
     11
    ],
    "confident_wrong": [],
-   "self_correct": false
+   "self_correct": true
   },
   "networth_20260930_131053_287": {
    "correct": [
@@ -426,7 +426,7 @@
     11
    ],
    "confident_wrong": [],
-   "self_correct": true
+   "self_correct": false
   },
   "networth_20260930_132452_476": {
    "correct": [
@@ -454,7 +454,7 @@
     11
    ],
    "confident_wrong": [],
-   "self_correct": true
+   "self_correct": false
   },
   "networth_20260930_140659_629": {
    "correct": [
@@ -518,7 +518,7 @@
     11
    ],
    "confident_wrong": [],
-   "self_correct": false
+   "self_correct": true
   },
   "networth_20260930_142030_907": {
    "correct": [

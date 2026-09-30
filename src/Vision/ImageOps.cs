@@ -171,6 +171,19 @@ public static class ImageOps
         return result;
     }
 
+    /// <summary>An RGB colour (0-255) as hue in degrees, and saturation and brightness from 0 to 1.</summary>
+    public static (double Hue, double Saturation, double Value) Hsv(IReadOnlyList<float> rgb)
+    {
+        double r = rgb[0] / 255.0, g = rgb[1] / 255.0, b = rgb[2] / 255.0;
+        var max = Math.Max(r, Math.Max(g, b));
+        var delta = max - Math.Min(r, Math.Min(g, b));
+        var hue = delta == 0 ? 0
+            : max == r ? 60 * ((g - b) / delta % 6)
+            : max == g ? 60 * ((b - r) / delta + 2)
+            : 60 * ((r - g) / delta + 4);
+        return (hue < 0 ? hue + 360 : hue, max == 0 ? 0 : delta / max, max);
+    }
+
     /// <summary>
     /// (mean RGB, mean per-channel spread) over a box, clipped to the image. Used on the backplate
     /// above each portrait: your own slot is filled with a flat team colour, the others show the map.

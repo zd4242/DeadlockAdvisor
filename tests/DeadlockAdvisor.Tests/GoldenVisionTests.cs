@@ -215,7 +215,7 @@ public class GoldenVisionTests
     }
 
     [Fact]
-    public void TrimmedScoresCandidatesAndSelfSlotMatch()
+    public void TrimmedScoresAndCandidatesMatch()
     {
         var golden = Json("vision/layout.json");
         foreach (var pair in Items(golden["trimmed"]))
@@ -231,6 +231,7 @@ public class GoldenVisionTests
                 var candidates = Layout.Candidates((int)entry[0]!, (int)entry[1]!, Range(entry[2])!.Value, Number(entry[3]));
                 entry.AsArray()[4] = new JsonArray(candidates.Select(candidate => (JsonNode?)candidate.ToJson()).ToArray());
             }
+            golden.AsObject().Remove("self_slot");
             WriteJson("vision/layout.json", golden);
             return;
         }
@@ -242,13 +243,6 @@ public class GoldenVisionTests
             Assert.Equal(expected.Count, candidates.Count);
             foreach (var (geometry, candidate) in expected.Zip(candidates))
                 AssertGeometry(geometry, candidate, "candidates");
-        }
-
-        foreach (var pair in Items(golden["self_slot"]))
-        {
-            var (slot, score) = Detector.FindSelfSlot(Items(pair[0]).Select(Number).ToList());
-            Assert.Equal((int?)pair[1]![0], slot);
-            AssertEx.Close(Number(pair[1]![1]), score);
         }
     }
 }

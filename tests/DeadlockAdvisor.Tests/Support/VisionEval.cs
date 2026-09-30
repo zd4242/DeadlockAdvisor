@@ -134,7 +134,8 @@ public static class VisionEval
         text.AppendLine(Invariant($"# Detection report — {outcomes.Count} captures, {slots.Count} labelled slots, {bank.Vectors.Count} reference images"));
         text.AppendLine();
         text.Append(Invariant($"Captures needing no correction: {outcomes.Count(o => o.NeedsNoCorrection)} of {outcomes.Count}. "))
-            .Append(Invariant($"You found: {outcomes.Count(o => o.SelfCorrect == true)} of {outcomes.Count(o => o.SelfCorrect is not null)}. "))
+            .Append(Invariant($"You found: {outcomes.Count(o => o.SelfCorrect == true)} of {outcomes.Count(o => o.SelfCorrect is not null)}, "))
+            .Append(Invariant($"wrongly {outcomes.Count(o => o.SelfCorrect == false && o.Detection.SelfSlot is not null)}. "))
             .AppendLine(Invariant($"Detection took {outcomes.Sum(o => o.Milliseconds)} ms in all, {outcomes.Average(o => (double)o.Milliseconds):0} ms each."));
         text.AppendLine();
         text.AppendLine("| state | slots | correct | confident & correct | confident & wrong | unread | true margin p5 | median |");

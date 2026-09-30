@@ -400,16 +400,28 @@ public class VisionTests
     [Fact]
     public void SelfIsFoundWhenLaneMatesAreAlsoLit()
     {
-        var (slot, value) = Detector.FindSelfSlot([4.7, 8.9, 0.5, 2.5, 0.5, 0.4, 6.6, 3.6, 0.4, 0.2, 0.4, 0.3]);
+        // You at 0.82; your lane partner at half that; the enemy lane lit too, in the other colour.
+        var (slot, value) = Detector.FindSelfSlot([0.45, 0.82, 0, 0, 0, 0, 0.36, 0.34, 0, 0, 0, 0]);
         Assert.Equal(1, slot);
-        Assert.Equal(8.9, value);
+        Assert.Equal(0.82, value);
     }
 
     [Fact]
     public void SelfIsRefusedWhenNothingStandsOut()
     {
-        Assert.Null(Detector.FindSelfSlot(Enumerable.Repeat(1.0, 12).ToList()).Slot);
-        Assert.Null(Detector.FindSelfSlot([.. Enumerable.Repeat(0.3, 11), 0.9]).Slot);
+        Assert.Null(Detector.FindSelfSlot(Enumerable.Repeat(0.7, 12).ToList()).Slot);
+        Assert.Null(Detector.FindSelfSlot([.. Enumerable.Repeat(0.0, 11), 0.5]).Slot);
+        Assert.Null(Detector.FindSelfSlot([.. Enumerable.Repeat(0.0, 10), 0.7, 0.62]).Slot);
         Assert.Null(Detector.FindSelfSlot([]).Slot);
+    }
+
+    [Fact]
+    public void ABackplateIsATeamColour()
+    {
+        Assert.Equal((31, 0.73, 0.80), Round(ImageOps.Hsv([204f, 133f, 55f])));
+        Assert.Equal((220, 0.55, 0.67), Round(ImageOps.Hsv([76f, 108f, 170f])));
+
+        static (double, double, double) Round((double H, double S, double V) hsv) =>
+            (Math.Round(hsv.H), Math.Round(hsv.S, 2), Math.Round(hsv.V, 2));
     }
 }

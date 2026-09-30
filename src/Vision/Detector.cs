@@ -61,16 +61,15 @@ public static class Detector
     /// <summary>How much lower the final read may score than the wide one before the refit behind it is distrusted.</summary>
     public const double RefitTolerance = 0.1;
 
-    // Your slot has to clear this floor outright and stand this far above the median slot. Against
-    // the runner-up was wrong: during laning the game lights all four lane players, so the runner-up
-    // is a lane-mate close behind. Against the median, your slot led by 7× to 37× on every capture.
-    public const double SelfMinScore = 2.0;
-    public const double SelfBaselineRatio = 4.0;
-
-    // Where the backplate is sampled: two heights above the art (characters overflow their box by
-    // about a tenth, so any closer reads hair and hats) and four points across the slot at each.
-    private static readonly double[] _selfProbeLifts = [0.16, 0.24];
-    private static readonly double[] _selfProbeFractions = [0.10, 0.35, 0.65, 0.90];
+    // Your slot is backed by a flat rectangle in your team's colour, amber or sapphire, filling the
+    // strip above your portrait. During laning your lane partner's is lit too, but at about half the
+    // brightness (0.3-0.45 against your 0.67-0.82 on the labelled captures); the map shows above the
+    // rest, and was never both that saturated a team colour and that bright. Anything else, such as
+    // a red critical backdrop or the spectator strip, isn't a team hue at all.
+    public const double SelfMinBrightness = 0.6;
+    public const double SelfMinSaturation = 0.45;
+    public const double SelfLead = 0.15;
+    private static readonly (double From, double To)[] _teamHues = [(25, 45), (210, 230)];
 
     public static Detection? Detect(RgbImage image, TemplateBank bank, Geometry? geometry = null,
         (double Min, double Max)? pitchRange = null, (double Min, double Max)? topRange = null,
@@ -117,86 +116,62 @@ public static class Detector
     }
 
     /// <summary>
-    /// How much each slot looks like yours. Your slot is backed by an opaque rectangle in your team's
-    /// colour; every other slot shows the game world above it, and eleven of the twelve showing the
-    /// map makes the median the map. So: colour with brightness thrown away, deviation from the median
-    /// weighted by saturation (a slot over deep shadow is uniformly unsaturated, not a backplate), and
-    /// divided by how much the eight sample points disagree (a flat backplate agrees with itself; one
-    /// bright respawn timer doesn't).
+    /// How much each slot looks like yours: the brightness of the strip above its portrait, from the
+    /// top of the screen to a little above the art (characters overflow their box by about a tenth,
+    /// so any lower reads hair and hats), if that's a saturated team colour, and nothing otherwise.
     /// </summary>
     public static List<double> SelfSlotScores(RgbImage image, Geometry geometry)
     {
-        var artHeight = geometry.ArtHeight;
-        var size = Math.Max(2, (int)Math.Round(geometry.Pitch * 0.10));
-        var means = new List<(float A, float B)>();
-        var spreads = new List<double>();
-
-        foreach (var box in geometry.Boxes())
+        var bottom = Math.Max(4, (int)Math.Round(geometry.Top - 0.12 * geometry.ArtHeight));
+        var half = geometry.Pitch * 0.3;
+        return geometry.Centers().Select(center =>
         {
-            var centerX = box.CenterX;
-            var chroma = new List<(float A, float B)>();
-            foreach (var lift in _selfProbeLifts)
-            {
-                var top = (int)Math.Round(Math.Max(0.0, box.Y - artHeight * lift));
-                foreach (var fraction in _selfProbeFractions)
-                {
-                    var at = (int)Math.Round(centerX - geometry.Pitch / 2.0 + geometry.Pitch * fraction);
-                    var (mean, _) = ImageOps.MeanColor(image, at - size / 2, top, at + size / 2 + 1, top + size);
-                    if (mean.Any(v => v != 0))
-                        chroma.Add(Chroma(mean));
-                }
-            }
-            if (chroma.Count == 0)
-            {
-                means.Add((0f, 0f));
-                spreads.Add(1e6);
-                continue;
-            }
-            // A column mean in numpy (axis 0) sums row by row, not pairwise.
-            float sumA = 0f, sumB = 0f;
-            foreach (var (a, b) in chroma)
-            {
-                sumA += a;
-                sumB += b;
-            }
-            var centre = (A: sumA / chroma.Count, B: sumB / chroma.Count);
-            means.Add(centre);
-            spreads.Add(NumpyMath.Mean(chroma.Select(c => Norm(c.A - centre.A, c.B - centre.B)).ToList()));
-        }
-
-        var background = (A: NumpyMath.Median(means.Select(m => m.A).ToList()), B: NumpyMath.Median(means.Select(m => m.B).ToList()));
-        double backgroundStrength = Norm(background.A, background.B);
-        var scores = new List<double>();
-        foreach (var (a, b) in means)
-        {
-            double deviation = Norm(a - background.A, b - background.B);
-            double strength = Norm(a, b);
-            var saturation = strength / (strength + backgroundStrength + 1e-6);
-            scores.Add(deviation * saturation / (1.0 + spreads[scores.Count]));
-        }
-        return scores;
+            if (BackplateColor(image, (int)Math.Round(center - half), (int)Math.Round(center + half), bottom) is not { } color)
+                return 0.0;
+            var (hue, saturation, value) = ImageOps.Hsv(color);
+            return saturation >= SelfMinSaturation && _teamHues.Any(range => hue >= range.From && hue <= range.To) ? value : 0.0;
+        }).ToList();
     }
 
-    /// <summary>RGB → the two opponent-colour axes, dropping brightness.</summary>
-    private static (float A, float B) Chroma(float[] rgb) => (rgb[0] - rgb[1], 0.5f * (rgb[0] + rgb[1]) - rgb[2]);
+    /// <summary>
+    /// The mean colour of a strip from the top of the image, leaving out near-black pixels (a
+    /// letterbox, or the edge of a crop): null when those are most of it.
+    /// </summary>
+    private static float[]? BackplateColor(RgbImage image, int left, int right, int bottom)
+    {
+        const int dark = 30;
+        (left, right, bottom) = (Math.Max(0, left), Math.Min(image.Width, right), Math.Min(image.Height, bottom));
+        var sum = new double[3];
+        int counted = 0, total = 0;
+        for (var y = 1; y < bottom; y++)
+        {
+            for (var x = left; x < right; x++)
+            {
+                total++;
+                var at = (y * image.Width + x) * 3;
+                var (r, g, b) = (image.Pixels[at], image.Pixels[at + 1], image.Pixels[at + 2]);
+                if (Math.Max(r, Math.Max(g, b)) < dark)
+                    continue;
+                (sum[0], sum[1], sum[2]) = (sum[0] + r, sum[1] + g, sum[2] + b);
+                counted++;
+            }
+        }
+        return counted * 2 < total || counted == 0 ? null : sum.Select(channel => (float)(channel / counted)).ToArray();
+    }
 
-    /// <summary>A float32 vector length, as np.linalg.norm gives for float32 input.</summary>
-    private static float Norm(float x, float y) => MathF.Sqrt(x * x + y * y);
-
-    /// <summary>Without a clear winner, say nothing: a wrong You silently mislabels both teams.</summary>
+    /// <summary>
+    /// The brightest team-coloured backplate, if it's bright enough and clearly brighter than the
+    /// next. Without a clear winner, say nothing: a wrong You silently mislabels both teams.
+    /// </summary>
     public static (int? Slot, double Score) FindSelfSlot(IReadOnlyList<double> values)
     {
         if (values.Count == 0)
             return (null, 0.0);
-        var best = 0;
-        for (var i = 1; i < values.Count; i++)
-        {
-            if (values[i] > values[best])
-                best = i;
-        }
-        double baseline = NumpyMath.Median(values.Select(value => (float)value).ToList());
-        if (values[best] < SelfMinScore || values[best] < baseline * SelfBaselineRatio)
-            return (null, values[best]);
-        return (best, values[best]);
+        var ranked = values.Select((value, slot) => (Value: value, Slot: slot)).OrderByDescending(entry => entry.Value).ToList();
+        var best = ranked[0];
+        var next = ranked.Count > 1 ? ranked[1].Value : 0.0;
+        if (best.Value < SelfMinBrightness || best.Value - next < SelfLead)
+            return (null, best.Value);
+        return (best.Slot, best.Value);
     }
 }
