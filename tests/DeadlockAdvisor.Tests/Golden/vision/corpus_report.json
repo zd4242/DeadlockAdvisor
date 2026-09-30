@@ -2,45 +2,45 @@
  "summary": {
   "all": {
    "slots": 192,
-   "correct": 171,
-   "confident_correct": 162,
-   "confident_wrong": 3,
-   "unread": 16
+   "correct": 182,
+   "confident_correct": 181,
+   "confident_wrong": 2,
+   "unread": 3
   },
   "visible": {
    "slots": 131,
-   "correct": 124,
-   "confident_correct": 119,
-   "confident_wrong": 3,
-   "unread": 3
+   "correct": 129,
+   "confident_correct": 128,
+   "confident_wrong": 2,
+   "unread": 0
   },
   "faded": {
    "slots": 48,
-   "correct": 45,
-   "confident_correct": 41,
+   "correct": 46,
+   "confident_correct": 46,
    "confident_wrong": 0,
-   "unread": 2
+   "unread": 0
   },
   "critical": {
    "slots": 3,
-   "correct": 2,
-   "confident_correct": 2,
+   "correct": 3,
+   "confident_correct": 3,
    "confident_wrong": 0,
-   "unread": 1
+   "unread": 0
   },
   "gloat": {
    "slots": 2,
-   "correct": 0,
-   "confident_correct": 0,
+   "correct": 2,
+   "confident_correct": 2,
    "confident_wrong": 0,
-   "unread": 2
+   "unread": 0
   },
   "dead": {
    "slots": 7,
-   "correct": 0,
-   "confident_correct": 0,
+   "correct": 2,
+   "confident_correct": 2,
    "confident_wrong": 0,
-   "unread": 7
+   "unread": 2
   },
   "transformed": {
    "slots": 1,
@@ -49,39 +49,11 @@
    "confident_wrong": 0,
    "unread": 1
   },
-  "captures_needing_no_correction": 8,
+  "captures_needing_no_correction": 9,
   "captures": 16
  },
  "captures": {
   "networth_20260927_004129_407": {
-   "correct": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    9,
-    10,
-    11
-   ],
-   "confident_correct": [
-    0,
-    1,
-    2,
-    3,
-    4,
-    5,
-    6,
-    9,
-    10,
-    11
-   ],
-   "confident_wrong": [],
-   "self_correct": true
-  },
-  "networth_20260927_011158_900": {
    "correct": [
     0,
     1,
@@ -103,6 +75,39 @@
     4,
     5,
     6,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_wrong": [],
+   "self_correct": true
+  },
+  "networth_20260927_011158_900": {
+   "correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11
+   ],
+   "confident_correct": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
     9,
     10,
     11
@@ -134,6 +139,7 @@
     5,
     6,
     7,
+    8,
     9,
     10,
     11
@@ -248,7 +254,6 @@
     6,
     7,
     8,
-    9,
     10,
     11
    ],
@@ -261,6 +266,7 @@
     5,
     6,
     7,
+    8,
     10,
     11
    ],
@@ -293,7 +299,8 @@
     7,
     8,
     9,
-    10
+    10,
+    11
    ],
    "confident_wrong": [],
    "self_correct": true
@@ -301,6 +308,7 @@
   "networth_20260930_130853_445": {
    "correct": [
     0,
+    1,
     2,
     3,
     5,
@@ -313,6 +321,7 @@
    ],
    "confident_correct": [
     0,
+    1,
     2,
     3,
     5,
@@ -320,16 +329,18 @@
     7,
     8,
     9,
-    10
+    10,
+    11
    ],
    "confident_wrong": [
     4
    ],
-   "self_correct": false
+   "self_correct": true
   },
   "networth_20260930_130930_472": {
    "correct": [
     0,
+    1,
     2,
     3,
     4,
@@ -338,10 +349,12 @@
     7,
     8,
     9,
+    10,
     11
    ],
    "confident_correct": [
     0,
+    1,
     2,
     3,
     4,
@@ -349,33 +362,43 @@
     6,
     7,
     8,
-    9
+    9,
+    10,
+    11
    ],
    "confident_wrong": [],
    "self_correct": false
   },
   "networth_20260930_131053_287": {
    "correct": [
+    0,
     2,
+    4,
     5,
     6,
+    7,
+    8,
     9,
-    10
+    10,
+    11
    ],
    "confident_correct": [
+    0,
     2,
     5,
     6,
+    7,
+    8,
     9,
-    10
+    10,
+    11
    ],
-   "confident_wrong": [
-    4
-   ],
+   "confident_wrong": [],
    "self_correct": null
   },
   "networth_20260930_132410_942": {
    "correct": [
+    0,
     1,
     2,
     3,
@@ -389,6 +412,7 @@
     11
    ],
    "confident_correct": [
+    0,
     1,
     2,
     3,
@@ -398,13 +422,15 @@
     7,
     8,
     9,
-    10
+    10,
+    11
    ],
    "confident_wrong": [],
    "self_correct": true
   },
   "networth_20260930_132452_476": {
    "correct": [
+    0,
     1,
     2,
     3,
@@ -415,13 +441,15 @@
     11
    ],
    "confident_correct": [
+    0,
     1,
     2,
     3,
     5,
     6,
     7,
-    10
+    10,
+    11
    ],
    "confident_wrong": [
     4

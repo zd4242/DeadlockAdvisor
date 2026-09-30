@@ -18,7 +18,6 @@ public class DetectReviewTests
     {
         using var ui = new UiHarness();
         CopyTopbarInto(ui.Data.AssetsDir);
-        // The laning capture has two uncertain reads.
         ui.Capture.Next = Capture("laning_2560x1440_band");
         ui.Show();
 
@@ -32,7 +31,7 @@ public class DetectReviewTests
         var review = Review()!;
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, review.SelfSlot);
-        Assert.Contains(review.Slots, slot => slot.IsUncertain);
+        Assert.DoesNotContain(review.Slots, slot => slot.IsUncertain);
         UiHarness.Settle();
         // The modal is a window of its own: its portraits need the art service handed on to it.
         var portraits = ui.Window.OwnedWindows.OfType<ModalWindow>().Single().GetVisualDescendants().OfType<ArtImage>().ToList();

@@ -95,6 +95,86 @@ public class VisionCorpusTools
         }
     }
 
+    /// <summary>
+    /// DEADLOCK_VISION_FETCH_ART=&lt;folder&gt;: the real art download, from deadlock-api.com, into that
+    /// folder, for the heroes in the golden data: the cards the test bank's derived portraits are cut
+    /// from, and whatever the API's art looks like today.
+    /// </summary>
+    [Fact]
+    public async Task FetchArt()
+    {
+        if (Environment.GetEnvironmentVariable("DEADLOCK_VISION_FETCH_ART") is not { Length: > 0 } folder)
+            return;
+        using var api = new DeadlockApi();
+        var download = new ArtDownloadService(new GameApiService(api), api);
+        await download.DownloadAsync(Golden.LoadStore(), folder, force: false, null, CancellationToken.None);
+    }
+
+    /// <summary>
+    /// DEADLOCK_VISION_DERIVE=&lt;assets folder&gt; (one <see cref="FetchArt"/> filled): cut every hero's
+    /// portraits from their cards, and draw mockups/vision_drafts/derived.png, each hero's API top-bar
+    /// art beside the portraits cut from their normal, critical and on-fire cards.
+    /// </summary>
+    [Fact]
+    public void DeriveArt()
+    {
+        if (Environment.GetEnvironmentVariable("DEADLOCK_VISION_DERIVE") is not { Length: > 0 } assets)
+            return;
+        var topbar = Path.Combine(assets, "topbar");
+        var heroes = Golden.LoadStore().Heroes.Keys.Order(StringComparer.Ordinal).ToList();
+        TopbarDerivation.Run(topbar, heroes, force: true);
+
+        var state = JsonNode.Parse(File.ReadAllText(Path.Combine(topbar, TopbarDerivation.StateFile)))!["heroes"]!.AsObject();
+        const int cellW = 120, cellH = 200, caption = 18, perRow = 4;
+        var rows = (heroes.Count + perRow - 1) / perRow;
+        var info = new SKImageInfo(perRow * (4 * cellW + 16), rows * (cellH + caption));
+        using var surface = SKSurface.Create(info);
+        var canvas = surface.Canvas;
+        canvas.Clear(new SKColor(24, 24, 28));
+        using var font = new SKFont(SKTypeface.Default, 13);
+        using var text = new SKPaint { Color = SKColors.White, IsAntialias = true };
+        using var weak = new SKPaint { Color = new SKColor(255, 170, 80), IsAntialias = true };
+        for (var i = 0; i < heroes.Count; i++)
+        {
+            var hero = heroes[i];
+            var (x, y) = (i % perRow * (4 * cellW + 16), i / perRow * (cellH + caption));
+            string?[] images =
+            [
+                Path.Combine(topbar, hero + ".png"),
+                .. Enum.GetValues<PortraitState>().Select(s => Path.Combine(topbar, hero, TopbarDerivation.OutputName(s))),
+            ];
+            for (var column = 0; column < images.Length; column++)
+            {
+                if (images[column] is { } image && File.Exists(image))
+                    DrawImage(canvas, ImageFile.Load(image), x + column * cellW, y, cellW, cellH);
+            }
+            var record = state[hero];
+            var score = (double?)record?["registration"]?["score"] ?? double.NaN;
+            var source = (string?)record?["source"] ?? "none";
+            canvas.DrawText(FormattableString.Invariant($"{hero}: {source} {score:0.00}"), x + 2, y + cellH + 14, font, source == "registered" ? text : weak);
+        }
+        using var snapshot = surface.Snapshot();
+        using var data = snapshot.Encode(SKEncodedImageFormat.Png, 100);
+        Directory.CreateDirectory(DraftsDir);
+        File.WriteAllBytes(Path.Combine(DraftsDir, "derived.png"), data.ToArray());
+    }
+
+    private static void DrawImage(SKCanvas canvas, RgbImage image, int x, int y, int width, int height)
+    {
+        var scaled = image.Resize(width, height, ResampleFilter.Bilinear);
+        using var bitmap = new SKBitmap(new SKImageInfo(width, height, SKColorType.Rgba8888, SKAlphaType.Opaque));
+        var pixels = new byte[width * height * 4];
+        for (var i = 0; i < width * height; i++)
+        {
+            pixels[i * 4] = scaled.Pixels[i * 3];
+            pixels[i * 4 + 1] = scaled.Pixels[i * 3 + 1];
+            pixels[i * 4 + 2] = scaled.Pixels[i * 3 + 2];
+            pixels[i * 4 + 3] = 255;
+        }
+        System.Runtime.InteropServices.Marshal.Copy(pixels, 0, bitmap.GetPixels(), pixels.Length);
+        canvas.DrawBitmap(bitmap, x, y);
+    }
+
     /// <summary>The grid a capture was read with, from the note beside it.</summary>
     private static Geometry? GridBeside(string capture)
     {

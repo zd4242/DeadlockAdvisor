@@ -82,8 +82,8 @@ public sealed class ArtDownloadServiceTests : IDisposable
         var steps = new List<FetchProgress>();
         await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, new SyncProgress(steps.Add), CancellationToken.None);
 
-        // Three heroes in five hero groups, three items, and done.
-        Assert.Equal(3 * 5 + 3 + 1, steps.Count);
+        // Three heroes in five hero groups, three items, cutting portraits from the cards, and done.
+        Assert.Equal(3 * 5 + 3 + 2, steps.Count);
         Assert.Equal((18, 18, "done"), (steps[^1].Done, steps[^1].Total, steps[^1].Text));
         Assert.Equal("Hero portraits: Generic", steps[0].Text);
     }

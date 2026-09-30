@@ -14,25 +14,25 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 884.5,
-    "pitch": 116.06814843900749,
-    "top": 15.0,
-    "gap_ratio": 1.65,
-    "width_ratio": 0.612
+    "center_x": 893.5229478012568,
+    "pitch": 116.04329750109822,
+    "top": 20.0,
+    "gap_ratio": 1.7173920263880145,
+    "width_ratio": 0.5069847905808169
    },
-   "score": 0.5619457364082336
+   "score": 0.7388269901275635
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 894.875302526037,
-    "pitch": 114.87418673602758,
-    "top": 15.0,
-    "gap_ratio": 1.755353233404253,
-    "width_ratio": 0.5317903840903475
+    "center_x": 892.557134162553,
+    "pitch": 115.1099809722479,
+    "top": 20.0,
+    "gap_ratio": 1.7460952518037038,
+    "width_ratio": 0.5519830799709068
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "abrams",
@@ -41,81 +41,81 @@
      "ranked": [
       "abrams",
       "ivy",
+      "kelvin",
       "sinclair",
-      "victor",
-      "dynamo"
+      "victor"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "yamato",
-     "is_confident": false,
+     "runner_up": "abrams",
+     "is_confident": true,
      "ranked": [
       "victor",
+      "abrams",
       "yamato",
       "sinclair",
-      "apollo",
-      "abrams"
+      "kelvin"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "calico",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "calico",
-      "graves",
-      "wraith",
-      "mcginnis"
-     ]
-    },
-    {
-     "hero_id": null,
-     "runner_up": "silver",
-     "is_confident": false,
-     "ranked": [
-      "silver",
-      "pocket",
-      "warden",
-      "drifter",
-      "mo_and_krill"
-     ]
-    },
-    {
-     "hero_id": "holliday",
-     "runner_up": "drifter",
-     "is_confident": true,
-     "ranked": [
-      "holliday",
-      "drifter",
-      "apollo",
-      "seven",
-      "yamato"
-     ]
-    },
-    {
-     "hero_id": "apollo",
      "runner_up": "rem",
      "is_confident": true,
      "ranked": [
-      "apollo",
+      "paige",
       "rem",
-      "mcginnis",
-      "kelvin",
+      "calico",
+      "dynamo",
+      "doorman"
+     ]
+    },
+    {
+     "hero_id": "mina",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "mina",
+      "ivy",
+      "drifter",
+      "calico",
       "silver"
      ]
     },
     {
+     "hero_id": "holliday",
+     "runner_up": "warden",
+     "is_confident": true,
+     "ranked": [
+      "holliday",
+      "warden",
+      "drifter",
+      "pocket",
+      "victor"
+     ]
+    },
+    {
+     "hero_id": "apollo",
+     "runner_up": "kelvin",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "kelvin",
+      "mcginnis",
+      "silver",
+      "victor"
+     ]
+    },
+    {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
+      "dynamo",
       "rem",
       "infernus",
-      "yamato",
-      "dynamo"
+      "ivy"
      ]
     },
     {
@@ -124,22 +124,22 @@
      "is_confident": false,
      "ranked": [
       "infernus",
-      "apollo",
-      "yamato",
-      "doorman",
-      "seven"
+      "graves",
+      "victor",
+      "venator",
+      "bebop"
      ]
     },
     {
      "hero_id": "yamato",
-     "runner_up": "infernus",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "yamato",
+      "venator",
       "infernus",
       "shiv",
-      "doorman",
-      "seven"
+      "holliday"
      ]
     },
     {
@@ -149,33 +149,33 @@
      "ranked": [
       "haze",
       "vyper",
-      "mcginnis",
       "doorman",
-      "wraith"
+      "paradox",
+      "silver"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "doorman",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "doorman",
-      "shiv",
-      "lash",
-      "apollo"
+      "dynamo",
+      "mo_and_krill",
+      "silver",
+      "calico"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "apollo",
+     "runner_up": "bebop",
      "is_confident": true,
      "ranked": [
       "pocket",
-      "apollo",
-      "dynamo",
-      "yamato",
-      "holliday"
+      "bebop",
+      "warden",
+      "celeste",
+      "dynamo"
      ]
     }
    ]
@@ -183,61 +183,61 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 894.3363703082796,
-    "pitch": 114.70037722398541,
-    "top": 15.0,
-    "gap_ratio": 1.766237326486639,
-    "width_ratio": 0.5325962247458405
+    "center_x": 892.6445318132254,
+    "pitch": 115.30747137894302,
+    "top": 20.0,
+    "gap_ratio": 1.7383279436643855,
+    "width_ratio": 0.5510376827503396
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "sinclair",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
       "abrams",
-      "sinclair",
       "ivy",
-      "victor",
-      "dynamo"
+      "kelvin",
+      "sinclair",
+      "victor"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
+     "runner_up": "abrams",
+     "is_confident": true,
      "ranked": [
       "victor",
-      "sinclair",
+      "abrams",
       "yamato",
-      "apollo",
-      "abrams"
+      "sinclair",
+      "kelvin"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "calico",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "paige",
+      "rem",
       "calico",
-      "graves",
-      "venator",
-      "mcginnis"
+      "dynamo",
+      "doorman"
      ]
     },
     {
-     "hero_id": null,
-     "runner_up": "silver",
-     "is_confident": false,
+     "hero_id": "mina",
+     "runner_up": "ivy",
+     "is_confident": true,
      "ranked": [
-      "silver",
-      "warden",
-      "pocket",
-      "mcginnis",
-      "graves"
+      "mina",
+      "ivy",
+      "drifter",
+      "calico",
+      "silver"
      ]
     },
     {
@@ -247,33 +247,33 @@
      "ranked": [
       "holliday",
       "drifter",
-      "apollo",
-      "infernus",
-      "seven"
+      "warden",
+      "pocket",
+      "ivy"
      ]
     },
     {
      "hero_id": "apollo",
-     "runner_up": "rem",
+     "runner_up": "kelvin",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "rem",
       "kelvin",
       "mcginnis",
-      "silver"
+      "venator",
+      "victor"
      ]
     },
     {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
+      "dynamo",
       "rem",
       "infernus",
-      "yamato",
-      "calico"
+      "sinclair"
      ]
     },
     {
@@ -282,22 +282,22 @@
      "is_confident": false,
      "ranked": [
       "infernus",
-      "yamato",
-      "apollo",
-      "doorman",
-      "drifter"
+      "graves",
+      "victor",
+      "mina",
+      "venator"
      ]
     },
     {
      "hero_id": "yamato",
-     "runner_up": "infernus",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "yamato",
+      "venator",
       "infernus",
       "shiv",
-      "doorman",
-      "seven"
+      "holliday"
      ]
     },
     {
@@ -307,33 +307,33 @@
      "ranked": [
       "haze",
       "vyper",
-      "mcginnis",
       "doorman",
-      "wraith"
+      "paradox",
+      "silver"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "doorman",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "doorman",
-      "shiv",
-      "lash",
-      "apollo"
+      "dynamo",
+      "mo_and_krill",
+      "silver",
+      "calico"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "dynamo",
+     "runner_up": "bebop",
      "is_confident": true,
      "ranked": [
       "pocket",
-      "dynamo",
-      "apollo",
-      "yamato",
-      "doorman"
+      "bebop",
+      "warden",
+      "paradox",
+      "celeste"
      ]
     }
    ]
@@ -347,59 +347,59 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1280.787311732257,
-    "pitch": 116.36597862767582,
-    "top": 11.8,
-    "gap_ratio": 1.6870415236522225,
-    "width_ratio": 0.5564559334330779
+    "center_x": 1280.0,
+    "pitch": 115.25577637005162,
+    "top": 28.8,
+    "gap_ratio": 1.65,
+    "width_ratio": 0.612
    },
-   "score": 0.6730639934539795
+   "score": 0.7514184713363647
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1280.5916053246522,
-    "pitch": 116.05507692561947,
-    "top": 11.8,
-    "gap_ratio": 1.7000912170229678,
-    "width_ratio": 0.5579466316550485
+    "center_x": 1279.8018158878806,
+    "pitch": 117.12969880419841,
+    "top": 14.8,
+    "gap_ratio": 1.6702308738473626,
+    "width_ratio": 0.5178995663643866
    },
    "self_slot": 1,
-   "confident_count": 11,
+   "confident_count": 12,
    "slots": [
     {
      "hero_id": "grey_talon",
-     "runner_up": "silver",
+     "runner_up": "lash",
      "is_confident": true,
      "ranked": [
       "grey_talon",
-      "silver",
-      "vindicta",
       "lash",
-      "paradox"
+      "graves",
+      "seven",
+      "abrams"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "silver",
+     "runner_up": "drifter",
      "is_confident": true,
      "ranked": [
       "ivy",
-      "silver",
-      "venator",
-      "billy",
-      "graves"
+      "drifter",
+      "rem",
+      "mo_and_krill",
+      "mcginnis"
      ]
     },
     {
      "hero_id": "mo_and_krill",
-     "runner_up": "ivy",
+     "runner_up": "sinclair",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
+      "sinclair",
       "ivy",
-      "doorman",
-      "silver",
+      "drifter",
       "victor"
      ]
     },
@@ -410,21 +410,21 @@
      "ranked": [
       "mirage",
       "lash",
-      "calico",
       "seven",
+      "rem",
       "silver"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "dynamo",
+     "runner_up": "mina",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "dynamo",
+      "mina",
       "doorman",
-      "calico",
-      "seven"
+      "dynamo",
+      "silver"
      ]
     },
     {
@@ -435,44 +435,44 @@
       "vyper",
       "lash",
       "venator",
-      "sinclair",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "kelvin",
-     "runner_up": "bebop",
-     "is_confident": true,
-     "ranked": [
-      "kelvin",
-      "bebop",
-      "abrams",
-      "dynamo",
-      "victor"
-     ]
-    },
-    {
-     "hero_id": "abrams",
-     "runner_up": "ivy",
-     "is_confident": true,
-     "ranked": [
-      "abrams",
-      "ivy",
-      "victor",
-      "silver",
+      "calico",
       "sinclair"
      ]
     },
     {
+     "hero_id": "kelvin",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "kelvin",
+      "ivy",
+      "apollo",
+      "shiv",
+      "billy"
+     ]
+    },
+    {
+     "hero_id": "abrams",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "abrams",
+      "calico",
+      "sinclair",
+      "rem",
+      "mcginnis"
+     ]
+    },
+    {
      "hero_id": "lash",
-     "runner_up": "graves",
+     "runner_up": "viscous",
      "is_confident": true,
      "ranked": [
       "lash",
+      "viscous",
       "graves",
-      "silver",
-      "yamato",
-      "mcginnis"
+      "mirage",
+      "silver"
      ]
     },
     {
@@ -482,21 +482,21 @@
      "ranked": [
       "yamato",
       "victor",
-      "silver",
+      "doorman",
       "graves",
-      "doorman"
+      "holliday"
      ]
     },
     {
      "hero_id": "dynamo",
-     "runner_up": "venator",
-     "is_confident": false,
+     "runner_up": "rem",
+     "is_confident": true,
      "ranked": [
       "dynamo",
-      "venator",
-      "mo_and_krill",
+      "rem",
       "calico",
-      "lash"
+      "sinclair",
+      "mina"
      ]
     },
     {
@@ -506,9 +506,9 @@
      "ranked": [
       "venator",
       "lash",
-      "sinclair",
-      "calico",
-      "rem"
+      "rem",
+      "paige",
+      "mo_and_krill"
      ]
     }
    ]
@@ -516,48 +516,48 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1280.6985656629904,
-    "pitch": 115.61272166688471,
-    "top": 11.8,
-    "gap_ratio": 1.7187286179088994,
-    "width_ratio": 0.5600814367443803
+    "center_x": 1279.8735104163964,
+    "pitch": 116.47165007701763,
+    "top": 14.8,
+    "gap_ratio": 1.692700321240027,
+    "width_ratio": 0.5208256273434163
    },
    "self_slot": 1,
-   "confident_count": 11,
+   "confident_count": 12,
    "slots": [
     {
      "hero_id": "grey_talon",
-     "runner_up": "silver",
+     "runner_up": "lash",
      "is_confident": true,
      "ranked": [
       "grey_talon",
-      "silver",
-      "vindicta",
       "lash",
-      "wraith"
+      "seven",
+      "calico",
+      "kelvin"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "silver",
+     "runner_up": "drifter",
      "is_confident": true,
      "ranked": [
       "ivy",
-      "silver",
-      "venator",
-      "graves",
-      "mo_and_krill"
+      "drifter",
+      "rem",
+      "mo_and_krill",
+      "venator"
      ]
     },
     {
      "hero_id": "mo_and_krill",
-     "runner_up": "ivy",
+     "runner_up": "sinclair",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
+      "sinclair",
       "ivy",
-      "doorman",
-      "silver",
+      "drifter",
       "victor"
      ]
     },
@@ -568,9 +568,9 @@
      "ranked": [
       "mirage",
       "lash",
-      "calico",
-      "silver",
-      "seven"
+      "seven",
+      "rem",
+      "silver"
      ]
     },
     {
@@ -580,9 +580,9 @@
      "ranked": [
       "bebop",
       "calico",
+      "mina",
       "dynamo",
-      "doorman",
-      "apollo"
+      "silver"
      ]
     },
     {
@@ -592,45 +592,45 @@
      "ranked": [
       "vyper",
       "lash",
+      "calico",
       "venator",
-      "sinclair",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "kelvin",
-     "runner_up": "abrams",
-     "is_confident": true,
-     "ranked": [
-      "kelvin",
-      "abrams",
-      "apollo",
-      "dynamo",
-      "yamato"
-     ]
-    },
-    {
-     "hero_id": "abrams",
-     "runner_up": "ivy",
-     "is_confident": true,
-     "ranked": [
-      "abrams",
-      "ivy",
-      "victor",
-      "silver",
       "sinclair"
      ]
     },
     {
+     "hero_id": "kelvin",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "kelvin",
+      "ivy",
+      "graves",
+      "yamato",
+      "billy"
+     ]
+    },
+    {
+     "hero_id": "abrams",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "abrams",
+      "calico",
+      "sinclair",
+      "rem",
+      "yamato"
+     ]
+    },
+    {
      "hero_id": "lash",
-     "runner_up": "graves",
+     "runner_up": "viscous",
      "is_confident": true,
      "ranked": [
       "lash",
+      "viscous",
       "graves",
-      "mcginnis",
-      "silver",
-      "yamato"
+      "mirage",
+      "silver"
      ]
     },
     {
@@ -640,21 +640,21 @@
      "ranked": [
       "yamato",
       "victor",
-      "silver",
       "doorman",
-      "graves"
+      "graves",
+      "silver"
      ]
     },
     {
      "hero_id": "dynamo",
-     "runner_up": "venator",
-     "is_confident": false,
+     "runner_up": "calico",
+     "is_confident": true,
      "ranked": [
       "dynamo",
-      "venator",
       "calico",
-      "mo_and_krill",
-      "lash"
+      "rem",
+      "mina",
+      "mo_and_krill"
      ]
     },
     {
@@ -664,9 +664,9 @@
      "ranked": [
       "venator",
       "lash",
-      "sinclair",
-      "calico",
-      "rem"
+      "rem",
+      "paige",
+      "dynamo"
      ]
     }
    ]
@@ -680,36 +680,36 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.5156536695122,
-    "pitch": 116.60889724370466,
+    "center_x": 1278.2001079817048,
+    "pitch": 116.63697656603003,
     "top": 17.8,
-    "gap_ratio": 1.6607340631266734,
-    "width_ratio": 0.5444085582247599
+    "gap_ratio": 1.6669309401422994,
+    "width_ratio": 0.5442774966709273
    },
-   "score": 0.8498022556304932
+   "score": 0.8310801982879639
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.2969945216064,
-    "pitch": 116.52571675606616,
-    "top": 17.8,
-    "gap_ratio": 1.6622243030858879,
-    "width_ratio": 0.5447971777553524
+    "center_x": 1277.4899248112552,
+    "pitch": 116.75402959508673,
+    "top": 11.8,
+    "gap_ratio": 1.656641204182405,
+    "width_ratio": 0.5437318253150547
    },
    "self_slot": 1,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "silver",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "abrams",
-      "silver",
-      "mcginnis",
-      "warden",
-      "grey_talon"
+      "calico",
+      "sinclair",
+      "ivy",
+      "kelvin"
      ]
     },
     {
@@ -719,9 +719,9 @@
      "ranked": [
       "holliday",
       "seven",
-      "doorman",
-      "billy",
-      "yamato"
+      "calico",
+      "silver",
+      "victor"
      ]
     },
     {
@@ -731,21 +731,21 @@
      "ranked": [
       "mina",
       "sinclair",
-      "mo_and_krill",
-      "infernus",
-      "apollo"
+      "drifter",
+      "yamato",
+      "holliday"
      ]
     },
     {
      "hero_id": "venator",
-     "runner_up": "calico",
+     "runner_up": "lash",
      "is_confident": true,
      "ranked": [
       "venator",
-      "calico",
       "lash",
-      "graves",
-      "ivy"
+      "mina",
+      "rem",
+      "paige"
      ]
     },
     {
@@ -757,67 +757,67 @@
       "doorman",
       "yamato",
       "silver",
-      "holliday"
+      "vyper"
      ]
     },
     {
      "hero_id": "kelvin",
-     "runner_up": "apollo",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
       "kelvin",
+      "ivy",
       "apollo",
-      "venator",
       "silver",
       "rem"
      ]
     },
     {
      "hero_id": "vindicta",
-     "runner_up": "sinclair",
+     "runner_up": "graves",
      "is_confident": true,
      "ranked": [
       "vindicta",
-      "sinclair",
-      "venator",
       "graves",
-      "victor"
+      "sinclair",
+      "kelvin",
+      "lash"
      ]
     },
     {
      "hero_id": "seven",
-     "runner_up": "holliday",
+     "runner_up": "paige",
      "is_confident": true,
      "ranked": [
       "seven",
+      "paige",
       "holliday",
-      "silver",
-      "sinclair",
-      "graves"
+      "warden",
+      "dynamo"
      ]
     },
     {
      "hero_id": "apollo",
-     "runner_up": "rem",
+     "runner_up": "kelvin",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "rem",
-      "silver",
-      "victor",
-      "kelvin"
+      "kelvin",
+      "bebop",
+      "mirage",
+      "mcginnis"
      ]
     },
     {
      "hero_id": "mo_and_krill",
-     "runner_up": "abrams",
+     "runner_up": "sinclair",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
-      "abrams",
       "sinclair",
-      "mina",
-      "rem"
+      "ivy",
+      "drifter",
+      "abrams"
      ]
     },
     {
@@ -827,21 +827,21 @@
      "ranked": [
       "silver",
       "graves",
-      "mina",
-      "billy",
-      "yamato"
+      "calico",
+      "venator",
+      "mina"
      ]
     },
     {
      "hero_id": "sinclair",
-     "runner_up": "graves",
+     "runner_up": "mcginnis",
      "is_confident": true,
      "ranked": [
       "sinclair",
-      "graves",
+      "mcginnis",
       "pocket",
-      "drifter",
-      "billy"
+      "graves",
+      "warden"
      ]
     }
    ]
@@ -849,25 +849,25 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.0547745338897,
-    "pitch": 116.41651444563506,
-    "top": 17.8,
-    "gap_ratio": 1.664433269479984,
-    "width_ratio": 0.545308214448132
+    "center_x": 1277.3544242347255,
+    "pitch": 116.68933661556639,
+    "top": 11.8,
+    "gap_ratio": 1.658702800939787,
+    "width_ratio": 0.5440332721555278
    },
    "self_slot": 1,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "silver",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "abrams",
-      "silver",
-      "mcginnis",
-      "warden",
-      "grey_talon"
+      "calico",
+      "sinclair",
+      "ivy",
+      "kelvin"
      ]
     },
     {
@@ -877,9 +877,9 @@
      "ranked": [
       "holliday",
       "seven",
-      "doorman",
-      "yamato",
-      "billy"
+      "calico",
+      "silver",
+      "victor"
      ]
     },
     {
@@ -889,21 +889,21 @@
      "ranked": [
       "mina",
       "sinclair",
-      "mo_and_krill",
-      "infernus",
-      "apollo"
+      "drifter",
+      "yamato",
+      "holliday"
      ]
     },
     {
      "hero_id": "venator",
-     "runner_up": "calico",
+     "runner_up": "lash",
      "is_confident": true,
      "ranked": [
       "venator",
-      "calico",
       "lash",
-      "graves",
-      "ivy"
+      "rem",
+      "paige",
+      "mina"
      ]
     },
     {
@@ -914,92 +914,92 @@
       "celeste",
       "doorman",
       "yamato",
-      "silver",
-      "holliday"
-     ]
-    },
-    {
-     "hero_id": "kelvin",
-     "runner_up": "apollo",
-     "is_confident": true,
-     "ranked": [
-      "kelvin",
-      "apollo",
-      "venator",
-      "shiv",
+      "vyper",
       "silver"
      ]
     },
     {
-     "hero_id": "vindicta",
-     "runner_up": "sinclair",
+     "hero_id": "kelvin",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
-      "vindicta",
-      "sinclair",
-      "venator",
-      "graves",
-      "victor"
-     ]
-    },
-    {
-     "hero_id": "seven",
-     "runner_up": "holliday",
-     "is_confident": true,
-     "ranked": [
-      "seven",
-      "holliday",
-      "graves",
-      "silver",
-      "sinclair"
-     ]
-    },
-    {
-     "hero_id": "apollo",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
+      "kelvin",
+      "ivy",
       "apollo",
       "silver",
-      "rem",
-      "victor",
-      "kelvin"
-     ]
-    },
-    {
-     "hero_id": "mo_and_krill",
-     "runner_up": "abrams",
-     "is_confident": true,
-     "ranked": [
-      "mo_and_krill",
-      "abrams",
-      "sinclair",
-      "mina",
       "rem"
      ]
     },
     {
+     "hero_id": "vindicta",
+     "runner_up": "graves",
+     "is_confident": true,
+     "ranked": [
+      "vindicta",
+      "graves",
+      "sinclair",
+      "kelvin",
+      "lash"
+     ]
+    },
+    {
+     "hero_id": "seven",
+     "runner_up": "paige",
+     "is_confident": true,
+     "ranked": [
+      "seven",
+      "paige",
+      "holliday",
+      "warden",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "apollo",
+     "runner_up": "kelvin",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "kelvin",
+      "bebop",
+      "mirage",
+      "mcginnis"
+     ]
+    },
+    {
+     "hero_id": "mo_and_krill",
+     "runner_up": "sinclair",
+     "is_confident": true,
+     "ranked": [
+      "mo_and_krill",
+      "sinclair",
+      "ivy",
+      "drifter",
+      "abrams"
+     ]
+    },
+    {
      "hero_id": "silver",
-     "runner_up": "mina",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "silver",
-      "mina",
+      "calico",
       "graves",
-      "yamato",
-      "victor"
+      "venator",
+      "mina"
      ]
     },
     {
      "hero_id": "sinclair",
-     "runner_up": "pocket",
+     "runner_up": "mcginnis",
      "is_confident": true,
      "ranked": [
       "sinclair",
-      "pocket",
+      "mcginnis",
       "graves",
-      "drifter",
-      "billy"
+      "pocket",
+      "warden"
      ]
     }
    ]
@@ -1013,48 +1013,48 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1278.9259854940774,
-    "pitch": 116.29620287138735,
-    "top": 17.8,
-    "gap_ratio": 1.7086765609903503,
-    "width_ratio": 0.5440527760754243
+    "center_x": 1280.0,
+    "pitch": 115.25577637005162,
+    "top": 28.8,
+    "gap_ratio": 1.65,
+    "width_ratio": 0.612
    },
-   "score": 0.7183934450149536
+   "score": 0.7669256925582886
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1278.6763261503886,
-    "pitch": 116.2008954142881,
-    "top": 17.8,
-    "gap_ratio": 1.709085222892964,
-    "width_ratio": 0.5063840753384515
+    "center_x": 1277.192708106842,
+    "pitch": 115.83235410601954,
+    "top": 14.8,
+    "gap_ratio": 1.7124253008975847,
+    "width_ratio": 0.5237001413574235
    },
    "self_slot": 0,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "apollo",
-     "runner_up": "dynamo",
+     "runner_up": "kelvin",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "dynamo",
+      "kelvin",
       "venator",
-      "silver",
-      "sinclair"
+      "dynamo",
+      "silver"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "drifter",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "ivy",
+      "rem",
+      "billy",
       "drifter",
-      "abrams",
-      "silver",
-      "paige"
+      "mcginnis"
      ]
     },
     {
@@ -1065,8 +1065,8 @@
       "wraith",
       "ivy",
       "venator",
-      "rem",
-      "apollo"
+      "kelvin",
+      "abrams"
      ]
     },
     {
@@ -1076,33 +1076,33 @@
      "ranked": [
       "bebop",
       "calico",
-      "silver",
-      "mo_and_krill",
-      "lash"
+      "dynamo",
+      "mina",
+      "vyper"
      ]
     },
     {
      "hero_id": "silver",
-     "runner_up": "lash",
+     "runner_up": "graves",
      "is_confident": true,
      "ranked": [
       "silver",
-      "lash",
+      "graves",
+      "drifter",
       "apollo",
-      "seven",
-      "pocket"
+      "holliday"
      ]
     },
     {
      "hero_id": "doorman",
-     "runner_up": "graves",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "doorman",
-      "graves",
-      "apollo",
-      "dynamo",
-      "shiv"
+      "rem",
+      "mina",
+      "pocket",
+      "haze"
      ]
     },
     {
@@ -1112,69 +1112,69 @@
      "ranked": [
       "celeste",
       "silver",
+      "calico",
       "doorman",
-      "drifter",
-      "holliday"
+      "victor"
      ]
     },
     {
      "hero_id": "lash",
-     "runner_up": "venator",
+     "runner_up": "graves",
      "is_confident": true,
      "ranked": [
       "lash",
-      "venator",
       "graves",
+      "viscous",
       "silver",
-      "yamato"
+      "mirage"
      ]
     },
     {
      "hero_id": "venator",
-     "runner_up": "silver",
+     "runner_up": "abrams",
      "is_confident": true,
      "ranked": [
       "venator",
+      "abrams",
+      "rem",
       "silver",
-      "wraith",
-      "apollo",
-      "abrams"
+      "infernus"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "silver",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "paige",
-      "silver",
       "calico",
-      "sinclair",
-      "wraith"
+      "rem",
+      "silver",
+      "sinclair"
      ]
     },
     {
      "hero_id": "mirage",
-     "runner_up": "seven",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "mirage",
-      "seven",
-      "calico",
+      "rem",
       "lash",
-      "silver"
+      "calico",
+      "seven"
      ]
     },
     {
      "hero_id": "mo_and_krill",
-     "runner_up": "silver",
+     "runner_up": "drifter",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
-      "silver",
-      "victor",
-      "venator",
-      "mina"
+      "drifter",
+      "sinclair",
+      "ivy",
+      "abrams"
      ]
     }
    ]
@@ -1182,37 +1182,37 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1279.0834277705824,
-    "pitch": 115.84716955196562,
-    "top": 17.8,
-    "gap_ratio": 1.726242117935176,
-    "width_ratio": 0.5079302602336735
+    "center_x": 1277.552031663911,
+    "pitch": 115.73999000833466,
+    "top": 14.8,
+    "gap_ratio": 1.7195955761093764,
+    "width_ratio": 0.5241180702946079
    },
    "self_slot": 0,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "apollo",
-     "runner_up": "dynamo",
+     "runner_up": "kelvin",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "dynamo",
+      "kelvin",
       "venator",
-      "silver",
-      "kelvin"
+      "dynamo",
+      "silver"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "drifter",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "ivy",
+      "rem",
+      "billy",
       "drifter",
-      "abrams",
-      "silver",
-      "rem"
+      "mcginnis"
      ]
     },
     {
@@ -1223,8 +1223,8 @@
       "wraith",
       "ivy",
       "venator",
-      "rem",
-      "apollo"
+      "kelvin",
+      "abrams"
      ]
     },
     {
@@ -1234,33 +1234,33 @@
      "ranked": [
       "bebop",
       "calico",
-      "silver",
-      "mo_and_krill",
-      "doorman"
+      "dynamo",
+      "mina",
+      "vyper"
      ]
     },
     {
      "hero_id": "silver",
-     "runner_up": "apollo",
+     "runner_up": "graves",
      "is_confident": true,
      "ranked": [
       "silver",
+      "graves",
+      "drifter",
       "apollo",
-      "lash",
-      "pocket",
-      "graves"
+      "holliday"
      ]
     },
     {
      "hero_id": "doorman",
-     "runner_up": "graves",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "doorman",
-      "graves",
-      "apollo",
-      "calico",
-      "sinclair"
+      "rem",
+      "mina",
+      "haze",
+      "graves"
      ]
     },
     {
@@ -1270,69 +1270,69 @@
      "ranked": [
       "celeste",
       "silver",
+      "holliday",
       "doorman",
-      "drifter",
-      "holliday"
+      "calico"
      ]
     },
     {
      "hero_id": "lash",
-     "runner_up": "yamato",
+     "runner_up": "graves",
      "is_confident": true,
      "ranked": [
       "lash",
-      "yamato",
-      "venator",
-      "silver",
-      "viscous"
-     ]
-    },
-    {
-     "hero_id": "venator",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "venator",
-      "silver",
-      "wraith",
-      "apollo",
-      "abrams"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "silver",
-      "sinclair",
-      "calico",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "mirage",
-     "runner_up": "calico",
-     "is_confident": true,
-     "ranked": [
+      "graves",
       "mirage",
-      "calico",
-      "seven",
-      "lash",
+      "viscous",
       "silver"
      ]
     },
     {
+     "hero_id": "venator",
+     "runner_up": "abrams",
+     "is_confident": true,
+     "ranked": [
+      "venator",
+      "abrams",
+      "rem",
+      "ivy",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "paige",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "paige",
+      "calico",
+      "rem",
+      "silver",
+      "mo_and_krill"
+     ]
+    },
+    {
+     "hero_id": "mirage",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "mirage",
+      "rem",
+      "lash",
+      "seven",
+      "calico"
+     ]
+    },
+    {
      "hero_id": "mo_and_krill",
-     "runner_up": "silver",
+     "runner_up": "drifter",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
-      "silver",
-      "victor",
-      "venator",
-      "mina"
+      "drifter",
+      "sinclair",
+      "ivy",
+      "abrams"
      ]
     }
    ]
@@ -1353,25 +1353,25 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 711.4767192976219,
-    "pitch": 91.88644166459314,
-    "top": 11.0,
-    "gap_ratio": 1.7180111162588407,
-    "width_ratio": 0.5531241638796948
+    "center_x": 714.3481448163728,
+    "pitch": 92.41441619060936,
+    "top": 19.0,
+    "gap_ratio": 1.7366457525713028,
+    "width_ratio": 0.5137868973341595
    },
-   "score": 0.6043292284011841
+   "score": 0.750379741191864
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 716.0788297524608,
-    "pitch": 91.72919773221656,
-    "top": 11.0,
-    "gap_ratio": 1.7621776821201975,
-    "width_ratio": 0.5540723398233551
+    "center_x": 714.3122864052046,
+    "pitch": 92.63345975636419,
+    "top": 14.0,
+    "gap_ratio": 1.7257836098697383,
+    "width_ratio": 0.5535777416872255
    },
    "self_slot": 2,
-   "confident_count": 8,
+   "confident_count": 10,
    "slots": [
     {
      "hero_id": "abrams",
@@ -1380,57 +1380,57 @@
      "ranked": [
       "abrams",
       "ivy",
-      "mo_and_krill",
-      "victor",
-      "dynamo"
+      "calico",
+      "sinclair",
+      "mcginnis"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
+     "runner_up": "abrams",
+     "is_confident": true,
      "ranked": [
       "victor",
-      "sinclair",
+      "abrams",
       "yamato",
-      "graves",
-      "abrams"
+      "sinclair",
+      "graves"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "sinclair",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "paige",
-      "sinclair",
-      "mcginnis",
       "calico",
-      "victor"
+      "rem",
+      "sinclair",
+      "dynamo"
      ]
     },
     {
-     "hero_id": null,
-     "runner_up": "silver",
-     "is_confident": false,
+     "hero_id": "mina",
+     "runner_up": "calico",
+     "is_confident": true,
      "ranked": [
-      "silver",
-      "pocket",
-      "victor",
-      "graves",
-      "warden"
+      "mina",
+      "calico",
+      "ivy",
+      "drifter",
+      "mo_and_krill"
      ]
     },
     {
      "hero_id": "holliday",
-     "runner_up": "apollo",
+     "runner_up": "pocket",
      "is_confident": true,
      "ranked": [
       "holliday",
-      "apollo",
-      "lash",
-      "yamato",
-      "paradox"
+      "pocket",
+      "drifter",
+      "victor",
+      "ivy"
      ]
     },
     {
@@ -1440,21 +1440,21 @@
      "ranked": [
       "apollo",
       "silver",
+      "kelvin",
       "rem",
-      "pocket",
-      "victor"
+      "pocket"
      ]
     },
     {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
-      "rem",
-      "yamato",
       "dynamo",
-      "victor"
+      "rem",
+      "ivy",
+      "apollo"
      ]
     },
     {
@@ -1463,10 +1463,10 @@
      "is_confident": false,
      "ranked": [
       "infernus",
-      "doorman",
-      "apollo",
-      "silver",
-      "shiv"
+      "graves",
+      "victor",
+      "mina",
+      "warden"
      ]
     },
     {
@@ -1476,9 +1476,9 @@
      "ranked": [
       "yamato",
       "shiv",
+      "holliday",
       "victor",
-      "doorman",
-      "infernus"
+      "venator"
      ]
     },
     {
@@ -1488,9 +1488,9 @@
      "ranked": [
       "haze",
       "vyper",
-      "mcginnis",
+      "lash",
       "doorman",
-      "pocket"
+      "wraith"
      ]
     },
     {
@@ -1500,21 +1500,21 @@
      "ranked": [
       "bebop",
       "mo_and_krill",
-      "doorman",
-      "apollo",
-      "silver"
+      "mina",
+      "viscous",
+      "shiv"
      ]
     },
     {
-     "hero_id": null,
-     "runner_up": "pocket",
+     "hero_id": "pocket",
+     "runner_up": "warden",
      "is_confident": false,
      "ranked": [
       "pocket",
-      "apollo",
+      "warden",
+      "infernus",
       "dynamo",
-      "holliday",
-      "yamato"
+      "apollo"
      ]
     }
    ]
@@ -1522,61 +1522,61 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 715.517886170667,
-    "pitch": 92.17669472785641,
-    "top": 11.0,
-    "gap_ratio": 1.747873326793316,
-    "width_ratio": 0.551382443986125
+    "center_x": 714.3222798507724,
+    "pitch": 92.79629171017606,
+    "top": 14.0,
+    "gap_ratio": 1.7163952832025453,
+    "width_ratio": 0.5526063650987383
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 10,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "ivy",
+     "runner_up": "sinclair",
      "is_confident": true,
      "ranked": [
       "abrams",
+      "sinclair",
       "ivy",
-      "mo_and_krill",
-      "victor",
-      "dynamo"
+      "calico",
+      "mcginnis"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
-     "ranked": [
-      "victor",
-      "sinclair",
-      "yamato",
-      "dynamo",
-      "abrams"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "sinclair",
+     "runner_up": "abrams",
      "is_confident": true,
      "ranked": [
-      "paige",
+      "victor",
+      "abrams",
+      "yamato",
       "sinclair",
-      "mcginnis",
-      "calico",
       "graves"
      ]
     },
     {
-     "hero_id": null,
-     "runner_up": "warden",
-     "is_confident": false,
+     "hero_id": "paige",
+     "runner_up": "calico",
+     "is_confident": true,
      "ranked": [
-      "warden",
-      "pocket",
-      "silver",
-      "graves",
-      "victor"
+      "paige",
+      "calico",
+      "rem",
+      "sinclair",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "mina",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "mina",
+      "calico",
+      "ivy",
+      "drifter",
+      "silver"
      ]
     },
     {
@@ -1586,33 +1586,33 @@
      "ranked": [
       "holliday",
       "drifter",
-      "apollo",
-      "lash",
-      "paradox"
-     ]
-    },
-    {
-     "hero_id": "apollo",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "apollo",
-      "silver",
-      "rem",
       "pocket",
+      "warden",
       "victor"
      ]
     },
     {
+     "hero_id": "apollo",
+     "runner_up": "kelvin",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "kelvin",
+      "silver",
+      "venator",
+      "rem"
+     ]
+    },
+    {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
-      "rem",
       "dynamo",
-      "yamato",
-      "calico"
+      "rem",
+      "ivy",
+      "billy"
      ]
     },
     {
@@ -1621,10 +1621,10 @@
      "is_confident": false,
      "ranked": [
       "infernus",
-      "doorman",
-      "apollo",
-      "yamato",
-      "drifter"
+      "graves",
+      "victor",
+      "mina",
+      "warden"
      ]
     },
     {
@@ -1635,8 +1635,8 @@
       "yamato",
       "shiv",
       "victor",
-      "doorman",
-      "infernus"
+      "holliday",
+      "venator"
      ]
     },
     {
@@ -1646,9 +1646,9 @@
      "ranked": [
       "haze",
       "vyper",
-      "mcginnis",
-      "doorman",
-      "pocket"
+      "lash",
+      "paradox",
+      "doorman"
      ]
     },
     {
@@ -1658,21 +1658,21 @@
      "ranked": [
       "bebop",
       "mo_and_krill",
-      "doorman",
-      "apollo",
-      "silver"
+      "mina",
+      "silver",
+      "viscous"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "dynamo",
-     "is_confident": true,
+     "runner_up": "warden",
+     "is_confident": false,
      "ranked": [
       "pocket",
+      "warden",
+      "infernus",
       "dynamo",
-      "apollo",
-      "shiv",
-      "holliday"
+      "apollo"
      ]
     }
    ]
@@ -1693,48 +1693,48 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 897.3718097981089,
-    "pitch": 114.82876622446967,
-    "top": 19.0,
-    "gap_ratio": 1.7575042891667019,
-    "width_ratio": 0.5251071957572336
+    "center_x": 896.4710520920895,
+    "pitch": 115.70839169880651,
+    "top": 26.0,
+    "gap_ratio": 1.7332051619856588,
+    "width_ratio": 0.5118510124804283
    },
-   "score": 0.6334978342056274
+   "score": 0.7548503875732422
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 898.1212579394572,
-    "pitch": 114.72821841871804,
-    "top": 19.0,
-    "gap_ratio": 1.7545431627565273,
-    "width_ratio": 0.525567399681303
+    "center_x": 897.6526138824106,
+    "pitch": 116.18742951976719,
+    "top": 20.0,
+    "gap_ratio": 1.7048622038562569,
+    "width_ratio": 0.5505199168565404
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 10,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "sinclair",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
       "abrams",
-      "sinclair",
-      "victor",
       "ivy",
-      "dynamo"
+      "calico",
+      "sinclair",
+      "mcginnis"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
+     "runner_up": "abrams",
+     "is_confident": true,
      "ranked": [
       "victor",
-      "sinclair",
       "abrams",
+      "sinclair",
       "yamato",
-      "graves"
+      "doorman"
      ]
     },
     {
@@ -1744,45 +1744,45 @@
      "ranked": [
       "paige",
       "calico",
-      "graves",
-      "wraith",
-      "mcginnis"
+      "rem",
+      "sinclair",
+      "dynamo"
      ]
     },
     {
-     "hero_id": "silver",
-     "runner_up": "warden",
-     "is_confident": false,
+     "hero_id": "mina",
+     "runner_up": "calico",
+     "is_confident": true,
      "ranked": [
-      "silver",
-      "warden",
-      "pocket",
-      "mo_and_krill",
-      "victor"
+      "mina",
+      "calico",
+      "drifter",
+      "ivy",
+      "mo_and_krill"
      ]
     },
     {
      "hero_id": "holliday",
-     "runner_up": "drifter",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
       "holliday",
-      "drifter",
-      "apollo",
-      "yamato",
-      "paradox"
+      "ivy",
+      "warden",
+      "pocket",
+      "mirage"
      ]
     },
     {
      "hero_id": "apollo",
-     "runner_up": "rem",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "rem",
-      "mcginnis",
-      "victor",
-      "kelvin"
+      "venator",
+      "kelvin",
+      "graves",
+      "rem"
      ]
     },
     {
@@ -1792,21 +1792,21 @@
      "ranked": [
       "shiv",
       "dynamo",
-      "rem",
       "ivy",
-      "infernus"
+      "rem",
+      "holliday"
      ]
     },
     {
      "hero_id": null,
-     "runner_up": "silver",
+     "runner_up": "infernus",
      "is_confident": false,
      "ranked": [
-      "silver",
       "infernus",
-      "doorman",
-      "yamato",
-      "graves"
+      "graves",
+      "victor",
+      "mina",
+      "warden"
      ]
     },
     {
@@ -1816,9 +1816,9 @@
      "ranked": [
       "yamato",
       "infernus",
-      "doorman",
+      "venator",
       "shiv",
-      "apollo"
+      "holliday"
      ]
     },
     {
@@ -1828,33 +1828,33 @@
      "ranked": [
       "haze",
       "vyper",
-      "wraith",
+      "lash",
       "doorman",
-      "mcginnis"
+      "silver"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "doorman",
+     "runner_up": "silver",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "doorman",
       "silver",
-      "lash",
-      "drifter"
+      "dynamo",
+      "mina",
+      "doorman"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "dynamo",
-     "is_confident": true,
+     "runner_up": "warden",
+     "is_confident": false,
      "ranked": [
       "pocket",
-      "dynamo",
-      "apollo",
-      "yamato",
-      "infernus"
+      "warden",
+      "bebop",
+      "infernus",
+      "shiv"
      ]
     }
    ]
@@ -1862,37 +1862,37 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 897.5437933917235,
-    "pitch": 114.62788939171233,
-    "top": 19.0,
-    "gap_ratio": 1.7630941369145268,
-    "width_ratio": 0.5260274069807112
+    "center_x": 898.0686079637011,
+    "pitch": 116.11340807984939,
+    "top": 26.0,
+    "gap_ratio": 1.7131912124894428,
+    "width_ratio": 0.5508708692368299
    },
    "self_slot": 2,
    "confident_count": 9,
    "slots": [
     {
      "hero_id": "abrams",
-     "runner_up": "sinclair",
+     "runner_up": "ivy",
      "is_confident": true,
      "ranked": [
       "abrams",
-      "sinclair",
       "ivy",
-      "victor",
-      "mo_and_krill"
+      "calico",
+      "sinclair",
+      "kelvin"
      ]
     },
     {
      "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
+     "runner_up": "abrams",
+     "is_confident": true,
      "ranked": [
       "victor",
-      "sinclair",
-      "yamato",
       "abrams",
-      "apollo"
+      "yamato",
+      "graves",
+      "sinclair"
      ]
     },
     {
@@ -1902,81 +1902,81 @@
      "ranked": [
       "paige",
       "calico",
-      "graves",
-      "wraith",
-      "venator"
+      "rem",
+      "venator",
+      "doorman"
      ]
     },
     {
-     "hero_id": "silver",
-     "runner_up": "warden",
-     "is_confident": false,
+     "hero_id": "mina",
+     "runner_up": "ivy",
+     "is_confident": true,
      "ranked": [
-      "silver",
-      "warden",
-      "drifter",
       "mina",
-      "pocket"
+      "ivy",
+      "silver",
+      "drifter",
+      "calico"
      ]
     },
     {
      "hero_id": "holliday",
-     "runner_up": "drifter",
+     "runner_up": "warden",
      "is_confident": true,
      "ranked": [
       "holliday",
-      "drifter",
-      "apollo",
-      "paradox",
-      "infernus"
+      "warden",
+      "victor",
+      "mirage",
+      "lash"
      ]
     },
     {
      "hero_id": "apollo",
-     "runner_up": "mcginnis",
+     "runner_up": "kelvin",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "mcginnis",
-      "rem",
       "kelvin",
-      "sinclair"
+      "venator",
+      "silver",
+      "rem"
      ]
     },
     {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
+      "dynamo",
       "rem",
-      "ivy",
-      "infernus",
-      "dynamo"
+      "sinclair",
+      "ivy"
      ]
     },
     {
      "hero_id": null,
-     "runner_up": "silver",
+     "runner_up": "infernus",
      "is_confident": false,
      "ranked": [
-      "silver",
       "infernus",
-      "doorman",
       "graves",
-      "apollo"
+      "victor",
+      "warden",
+      "sinclair"
      ]
     },
     {
      "hero_id": "yamato",
-     "runner_up": "infernus",
-     "is_confident": true,
+     "runner_up": "doorman",
+     "is_confident": false,
      "ranked": [
       "yamato",
-      "infernus",
       "doorman",
       "shiv",
-      "apollo"
+      "venator",
+      "holliday"
      ]
     },
     {
@@ -1986,33 +1986,33 @@
      "ranked": [
       "haze",
       "vyper",
-      "wraith",
       "doorman",
-      "yamato"
+      "lash",
+      "wraith"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "doorman",
+     "runner_up": "seven",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "doorman",
-      "calico",
-      "lash",
-      "silver"
+      "seven",
+      "mo_and_krill",
+      "silver",
+      "dynamo"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "apollo",
-     "is_confident": true,
+     "runner_up": "infernus",
+     "is_confident": false,
      "ranked": [
       "pocket",
-      "apollo",
-      "dynamo",
-      "yamato",
-      "infernus"
+      "infernus",
+      "warden",
+      "paradox",
+      "shiv"
      ]
     }
    ]
@@ -2033,25 +2033,25 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1207.937121748211,
-    "pitch": 154.89677244646242,
-    "top": 20.0,
-    "gap_ratio": 1.759808920434982,
-    "width_ratio": 0.5701588683857908
+    "center_x": 1206.5785624647494,
+    "pitch": 155.88028054441006,
+    "top": 27.0,
+    "gap_ratio": 1.7313088141532114,
+    "width_ratio": 0.5099053669111968
    },
-   "score": 0.5573297739028931
+   "score": 0.7390223145484924
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1208.0011024280782,
-    "pitch": 155.45020388685856,
-    "top": 20.0,
-    "gap_ratio": 1.7443349093715455,
-    "width_ratio": 0.5283599676706614
+    "center_x": 1205.914758181798,
+    "pitch": 155.44197257790924,
+    "top": 27.0,
+    "gap_ratio": 1.7457369005967318,
+    "width_ratio": 0.5522506280201103
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 10,
    "slots": [
     {
      "hero_id": "abrams",
@@ -2060,203 +2060,45 @@
      "ranked": [
       "abrams",
       "ivy",
-      "victor",
       "sinclair",
-      "dynamo"
-     ]
-    },
-    {
-     "hero_id": "victor",
-     "runner_up": "sinclair",
-     "is_confident": false,
-     "ranked": [
-      "victor",
-      "sinclair",
-      "abrams",
-      "apollo",
-      "yamato"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "calico",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "calico",
-      "graves",
-      "mcginnis",
-      "venator"
-     ]
-    },
-    {
-     "hero_id": "silver",
-     "runner_up": "pocket",
-     "is_confident": false,
-     "ranked": [
-      "silver",
-      "pocket",
-      "graves",
-      "mcginnis",
-      "victor"
-     ]
-    },
-    {
-     "hero_id": "holliday",
-     "runner_up": "apollo",
-     "is_confident": true,
-     "ranked": [
-      "holliday",
-      "apollo",
-      "drifter",
-      "seven",
-      "paradox"
-     ]
-    },
-    {
-     "hero_id": "apollo",
-     "runner_up": "rem",
-     "is_confident": true,
-     "ranked": [
-      "apollo",
-      "rem",
       "kelvin",
-      "ivy",
-      "venator"
-     ]
-    },
-    {
-     "hero_id": "shiv",
-     "runner_up": "rem",
-     "is_confident": true,
-     "ranked": [
-      "shiv",
-      "rem",
-      "infernus",
-      "dynamo",
-      "lash"
-     ]
-    },
-    {
-     "hero_id": null,
-     "runner_up": "infernus",
-     "is_confident": false,
-     "ranked": [
-      "infernus",
-      "doorman",
-      "apollo",
-      "drifter",
-      "seven"
-     ]
-    },
-    {
-     "hero_id": "yamato",
-     "runner_up": "shiv",
-     "is_confident": true,
-     "ranked": [
-      "yamato",
-      "shiv",
-      "victor",
-      "doorman",
-      "seven"
-     ]
-    },
-    {
-     "hero_id": "haze",
-     "runner_up": "vyper",
-     "is_confident": true,
-     "ranked": [
-      "haze",
-      "vyper",
-      "doorman",
-      "mcginnis",
-      "wraith"
-     ]
-    },
-    {
-     "hero_id": "bebop",
-     "runner_up": "doorman",
-     "is_confident": true,
-     "ranked": [
-      "bebop",
-      "doorman",
-      "lash",
-      "shiv",
-      "silver"
-     ]
-    },
-    {
-     "hero_id": "pocket",
-     "runner_up": "apollo",
-     "is_confident": true,
-     "ranked": [
-      "pocket",
-      "apollo",
-      "dynamo",
-      "yamato",
-      "doorman"
-     ]
-    }
-   ]
-  },
-  "cached_detection": {
-   "geometry": {
-    "version": 2,
-    "center_x": 1206.9874494896103,
-    "pitch": 155.1559828795344,
-    "top": 20.0,
-    "gap_ratio": 1.7581507089402155,
-    "width_ratio": 0.5293618923082599
-   },
-   "self_slot": 2,
-   "confident_count": 9,
-   "slots": [
-    {
-     "hero_id": "abrams",
-     "runner_up": "ivy",
-     "is_confident": true,
-     "ranked": [
-      "abrams",
-      "ivy",
-      "sinclair",
-      "victor",
-      "dynamo"
+      "calico"
      ]
     },
     {
      "hero_id": "victor",
      "runner_up": "abrams",
-     "is_confident": false,
+     "is_confident": true,
      "ranked": [
       "victor",
       "abrams",
-      "apollo",
+      "yamato",
       "graves",
-      "yamato"
+      "dynamo"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "calico",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "paige",
+      "rem",
       "calico",
-      "graves",
-      "mcginnis",
-      "lash"
+      "doorman",
+      "dynamo"
      ]
     },
     {
-     "hero_id": "silver",
-     "runner_up": "warden",
-     "is_confident": false,
+     "hero_id": "mina",
+     "runner_up": "ivy",
+     "is_confident": true,
      "ranked": [
-      "silver",
-      "warden",
-      "graves",
-      "mcginnis",
-      "pocket"
+      "mina",
+      "ivy",
+      "drifter",
+      "calico",
+      "silver"
      ]
     },
     {
@@ -2266,33 +2108,33 @@
      "ranked": [
       "holliday",
       "drifter",
-      "paradox",
-      "apollo",
-      "seven"
-     ]
-    },
-    {
-     "hero_id": "apollo",
-     "runner_up": "rem",
-     "is_confident": true,
-     "ranked": [
-      "apollo",
-      "rem",
-      "mcginnis",
-      "kelvin",
+      "pocket",
+      "warden",
       "victor"
      ]
     },
     {
+     "hero_id": "apollo",
+     "runner_up": "kelvin",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "kelvin",
+      "venator",
+      "mcginnis",
+      "silver"
+     ]
+    },
+    {
      "hero_id": "shiv",
-     "runner_up": "rem",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "shiv",
-      "rem",
+      "dynamo",
       "infernus",
-      "lash",
-      "dynamo"
+      "rem",
+      "sinclair"
      ]
     },
     {
@@ -2301,22 +2143,22 @@
      "is_confident": false,
      "ranked": [
       "infernus",
-      "doorman",
-      "apollo",
-      "drifter",
-      "seven"
+      "victor",
+      "graves",
+      "mina",
+      "bebop"
      ]
     },
     {
      "hero_id": "yamato",
-     "runner_up": "shiv",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "yamato",
+      "venator",
+      "infernus",
       "shiv",
-      "victor",
-      "doorman",
-      "seven"
+      "doorman"
      ]
     },
     {
@@ -2326,33 +2168,191 @@
      "ranked": [
       "haze",
       "vyper",
+      "lash",
       "doorman",
-      "mcginnis",
-      "wraith"
+      "victor"
      ]
     },
     {
      "hero_id": "bebop",
-     "runner_up": "doorman",
+     "runner_up": "dynamo",
      "is_confident": true,
      "ranked": [
       "bebop",
-      "doorman",
-      "lash",
-      "shiv",
-      "silver"
+      "dynamo",
+      "seven",
+      "silver",
+      "lash"
      ]
     },
     {
      "hero_id": "pocket",
-     "runner_up": "apollo",
-     "is_confident": true,
+     "runner_up": "warden",
+     "is_confident": false,
      "ranked": [
       "pocket",
-      "apollo",
-      "dynamo",
+      "warden",
+      "bebop",
+      "celeste",
+      "holliday"
+     ]
+    }
+   ]
+  },
+  "cached_detection": {
+   "geometry": {
+    "version": 2,
+    "center_x": 1206.0444103435034,
+    "pitch": 155.67897139074134,
+    "top": 27.0,
+    "gap_ratio": 1.7390371717920785,
+    "width_ratio": 0.5514099059748827
+   },
+   "self_slot": 2,
+   "confident_count": 10,
+   "slots": [
+    {
+     "hero_id": "abrams",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "abrams",
+      "ivy",
+      "sinclair",
+      "kelvin",
+      "calico"
+     ]
+    },
+    {
+     "hero_id": "victor",
+     "runner_up": "abrams",
+     "is_confident": true,
+     "ranked": [
+      "victor",
+      "abrams",
       "yamato",
+      "graves",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "paige",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "paige",
+      "rem",
+      "calico",
+      "doorman",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "mina",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "mina",
+      "ivy",
+      "drifter",
+      "calico",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "holliday",
+     "runner_up": "pocket",
+     "is_confident": true,
+     "ranked": [
+      "holliday",
+      "pocket",
+      "warden",
+      "victor",
+      "drifter"
+     ]
+    },
+    {
+     "hero_id": "apollo",
+     "runner_up": "kelvin",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "kelvin",
+      "mcginnis",
+      "venator",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "shiv",
+     "runner_up": "dynamo",
+     "is_confident": true,
+     "ranked": [
+      "shiv",
+      "dynamo",
+      "infernus",
+      "rem",
+      "sinclair"
+     ]
+    },
+    {
+     "hero_id": null,
+     "runner_up": "infernus",
+     "is_confident": false,
+     "ranked": [
+      "infernus",
+      "graves",
+      "victor",
+      "doorman",
+      "mina"
+     ]
+    },
+    {
+     "hero_id": "yamato",
+     "runner_up": "venator",
+     "is_confident": true,
+     "ranked": [
+      "yamato",
+      "venator",
+      "infernus",
+      "shiv",
       "doorman"
+     ]
+    },
+    {
+     "hero_id": "haze",
+     "runner_up": "vyper",
+     "is_confident": true,
+     "ranked": [
+      "haze",
+      "vyper",
+      "lash",
+      "doorman",
+      "victor"
+     ]
+    },
+    {
+     "hero_id": "bebop",
+     "runner_up": "dynamo",
+     "is_confident": true,
+     "ranked": [
+      "bebop",
+      "dynamo",
+      "silver",
+      "seven",
+      "lash"
+     ]
+    },
+    {
+     "hero_id": "pocket",
+     "runner_up": "warden",
+     "is_confident": false,
+     "ranked": [
+      "pocket",
+      "warden",
+      "bebop",
+      "holliday",
+      "celeste"
      ]
     }
    ]
@@ -2366,60 +2366,60 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1279.8459309245234,
-    "pitch": 118.80259859652564,
-    "top": 16.8,
-    "gap_ratio": 1.6541507659048447,
-    "width_ratio": 0.4879621556217089
+    "center_x": 1275.5,
+    "pitch": 115.25577637005162,
+    "top": 28.8,
+    "gap_ratio": 1.65,
+    "width_ratio": 0.612
    },
-   "score": 0.6970405578613281
+   "score": 0.7592300176620483
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.8469585477567,
-    "pitch": 116.4869791091826,
-    "top": 16.8,
-    "gap_ratio": 1.7006981334899454,
-    "width_ratio": 0.49766224987502855
+    "center_x": 1278.036423514757,
+    "pitch": 115.75411375619028,
+    "top": 14.8,
+    "gap_ratio": 1.7122400067789898,
+    "width_ratio": 0.5240541199844962
    },
    "self_slot": 0,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "apollo",
-     "runner_up": "dynamo",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "apollo",
+      "venator",
       "dynamo",
-      "sinclair",
-      "victor",
-      "silver"
+      "kelvin",
+      "ivy"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "billy",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "ivy",
-      "billy",
-      "silver",
-      "paige",
-      "drifter"
+      "rem",
+      "drifter",
+      "mcginnis",
+      "billy"
      ]
     },
     {
      "hero_id": "wraith",
-     "runner_up": "ivy",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "wraith",
-      "ivy",
       "venator",
-      "mcginnis",
-      "lash"
+      "ivy",
+      "shiv",
+      "kelvin"
      ]
     },
     {
@@ -2429,45 +2429,45 @@
      "ranked": [
       "bebop",
       "calico",
-      "silver",
-      "mo_and_krill",
-      "vyper"
+      "mina",
+      "dynamo",
+      "silver"
      ]
     },
     {
      "hero_id": "silver",
-     "runner_up": "apollo",
+     "runner_up": "victor",
      "is_confident": true,
      "ranked": [
       "silver",
-      "apollo",
-      "drifter",
-      "graves",
-      "bebop"
+      "victor",
+      "infernus",
+      "holliday",
+      "graves"
      ]
     },
     {
      "hero_id": "doorman",
-     "runner_up": "graves",
+     "runner_up": "mina",
      "is_confident": true,
      "ranked": [
       "doorman",
-      "graves",
-      "drifter",
-      "sinclair",
-      "dynamo"
+      "mina",
+      "rem",
+      "ivy",
+      "haze"
      ]
     },
     {
      "hero_id": "celeste",
-     "runner_up": "doorman",
+     "runner_up": "silver",
      "is_confident": true,
      "ranked": [
       "celeste",
-      "doorman",
       "silver",
-      "drifter",
-      "victor"
+      "calico",
+      "rem",
+      "doorman"
      ]
     },
     {
@@ -2477,57 +2477,57 @@
      "ranked": [
       "lash",
       "graves",
-      "holliday",
-      "calico",
-      "venator"
-     ]
-    },
-    {
-     "hero_id": "venator",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "venator",
-      "silver",
-      "wraith",
-      "apollo",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "silver",
-      "calico",
-      "wraith",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "mirage",
-     "runner_up": "seven",
-     "is_confident": true,
-     "ranked": [
+      "viscous",
       "mirage",
-      "seven",
-      "calico",
-      "lash",
       "silver"
      ]
     },
     {
+     "hero_id": "venator",
+     "runner_up": "abrams",
+     "is_confident": true,
+     "ranked": [
+      "venator",
+      "abrams",
+      "rem",
+      "ivy",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "paige",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "paige",
+      "calico",
+      "rem",
+      "silver",
+      "sinclair"
+     ]
+    },
+    {
+     "hero_id": "mirage",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "mirage",
+      "rem",
+      "lash",
+      "calico",
+      "seven"
+     ]
+    },
+    {
      "hero_id": "mo_and_krill",
-     "runner_up": "silver",
+     "runner_up": "drifter",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
-      "silver",
-      "venator",
-      "victor",
-      "wraith"
+      "drifter",
+      "sinclair",
+      "ivy",
+      "abrams"
      ]
     }
    ]
@@ -2535,37 +2535,37 @@
   "cached_detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.920089013778,
-    "pitch": 115.79531859576292,
-    "top": 16.8,
-    "gap_ratio": 1.7258737154059733,
-    "width_ratio": 0.5006348512844153
+    "center_x": 1277.7492820192774,
+    "pitch": 116.28208902301797,
+    "top": 14.8,
+    "gap_ratio": 1.6975393179899423,
+    "width_ratio": 0.521674668289436
    },
    "self_slot": 0,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "apollo",
-     "runner_up": "dynamo",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "apollo",
-      "dynamo",
       "venator",
-      "ivy",
-      "sinclair"
+      "dynamo",
+      "kelvin",
+      "silver"
      ]
     },
     {
      "hero_id": "ivy",
-     "runner_up": "billy",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "ivy",
-      "billy",
-      "silver",
+      "rem",
       "drifter",
-      "paige"
+      "billy",
+      "mcginnis"
      ]
     },
     {
@@ -2576,8 +2576,8 @@
       "wraith",
       "ivy",
       "venator",
-      "mcginnis",
-      "shiv"
+      "kelvin",
+      "abrams"
      ]
     },
     {
@@ -2587,33 +2587,33 @@
      "ranked": [
       "bebop",
       "calico",
-      "silver",
-      "mo_and_krill",
+      "mina",
+      "dynamo",
       "vyper"
      ]
     },
     {
      "hero_id": "silver",
-     "runner_up": "apollo",
+     "runner_up": "victor",
      "is_confident": true,
      "ranked": [
       "silver",
-      "apollo",
-      "graves",
-      "drifter",
-      "lash"
+      "victor",
+      "infernus",
+      "holliday",
+      "graves"
      ]
     },
     {
      "hero_id": "doorman",
-     "runner_up": "graves",
+     "runner_up": "mina",
      "is_confident": true,
      "ranked": [
       "doorman",
-      "graves",
-      "drifter",
-      "sinclair",
-      "dynamo"
+      "mina",
+      "rem",
+      "ivy",
+      "haze"
      ]
     },
     {
@@ -2635,57 +2635,57 @@
      "ranked": [
       "lash",
       "graves",
-      "yamato",
+      "viscous",
       "silver",
-      "holliday"
+      "mirage"
      ]
     },
     {
      "hero_id": "venator",
-     "runner_up": "silver",
+     "runner_up": "abrams",
      "is_confident": true,
      "ranked": [
       "venator",
-      "silver",
-      "apollo",
-      "wraith",
-      "graves"
+      "abrams",
+      "rem",
+      "ivy",
+      "silver"
      ]
     },
     {
      "hero_id": "paige",
-     "runner_up": "silver",
+     "runner_up": "calico",
      "is_confident": true,
      "ranked": [
       "paige",
-      "silver",
       "calico",
-      "graves",
-      "lash"
+      "rem",
+      "silver",
+      "mo_and_krill"
      ]
     },
     {
      "hero_id": "mirage",
-     "runner_up": "seven",
+     "runner_up": "rem",
      "is_confident": true,
      "ranked": [
       "mirage",
+      "rem",
+      "lash",
       "seven",
-      "silver",
-      "calico",
-      "lash"
+      "silver"
      ]
     },
     {
      "hero_id": "mo_and_krill",
-     "runner_up": "venator",
+     "runner_up": "sinclair",
      "is_confident": true,
      "ranked": [
       "mo_and_krill",
-      "venator",
-      "silver",
-      "rem",
-      "vyper"
+      "sinclair",
+      "drifter",
+      "ivy",
+      "rem"
      ]
     }
    ]
@@ -2699,36 +2699,194 @@
   "search": {
    "geometry": {
     "version": 2,
-    "center_x": 1276.7630951893577,
-    "pitch": 116.60732468109079,
-    "top": 17.8,
-    "gap_ratio": 1.6872221965018819,
-    "width_ratio": 0.4718271134208581
+    "center_x": 1277.8206157884135,
+    "pitch": 118.24184992086552,
+    "top": 15.8,
+    "gap_ratio": 1.654757347852375,
+    "width_ratio": 0.5091330405476031
    },
-   "score": 0.6855053901672363
+   "score": 0.7810987234115601
   },
   "detection": {
    "geometry": {
     "version": 2,
-    "center_x": 1277.5216164754627,
-    "pitch": 116.37091523710981,
-    "top": 17.8,
-    "gap_ratio": 1.7027715081146146,
-    "width_ratio": 0.510608489067721
+    "center_x": 1277.9296762432884,
+    "pitch": 115.85212303747954,
+    "top": 15.8,
+    "gap_ratio": 1.710964446536033,
+    "width_ratio": 0.5196351261574027
    },
    "self_slot": 0,
    "confident_count": 12,
    "slots": [
     {
      "hero_id": "apollo",
-     "runner_up": "dynamo",
+     "runner_up": "venator",
      "is_confident": true,
      "ranked": [
       "apollo",
+      "venator",
+      "kelvin",
       "dynamo",
+      "sinclair"
+     ]
+    },
+    {
+     "hero_id": "ivy",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "ivy",
+      "rem",
+      "drifter",
+      "mcginnis",
+      "billy"
+     ]
+    },
+    {
+     "hero_id": "wraith",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "wraith",
+      "ivy",
+      "venator",
+      "abrams",
+      "shiv"
+     ]
+    },
+    {
+     "hero_id": "bebop",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "bebop",
+      "calico",
+      "mina",
+      "dynamo",
+      "vyper"
+     ]
+    },
+    {
+     "hero_id": "silver",
+     "runner_up": "victor",
+     "is_confident": true,
+     "ranked": [
       "silver",
+      "victor",
+      "lash",
+      "infernus",
+      "holliday"
+     ]
+    },
+    {
+     "hero_id": "doorman",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "doorman",
+      "ivy",
+      "mina",
+      "rem",
+      "drifter"
+     ]
+    },
+    {
+     "hero_id": "celeste",
+     "runner_up": "silver",
+     "is_confident": true,
+     "ranked": [
+      "celeste",
+      "silver",
+      "doorman",
+      "calico",
+      "rem"
+     ]
+    },
+    {
+     "hero_id": "lash",
+     "runner_up": "viscous",
+     "is_confident": true,
+     "ranked": [
+      "lash",
+      "viscous",
+      "graves",
+      "haze",
+      "mirage"
+     ]
+    },
+    {
+     "hero_id": "venator",
+     "runner_up": "abrams",
+     "is_confident": true,
+     "ranked": [
+      "venator",
+      "abrams",
+      "rem",
+      "ivy",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "paige",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "paige",
+      "calico",
+      "rem",
+      "silver",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "mirage",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "mirage",
+      "rem",
+      "lash",
+      "silver",
+      "calico"
+     ]
+    },
+    {
+     "hero_id": "mo_and_krill",
+     "runner_up": "drifter",
+     "is_confident": true,
+     "ranked": [
+      "mo_and_krill",
+      "drifter",
       "sinclair",
-      "mo_and_krill"
+      "ivy",
+      "abrams"
+     ]
+    }
+   ]
+  },
+  "cached_detection": {
+   "geometry": {
+    "version": 2,
+    "center_x": 1277.6779794769473,
+    "pitch": 116.34187956206664,
+    "top": 15.8,
+    "gap_ratio": 1.696573250915164,
+    "width_ratio": 0.517447653388369
+   },
+   "self_slot": 0,
+   "confident_count": 12,
+   "slots": [
+    {
+     "hero_id": "apollo",
+     "runner_up": "venator",
+     "is_confident": true,
+     "ranked": [
+      "apollo",
+      "venator",
+      "dynamo",
+      "kelvin",
+      "sinclair"
      ]
     },
     {
@@ -2738,9 +2896,9 @@
      "ranked": [
       "ivy",
       "drifter",
-      "billy",
-      "abrams",
-      "calico"
+      "rem",
+      "mcginnis",
+      "billy"
      ]
     },
     {
@@ -2751,8 +2909,8 @@
       "wraith",
       "ivy",
       "venator",
-      "apollo",
-      "rem"
+      "abrams",
+      "lash"
      ]
     },
     {
@@ -2762,263 +2920,105 @@
      "ranked": [
       "bebop",
       "calico",
-      "vyper",
-      "mo_and_krill",
-      "lash"
-     ]
-    },
-    {
-     "hero_id": "silver",
-     "runner_up": "apollo",
-     "is_confident": true,
-     "ranked": [
-      "silver",
-      "apollo",
-      "pocket",
-      "drifter",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "doorman",
-     "runner_up": "graves",
-     "is_confident": true,
-     "ranked": [
-      "doorman",
-      "graves",
-      "sinclair",
-      "shiv",
-      "vindicta"
-     ]
-    },
-    {
-     "hero_id": "celeste",
-     "runner_up": "doorman",
-     "is_confident": true,
-     "ranked": [
-      "celeste",
-      "doorman",
-      "silver",
-      "drifter",
-      "holliday"
-     ]
-    },
-    {
-     "hero_id": "lash",
-     "runner_up": "graves",
-     "is_confident": true,
-     "ranked": [
-      "lash",
-      "graves",
-      "venator",
-      "yamato",
-      "holliday"
-     ]
-    },
-    {
-     "hero_id": "venator",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "venator",
-      "silver",
-      "wraith",
-      "abrams",
-      "apollo"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "silver",
-      "calico",
-      "sinclair",
-      "venator"
-     ]
-    },
-    {
-     "hero_id": "mirage",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "mirage",
-      "silver",
-      "seven",
-      "calico",
-      "lash"
-     ]
-    },
-    {
-     "hero_id": "mo_and_krill",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "mo_and_krill",
-      "silver",
-      "victor",
       "mina",
-      "venator"
-     ]
-    }
-   ]
-  },
-  "cached_detection": {
-   "geometry": {
-    "version": 2,
-    "center_x": 1278.6006996558078,
-    "pitch": 116.41990245574505,
-    "top": 11.8,
-    "gap_ratio": 1.7097454758524302,
-    "width_ratio": 0.5103936349992728
-   },
-   "self_slot": 0,
-   "confident_count": 12,
-   "slots": [
-    {
-     "hero_id": "apollo",
-     "runner_up": "dynamo",
-     "is_confident": true,
-     "ranked": [
-      "apollo",
       "dynamo",
-      "venator",
-      "silver",
-      "ivy"
-     ]
-    },
-    {
-     "hero_id": "ivy",
-     "runner_up": "billy",
-     "is_confident": true,
-     "ranked": [
-      "ivy",
-      "billy",
-      "drifter",
-      "calico",
-      "mo_and_krill"
-     ]
-    },
-    {
-     "hero_id": "wraith",
-     "runner_up": "ivy",
-     "is_confident": true,
-     "ranked": [
-      "wraith",
-      "ivy",
-      "apollo",
-      "shiv",
-      "lash"
-     ]
-    },
-    {
-     "hero_id": "bebop",
-     "runner_up": "calico",
-     "is_confident": true,
-     "ranked": [
-      "bebop",
-      "calico",
-      "vyper",
-      "lash",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "silver",
-     "runner_up": "apollo",
-     "is_confident": true,
-     "ranked": [
-      "silver",
-      "apollo",
-      "graves",
-      "drifter",
-      "mina"
-     ]
-    },
-    {
-     "hero_id": "doorman",
-     "runner_up": "graves",
-     "is_confident": true,
-     "ranked": [
-      "doorman",
-      "graves",
-      "drifter",
-      "sinclair",
-      "shiv"
-     ]
-    },
-    {
-     "hero_id": "celeste",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "celeste",
-      "silver",
-      "doorman",
-      "holliday",
-      "drifter"
-     ]
-    },
-    {
-     "hero_id": "lash",
-     "runner_up": "graves",
-     "is_confident": true,
-     "ranked": [
-      "lash",
-      "graves",
-      "yamato",
-      "venator",
-      "mcginnis"
-     ]
-    },
-    {
-     "hero_id": "venator",
-     "runner_up": "wraith",
-     "is_confident": true,
-     "ranked": [
-      "venator",
-      "wraith",
-      "silver",
-      "abrams",
-      "ivy"
-     ]
-    },
-    {
-     "hero_id": "paige",
-     "runner_up": "silver",
-     "is_confident": true,
-     "ranked": [
-      "paige",
-      "silver",
-      "calico",
-      "sinclair",
-      "graves"
-     ]
-    },
-    {
-     "hero_id": "mirage",
-     "runner_up": "seven",
-     "is_confident": true,
-     "ranked": [
-      "mirage",
-      "seven",
-      "calico",
-      "lash",
       "silver"
      ]
     },
     {
-     "hero_id": "mo_and_krill",
+     "hero_id": "silver",
+     "runner_up": "victor",
+     "is_confident": true,
+     "ranked": [
+      "silver",
+      "victor",
+      "lash",
+      "infernus",
+      "holliday"
+     ]
+    },
+    {
+     "hero_id": "doorman",
+     "runner_up": "ivy",
+     "is_confident": true,
+     "ranked": [
+      "doorman",
+      "ivy",
+      "mina",
+      "rem",
+      "haze"
+     ]
+    },
+    {
+     "hero_id": "celeste",
      "runner_up": "silver",
      "is_confident": true,
      "ranked": [
-      "mo_and_krill",
+      "celeste",
       "silver",
-      "victor",
       "doorman",
-      "sinclair"
+      "calico",
+      "victor"
+     ]
+    },
+    {
+     "hero_id": "lash",
+     "runner_up": "viscous",
+     "is_confident": true,
+     "ranked": [
+      "lash",
+      "viscous",
+      "graves",
+      "haze",
+      "mirage"
+     ]
+    },
+    {
+     "hero_id": "venator",
+     "runner_up": "abrams",
+     "is_confident": true,
+     "ranked": [
+      "venator",
+      "abrams",
+      "rem",
+      "ivy",
+      "silver"
+     ]
+    },
+    {
+     "hero_id": "paige",
+     "runner_up": "calico",
+     "is_confident": true,
+     "ranked": [
+      "paige",
+      "calico",
+      "rem",
+      "silver",
+      "dynamo"
+     ]
+    },
+    {
+     "hero_id": "mirage",
+     "runner_up": "rem",
+     "is_confident": true,
+     "ranked": [
+      "mirage",
+      "rem",
+      "silver",
+      "lash",
+      "calico"
+     ]
+    },
+    {
+     "hero_id": "mo_and_krill",
+     "runner_up": "sinclair",
+     "is_confident": true,
+     "ranked": [
+      "mo_and_krill",
+      "sinclair",
+      "drifter",
+      "ivy",
+      "rem"
      ]
     }
    ]

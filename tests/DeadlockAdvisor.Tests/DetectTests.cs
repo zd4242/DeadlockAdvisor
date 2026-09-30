@@ -250,7 +250,7 @@ public sealed class DetectTests : IDisposable
 
         await review.ApplyCommand.Execute();
 
-        Assert.False(Directory.Exists(Path.Combine(_detect.TopbarDir, "haze")));
+        Assert.Empty(Directory.GetFiles(Path.Combine(_detect.TopbarDir, "haze"), "variant_*"));
         Assert.False(_fixture.Modals.IsModalOpen);
         Assert.False(_fixture.Settings.Current.RememberCorrections);
         Assert.False((await DetectAsync()).RememberCorrections);
