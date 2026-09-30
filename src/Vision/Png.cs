@@ -8,7 +8,8 @@ namespace DeadlockAdvisor.Vision;
 /// <summary>
 /// PNG in and out, as RGB. Decoding does what Pillow's <c>convert("RGB")</c> does: alpha is dropped,
 /// not composited or premultiplied, and no gamma or colour profile is applied, so the pixels match
-/// the ones the Python app matched against. Every colour type, bit depth and interlacing is read.
+/// the ones the Python app matched against; <see cref="DecodeWithAlpha"/> hands the alpha back
+/// separately. Every colour type, bit depth and interlacing is read.
 /// </summary>
 public static class Png
 {
@@ -17,13 +18,26 @@ public static class Png
 
     public static RgbImage Load(string path) => Decode(File.ReadAllBytes(path));
 
-    public static RgbImage Decode(ReadOnlySpan<byte> data)
+    public static RgbImage Decode(ReadOnlySpan<byte> data) => Decode(data, withAlpha: false).Image;
+
+    /// <summary>
+    /// The pixels as <see cref="Decode(ReadOnlySpan{byte})"/> gives them, plus each one's opacity (0-255):
+    /// from an alpha channel, a palette's transparency, or a transparent colour key.
+    /// </summary>
+    public static (RgbImage Image, byte[] Alpha) DecodeWithAlpha(ReadOnlySpan<byte> data)
+    {
+        var (image, alpha) = Decode(data, withAlpha: true);
+        return (image, alpha!);
+    }
+
+    private static (RgbImage Image, byte[]? Alpha) Decode(ReadOnlySpan<byte> data, bool withAlpha)
     {
         if (data.Length < 8 || !data[..8].SequenceEqual(_signature))
             throw new InvalidDataException("Not a PNG file.");
 
         int width = 0, height = 0, depth = 0, colorType = 0, interlace = 0;
         byte[]? palette = null;
+        byte[]? transparency = null;
         using var compressed = new MemoryStream();
         var position = 8;
         while (position + 8 <= data.Length)
@@ -44,6 +58,9 @@ public static class Png
                     break;
                 case "PLTE":
                     palette = body.ToArray();
+                    break;
+                case "tRNS":
+                    transparency = body.ToArray();
                     break;
                 case "IDAT":
                     compressed.Write(body);
@@ -75,10 +92,16 @@ public static class Png
         var bytes = raw.GetBuffer().AsSpan(0, (int)raw.Length);
 
         var image = new RgbImage(width, height);
-        var format = new Format(channels, depth, colorType, palette);
+        byte[]? alpha = null;
+        if (withAlpha)
+        {
+            alpha = new byte[width * height];
+            Array.Fill(alpha, (byte)255);
+        }
+        var format = new Format(channels, depth, colorType, palette, transparency);
         if (interlace == 0)
         {
-            Unpack(bytes, image, format, 0, 0, 1, 1, width, height);
+            Unpack(bytes, image, alpha, format, 0, 0, 1, 1, width, height);
         }
         else
         {
@@ -91,20 +114,21 @@ public static class Png
                 var passHeight = (height - y0 + dy - 1) / dy;
                 if (passWidth <= 0 || passHeight <= 0)
                     continue;
-                offset += Unpack(bytes[offset..], image, format, x0, y0, dx, dy, passWidth, passHeight);
+                offset += Unpack(bytes[offset..], image, alpha, format, x0, y0, dx, dy, passWidth, passHeight);
             }
         }
-        return image;
+        return (image, alpha);
     }
 
-    private sealed record Format(int Channels, int Depth, int ColorType, byte[]? Palette)
+    /// <param name="Transparency">The tRNS chunk: an alpha per palette entry, or the one colour that's transparent.</param>
+    private sealed record Format(int Channels, int Depth, int ColorType, byte[]? Palette, byte[]? Transparency)
     {
         public int BitsPerPixel => Channels * Depth;
         public int FilterStride => Math.Max(1, BitsPerPixel / 8);
     }
 
     /// <summary>Unfilter one (sub)image's scanlines and write its pixels into place. Returns the bytes consumed.</summary>
-    private static int Unpack(Span<byte> bytes, RgbImage image, Format format, int x0, int y0, int dx, int dy, int width, int height)
+    private static int Unpack(Span<byte> bytes, RgbImage image, byte[]? alpha, Format format, int x0, int y0, int dx, int dy, int width, int height)
     {
         var stride = (width * format.BitsPerPixel + 7) / 8;
         var previous = new byte[stride];
@@ -115,11 +139,52 @@ public static class Png
             line[1..].CopyTo(current);
             Unfilter(line[0], current, previous, format.FilterStride);
             for (var column = 0; column < width; column++)
-                WritePixel(image, x0 + column * dx, y0 + row * dy, current, column, format);
+            {
+                var (x, y) = (x0 + column * dx, y0 + row * dy);
+                WritePixel(image, x, y, current, column, format);
+                if (alpha is not null)
+                    alpha[y * image.Width + x] = AlphaOf(current, column, format);
+            }
             (previous, current) = (current, previous);
         }
         return height * (stride + 1);
     }
+
+    private static byte AlphaOf(byte[] line, int column, Format format)
+    {
+        switch (format.ColorType)
+        {
+            case 4 or 6:
+                return (byte)Sample(line, column * format.Channels + format.Channels - 1, format.Depth);
+            case 3:
+            {
+                var bit = column * format.Depth;
+                var index = format.Depth == 8 ? line[column] : (line[bit / 8] >> (8 - format.Depth - bit % 8)) & ((1 << format.Depth) - 1);
+                return format.Transparency is { } alphas && index < alphas.Length ? alphas[index] : (byte)255;
+            }
+            default:
+            {
+                // A colour key: two bytes per channel, whatever the depth, holding a sample at that depth.
+                if (format.Transparency is not { } key || key.Length < 2 * format.Channels)
+                    return 255;
+                for (var c = 0; c < format.Channels; c++)
+                {
+                    var wanted = BinaryPrimitives.ReadUInt16BigEndian(key.AsSpan(c * 2));
+                    if (RawSample(line, column * format.Channels + c, format.Depth) != wanted)
+                        return 255;
+                }
+                return 0;
+            }
+        }
+    }
+
+    /// <summary>A sample at its own depth, unscaled.</summary>
+    private static int RawSample(byte[] line, int index, int depth) => depth switch
+    {
+        8 => line[index],
+        16 => BinaryPrimitives.ReadUInt16BigEndian(line.AsSpan(index * 2)),
+        _ => (line[index * depth / 8] >> (8 - depth - index * depth % 8)) & ((1 << depth) - 1),
+    };
 
     private static void Unfilter(byte filter, byte[] line, byte[] previous, int bpp)
     {

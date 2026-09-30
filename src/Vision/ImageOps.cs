@@ -155,6 +155,23 @@ public static class ImageOps
     }
 
     /// <summary>
+    /// An image laid over a flat colour by its opacity. Art is kept this way rather than with its
+    /// alpha dropped: the colour under a fully transparent pixel is whatever the exporter left there.
+    /// </summary>
+    public static RgbImage Composite(RgbImage image, byte[] alpha, (byte R, byte G, byte B) background)
+    {
+        var result = new RgbImage(image.Width, image.Height);
+        byte[] under = [background.R, background.G, background.B];
+        for (var i = 0; i < alpha.Length; i++)
+        {
+            var a = alpha[i];
+            for (var c = 0; c < 3; c++)
+                result.Pixels[i * 3 + c] = (byte)((image.Pixels[i * 3 + c] * a + under[c] * (255 - a) + 127) / 255);
+        }
+        return result;
+    }
+
+    /// <summary>
     /// (mean RGB, mean per-channel spread) over a box, clipped to the image. Used on the backplate
     /// above each portrait: your own slot is filled with a flat team colour, the others show the map.
     /// </summary>

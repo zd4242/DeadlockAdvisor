@@ -199,6 +199,41 @@ public class VisionTests
     }
 
     [Fact]
+    public void PngAlphaIsReadBesideThePixelsItDoesNotChange()
+    {
+        // Skia writes an RGBA PNG with every kind of opacity in it; ours has to read the same back.
+        var info = new SkiaSharp.SKImageInfo(3, 2, SkiaSharp.SKColorType.Rgba8888, SkiaSharp.SKAlphaType.Unpremul);
+        using var bitmap = new SkiaSharp.SKBitmap(info);
+        byte[] alphas = [0, 1, 127, 128, 254, 255];
+        for (var i = 0; i < alphas.Length; i++)
+            bitmap.SetPixel(i % 3, i / 3, new SkiaSharp.SKColor((byte)(40 * i), 200, (byte)(255 - 30 * i), alphas[i]));
+        using var encoded = bitmap.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+        var bytes = encoded.ToArray();
+
+        var (image, alpha) = Png.DecodeWithAlpha(bytes);
+
+        Assert.Equal(alphas, alpha);
+        Assert.Equal(Png.Decode(bytes).Pixels, image.Pixels);
+        Assert.Equal((byte)200, image.Pixels[5 * 3 + 1]);
+
+        // The API's top-bar art has transparent pixels, with junk colours under them.
+        var (_, vertical) = ImageFile.LoadWithAlpha(Path.Combine(TopbarDir, "abrams.png"));
+        Assert.Contains((byte)0, vertical);
+        Assert.Contains((byte)255, vertical);
+    }
+
+    [Fact]
+    public void ArtIsLaidOverAFlatColourByItsOpacity()
+    {
+        var image = new RgbImage(3, 1);
+        image.Pixels.AsSpan().Fill(200);
+
+        var laid = ImageOps.Composite(image, [0, 128, 255], (10, 20, 30));
+
+        Assert.Equal([10, 20, 30, 105, 110, 115, 200, 200, 200], laid.Pixels);
+    }
+
+    [Fact]
     public void LabeledCapturesRoundTripAndReadTheFixtures()
     {
         var labels = new LabeledCapture
