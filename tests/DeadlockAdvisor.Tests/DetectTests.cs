@@ -130,17 +130,59 @@ public sealed class DetectTests : IDisposable
     }
 
     [Fact]
-    public void CapturesNetWorthWasNotReadOffAreKeptUpToALimit()
+    public void CapturesAreKeptUpToALimitForEachKind()
     {
         var start = new DateTimeOffset(2026, 9, 26, 20, 0, 0, TimeSpan.Zero);
-        for (var i = 0; i < NetWorthCaptures.Keep + 3; i++)
-            Assert.NotNull(NetWorthCaptures.Save(_fixture.Data.DataRoot, new RgbImage(4, 4), start.AddSeconds(i), $"read {i}"));
+        var archive = CaptureArchive.NetWorth;
+        Assert.NotNull(CaptureArchive.Detections.Save(_fixture.Data.DataRoot, new RgbImage(4, 4), start, "{}"));
+        for (var i = 0; i < archive.Keep + 3; i++)
+            Assert.NotNull(archive.Save(_fixture.Data.DataRoot, new RgbImage(4, 4), start.AddSeconds(i), $"read {i}"));
 
-        var folder = Path.Combine(_fixture.Data.DataRoot, NetWorthCaptures.FolderName);
-        var kept = Directory.GetFiles(folder, "*.png").Order(StringComparer.Ordinal).ToList();
-        Assert.Equal(NetWorthCaptures.Keep, kept.Count);
+        var folder = Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName);
+        var kept = Directory.GetFiles(folder, "networth_*.png").Order(StringComparer.Ordinal).ToList();
+        Assert.Equal(archive.Keep, kept.Count);
         Assert.Equal("read 3", File.ReadAllText(Path.ChangeExtension(kept[0], ".txt")).Trim());
-        Assert.Equal(NetWorthCaptures.Keep, Directory.GetFiles(folder, "*.txt").Length);
+        Assert.Equal(archive.Keep, Directory.GetFiles(folder, "*.txt").Length);
+        // Pruning one kind leaves the others alone.
+        Assert.Single(Directory.GetFiles(folder, "detect_*.png"));
+        Assert.Single(Directory.GetFiles(folder, "detect_*.json"));
+    }
+
+    [AvaloniaFact]
+    public async Task AnAppliedDetectionIsKeptWithTheHeroesItWasAppliedAs()
+    {
+        var review = await DetectAsync();
+        review.Slots[3].SelectedHero = review.Slots[3].Choices.Single(choice => choice.HeroId == "haze");
+        review.Slots[4].SelectedHero = HeroChoice.Unknown;
+        review.RememberCorrections = false;
+
+        await review.ApplyCommand.Execute();
+
+        var folder = Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName);
+        var note = Assert.Single(Directory.GetFiles(folder, "detect_*.json"));
+        Assert.True(File.Exists(Path.ChangeExtension(note, ".png")));
+        var kept = LabeledCapture.FromJson(System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(note))!);
+        Assert.Equal((2560, 1440, 0), (kept.ScreenWidth!.Value, kept.ScreenHeight!.Value, kept.SelfSlot!.Value));
+        string?[] applied = [.. _band2Heroes];
+        (applied[3], applied[4]) = ("haze", null);
+        Assert.Equal(applied, Enumerable.Range(0, 12).Select(slot => kept.Heroes.GetValueOrDefault(slot)));
+        Assert.Equal(LabelSource.Corrected, kept.SourceOf(3));
+        Assert.True(kept.Reviewed);
+        // What the detector said before the review changed it.
+        Assert.Equal(_band2Heroes, kept.Read!.Select(slot => slot.Hero));
+        Assert.Equal(0, kept.ReadSelfSlot);
+        Assert.NotNull(kept.Grid);
+    }
+
+    [AvaloniaFact]
+    public async Task AppliedDetectionsAreNotKeptWhenTurnedOff()
+    {
+        _fixture.Settings.Update(s => s.KeepDetectionCaptures = false);
+
+        await (await DetectAsync()).ApplyCommand.Execute();
+
+        var folder = Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName);
+        Assert.Empty(Directory.Exists(folder) ? Directory.GetFiles(folder, "detect_*") : []);
     }
 
     [AvaloniaFact]
@@ -220,7 +262,7 @@ public sealed class DetectTests : IDisposable
         var detected = await DetectAsync();
         await detected.CancelCommand.Execute();
         var detection = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)! with { SelfSlot = null };
-        using var review = new DetectReviewViewModel(detection, NetWorthReading.Empty, [], _ => { }, () => { });
+        using var review = new DetectReviewViewModel(detection, NetWorthReading.Empty, [], _ => Task.CompletedTask, () => { });
 
         Assert.False(await review.ApplyCommand.CanExecute.FirstAsync());
         Assert.Equal("LEFT SIDE", review.OwnHeading);

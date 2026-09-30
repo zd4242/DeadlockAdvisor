@@ -57,6 +57,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.KeepUnreadCaptures = value);
     }
 
+    public bool KeepDetectionCaptures
+    {
+        get => Current.KeepDetectionCaptures;
+        set => Change(s => s.KeepDetectionCaptures = value);
+    }
+
     public bool RememberCorrections
     {
         get => Current.RememberCorrections;

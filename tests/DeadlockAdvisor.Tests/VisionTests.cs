@@ -199,6 +199,41 @@ public class VisionTests
     }
 
     [Fact]
+    public void LabeledCapturesRoundTripAndReadTheFixtures()
+    {
+        var labels = new LabeledCapture
+        {
+            ScreenWidth = 2560,
+            ScreenHeight = 1440,
+            Match = "2026-09-30a",
+            SelfSlot = 5,
+            Heroes = new() { [0] = "abrams", [9] = "haze" },
+            States = new() { [9] = SlotState.Critical, [11] = SlotState.Dead },
+            Sources = new() { [0] = LabelSource.Unsure },
+            Reviewed = false,
+            Grid = new Geometry(1277.5, 118.6, 17.8),
+            Read = [new SlotRead("abrams", 0.41234567, 0.02, false)],
+            ReadSelfSlot = 5,
+        };
+
+        var back = LabeledCapture.FromJson(labels.ToJson());
+
+        Assert.Equal((2560, 1440, "2026-09-30a", 5), (back.ScreenWidth!.Value, back.ScreenHeight!.Value, back.Match, back.SelfSlot!.Value));
+        Assert.Equal(labels.Heroes, back.Heroes);
+        Assert.Equal(labels.States, back.States);
+        Assert.Equal((SlotState.Visible, SlotState.Critical), (back.StateOf(0), back.StateOf(9)));
+        Assert.Equal((LabelSource.Unsure, LabelSource.Read), (back.SourceOf(0), back.SourceOf(9)));
+        Assert.False(back.Reviewed);
+        Assert.Equal(labels.Grid, back.Grid);
+        Assert.Equal(new SlotRead("abrams", 0.4123, 0.02, false), Assert.Single(back.Read!));
+
+        var fixture = LabeledCapture.FromJson(FixtureSpec("laning_2560x1440_band"));
+        Assert.Equal((1440, 1, 0), (fixture.ScreenHeight!.Value, fixture.SelfSlot!.Value, fixture.AllowWrong));
+        Assert.Equal("ivy", fixture.Heroes[1]);
+        Assert.Empty(fixture.States);
+    }
+
+    [Fact]
     public void AnAlternatesNameSaysWhereItCameFrom()
     {
         Assert.Equal(TemplateKind.Api, TemplateSource.Of("haze", "haze.png", isAlternate: false).Kind);

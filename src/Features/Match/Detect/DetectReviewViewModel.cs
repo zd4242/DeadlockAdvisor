@@ -11,8 +11,9 @@ namespace DeadlockAdvisor.Features.Match.Detect;
 /// <param name="SlotHeroes">The hero in each of the twelve slots, left to right, or null where none was read.</param>
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
 /// <param name="SlotSouls">Each slot's net worth, where it was read and its side added up.</param>
+/// <param name="CorrectedSlots">Every slot whose hero was corrected, whether or not the crops are kept.</param>
 public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot,
-    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls);
+    IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls, IReadOnlyList<int> CorrectedSlots);
 
 /// <summary>
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette
@@ -27,7 +28,7 @@ public class DetectReviewViewModel : ViewModelBase
     private readonly NetWorthReading _netWorth;
 
     public DetectReviewViewModel(Detection detection, NetWorthReading netWorth, IReadOnlyList<HeroChoice> heroes,
-        Action<DetectReviewResult> apply, Action cancel)
+        Func<DetectReviewResult, Task> apply, Action cancel)
     {
         _detection = detection;
         _netWorth = netWorth;
@@ -44,7 +45,7 @@ public class DetectReviewViewModel : ViewModelBase
             .Subscribe(_ => HasCorrections = Slots.Any(slot => slot.WasCorrected))
             .DisposeWith(Disposables);
 
-        ApplyCommand = ReactiveCommand.Create(() => apply(Result()), this.WhenAnyValue(vm => vm.SelfSlot).Select(self => self is not null));
+        ApplyCommand = ReactiveCommand.CreateFromTask(() => apply(Result()), this.WhenAnyValue(vm => vm.SelfSlot).Select(self => self is not null));
         CancelCommand = ReactiveCommand.Create(cancel);
     }
 
@@ -107,7 +108,7 @@ public class DetectReviewViewModel : ViewModelBase
             ? Slots.Where(slot => slot.WasCorrected && slot.Crop is not null).Select(slot => (slot.HeroId!, slot.Crop!)).ToList()
             : [];
         return new DetectReviewResult(Slots.OrderBy(slot => slot.Index).Select(slot => slot.HeroId).ToList(), SelfSlot!.Value,
-            corrections, _netWorth.Souls);
+            corrections, _netWorth.Souls, Slots.Where(slot => slot.WasCorrected).Select(slot => slot.Index).ToList());
     }
 
     protected override void Dispose(bool disposing)

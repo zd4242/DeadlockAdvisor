@@ -1,5 +1,6 @@
 using System.IO;
 using System.Reactive.Linq;
+using System.Text.Json;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
@@ -26,6 +27,8 @@ public class DetectAction
 
     // A read with a cached grid is quick; only a search is worth putting a progress modal up for.
     private static readonly TimeSpan _progressDelay = TimeSpan.FromMilliseconds(250);
+
+    private static readonly JsonSerializerOptions _captureJson = new() { WriteIndented = true };
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
@@ -92,7 +95,7 @@ public class DetectAction
         if (_settings.Current.KeepUnreadCaptures && detection is not null && !(netWorth.Agrees(0) && netWorth.Agrees(1)))
         {
             var note = $"{NetWorthLog(netWorth)}\ngrid: {detection.Geometry.ToJson().ToJsonString()}";
-            if (await Task.Run(() => NetWorthCaptures.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)
+            if (await Task.Run(() => CaptureArchive.NetWorth.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)
                 _log.Information($"Detect: kept the capture net worth wasn't fully read off, in {path}");
         }
         if (detection is null)
@@ -112,11 +115,14 @@ public class DetectAction
             .ToList();
         DetectReviewViewModel? review = null;
         review = new DetectReviewViewModel(detection, netWorth, heroes,
-            result =>
+            async result =>
             {
                 Close(review!);
                 Apply(match, result, capturedAt, directory);
                 applied();
+                await KeepCaptureAsync(capture, capturedAt,
+                    LabeledCapture.FromApplied(detection, result.SlotHeroes, result.SelfSlot, result.CorrectedSlots, reviewed: true,
+                        capture.ScreenWidth, capture.ScreenHeight));
             },
             () => Close(review!))
         {
@@ -200,6 +206,16 @@ public class DetectAction
             _modals.ShowMessage("Saved as reference art",
                 $"Kept {learned} corrected portrait(s) in {directory}.\nThose heroes should be recognised directly next time.");
         }
+    }
+
+    /// <summary>Keep an applied capture with the heroes it was applied as, the corpus detection is measured and tuned on.</summary>
+    private async Task KeepCaptureAsync(ScreenCapture capture, DateTimeOffset capturedAt, LabeledCapture labels)
+    {
+        if (!_settings.Current.KeepDetectionCaptures)
+            return;
+        var note = labels.ToJson().ToJsonString(_captureJson);
+        if (await Task.Run(() => CaptureArchive.Detections.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)
+            _log.Information($"Detect: kept the applied capture in {path}");
     }
 
     private void Close(DetectReviewViewModel review)

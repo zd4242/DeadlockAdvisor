@@ -25,6 +25,10 @@
                                      Description="Saved with what was read in the captures folder of your data folder, the latest 20 kept, as material for fixing the reader.">
                     <ToggleSwitch IsChecked="{Binding KeepUnreadCaptures}"/>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Keep the captures you apply"
+                                     Description="Saved with the heroes you applied in the captures folder of your data folder, the latest 60 kept, as material for improving detection.">
+                    <ToggleSwitch IsChecked="{Binding KeepDetectionCaptures}"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 

@@ -22,6 +22,7 @@ public class AppSettings
     public bool DetectFromAnywhere { get; set; } = true;
     public bool MinimizeToDetect { get; set; } = true;
     public bool KeepUnreadCaptures { get; set; } = true;
+    public bool KeepDetectionCaptures { get; set; } = true;
     public bool RememberCorrections { get; set; } = true;
 
     // Your Steam account ID (SteamID3's number), which picks you out of an imported match.
