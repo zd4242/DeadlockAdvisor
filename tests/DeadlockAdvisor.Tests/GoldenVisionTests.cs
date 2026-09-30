@@ -164,7 +164,7 @@ public class GoldenVisionTests
 
     private static void AssertGeometry(JsonNode? expected, Geometry actual, string because)
     {
-        var golden = Geometry.FromJson(expected!.AsObject())!;
+        var golden = Geometry.Parse(expected!.AsObject())!;
         AssertEx.Close(golden.CenterX, actual.CenterX, 1e-4, $"{because}: center_x");
         AssertEx.Close(golden.Pitch, actual.Pitch, 1e-4, $"{because}: pitch");
         AssertEx.Close(golden.Top, actual.Top, 1e-4, $"{because}: top");
@@ -205,7 +205,7 @@ public class GoldenVisionTests
         {
             var centers = Items(fit["centers"]).Select(node => (double?)Number(node)).ToList();
             var weights = Items(fit["weights"]).Select(Number).ToList();
-            var guess = Geometry.FromJson(fit["guess"]!.AsObject())!;
+            var guess = Geometry.Parse(fit["guess"]!.AsObject())!;
             var boxes = Items(fit["boxes"]).Select(ExpectedBox).ToList();
 
             var fitted = Layout.FitGeometry(centers, weights, guess);
@@ -224,6 +224,16 @@ public class GoldenVisionTests
             AssertEx.Close(Number(pair[1]), Layout.TrimmedScore(values), 1e-6);
         }
 
+        if (Updating)
+        {
+            foreach (var entry in Items(golden["candidates"]))
+            {
+                var candidates = Layout.Candidates((int)entry[0]!, (int)entry[1]!, Range(entry[2])!.Value, Number(entry[3]));
+                entry.AsArray()[4] = new JsonArray(candidates.Select(candidate => (JsonNode?)candidate.ToJson()).ToArray());
+            }
+            WriteJson("vision/layout.json", golden);
+            return;
+        }
         foreach (var entry in Items(golden["candidates"]))
         {
             var range = Range(entry[2])!.Value;

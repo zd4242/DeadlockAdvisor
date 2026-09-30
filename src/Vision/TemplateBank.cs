@@ -48,10 +48,15 @@ public sealed record TemplateSource(string Hero, string Path, TemplateKind Kind,
 }
 
 /// <summary>
-/// The reference art detection matches against: assets/topbar/&lt;hero_id&gt;.png, the art Deadlock
-/// draws in its scoreboard strip, plus any number of alternates in assets/topbar/&lt;hero_id&gt;/. Every
-/// variant is scored and a hero takes their best, which is how alternate portraits are handled
-/// without characterising them up front: a corrected misread saved as a variant stops recurring.
+/// The reference art detection matches against: each hero's portraits cut from their cards
+/// (assets/topbar/&lt;hero_id&gt;/card_normal.png and the critical and on-fire state_*.png), plus any
+/// corrections learned in the review. Every image is scored and a hero takes their best, which is
+/// how a skin or an unusual portrait is handled: a corrected misread saved alongside stops recurring.
+/// <para>
+/// The API's own top-bar art (assets/topbar/&lt;hero_id&gt;.png) and bundled in-game portraits are only
+/// used for a hero with no cut portraits: they're cropped hero by hero, so they don't sit in the
+/// slot's box the way the cut portraits all do, and some are out of date.
+/// </para>
 /// <para>
 /// Descriptors are rebuilt on every load, in milliseconds; the Python app's _templates.npz cache is
 /// left for the Python app.
@@ -79,6 +84,9 @@ public sealed class TemplateBank
     public IReadOnlyList<TemplateSource> Sources { get; }
 
     public bool IsEmpty => Heroes.Count == 0 || Vectors.Count == 0;
+
+    /// <summary>One row's score for a descriptor.</summary>
+    public float Score(float[] descriptor, int row) => Dot(descriptor, Vectors[row]);
 
     /// <summary>A descriptor → the best score per hero (dot product with their best variant).</summary>
     public float[] Scores(float[] descriptor) => Scores(descriptor, null);
@@ -185,8 +193,11 @@ public sealed class TemplateBank
         foreach (var (heroId, candidates) in files)
         {
             var added = false;
+            var hasCuts = candidates.Any(source => source.Kind == TemplateKind.Derived);
             foreach (var source in candidates)
             {
+                if (hasCuts && source.Kind is TemplateKind.Api or TemplateKind.Bundled)
+                    continue;
                 float[]? vector;
                 try
                 {

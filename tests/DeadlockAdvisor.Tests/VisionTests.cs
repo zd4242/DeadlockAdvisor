@@ -290,16 +290,32 @@ public class VisionTests
     [Fact]
     public void ABankCanBeNarrowedToTheImagesItWasGiven()
     {
-        var clean = Bank.Where(source => source.Kind == TemplateKind.Api);
+        var normal = Bank.Where(source => source.State == PortraitState.Normal);
 
-        Assert.Equal(Bank.Heroes, clean.Heroes);
-        Assert.Equal(Bank.Heroes.Count, clean.Vectors.Count);
-        Assert.All(clean.Sources, source => Assert.Equal(TemplateKind.Api, source.Kind));
-        Assert.Contains(Bank.Sources, source => source.Kind != TemplateKind.Api);
+        Assert.Equal(Bank.Heroes, normal.Heroes);
+        Assert.Equal(Bank.Heroes.Count, normal.Vectors.Count);
+        Assert.All(normal.Sources, source => Assert.Equal(PortraitState.Normal, source.State));
+        Assert.Contains(Bank.Sources, source => source.State != PortraitState.Normal);
 
         var onlyHaze = Bank.Where(source => source.Hero == "haze");
         Assert.Equal(["haze"], onlyHaze.Heroes);
         Assert.All(onlyHaze.RowsHero, hero => Assert.Equal(0, hero));
+    }
+
+    /// <summary>The API's own top-bar art is cropped hero by hero, so it's only matched against for a hero with no cut portraits.</summary>
+    [Fact]
+    public void TheApisTopBarArtStandsInOnlyWhereNothingIsCut()
+    {
+        using var temp = new TempDirectory();
+        foreach (var hero in new[] { "haze", "lash" })
+            File.Copy(Path.Combine(TopbarDir, hero + ".png"), Path.Combine(temp.Path, hero + ".png"));
+        Directory.CreateDirectory(Path.Combine(temp.Path, "haze"));
+        File.Copy(Path.Combine(TopbarDir, "haze", "card_normal.png"), Path.Combine(temp.Path, "haze", "card_normal.png"));
+
+        var bank = TemplateBank.Load(temp.Path);
+
+        Assert.Equal([("haze", TemplateKind.Derived), ("lash", TemplateKind.Api)], bank.Sources.Select(source => (source.Hero, source.Kind)));
+        Assert.DoesNotContain(Bank.Sources, source => source.Kind is TemplateKind.Api or TemplateKind.Bundled);
     }
 
     [Fact]

@@ -124,7 +124,6 @@ public class VisionCorpusTools
         var heroes = Golden.LoadStore().Heroes.Keys.Order(StringComparer.Ordinal).ToList();
         TopbarDerivation.Run(topbar, heroes, force: true);
 
-        var state = JsonNode.Parse(File.ReadAllText(Path.Combine(topbar, TopbarDerivation.StateFile)))!["heroes"]!.AsObject();
         const int cellW = 120, cellH = 200, caption = 18, perRow = 4;
         var rows = (heroes.Count + perRow - 1) / perRow;
         var info = new SKImageInfo(perRow * (4 * cellW + 16), rows * (cellH + caption));
@@ -133,7 +132,6 @@ public class VisionCorpusTools
         canvas.Clear(new SKColor(24, 24, 28));
         using var font = new SKFont(SKTypeface.Default, 13);
         using var text = new SKPaint { Color = SKColors.White, IsAntialias = true };
-        using var weak = new SKPaint { Color = new SKColor(255, 170, 80), IsAntialias = true };
         for (var i = 0; i < heroes.Count; i++)
         {
             var hero = heroes[i];
@@ -148,10 +146,7 @@ public class VisionCorpusTools
                 if (images[column] is { } image && File.Exists(image))
                     DrawImage(canvas, ImageFile.Load(image), x + column * cellW, y, cellW, cellH);
             }
-            var record = state[hero];
-            var score = (double?)record?["registration"]?["score"] ?? double.NaN;
-            var source = (string?)record?["source"] ?? "none";
-            canvas.DrawText(FormattableString.Invariant($"{hero}: {source} {score:0.00}"), x + 2, y + cellH + 14, font, source == "registered" ? text : weak);
+            canvas.DrawText(hero, x + 2, y + cellH + 14, font, text);
         }
         using var snapshot = surface.Snapshot();
         using var data = snapshot.Encode(SKEncodedImageFormat.Png, 100);

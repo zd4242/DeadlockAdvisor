@@ -2,24 +2,24 @@
  "summary": {
   "all": {
    "slots": 192,
-   "correct": 182,
-   "confident_correct": 181,
-   "confident_wrong": 2,
-   "unread": 3
+   "correct": 184,
+   "confident_correct": 184,
+   "confident_wrong": 0,
+   "unread": 8
   },
   "visible": {
    "slots": 131,
-   "correct": 129,
-   "confident_correct": 128,
-   "confident_wrong": 2,
+   "correct": 131,
+   "confident_correct": 131,
+   "confident_wrong": 0,
    "unread": 0
   },
   "faded": {
    "slots": 48,
-   "correct": 46,
-   "confident_correct": 46,
+   "correct": 47,
+   "confident_correct": 47,
    "confident_wrong": 0,
-   "unread": 0
+   "unread": 1
   },
   "critical": {
    "slots": 3,
@@ -37,10 +37,10 @@
   },
   "dead": {
    "slots": 7,
-   "correct": 2,
-   "confident_correct": 2,
+   "correct": 1,
+   "confident_correct": 1,
    "confident_wrong": 0,
-   "unread": 2
+   "unread": 6
   },
   "transformed": {
    "slots": 1,
@@ -49,7 +49,7 @@
    "confident_wrong": 0,
    "unread": 1
   },
-  "captures_needing_no_correction": 9,
+  "captures_needing_no_correction": 12,
   "captures": 16
  },
  "captures": {
@@ -254,6 +254,7 @@
     6,
     7,
     8,
+    9,
     10,
     11
    ],
@@ -267,6 +268,7 @@
     6,
     7,
     8,
+    9,
     10,
     11
    ],
@@ -311,6 +313,7 @@
     1,
     2,
     3,
+    4,
     5,
     6,
     7,
@@ -324,6 +327,7 @@
     1,
     2,
     3,
+    4,
     5,
     6,
     7,
@@ -332,9 +336,7 @@
     10,
     11
    ],
-   "confident_wrong": [
-    4
-   ],
+   "confident_wrong": [],
    "self_correct": true
   },
   "networth_20260930_130930_472": {
@@ -371,7 +373,6 @@
   },
   "networth_20260930_131053_287": {
    "correct": [
-    0,
     2,
     4,
     5,
@@ -383,8 +384,8 @@
     11
    ],
    "confident_correct": [
-    0,
     2,
+    4,
     5,
     6,
     7,
@@ -434,6 +435,7 @@
     1,
     2,
     3,
+    4,
     5,
     6,
     7,
@@ -445,15 +447,14 @@
     1,
     2,
     3,
+    4,
     5,
     6,
     7,
     10,
     11
    ],
-   "confident_wrong": [
-    4
-   ],
+   "confident_wrong": [],
    "self_correct": true
   },
   "networth_20260930_140659_629": {

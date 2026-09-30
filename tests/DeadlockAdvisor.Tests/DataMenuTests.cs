@@ -275,7 +275,7 @@ public sealed class DataMenuTests : IDisposable
 
         menu.OnStartup();
         Assert.Equal(1, download.Started);
-        download.Finish(new ArtDownloadReport([new ArtGroupReport("Top-bar portraits", 1, 1, 0, 1, [], [])], 0, new([], [], [])));
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Top-bar portraits", 1, 1, 0, 1, [], [])], new([], [])));
         await Task.Yield();
 
         // Nothing changed, so there's nothing to say.
@@ -299,7 +299,7 @@ public sealed class DataMenuTests : IDisposable
         menu.OnStartup();
 
         Assert.Equal(1, download.Started);
-        download.Finish(new ArtDownloadReport([], 0, new([], [], [])));
+        download.Finish(new ArtDownloadReport([], new([], [])));
     }
 
     [Fact]
@@ -310,7 +310,7 @@ public sealed class DataMenuTests : IDisposable
         using var menu = Menu(artDownload: download);
 
         menu.OnStartup();
-        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero cards", 1, 1, 0, 0, [], ["haze"])], 0, new(["haze"], [], [])));
+        download.Finish(new ArtDownloadReport([new ArtGroupReport("Hero cards", 1, 1, 0, 0, [], ["haze"])], new(["haze"], [])));
         await Task.Yield();
 
         Assert.Equal(BackgroundJobState.Succeeded, Assert.Single(menu.Jobs).State);

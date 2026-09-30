@@ -39,14 +39,21 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
 
 /// <summary>
 /// One screenshot in, a read of the match out: find the grid (or reuse the cached one), refine every
-/// slot in a wide window, refit the grid to where the confident slots landed and refine again in a
-/// tighter one, assign heroes under the no-duplicates rule, then read which slot is you off the
+/// slot in a wide window, refit the grid to where the confident slots landed, read each slot at its
+/// own box, assign heroes under the no-duplicates rule, then read which slot is you off the
 /// backplate. A pure function of the image.
 /// </summary>
 public static class Detector
 {
-    public const double TightSpanX = 0.16;
-    public const double TightSpanY = 0.18;
+    // The final read: every portrait is cut where the top bar crops its card, so each sits in the
+    // slot's box and only needs looking for a few per cent either way. Hundreds of tries per hero
+    // would let a wrong hero's best of them crowd out the right one.
+    public static readonly double[] FinalScales = [0.95, 1.0, 1.05];
+    public const double FinalSpan = 0.04;
+    public const int FinalSamples = 5;
+
+    /// <summary>How much lower the final read may score than the wide one before the refit behind it is distrusted.</summary>
+    public const double RefitTolerance = 0.1;
 
     // Your slot has to clear this floor outright and stand this far above the median slot. Against
     // the runner-up was wrong: during laning the game lights all four lane players, so the runner-up
@@ -79,11 +86,11 @@ public static class Detector
         var refit = Layout.FitGeometry(boxes.Select(b => (double?)b.CenterX).ToList(), weights, geometry);
         refit = Layout.FitShape(boxes, weights, refit);
 
-        // Pass two: a narrower window around the corrected grid, kept only if it reads better, so a
-        // bad refit can never make things worse.
-        var (tightBoxes, tightScores) = Layout.RefineSlots(image, bank, refit.Boxes(), Layout.SlotScales, TightSpanX, TightSpanY);
-        if (Layout.TrimmedScore(tightScores.Select(row => row.Max()).ToArray()) >= Layout.TrimmedScore(peaks))
-            (geometry, scores, boxes) = (refit, tightScores, tightBoxes);
+        // Pass two: each slot's own box on the corrected grid, give or take a few per cent. A read far
+        // worse than the wide one means the refit went wrong, and the wide read stands.
+        var (finalBoxes, finalScores) = Layout.RefineSlots(image, bank, refit.Boxes(), FinalScales, FinalSpan, FinalSpan, FinalSamples, FinalSamples);
+        if (Layout.TrimmedScore(finalScores.Select(row => row.Max()).ToArray()) >= Layout.TrimmedScore(peaks) - RefitTolerance)
+            (geometry, scores, boxes) = (refit, finalScores, finalBoxes);
 
         var readings = Matcher.Assign(scores).Select(assignment =>
         {

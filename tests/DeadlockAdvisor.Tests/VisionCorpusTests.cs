@@ -62,4 +62,34 @@ public class VisionCorpusTests
     }
 
     private static IEnumerable<int> Slots(JsonNode? node) => node?.AsArray().Select(slot => (int)slot!) ?? [];
+
+    /// <summary>Every labelled capture: the corpus, and the fixtures (which label only the slots they're sure of).</summary>
+    public static List<CorpusCapture> Labelled() =>
+        [.. CorpusCapture.LoadAll(Golden.PathOf("vision", "corpus")), .. CorpusCapture.LoadAll(Golden.PathOf("vision", "fixtures"))];
+
+    /// <summary>
+    /// The top bar crops every hero's card the same way, which is what lets every portrait be cut at
+    /// <see cref="TopbarDerivation.InGameFrame"/> and looked for in the same box. Measured afresh off
+    /// every labelled capture (listed in mockups/template_frames.md): if Valve ever crops differently,
+    /// the cut portraits stop sitting where the grid says, and this says so.
+    /// </summary>
+    [Fact]
+    public void TheGameCropsEveryCardTheSameWay()
+    {
+        var bank = Bank.Where(source => source is { Kind: TemplateKind.Derived, State: PortraitState.Normal });
+        var (width, frames) = VisionCalibration.Fit(VisionCalibration.Measure(Labelled(), bank));
+
+        var report = new System.Text.StringBuilder(FormattableString.Invariant(
+            $"# Where each cut portrait sits: {frames.Count} heroes, {width:0.000} pitches wide\n\n| hero | n | dx | dy | scale |\n|---|---|---|---|---|\n"));
+        foreach (var (row, (frame, n)) in frames.OrderBy(pair => bank.Sources[pair.Key].Hero, StringComparer.Ordinal))
+            report.AppendLine(FormattableString.Invariant($"| {bank.Sources[row].Hero} | {n} | {frame.Dx:+0.000;-0.000} | {frame.Dy:+0.000;-0.000} | {frame.Scale:0.000} |"));
+        File.WriteAllText(Path.Combine(UiHarness.RepoRoot(), "mockups", "template_frames.md"), report.ToString());
+
+        Assert.True(Math.Abs(width - TopbarDerivation.WidthRatio) < 0.01, $"portraits are {width:0.000} pitches wide, not {TopbarDerivation.WidthRatio}");
+        var measured = frames.Where(pair => pair.Value.Samples >= 3).ToList();
+        Assert.True(measured.Count >= 25, $"only {measured.Count} heroes measured");
+        Assert.All(measured, pair => Assert.True(
+            Math.Abs(pair.Value.Frame.Dx) < 0.04 && Math.Abs(pair.Value.Frame.Dy) < 0.04 && Math.Abs(pair.Value.Frame.Scale / width - 1) < 0.05,
+            $"{bank.Sources[pair.Key].Hero} sits at {pair.Value.Frame}"));
+    }
 }

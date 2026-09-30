@@ -15,9 +15,8 @@ namespace DeadlockAdvisor.Services;
 public sealed record ArtGroupReport(string Label, int Wanted, int Offered, int Downloaded, int Skipped, IReadOnlyList<string> Unmatched,
     IReadOnlyList<string> Updated);
 
-/// <param name="VariantsInstalled">Bundled alternate top-bar portraits written, for heroes whose API art the game no longer matches.</param>
 /// <param name="Derivation">The top-bar portraits cut from the hero cards.</param>
-public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups, int VariantsInstalled = 0, TopbarDerivation.Outcome? Derivation = null)
+public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups, TopbarDerivation.Outcome? Derivation = null)
 {
     public int Downloaded => Groups.Sum(group => group.Downloaded);
     public int Updated => Groups.Sum(group => group.Updated.Count);
@@ -28,13 +27,9 @@ public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups, int
             .Select(group => $"{group.Label}: {group.Downloaded} downloaded, {group.Updated.Count} updated, {group.Skipped} already present "
                              + $"({group.Wanted} wanted, {group.Offered} offered by the API)")
             .ToList();
-        if (VariantsInstalled > 0)
-            lines.Add($"Top-bar alternates: {VariantsInstalled} installed, for heroes the game draws differently from their API art");
         if (Derivation is { } derivation)
         {
             lines.Add($"Top-bar portraits cut from the hero cards (normal, critical, on fire): {derivation.Derived.Count} hero(es)");
-            if (derivation.Fallbacks.Count > 0)
-                lines.Add($"  cut at the usual crop, as their top-bar art is out of date: {string.Join(", ", derivation.Fallbacks)}");
             lines.AddRange(derivation.Failed.Select(line => $"  couldn't cut {line}"));
         }
         var unmatched = Groups.SelectMany(group => group.Unmatched.Select(line => $"  - {group.Label}: {line}")).ToList();
@@ -134,11 +129,8 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
         }
         progress?.Report(new FetchProgress(total, total, "Cutting top-bar portraits from the cards"));
         var derivation = TopbarDerivation.Run(topbarDir, heroes.Keys, force);
-        var variants = BundledTopbarVariants.Install(topbarDir, heroes.Keys);
-        if (variants > 0)
-            TemplateBank.InvalidatePythonCache(topbarDir);
         progress?.Report(new FetchProgress(total, total, "done"));
-        return new ArtDownloadReport(reports, variants, derivation);
+        return new ArtDownloadReport(reports, derivation);
     }
 
     private async Task<ArtGroupReport> RunGroupAsync(Group group, ArtManifest manifest, bool force, Action<string> step,

@@ -90,13 +90,19 @@ public static class Layout
 
     // Measured off a real capture; starting points for the search, not fixed truths.
     public const double DefaultGapRatio = 1.65;
-    public const double DefaultWidthRatio = 0.612;
+
+    // The clock between the teams scales with the rest of the strip: every grid measured has had a gap
+    // of 1.6 to 1.75 pitches. Letting it shrink much further lets a grid shifted a slot inward on both
+    // sides pass for the real one, since ten of its twelve boxes still land on some portrait.
+    public const double MinGapRatio = 1.35;
+    public const double MaxGapRatio = 2.2;
+    public const double DefaultWidthRatio = TopbarDerivation.WidthRatio;
 
     public const int SlotCount = 12;
     public const int PerTeam = 6;
 
     /// <summary>Bumped whenever a change to the search makes a cached grid untrustworthy.</summary>
-    public const int CacheVersion = 2;
+    public const int CacheVersion = 3;
 
     public const double TrimFraction = 1.0 / 3.0;
     public const int PitchSteps = 20;
@@ -212,7 +218,7 @@ public static class Layout
         // A refit that wild means the inputs were noise.
         if (pitch / template.Pitch is < 0.8 or > 1.25)
             return template;
-        return template with { CenterX = centerX, Pitch = pitch, GapRatio = Math.Clamp(gapRatio, 0.8, 3.0) };
+        return template with { CenterX = centerX, Pitch = pitch, GapRatio = Math.Clamp(gapRatio, MinGapRatio, MaxGapRatio) };
     }
 
     /// <summary>Weighted least squares through the normal equations; null when the columns don't pin a solution.</summary>
