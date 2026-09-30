@@ -44,6 +44,8 @@ public class DetectReviewTests
         var corrected = review.Slots[3];
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
         var dropdown = modal.GetVisualDescendants().OfType<SearchComboBox>().Single(box => box.DataContext == corrected);
+        var view = modal.GetVisualDescendants().OfType<DetectReviewView>().Single();
+        var heightBeforeCorrecting = view.Bounds.Height;
         dropdown.Focus();
         modal.KeyTextInput("h");
         UiHarness.Settle();
@@ -77,6 +79,8 @@ public class DetectReviewTests
         UiHarness.Settle();
         Assert.False(dropdown.IsDropDownOpen);
         Assert.Equal("corrected from Mirage", corrected.Detail);
+        // The first correction brings in the remember option without growing the dialog, which could tip it into scrolling.
+        Assert.True(view.Bounds.Height <= heightBeforeCorrecting, $"{view.Bounds.Height} > {heightBeforeCorrecting}");
         review.ToggleSelf(1);
         ui.ScreenshotModal("detect_review_no_self.png");
     }
