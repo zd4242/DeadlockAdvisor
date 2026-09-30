@@ -170,6 +170,61 @@ public class VisionCorpusTools
         canvas.DrawBitmap(bitmap, x, y);
     }
 
+    /// <summary>
+    /// DEADLOCK_VISION_AUDIT=&lt;topbar folder&gt;: every learned portrait there (a correction saved from
+    /// the review) added to the test bank on its own, and every labelled capture read again. One that
+    /// breaks a read, or rescues none, is listed for the quarantine in mockups/variant_audit.md; with
+    /// DEADLOCK_VISION_AUDIT_APPLY=1 it's moved there too.
+    /// </summary>
+    [Fact]
+    public void AuditLearnedPortraits()
+    {
+        if (Environment.GetEnvironmentVariable("DEADLOCK_VISION_AUDIT") is not { Length: > 0 } topbar)
+            return;
+        var apply = Environment.GetEnvironmentVariable("DEADLOCK_VISION_AUDIT_APPLY") == "1";
+        var captures = VisionCorpusTests.Labelled();
+        var baseline = VisionEval.Run(captures, Bank).SelectMany(outcome => outcome.Slots).ToList();
+        var learned = Directory.GetDirectories(topbar)
+            .Where(folder => !Path.GetFileName(folder).StartsWith('_'))
+            .SelectMany(folder => Directory.GetFiles(folder).Select(file => TemplateSource.Of(Path.GetFileName(folder), file, isAlternate: true)))
+            .Where(source => source.Kind == TemplateKind.Learned && ImageFile.Suffixes.Contains(Path.GetExtension(source.Path).ToLowerInvariant()))
+            .OrderBy(source => source.Path, StringComparer.Ordinal)
+            .ToList();
+
+        var report = new System.Text.StringBuilder("# Learned portraits\n\n| image | rescues | breaks | verdict |\n|---|---|---|---|\n");
+        foreach (var source in learned)
+        {
+            var hero = Bank.Heroes.ToList().IndexOf(source.Hero);
+            var vector = hero < 0 ? null : ImageOps.Descriptor(ImageFile.Load(source.Path));
+            if (vector is null)
+            {
+                report.AppendLine($"| {Relative(source.Path)} | – | – | unreadable or unknown hero: quarantine |");
+                Retire(source);
+                continue;
+            }
+            var bank = new TemplateBank(Bank.Heroes, [.. Bank.RowsHero, hero], [.. Bank.Vectors, vector], [.. Bank.Sources, source]);
+            var slots = VisionEval.Run(captures, bank).SelectMany(outcome => outcome.Slots).ToList();
+            var pairs = baseline.Zip(slots).ToList();
+            var rescues = pairs.Count(pair => !pair.First.Correct && pair.Second.Correct);
+            var breaks = pairs.Count(pair => pair.First.Correct && !pair.Second.Correct
+                                             || pair.First is { Correct: true, Confident: true } && !pair.Second.Confident
+                                             || !pair.First.ConfidentWrong && pair.Second.ConfidentWrong);
+            var keep = rescues > 0 && breaks == 0;
+            report.AppendLine($"| {Relative(source.Path)} | {rescues} | {breaks} | {(keep ? "keep" : "quarantine")} |");
+            if (!keep)
+                Retire(source);
+        }
+        File.WriteAllText(Path.Combine(DraftsDir, "..", "variant_audit.md"), report.ToString());
+
+        string Relative(string path) => Path.GetRelativePath(topbar, path).Replace('\\', '/');
+
+        void Retire(TemplateSource source)
+        {
+            if (apply)
+                TemplateBank.Quarantine(topbar, source.Hero, source.Path);
+        }
+    }
+
     /// <summary>The grid a capture was read with, from the note beside it.</summary>
     private static Geometry? GridBeside(string capture)
     {
