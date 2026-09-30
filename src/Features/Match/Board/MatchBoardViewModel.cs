@@ -141,6 +141,12 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>Importing a finished match by its ID, owned by the Match tab.</summary>
     public System.Windows.Input.ICommand? ImportCommand { get; set; }
 
+    /// <summary>Reviewing a detection that was applied without review, owned by the Match tab.</summary>
+    public System.Windows.Input.ICommand? ReviewDetectionCommand { get; set; }
+
+    /// <summary>The last detection was applied without review, and can be looked back at.</summary>
+    [Reactive] public bool CanReviewDetection { get; set; }
+
     public void SetMode(Role role)
     {
         Mode = role;

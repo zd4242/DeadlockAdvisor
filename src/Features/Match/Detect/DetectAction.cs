@@ -33,19 +33,26 @@ public class DetectAction
 
     private static readonly JsonSerializerOptions _captureJson = new() { WriteIndented = true };
 
+    private static readonly TimeSpan _appliedToast = TimeSpan.FromSeconds(6);
+
     private readonly Subject<Unit> _artWanted = new();
+    private readonly BehaviorSubject<bool> _canReview = new(false);
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
     private readonly IModalService _modals;
+    private readonly INotificationService _notifications;
     private readonly IScreenCaptureService _capture;
     private readonly ILoggingService _log;
+    private Read? _lastApplied;
 
-    public DetectAction(IDataService data, ISettingsService settings, IModalService modals, IScreenCaptureService capture, ILoggingService log)
+    public DetectAction(IDataService data, ISettingsService settings, IModalService modals, INotificationService notifications,
+        IScreenCaptureService capture, ILoggingService log)
     {
         _data = data;
         _settings = settings;
         _modals = modals;
+        _notifications = notifications;
         _capture = capture;
         _log = log;
     }
@@ -55,12 +62,20 @@ public class DetectAction
     /// <summary>Asked for when there's no art to match against and the offer to download it is taken.</summary>
     public IObservable<Unit> ArtWanted => _artWanted;
 
-    /// <summary>Run a detection into <paramref name="match"/>; <paramref name="applied"/> is called if the review is applied.</summary>
+    /// <summary>Whether there's a detection applied without review to look back at.</summary>
+    public IObservable<bool> CanReview => _canReview;
+
+    /// <summary>
+    /// Run a detection into <paramref name="match"/>: applied straight away when nothing in it is in
+    /// doubt (and the setting allows), otherwise shown for review. <paramref name="applied"/> is called
+    /// once it's applied.
+    /// </summary>
     public async Task RunAsync(MatchState match, Action applied)
     {
         // F9 while a review (or anything else) is up would stack a second detection behind it.
         if (_modals.IsModalOpen)
             return;
+        ForgetLast();
 
         var directory = TopbarDir;
         var bank = await Task.Run(() => TemplateBank.Load(directory));
@@ -125,20 +140,61 @@ public class DetectAction
         if (detection.ConfidentCount > 0)
             _settings.Update(s => s.VisionGeometry[screenKey] = detection.Geometry.ToJson());
 
+        var read = new Read(detection, netWorth, capture, capturedAt, directory);
+        if (_settings.Current.AutoApplyDetect && detection.IsSettled)
+            await ApplyWithoutReviewAsync(match, applied, read);
+        else
+            ShowReview(match, applied, read);
+    }
+
+    /// <summary>Open the review of the detection last applied without one, to check or correct it.</summary>
+    public void ReviewLast(MatchState match, Action applied)
+    {
+        if (!_modals.IsModalOpen && _lastApplied is { } read)
+            ShowReview(match, applied, read);
+    }
+
+    /// <summary>The detection last applied without review is no longer the match's, so there's nothing to review.</summary>
+    public void ForgetLast()
+    {
+        _lastApplied = null;
+        _canReview.OnNext(false);
+    }
+
+    /// <summary>
+    /// Every slot read confidently or kept from the match, and you known: nothing for anyone to
+    /// check, so it's applied, and the review stays a click away.
+    /// </summary>
+    private async Task ApplyWithoutReviewAsync(MatchState match, Action applied, Read read)
+    {
+        var heroes = read.Detection.Slots.Select(slot => slot.HeroId).ToList();
+        var self = read.Detection.SelfSlot!.Value;
+        Apply(match, new DetectReviewResult(heroes, self, [], read.NetWorth.Souls, []), read.At, read.Directory);
+        applied();
+        _lastApplied = read;
+        _canReview.OnNext(true);
+        _log.Information("Detect: applied without review, every slot being settled");
+        _notifications.ShowSuccess("Read the match off the screen and applied it. Review beside Detect shows what was read.", _appliedToast);
+        await KeepCaptureAsync(read.Capture, read.At,
+            LabeledCapture.FromApplied(read.Detection, heroes, self, [], reviewed: false, read.Capture.ScreenWidth, read.Capture.ScreenHeight));
+    }
+
+    private void ShowReview(MatchState match, Action applied, Read read)
+    {
         var heroes = _data.Store.Heroes.Values
             .Select(hero => new HeroChoice(hero.HeroId, hero.HeroName))
             .OrderBy(choice => choice.Name.ToLowerInvariant(), StringComparer.Ordinal)
             .ToList();
         DetectReviewViewModel? review = null;
-        review = new DetectReviewViewModel(detection, netWorth, heroes,
+        review = new DetectReviewViewModel(read.Detection, read.NetWorth, heroes,
             async result =>
             {
                 Close(review!);
-                Apply(match, result, capturedAt, directory);
+                Apply(match, result, read.At, read.Directory);
                 applied();
-                await KeepCaptureAsync(capture, capturedAt,
-                    LabeledCapture.FromApplied(detection, result.SlotHeroes, result.SelfSlot, result.CorrectedSlots, reviewed: true,
-                        capture.ScreenWidth, capture.ScreenHeight));
+                await KeepCaptureAsync(read.Capture, read.At,
+                    LabeledCapture.FromApplied(read.Detection, result.SlotHeroes, result.SelfSlot, result.CorrectedSlots, reviewed: true,
+                        read.Capture.ScreenWidth, read.Capture.ScreenHeight));
             },
             () => Close(review!))
         {
@@ -149,6 +205,9 @@ public class DetectAction
             .Subscribe(remember => _settings.Update(s => s.RememberCorrections = remember));
         _modals.ShowModal(review);
     }
+
+    /// <summary>A detection with everything needed to apply or review it: what was read, and off what.</summary>
+    private sealed record Read(Detection Detection, NetWorthReading NetWorth, ScreenCapture Capture, DateTimeOffset At, string Directory);
 
     /// <summary>What was read, for the log: each side's pills and total, and whether they added up.</summary>
     internal static string NetWorthLog(NetWorthReading reading)

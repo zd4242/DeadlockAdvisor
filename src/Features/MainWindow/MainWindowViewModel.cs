@@ -14,6 +14,7 @@ using DeadlockAdvisor.Features.Settings.General;
 using DeadlockAdvisor.Features.Settings.Shortcuts;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
+using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Contracts;
@@ -366,7 +367,12 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         ShowPage(0);
-        using var surface = _modals.ShowModalObservable.Take(1).Subscribe(_ => RequestViewAction(BringForwardAction));
+        // Only a review or a problem needs you here; a detection applied without review, or its
+        // progress, shouldn't pull you out of the game.
+        using var surface = _modals.ShowModalObservable
+            .Where(modal => modal is not ProgressModalViewModel)
+            .Take(1)
+            .Subscribe(_ => RequestViewAction(BringForwardAction));
         await Match.DetectCommand.Execute();
     }
 

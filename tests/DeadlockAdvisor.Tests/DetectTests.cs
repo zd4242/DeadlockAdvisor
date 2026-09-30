@@ -24,6 +24,9 @@ public sealed class DetectTests : IDisposable
     private static readonly string[] _band2Heroes =
         ["apollo", "ivy", "wraith", "bebop", "silver", "doorman", "celeste", "lash", "venator", "paige", "mirage", "mo_and_krill"];
 
+    /// <summary>A capture every hero of which reads confidently, you found too.</summary>
+    private const string Certain = "screen_2560x1440_band";
+
     private readonly DataFixture _fixture = new();
     private readonly FakeScreenCapture _capture = new();
     private readonly List<ViewModelBase> _shown = [];
@@ -34,7 +37,9 @@ public sealed class DetectTests : IDisposable
     public DetectTests()
     {
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
-        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, _capture, new FakeLoggingService());
+        // Most of these are about the review, which a certain read would otherwise skip.
+        _fixture.Settings.Current.AutoApplyDetect = false;
+        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new NotificationService(new FakeLoggingService()), _capture, new FakeLoggingService());
         var dataRanks = new DataRanksViewModel(_fixture.Data, new MatchStatsService(new FakeDeadlockApi()), new NotificationService(new FakeLoggingService()));
         var import = new ImportMatchAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new MatchLookupService(new FakeDeadlockApi()),
             new FakeLoggingService());
@@ -202,6 +207,71 @@ public sealed class DetectTests : IDisposable
         _page.Board.ClearCommand.Execute().Subscribe();
         Assert.True(_page.Match.NetWorth.IsEmpty);
         Assert.False(_page.Board.HasNetWorth);
+    }
+
+    [AvaloniaFact]
+    public async Task ACertainDetectionIsAppliedWithoutReviewAndCanStillBeReviewed()
+    {
+        _fixture.Settings.Current.AutoApplyDetect = true;
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        // Every hero in this one reads confidently, and you're found.
+        _capture.Next = Capture(Certain);
+        var spec = FixtureSpec(Certain);
+        var heroes = Enumerable.Range(0, 12).Select(slot => (string)spec["heroes"]![slot.ToString()]!).ToList();
+
+        await _page.DetectCommand.Execute();
+
+        Assert.DoesNotContain(_shown, modal => modal is DetectReviewViewModel);
+        Assert.False(_fixture.Modals.IsModalOpen);
+        Assert.Equal(heroes[1], _page.Match.SelfHero);
+        Assert.Equal(heroes[6..], _page.Match.Enemies);
+        Assert.True(_page.Board.CanReviewDetection);
+        var kept = Directory.GetFiles(Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName), "detect_*.json").Single();
+        Assert.False(LabeledCapture.FromJson(System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(kept))!).Reviewed);
+
+        // Review shows what was read, and applying it again (corrected) works as ever.
+        await _page.ReviewDetectionCommand.Execute();
+        var review = Assert.IsType<DetectReviewViewModel>(_shown[^1]);
+        Assert.Equal(heroes, review.Slots.Select(slot => slot.HeroId));
+        review.Slots[3].SelectedHero = review.Slots[3].Choices.Single(choice => choice.HeroId == "haze");
+        await review.ApplyCommand.Execute();
+        Assert.Equal(Role.Ally, _page.Match.RoleOf("haze"));
+    }
+
+    [AvaloniaFact]
+    public async Task AnUncertainDetectionIsReviewedEvenWhenApplyingWithoutAsking()
+    {
+        _fixture.Settings.Current.AutoApplyDetect = true;
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        var band = Capture().Band;
+        var blacked = new RgbImage(band.Width, band.Height, (byte[])band.Pixels.Clone());
+        // A dead player in slot 3, and no match applied yet to keep them from.
+        var grid = DetectAction.Detect(Capture(), TemplateBank.Load(_detect.TopbarDir), null)!.Geometry;
+        var dead = grid.Boxes()[3];
+        for (var y = (int)dead.Y; y < (int)(dead.Y + dead.H); y++)
+            Array.Clear(blacked.Pixels, (y * band.Width + (int)dead.X) * 3, (int)dead.W * 3);
+        _capture.Next = new(blacked, 2560, 1440);
+
+        await _page.DetectCommand.Execute();
+
+        var review = Assert.IsType<DetectReviewViewModel>(_shown[^1]);
+        Assert.True(review.Slots[3].IsUncertain);
+        Assert.False(_page.Board.CanReviewDetection);
+    }
+
+    [AvaloniaFact]
+    public async Task ClearingTheMatchLeavesNothingToReview()
+    {
+        _fixture.Settings.Current.AutoApplyDetect = true;
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        _capture.Next = Capture(Certain);
+        await _page.DetectCommand.Execute();
+        Assert.True(_page.Board.CanReviewDetection);
+
+        _page.Board.ClearCommand.Execute().Subscribe();
+
+        Assert.False(_page.Board.CanReviewDetection);
+        Assert.False(await _page.ReviewDetectionCommand.CanExecute.FirstAsync());
     }
 
     [AvaloniaFact]

@@ -98,6 +98,11 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
         Board.DetectCommand = DetectCommand;
+        ReviewDetectionCommand = ReactiveCommand.Create(() => detect.ReviewLast(Match, WhenReplaced()), detect.CanReview);
+        Board.ReviewDetectionCommand = ReviewDetectionCommand;
+        detect.CanReview.Subscribe(can => Board.CanReviewDetection = can).DisposeWith(Disposables);
+        // The match it applied is gone, so there's nothing left to review.
+        Board.ClearCommand.Subscribe(_ => detect.ForgetLast()).DisposeWith(Disposables);
         ArtWanted = detect.ArtWanted;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
@@ -187,6 +192,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Detect found no art to match against and was asked to download it.</summary>
     public IObservable<Unit> ArtWanted { get; }
     public ReactiveCommand<Unit, Unit> ImportCommand { get; }
+
+    /// <summary>Look back at a detection that was applied without review.</summary>
+    public ReactiveCommand<Unit, Unit> ReviewDetectionCommand { get; }
 
     public void FocusSearch() => Board.OpenPicker();
 

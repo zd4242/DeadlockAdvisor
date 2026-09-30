@@ -54,7 +54,7 @@
                            IsVisible="{Binding IsSelfMissing}"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                     <Button Command="{Binding DetectCommand}"
-                            ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;You get to check the result before anything is applied.">
+                            ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;Applied straight away when every hero is certain; otherwise you check it first.">
                         <StackPanel Orientation="Horizontal" Spacing="8">
                             <TextBlock Text="Detect from screen" VerticalAlignment="Center"/>
                             <TextBlock Classes="shortcut"
@@ -62,6 +62,11 @@
                                        IsVisible="{Binding DetectKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                         </StackPanel>
                     </Button>
+                    <Button Classes="ghost"
+                            Content="Review"
+                            Command="{Binding ReviewDetectionCommand}"
+                            IsVisible="{Binding CanReviewDetection}"
+                            ToolTip.Tip="See what the last detection read, applied without asking because every hero was certain"/>
                     <Button Content="Import match…"
                             Command="{Binding ImportCommand}"
                             ToolTip.Tip="Look up a finished match by its ID and bring in its heroes"/>

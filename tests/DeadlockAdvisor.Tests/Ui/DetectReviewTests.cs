@@ -16,7 +16,8 @@ public class DetectReviewTests
     [AvaloniaFact]
     public async Task F9DetectsAndTheReviewRenders()
     {
-        using var ui = new UiHarness();
+        // Every hero in the laning capture reads confidently, which would apply it without a review.
+        using var ui = new UiHarness(settings => settings.Current.AutoApplyDetect = false);
         CopyTopbarInto(ui.Data.AssetsDir);
         ui.Capture.Next = Capture("laning_2560x1440_band");
         ui.Show();

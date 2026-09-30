@@ -63,6 +63,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.KeepDetectionCaptures = value);
     }
 
+    public bool AutoApplyDetect
+    {
+        get => Current.AutoApplyDetect;
+        set => Change(s => s.AutoApplyDetect = value);
+    }
+
     public bool RememberCorrections
     {
         get => Current.RememberCorrections;

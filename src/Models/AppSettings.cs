@@ -27,6 +27,7 @@ public class AppSettings
     public bool KeepUnreadCaptures { get; set; } = true;
     public bool KeepDetectionCaptures { get; set; } = true;
     public bool RememberCorrections { get; set; } = true;
+    public bool AutoApplyDetect { get; set; } = true;
 
     // Your Steam account ID (SteamID3's number), which picks you out of an imported match.
     public long? SteamAccountId { get; set; }
