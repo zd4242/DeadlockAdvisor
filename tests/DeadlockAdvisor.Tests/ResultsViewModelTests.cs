@@ -212,6 +212,18 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void ClearingTheHeroesDropsThePickEvenForEveryItem()
+    {
+        var results = Show(RankBy.Formula, null);
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+
+        results.SetResults([Scored("a", 0), Scored("b", 0)], "");
+
+        Assert.True(results.IsEmpty);
+        Assert.Null(results.SelectedItemId);
+    }
+
+    [Fact]
     public void ClickingTheSelectedRowAgainClearsIt()
     {
         var results = Show(RankBy.Formula, 0);

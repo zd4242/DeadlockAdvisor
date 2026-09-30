@@ -166,9 +166,9 @@ public class ResultsViewModel : ViewModelBase
         SummaryTip = RankTip();
 
         // Drop a selection that no longer appears, so the explanation and the highlighted row can't
-        // disagree. A collapsed section still counts as showing its items: folding one shouldn't
-        // lose the pick.
-        if (!shown.Any(entry => entry.Item.ItemId == SelectedItemId) && !picks.Any(item => item.ItemId == SelectedItemId))
+        // disagree; the empty hint lists nothing, even when every item is kept. A collapsed section
+        // still counts as showing its items: folding one shouldn't lose the pick.
+        if (IsEmpty || (!shown.Any(entry => entry.Item.ItemId == SelectedItemId) && !picks.Any(item => item.ItemId == SelectedItemId)))
             SetSelection(null);
 
         // Blending, both bars share one scale, the largest part on screen, so they compare directly.

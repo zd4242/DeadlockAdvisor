@@ -75,6 +75,22 @@ public class MatchPageTests
         Assert.True(match.Explain.HasItem);
     }
 
+    [AvaloniaTheory]
+    [InlineData(CutoffPreset.EveryItem)]
+    [InlineData(MatchViewModel.DefaultCutoffPercent)]
+    public async Task ClearEmptiesTheExplanation(int cutoffPercent)
+    {
+        using var ui = new UiHarness(settings => settings.Current.ResultsMinPercent = cutoffPercent);
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
+
+        await match.Board.ClearCommand.Execute();
+
+        Assert.Null(match.Results.SelectedItemId);
+        Assert.False(match.Explain.HasItem);
+    }
+
     [AvaloniaFact]
     public void TheTieredViewAndEmptyStateRender()
     {
