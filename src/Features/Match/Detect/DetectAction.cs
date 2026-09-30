@@ -22,11 +22,11 @@ namespace DeadlockAdvisor.Features.Match.Detect;
 public class DetectAction
 {
     /// <summary>
-    /// A cached grid reading fewer slots than this confidently is searched for afresh and the better
-    /// read kept: a correct grid reads all twelve on a live match, so much less means a roster of dead
-    /// players or a grid that has quietly stopped fitting.
+    /// A cached grid fitting worse than this (<see cref="Detection.Fit"/>) is searched for afresh and
+    /// the better read kept: it has stopped fitting, say after a change of HUD scale. Counting
+    /// confident slots instead paid for a five-second search whenever a few players were dead.
     /// </summary>
-    public const int CacheTrustFloor = 10;
+    public const double CacheTrustFit = 0.7;
 
     // A read with a cached grid is quick; only a search is worth putting a progress modal up for.
     private static readonly TimeSpan _progressDelay = TimeSpan.FromMilliseconds(250);
@@ -162,12 +162,12 @@ public class DetectAction
     {
         // The band is only the top of the screen; the search sizes itself against the whole screen's height.
         var detection = Detector.Detect(capture.Band, bank, cached, screenHeight: capture.ScreenHeight, progress: progress);
-        if (cached is not null && detection is not null && detection.ConfidentCount < CacheTrustFloor)
+        if (cached is not null && detection is not null && detection.Fit < CacheTrustFit)
         {
             // The HUD scale changed, or the cached grid was never as good as it looked: pay for a fresh
-            // search and keep whichever reads better.
+            // search and keep whichever fits better.
             var fresh = Detector.Detect(capture.Band, bank, screenHeight: capture.ScreenHeight, progress: progress);
-            if (fresh is not null && fresh.ConfidentCount > detection.ConfidentCount)
+            if (fresh is not null && fresh.Fit > detection.Fit)
                 detection = fresh;
         }
         return detection;

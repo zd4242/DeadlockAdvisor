@@ -32,7 +32,7 @@
     "width_ratio": 0.5214937171610257
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -85,7 +85,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -190,7 +190,7 @@
     "width_ratio": 0.5214937171610253
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -243,7 +243,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -1031,7 +1031,7 @@
     "width_ratio": 0.5575163884532729
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -1084,7 +1084,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",
@@ -1189,7 +1189,7 @@
     "width_ratio": 0.557516388453272
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -1242,7 +1242,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",
@@ -1371,7 +1371,7 @@
     "width_ratio": 0.5309520956042799
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -1424,7 +1424,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -1529,7 +1529,7 @@
     "width_ratio": 0.49378544891198006
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -1582,7 +1582,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -1711,7 +1711,7 @@
     "width_ratio": 0.5379054779497165
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -1764,7 +1764,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -1869,7 +1869,7 @@
     "width_ratio": 0.5379054779497167
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -1922,7 +1922,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -2051,7 +2051,7 @@
     "width_ratio": 0.5161560060870708
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -2104,7 +2104,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -2209,7 +2209,7 @@
     "width_ratio": 0.5161560060870707
    },
    "self_slot": 2,
-   "confident_count": 9,
+   "confident_count": 8,
    "slots": [
     {
      "hero_id": "abrams",
@@ -2262,7 +2262,7 @@
     {
      "hero_id": "holliday",
      "runner_up": "warden",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "holliday",
       "warden",
@@ -2384,7 +2384,7 @@
     "width_ratio": 0.52830269919415
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -2437,7 +2437,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",
@@ -2542,7 +2542,7 @@
     "width_ratio": 0.5283026991941493
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -2595,7 +2595,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",
@@ -2717,7 +2717,7 @@
     "width_ratio": 0.5263682803118397
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -2770,7 +2770,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",
@@ -2875,7 +2875,7 @@
     "width_ratio": 0.5263682803118397
    },
    "self_slot": 0,
-   "confident_count": 12,
+   "confident_count": 11,
    "slots": [
     {
      "hero_id": "apollo",
@@ -2928,7 +2928,7 @@
     {
      "hero_id": "silver",
      "runner_up": "drifter",
-     "is_confident": true,
+     "is_confident": false,
      "ranked": [
       "silver",
       "drifter",

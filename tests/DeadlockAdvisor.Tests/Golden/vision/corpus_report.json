@@ -3,7 +3,7 @@
   "all": {
    "slots": 192,
    "correct": 184,
-   "confident_correct": 184,
+   "confident_correct": 183,
    "confident_wrong": 0,
    "unread": 8
   },
@@ -17,7 +17,7 @@
   "faded": {
    "slots": 48,
    "correct": 47,
-   "confident_correct": 47,
+   "confident_correct": 46,
    "confident_wrong": 0,
    "unread": 1
   },
@@ -390,7 +390,6 @@
     6,
     7,
     8,
-    9,
     10,
     11
    ],

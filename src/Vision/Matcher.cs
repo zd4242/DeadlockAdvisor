@@ -4,7 +4,7 @@ namespace DeadlockAdvisor.Vision;
 /// <param name="RunnerUp">The best hero this slot didn't get, whether or not another slot claimed them.</param>
 public sealed record SlotAssignment(int Slot, int? HeroIndex, double Score, double Margin, int? RunnerUp)
 {
-    public bool IsConfident => HeroIndex is not null && Score >= Matcher.MinScore && Margin >= Matcher.ClearMargin;
+    public bool IsConfident => Matcher.IsConfident(HeroIndex is not null, Score, Margin);
 }
 
 /// <summary>
@@ -18,8 +18,15 @@ public static class Matcher
     /// <summary>Below this a slot is left unidentified rather than guessed: a dead player's silhouette carries no hero at all.</summary>
     public const float MinScore = 0.30f;
 
+    // A confident read is one detection would apply without anyone checking it. On the labelled
+    // captures a hero in their own slot scores 0.76 or better nineteen times in twenty, and no other
+    // hero has scored above 0.41 in a slot that isn't theirs.
+    public const float ConfidentScore = 0.40f;
+
     /// <summary>How far clear of the runner-up a match has to be to count as confident.</summary>
-    public const float ClearMargin = 0.06f;
+    public const float ClearMargin = 0.08f;
+
+    public static bool IsConfident(bool hasHero, double score, double margin) => hasHero && score >= ConfidentScore && margin >= ClearMargin;
 
     /// <summary>A row's hero indices, best first; ties go to the later index, as numpy's reversed argsort gives.</summary>
     public static int[] Ranked(float[] row) =>

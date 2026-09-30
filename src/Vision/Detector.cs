@@ -4,7 +4,7 @@ namespace DeadlockAdvisor.Vision;
 public sealed record SlotReading(int Index, string? HeroId, double Score, double Margin, string? RunnerUp, Box Box,
     IReadOnlyList<(string HeroId, double Score)> Ranked)
 {
-    public bool IsConfident => HeroId is not null && Score >= Matcher.MinScore && Margin >= Matcher.ClearMargin;
+    public bool IsConfident => Matcher.IsConfident(HeroId is not null, Score, Margin);
 }
 
 /// <summary>What a screenshot says: a reading per slot, the grid it was read with, and which slot is you.</summary>
@@ -29,6 +29,12 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
     public RgbImage? CropOf(int slot) => Image is { } image ? Layout.Crop(image, Geometry.Boxes()[slot]) : null;
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
+
+    /// <summary>
+    /// How well the grid fits: the mean of its best slots' top scores, ignoring the worst third (the
+    /// dead). A right grid reads 0.8 or more even with four players dead; a wrong one reads far less.
+    /// </summary>
+    public double Fit => Scores.Count == 0 ? 0 : Layout.TrimmedScore(Scores.Select(row => row.Max()).ToArray());
 
     /// <summary>The heroes the scores are for, in the bank's order.</summary>
     public IReadOnlyList<string> Heroes { get; init; } = [];
