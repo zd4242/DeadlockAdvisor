@@ -21,6 +21,13 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
 
     public string? HeroAt(int slot) => slot >= 0 && slot < Slots.Count ? Slots[slot].HeroId : null;
 
+    /// <summary>
+    /// The slot as the grid frames it, the same for whoever is in it. The box the winning hero scored
+    /// best in drifts with the hero (and with whatever overlay it latched onto), so it's no frame to
+    /// learn from or show.
+    /// </summary>
+    public RgbImage? CropOf(int slot) => Image is { } image ? Layout.Crop(image, Geometry.Boxes()[slot]) : null;
+
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
 }
 

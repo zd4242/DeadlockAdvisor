@@ -186,6 +186,10 @@ public sealed class DetectTests : IDisposable
 
         var saved = Path.Combine(_detect.TopbarDir, "haze", "variant_01.png");
         Assert.True(File.Exists(saved));
+        // Framed by the grid, not by wherever the misread hero happened to score best.
+        var grid = Geometry.FromJson(_fixture.Settings.Current.VisionGeometry["2560x1440"])!;
+        var framed = Layout.Crop(Capture().Band, grid.Boxes()[3])!;
+        Assert.Equal(framed.Pixels, ImageFile.Load(saved).Pixels);
         Assert.False(Directory.Exists(Path.Combine(_detect.TopbarDir, "silver", "variant_01.png")));
         Assert.Equal("Saved as reference art", Assert.IsType<MessageModalViewModel>(_shown[^1]).Title);
         Assert.Equal(Role.Ally, _page.Match.RoleOf("haze"));

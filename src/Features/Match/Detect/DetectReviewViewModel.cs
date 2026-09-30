@@ -34,7 +34,7 @@ public class DetectReviewViewModel : ViewModelBase
         IReadOnlyList<HeroChoice> choices = [HeroChoice.Unknown, .. heroes];
         var souls = netWorth.Souls;
         Slots = detection.Slots
-            .Select(reading => new SlotReviewViewModel(reading, detection.Image is { } image ? Layout.Crop(image, reading.Box) : null, choices, ToggleSelf,
+            .Select(reading => new SlotReviewViewModel(reading, detection.CropOf(reading.Index), choices, ToggleSelf,
                 reading.Index < souls.Count ? souls[reading.Index] : null))
             .ToList();
         SelfSlot = detection.SelfSlot;
