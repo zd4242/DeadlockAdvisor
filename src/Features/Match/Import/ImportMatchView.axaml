@@ -68,7 +68,7 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <StackPanel Margin="20" Spacing="12" Width="620">
+    <StackPanel Margin="20" Spacing="12" Width="620" Classes.picking="{Binding NeedsSelf}">
         <TextBlock Classes="h2" Text="Import a match"/>
         <TextBlock TextWrapping="Wrap"
                    Foreground="{DynamicResource TextDimBrush}"
@@ -126,18 +126,26 @@
                       ToolTip.Tip="Saved under Settings → General, where it can be changed or cleared"/>
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
-            <Button x:Name="ApplyButton"
-                    Classes="primary"
-                    Content="Apply to match"
-                    MinWidth="80"
-                    HorizontalContentAlignment="Center"
-                    Command="{Binding ApplyCommand}"/>
-            <Button Content="Cancel"
-                    MinWidth="80"
-                    HorizontalContentAlignment="Center"
-                    IsCancel="True"
-                    Command="{Binding CancelCommand}"/>
-        </StackPanel>
+        <Grid ColumnDefinitions="*,Auto">
+            <Border Classes="blocker" Margin="0,0,16,0" IsVisible="{Binding NeedsSelf}">
+                <StackPanel>
+                    <PathIcon/>
+                    <TextBlock Text="Press You on your own hero to apply"/>
+                </StackPanel>
+            </Border>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
+                <Button x:Name="ApplyButton"
+                        Classes="primary"
+                        Content="Apply to match"
+                        MinWidth="80"
+                        HorizontalContentAlignment="Center"
+                        Command="{Binding ApplyCommand}"/>
+                <Button Content="Cancel"
+                        MinWidth="80"
+                        HorizontalContentAlignment="Center"
+                        IsCancel="True"
+                        Command="{Binding CancelCommand}"/>
+            </StackPanel>
+        </Grid>
     </StackPanel>
 </UserControl>

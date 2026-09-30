@@ -95,8 +95,7 @@ public class DetectReviewViewModel : ViewModelBase
 
         var confident = _detection.ConfidentCount;
         Summary = (SelfSlot is null
-            ? $"Read {confident} of 12 heroes, but couldn't tell which one is you, so the teams can't be split. "
-              + "Press You on your own slot to apply."
+            ? $"Read {confident} of 12 heroes, but couldn't tell which one is you, so the teams can't be split."
             : $"Read {confident} of 12 heroes confidently. Check anything marked uncertain before applying — "
               + "a slot whose player was dead at the moment of capture can't be identified from the portrait.")
             + $" Net worth read for {_netWorth.ReadCount} of 12.";

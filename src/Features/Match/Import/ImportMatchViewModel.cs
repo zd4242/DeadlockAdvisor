@@ -57,6 +57,8 @@ public class ImportMatchViewModel : ViewModelBase
     public bool HasMatch => Players.Count > 0;
     [Reactive] public ImportPlayerViewModel? Self { get; private set; }
     public bool HasSelf => Self is not null;
+    /// <summary>The match is shown, but can't be applied until you're picked out of it.</summary>
+    public bool NeedsSelf => HasMatch && !HasSelf;
 
     [Reactive] public IReadOnlyList<ImportPlayerViewModel> OwnRows { get; private set; } = [];
     [Reactive] public IReadOnlyList<ImportPlayerViewModel> FoeRows { get; private set; } = [];
@@ -66,7 +68,7 @@ public class ImportMatchViewModel : ViewModelBase
     /// <summary>When the match was played, how long it went, and who won.</summary>
     [Reactive] public string Summary { get; private set; } = "";
 
-    /// <summary>What to do next, or how you were picked out.</summary>
+    /// <summary>How you were picked out, when it was automatic.</summary>
     [Reactive] public string Prompt { get; private set; } = "";
 
     /// <summary>Heroes the match has that this data doesn't, which are left out.</summary>
@@ -190,12 +192,10 @@ public class ImportMatchViewModel : ViewModelBase
             ? (TeamName(ownTeam).ToUpperInvariant(), TeamName(foeTeam).ToUpperInvariant())
             : ("YOUR TEAM", "ENEMY TEAM");
         this.RaisePropertyChanged(nameof(HasSelf));
+        this.RaisePropertyChanged(nameof(NeedsSelf));
 
         Summary = SummaryText();
-        Prompt = !HasMatch ? ""
-            : Self is null ? "Press You on your own hero: the teams follow from it."
-            : Self.AccountId == _savedAccount ? "You were picked out by your saved Steam account."
-            : "";
+        Prompt = Self is not null && Self.AccountId == _savedAccount ? "You were picked out by your saved Steam account." : "";
         RefreshRemember();
     }
 

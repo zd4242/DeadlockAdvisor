@@ -381,6 +381,38 @@
         <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
         <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
     </Style>
+    <!-- While a dialog waits on you being picked, every You toggle asks to be pressed -->
+    <Style Selector=".picking ToggleButton.pill.self">
+        <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        <Setter Property="Foreground" Value="{DynamicResource SelfBrush}"/>
+    </Style>
+
+    <!-- What a dialog's main button is waiting on, beside the button -->
+    <Style Selector="Border.blocker">
+        <Setter Property="Background" Value="{DynamicResource WarningTintBrush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="CornerRadius" Value="6"/>
+        <Setter Property="Padding" Value="10,0,12,0"/>
+        <Setter Property="MinHeight" Value="36"/>
+        <Setter Property="HorizontalAlignment" Value="Left"/>
+    </Style>
+    <Style Selector="Border.blocker > StackPanel">
+        <Setter Property="Orientation" Value="Horizontal"/>
+        <Setter Property="Spacing" Value="8"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
+    <Style Selector="Border.blocker PathIcon">
+        <Setter Property="Width" Value="16"/>
+        <Setter Property="Height" Value="16"/>
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="Data" Value="M13,9H11V7H13M13,17H11V11H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z"/>
+    </Style>
+    <Style Selector="Border.blocker TextBlock">
+        <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+    </Style>
 
     <Style Selector="Button.icon">
         <Setter Property="Background" Value="Transparent"/>

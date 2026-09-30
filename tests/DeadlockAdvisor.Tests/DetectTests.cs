@@ -220,7 +220,8 @@ public sealed class DetectTests : IDisposable
 
         Assert.False(await review.ApplyCommand.CanExecute.FirstAsync());
         Assert.Equal("LEFT SIDE", review.OwnHeading);
-        Assert.Contains("Press You on your own slot", review.Summary);
+        Assert.False(review.HasSelf);
+        Assert.Contains("couldn't tell which one is you", review.Summary);
         Assert.All(review.Slots, slot => Assert.Equal(SlotRole.Unknown, slot.Role));
 
         review.Slots[8].SetSelfCommand.Execute().Subscribe();

@@ -40,6 +40,7 @@
     <SolidColorBrush x:Key="InfoBrush" Color="{x:Static theme:Palette.Tier2}"/>
     <SolidColorBrush x:Key="SuccessBrush" Color="{x:Static theme:Palette.Ally}"/>
     <SolidColorBrush x:Key="WarningBrush" Color="{x:Static theme:Palette.Accent}"/>
+    <SolidColorBrush x:Key="WarningTintBrush" Color="{x:Static theme:Palette.Accent}" Opacity="0.12"/>
     <SolidColorBrush x:Key="ErrorBrush" Color="{x:Static theme:Palette.Enemy}"/>
 
 </ResourceDictionary>

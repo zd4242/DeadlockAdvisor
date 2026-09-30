@@ -216,7 +216,7 @@ public sealed class MatchImportTests : IDisposable
         Assert.False(await dialog.ApplyCommand.CanExecute.FirstAsync());
         Assert.Equal(("THE HIDDEN KING", "THE ARCHMOTHER"), (dialog.OwnHeading, dialog.FoeHeading));
         Assert.Contains("The Hidden King won", dialog.Summary);
-        Assert.Contains("Press You", dialog.Prompt);
+        Assert.True(dialog.NeedsSelf);
         Assert.All(dialog.Players, player => Assert.Equal(Role.None, player.Role));
 
         // You on the right-hand side: your team moves to the left.
@@ -224,6 +224,7 @@ public sealed class MatchImportTests : IDisposable
         await celeste.SetSelfCommand.Execute();
 
         Assert.Same(celeste, dialog.Self);
+        Assert.False(dialog.NeedsSelf);
         Assert.Equal([7, 8, 9, 10, 11, 12], dialog.OwnRows.Select(row => row.Player.PlayerSlot));
         Assert.Contains("your team lost", dialog.Summary);
         Assert.True(dialog.ShowsRememberMe);

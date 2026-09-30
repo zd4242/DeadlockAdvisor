@@ -89,7 +89,7 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <StackPanel Margin="20" Spacing="12" Width="700">
+    <StackPanel Margin="20" Spacing="12" Width="700" Classes.picking="{Binding !HasSelf}">
         <TextBlock Classes="h2" Text="Detected match"/>
         <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
 
@@ -117,13 +117,26 @@
         </Grid>
 
         <Grid ColumnDefinitions="*,Auto">
-            <!-- Only once there's a correction to remember; it's also under Settings → Detection. Beside the
-                 buttons rather than above them, so appearing doesn't grow the dialog. -->
+            <!-- Until you're picked, this spot says that's what Apply waits on. After that it offers to remember
+                 corrections, once there are any; that's also under Settings → Detection. Beside the buttons rather
+                 than above them, so neither grows the dialog. -->
+            <Border Classes="blocker" Margin="0,0,16,0" IsVisible="{Binding !HasSelf}">
+                <StackPanel>
+                    <PathIcon/>
+                    <TextBlock Text="Press You on your own slot to apply"/>
+                </StackPanel>
+            </Border>
             <CheckBox Content="Remember my corrections as reference art"
                       VerticalAlignment="Center"
                       IsChecked="{Binding RememberCorrections}"
-                      IsVisible="{Binding HasCorrections}"
-                      ToolTip.Tip="Saves each corrected crop into assets/topbar/&lt;hero&gt;/ so the same portrait is recognised next time"/>
+                      ToolTip.Tip="Saves each corrected crop into assets/topbar/&lt;hero&gt;/ so the same portrait is recognised next time">
+                <CheckBox.IsVisible>
+                    <MultiBinding Converter="{x:Static BoolConverters.And}">
+                        <Binding Path="HasCorrections"/>
+                        <Binding Path="HasSelf"/>
+                    </MultiBinding>
+                </CheckBox.IsVisible>
+            </CheckBox>
 
             <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="10">
                 <Button x:Name="ApplyButton"
