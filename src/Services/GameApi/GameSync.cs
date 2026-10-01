@@ -52,6 +52,8 @@ public static partial class GameSync
             ["TechPowerPercent"] = ("TechPowerPercent", "Spirit Power", "%"),
             ["BaseAttackDamagePercent"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["BaseAttackDamagePercentBonus"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
+            // Intensifying Magazine's bonus after firing continuously, labelled "Max Weapon Damage".
+            ["BaseAttackDamagePercentAtMaxDuration"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["CloseRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["LongRangeBonusWeaponPower"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
             ["WeaponPowerPerStack"] = ("BaseAttackDamagePercent", "Weapon Damage", "%"),
@@ -106,6 +108,8 @@ public static partial class GameSync
         ["FireRateSlow"] = "a debuff on enemies",
         ["SlowPercent"] = "a debuff on enemies",
         ["MovementSpeedSlow"] = "a debuff on enemies",
+        ["MaxSlowPercent"] = "a debuff on enemies",
+        ["HealLifePercentOutOfCombat"] = "a percent of max health per second, not the flat amount Out of Combat Regen counts",
         ["GuardianWardCombatBarrier"] = "goes on an ally",
         ["HealAmpRegenPenaltyPercent"] = "the regen half of a healing reduction HealAmpReceivePenaltyPercent already counts",
         ["ProcBaseAttackDamagePercent"] = "one proc shot, not a lasting bonus",
@@ -333,9 +337,9 @@ public static partial class GameSync
 
     /// <summary>
     /// "Key ("Label"): Item, Item" for every shown, nonzero property that isn't in <see cref="Stats"/> or
-    /// <see cref="Unscored"/> but carries a label a scored stat uses: most likely a new or renamed
-    /// alias the stat rules are missing. Labels unrelated to any scored stat (Duration, Cast Range…)
-    /// aren't reported.
+    /// <see cref="Unscored"/> but carries a label a scored stat uses, or that label with "Max " in front
+    /// (a fully stacked or charged-up value): most likely a new or renamed alias the stat rules are
+    /// missing. Labels unrelated to any scored stat (Duration, Cast Range…) aren't reported.
     /// </summary>
     public static List<string> UnmappedStats(IReadOnlyCollection<JsonNode> records)
     {
@@ -358,7 +362,8 @@ public static partial class GameSync
                 if (Stats.ContainsKey(key) || Unscored.ContainsKey(key))
                     continue;
                 var label = PyJson.Text(property, "label");
-                if (!scoredLabels.Contains(label) || Number(PyJson.Get(property, "value")) is not { } value || value == 0)
+                var unprefixed = label.StartsWith("Max ", StringComparison.Ordinal) ? label["Max ".Length..] : label;
+                if (!scoredLabels.Contains(label) && !scoredLabels.Contains(unprefixed) || Number(PyJson.Get(property, "value")) is not { } value || value == 0)
                     continue;
                 if (!found.TryGetValue(key, out var entry))
                 {

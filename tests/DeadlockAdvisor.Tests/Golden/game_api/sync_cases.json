@@ -36,8 +36,8 @@
   "fresh": {
    "report": {
     "lines": [
-     "Item stats refreshed: 338 stat row(s).",
-     "42 item stat(s) changed:",
+     "Item stats refreshed: 339 stat row(s).",
+     "43 item stat(s) changed:",
      "  Opening Rounds: Weapon Damage (conditional) none -> 25%",
      "  Close Quarters: Weapon Damage (conditional) none -> 20%",
      "  Long Range: Weapon Damage (conditional) none -> 40%",
@@ -74,6 +74,7 @@
      "  Diviner's Kevlar: Barrier (conditional) none -> 1000",
      "  Burst Fire: Fire Rate (conditional) none -> 32%",
      "  Surge of Power: Fire Rate (conditional) none -> 20%",
+     "  Intensifying Magazine: Weapon Damage (conditional) none -> 45%",
      "  Escalating Resilience: Bullet Resist (conditional) none -> 30%",
      "  Reactive Barrier: Barrier (conditional) none -> 325",
      "  Indomitable: Barrier (conditional) none -> 325",
@@ -89,7 +90,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": true,
-    "stat_rows": 338,
+    "stat_rows": 339,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": true
@@ -106,7 +107,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 338,
+    "stat_rows": 339,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -133,7 +134,7 @@
      "  Monster Rounds: cost 1 -> 800",
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
-     "Item stats refreshed: 338 stat row(s).",
+     "Item stats refreshed: 339 stat row(s).",
      "Item tooltips refreshed: 156 item(s).",
      "",
      "Single-target changes -- these items are now scored on their best targets on the side they're cast on, or no longer:",
@@ -157,7 +158,7 @@
     "heroes_changed": true,
     "items_changed": true,
     "stats_changed": true,
-    "stat_rows": 338,
+    "stat_rows": 339,
     "tooltips_changed": true,
     "tooltip_count": 156,
     "anything_changed": true
@@ -174,7 +175,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 338,
+    "stat_rows": 339,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false

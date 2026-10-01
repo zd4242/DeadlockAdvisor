@@ -172,6 +172,7 @@ infuser,TechResist,Spirit Resist,10,%,0
 inhibitor,BaseAttackDamagePercent,Weapon Damage,10,%,0
 inhibitor,BonusHealth,Bonus Health,150,,0
 inhibitor,HealAmpReceivePenaltyPercent,Healing Reduction,40,%,1
+intensifying_magazine,BaseAttackDamagePercent,Weapon Damage,45,%,1
 intensifying_magazine,BonusClipSizePercent,Max Ammo,20,%,0
 juggernaut,BonusHealthRegen,Health Regen,8,,0
 juggernaut,BonusMoveSpeed,Move Speed,2.5,m/s,0
