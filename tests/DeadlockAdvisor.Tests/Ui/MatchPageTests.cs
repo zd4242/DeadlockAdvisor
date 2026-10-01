@@ -149,6 +149,58 @@ public class MatchPageTests
                                      && tip.Contains("\n\nFetched ", StringComparison.Ordinal));
     }
 
+    /// <summary>
+    /// The explanation leads with the number the list shows, whatever it ranks by; when that isn't the
+    /// formula's score, the hero cards get a total of their own.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(RankBy.Formula)]
+    [InlineData(RankBy.MatchData)]
+    [InlineData(RankBy.Both)]
+    public void TheExplanationLeadsWithTheNumberTheListShows(RankBy rankBy)
+    {
+        using var ui = new UiHarness(settings =>
+        {
+            settings.Current.ResultsRankBy = rankBy;
+            settings.Current.ResultsMinPercent = CutoffPreset.EveryItem;
+        });
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        var row = match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown");
+        match.Results.Select(row);
+
+        var explain = match.Explain;
+        Assert.Equal(row.Score.Text, explain.Headline.Text);
+        Assert.Equal(rankBy != RankBy.Formula, explain.ShowsFormulaTotal);
+        Assert.Equal(explain.Contributions.Sum(card => card.Amount.Value), explain.FormulaTotal.Value, 6);
+    }
+
+    /// <summary>Without the math, the cards say who counts and how much, and each line's working moves to its tooltip.</summary>
+    [AvaloniaFact]
+    public void WithoutTheMathTheWorkingShowsOnHover()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ShowExplainMath = false);
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+        ui.Show();
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown"));
+        ui.Screenshot("match_explain_simple.png");
+
+        var explain = ui.Window.MatchPage.GetVisualDescendants().OfType<ExplainView>().Single();
+        var lines = explain.GetVisualDescendants().OfType<Grid>().Where(grid => grid.Classes.Contains("traitLine")).ToList();
+        List<Control> MathShown() => explain.GetVisualDescendants().OfType<Control>()
+            .Where(control => control.Classes.Contains("math") && control.IsEffectivelyVisible).ToList();
+        Assert.NotEmpty(lines);
+        Assert.All(lines, line => Assert.StartsWith(((TraitLine)line.DataContext!).Arithmetic, (string)ToolTip.GetTip(line)!));
+        Assert.Empty(MathShown());
+
+        ui.ViewModel.Settings.General.ShowExplainMath = true;
+        UiHarness.Settle();
+        Assert.All(lines, line => Assert.Null(ToolTip.GetTip(line)));
+        Assert.NotEmpty(MathShown());
+    }
+
     /// <summary>How to use the match bar sits behind its heading's info badge; only "you're not set" stays in view, until you are.</summary>
     [AvaloniaFact]
     public void TheMatchBarKeepsItsHowToBehindAnInfoBadge()

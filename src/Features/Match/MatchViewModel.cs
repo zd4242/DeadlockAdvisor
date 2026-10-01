@@ -117,6 +117,11 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             .DistinctUntilChanged()
             .Subscribe(show => Results.ShowsEditors = Explain.ShowsEditors = show)
             .DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.ShowExplainMath)
+            .DistinctUntilChanged()
+            .Subscribe(show => Explain.ShowsMath = show)
+            .DisposeWith(Disposables);
 
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData, vm => vm.HideRarelyBuilt)
             .Skip(1)
@@ -275,5 +280,5 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private void RefreshExplain() => ShowExplain(Results.SelectedItemId);
 
     private void ShowExplain(string? itemId) =>
-        Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy == RankBy.Both ? Scale() : null);
+        Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy, EffectiveRankBy == RankBy.Both ? Scale() : null);
 }

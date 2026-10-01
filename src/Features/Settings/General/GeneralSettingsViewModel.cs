@@ -50,6 +50,12 @@ public class GeneralSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.ShowRandomButtons = value);
     }
 
+    public bool ShowExplainMath
+    {
+        get => Current.ShowExplainMath;
+        set => Change(s => s.ShowExplainMath = value);
+    }
+
     public bool ShowModelEditors
     {
         get => Current.ShowModelEditors;

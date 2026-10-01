@@ -18,6 +18,19 @@
             <Setter Property="Margin" Value="0,0,6,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        <!-- Without the math (Settings → General), each line says what it is and how much it counts, and the rest shows on hover. -->
+        <Style Selector="DockPanel.simple :is(Control).math">
+            <Setter Property="IsVisible" Value="False"/>
+        </Style>
+        <Style Selector="DockPanel.simple Grid.cardTitle" x:DataType="explain:ContributionCard">
+            <Setter Property="ToolTip.Tip" Value="{Binding NoteWithTip}"/>
+        </Style>
+        <Style Selector="DockPanel.simple Grid.traitLine" x:DataType="explain:TraitLine">
+            <Setter Property="ToolTip.Tip" Value="{Binding Working}"/>
+        </Style>
+        <Style Selector="DockPanel.simple Grid.dataLine" x:DataType="explain:DataLine">
+            <Setter Property="ToolTip.Tip" Value="{Binding Detail}"/>
+        </Style>
         <!-- Only with an item, so the idle title offers nothing to go to. The formula only while the editors are shown. -->
         <Style Selector="Grid.itemHeader.hasItem">
             <Setter Property="ContextMenu">
@@ -32,7 +45,7 @@
         </Style>
     </UserControl.Styles>
 
-    <DockPanel>
+    <DockPanel Classes.simple="{Binding !ShowsMath}">
         <TextBlock DockPanel.Dock="Top" Classes="section" Text="WHY THIS ITEM?"/>
 
         <Grid DockPanel.Dock="Top"
@@ -64,9 +77,9 @@
                                    VerticalAlignment="Center"
                                    FontSize="15"
                                    IsBold="True"
-                                   Value="{Binding Total.Shown}"
-                                   Text="{Binding Total.Text}"
-                                   ToolTip.Tip="{Binding Total.Tip}"
+                                   Value="{Binding Headline.Shown}"
+                                   Text="{Binding Headline.Text}"
+                                   ToolTip.Tip="{Binding Headline.Tip}"
                                    IsVisible="{Binding HasItem}"/>
         </Grid>
 
@@ -84,12 +97,26 @@
                            IsVisible="{Binding NoContributions}"
                            Text="No hero in this view triggers any of this item's rules."/>
 
+                <!-- Lined up with the cards' own amounts, which add up to it. -->
+                <Grid ColumnDefinitions="*,Auto"
+                      Margin="10,0,10,2"
+                      Background="Transparent"
+                      ToolTip.Tip="{Binding FormulaTotalTip}"
+                      IsVisible="{Binding ShowsFormulaTotal}">
+                    <TextBlock Text="Formula" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource FormulaBrush}"/>
+                    <controls:SignedAmount Grid.Column="1"
+                                           VerticalAlignment="Center"
+                                           IsBold="True"
+                                           Value="{Binding FormulaTotal.Shown}"
+                                           Text="{Binding FormulaTotal.Text}"/>
+                </Grid>
+
                 <ItemsControl ItemsSource="{Binding Contributions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="explain:ContributionCard">
                             <Border Classes="inset" Margin="0,0,0,4">
                                 <StackPanel Spacing="4">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto">
+                                    <Grid Classes="cardTitle" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Background="Transparent">
                                         <art:ArtImage Classes="heroIcon"
                                                       Kind="Hero"
                                                       ArtId="{Binding HeroId}"
@@ -107,7 +134,7 @@
                                                             ToolTip.Tip="{Binding Info}"
                                                             IsVisible="{Binding Info, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                         <TextBlock Grid.Column="4"
-                                                   Classes="faintText"
+                                                   Classes="faintText math"
                                                    Margin="10,0,0,0"
                                                    VerticalAlignment="Center"
                                                    TextTrimming="CharacterEllipsis"
@@ -123,11 +150,12 @@
                                     <!-- One line per trait with the multiplication and its share in right-aligned
                                          columns so the numbers stack and scan, then where the coefficient came from
                                          on its own line beneath, so a long source wraps across the card's full
-                                         width instead of squeezing between the name and the numbers. -->
+                                         width instead of squeezing between the name and the numbers. Without the
+                                         math, a hero's only line leaves its share to the card's amount. -->
                                     <ItemsControl ItemsSource="{Binding Traits}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="explain:TraitLine">
-                                                <Grid Margin="0,0,0,4" RowDefinitions="Auto,Auto">
+                                                <Grid Classes="traitLine" Margin="0,0,0,4" RowDefinitions="Auto,Auto" Background="Transparent">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Arithmetic"/>
@@ -135,26 +163,27 @@
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding TraitName}"/>
                                                     <TextBlock Grid.Column="1"
-                                                               Classes="faintText"
+                                                               Classes="faintText math"
                                                                Margin="10,0,0,0"
                                                                HorizontalAlignment="Right"
                                                                Text="{Binding Arithmetic}"/>
                                                     <controls:SignedAmount Grid.Column="2"
+                                                                           Classes.math="{Binding IsSole}"
                                                                            Margin="10,0,0,0"
                                                                            HorizontalAlignment="Right"
                                                                            Value="{Binding Share.Shown}"
                                                                            Text="{Binding Share.Text}"
                                                                            ToolTip.Tip="{Binding Share.Tip}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
-                                                    <TextBlock Grid.Row="1"
-                                                               Grid.ColumnSpan="2"
-                                                               Classes="faintText"
-                                                               Margin="12,1,0,0"
-                                                               FontSize="12"
-                                                               TextWrapping="Wrap"
-                                                               Text="{Binding Source}"
-                                                               ToolTip.Tip="{Binding SourceTip}"
-                                                               IsVisible="{Binding Source, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                                    <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="math">
+                                                        <TextBlock Classes="faintText"
+                                                                   Margin="12,1,0,0"
+                                                                   FontSize="12"
+                                                                   TextWrapping="Wrap"
+                                                                   Text="{Binding Source}"
+                                                                   ToolTip.Tip="{Binding SourceTip}"
+                                                                   IsVisible="{Binding Source, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                                                    </Border>
                                                 </Grid>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
@@ -208,7 +237,7 @@
                                     <ItemsControl ItemsSource="{Binding Lines}">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="explain:DataLine">
-                                                <Grid Margin="0,0,0,3">
+                                                <Grid Classes="dataLine" Margin="0,0,0,3" Background="Transparent">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="Auto"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="DataHero"/>
@@ -228,7 +257,7 @@
                                                                     Text="{Binding RelationText}"
                                                                     Color="{Binding RelationColor}"/>
                                                     <TextBlock Grid.Column="3"
-                                                               Classes="faintText"
+                                                               Classes="faintText math"
                                                                Margin="10,0,0,0"
                                                                VerticalAlignment="Center"
                                                                Text="{Binding Detail}"/>

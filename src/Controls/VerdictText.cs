@@ -4,7 +4,7 @@ using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Controls;
 
-/// <summary>"Formula ▲8.0 · data ▼1.0 → ▲7.0": a <see cref="BlendVerdict"/>, each opinion named in the colour of its bar.</summary>
+/// <summary>"Formula ▲8.0 · data ▼1.0": a <see cref="BlendVerdict"/>'s parts, each opinion named in the colour of its bar.</summary>
 public class VerdictText : AmountLine
 {
     public static readonly StyledProperty<BlendVerdict?> VerdictProperty =
@@ -32,8 +32,6 @@ public class VerdictText : AmountLine
             return;
         Part("Formula", _formula, verdict.Formula, "no rule for this line-up");
         Part("data", _data, verdict.Data, "none for these heroes");
-        Separate("→");
-        Amount(verdict.Total, bold: true);
     }
 
     private void Part(string name, IBrush brush, double? value, string missing)

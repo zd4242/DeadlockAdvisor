@@ -51,6 +51,11 @@ public class ExplainViewModelTests
         Assert.Equal("(0 − 2 avg) × 2 × 0.5", lowHp.Traits[1].Arithmetic);
         Assert.DoesNotContain("0.5", lowHp.Traits[0].Arithmetic);
         Assert.Equal(-2 - 8.0 / 3, lowHp.Amount.Value, 9);
+        Assert.False(lowHp.Traits[0].IsSole);
+        // The best target counts in full, which needs no "×1".
+        var heavy = explain.Contributions.Single(card => card.HeroId == "heavy_spirit");
+        Assert.Equal("best target", heavy.Note);
+        Assert.Equal("(5 − 2 avg) × 2", heavy.Traits.Single(line => line.TraitName == "Deals Spirit Damage").Arithmetic);
         // The targets are the ranked lines only: 6 + -4/2.
         Assert.Contains("These enemies come to +4.0 as targets", explain.Contributions.Single(card => card.Info is not null).Info);
     }

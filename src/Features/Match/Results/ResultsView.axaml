@@ -9,6 +9,10 @@
              x:DataType="results:ResultsViewModel">
 
     <UserControl.Styles>
+        <!-- Green or red by its sign, as amounts are everywhere: gold names the formula, and this is often more than it. -->
+        <Style Selector="TextBlock.value">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
         <Style Selector="TextBlock.value.zero">
             <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
         </Style>

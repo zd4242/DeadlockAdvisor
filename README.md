@@ -56,7 +56,8 @@ another. That's worked out on the spot from the last fetch, and stays set
 until changed. The button counts the filters changed from their defaults.
 
 Click any recommendation to see **why** it scored what it did, per hero
-and per trait, with the arithmetic shown. With nothing selected, the panel
+and per trait, with the arithmetic shown. **Settings → General** can hide
+the arithmetic, which then shows when you hover a line. With nothing selected, the panel
 lists what the match data likes that the hand model doesn't.
 
 **Hero Traits** — the hero × trait grid, edited in place.

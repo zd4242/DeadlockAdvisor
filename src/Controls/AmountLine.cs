@@ -43,25 +43,24 @@ public abstract class AmountLine : StackPanel
             VerticalAlignment = VerticalAlignment.Center,
         });
 
-    protected void Amount(double value, bool bold = false)
+    protected void Amount(double value)
     {
         var amount = new DisplayAmount(value);
         Children.Add(new SignedAmount
         {
             Value = amount.Shown,
             Text = amount.Text,
-            IsBold = bold,
             VerticalAlignment = VerticalAlignment.Center,
         });
     }
 
     /// <summary>A "·" before every part but the first.</summary>
-    protected void Separate(string separator = "·")
+    protected void Separate()
     {
         if (_separate)
             Children.Add(new TextBlock
             {
-                Text = separator,
+                Text = "·",
                 Foreground = Faint,
                 Margin = new Thickness(5, 0),
                 VerticalAlignment = VerticalAlignment.Center,

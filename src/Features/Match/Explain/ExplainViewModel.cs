@@ -13,7 +13,12 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
-public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share);
+/// <param name="IsSole">The hero's only line, so without the math the card's amount stands for it.</param>
+public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share, bool IsSole = false)
+{
+    /// <summary>The arithmetic and where its coefficient came from, for hovering the line when the math is hidden.</summary>
+    public string Working => $"{Arithmetic} = {Format.SignedFixed(Share.Value, 1)}" + (SourceTip is null ? "" : $"\n\n{SourceTip}");
+}
 
 /// <param name="HeroId">The portrait beside the name; null for a line that isn't a hero, such as the typical team.</param>
 /// <param name="Note">Beside the name: the hero's best-target rank and net worth standing, when they scale its share.</param>
@@ -27,9 +32,13 @@ public sealed record ContributionCard(
     IReadOnlyList<TraitLine> Traits,
     string? Note = null,
     string? NoteTip = null,
-    string? Info = null);
+    string? Info = null)
+{
+    /// <summary>The note and what it means, for hovering the card's title when the math is hidden.</summary>
+    public string? NoteWithTip => Note is null ? null : NoteTip is null ? Note : $"{Note}\n\n{NoteTip}";
+}
 
-public sealed record DataLine(string HeroId, string HeroName,string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
+public sealed record DataLine(string HeroId, string HeroName, string RelationText, Color RelationColor, string Detail, DisplayAmount Share);
 
 /// <summary>"enemies ▲1.3": one relation's summed lift.</summary>
 public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
@@ -37,7 +46,7 @@ public sealed record DataTotal(string Word, Color Color, DisplayAmount Value)
     public IBrush Brush => new SolidColorBrush(Color);
 }
 
-/// <summary>"Formula ▲1.6 · data ▲0.7 → ▲2.3": each opinion's part in the formula-and-data ranking, and their sum.</summary>
+/// <summary>"Formula ▲1.6 · data ▲0.7": each opinion's part in the formula-and-data ranking, and their sum.</summary>
 /// <param name="Formula">Null when no rule of the item's applies to the line-up.</param>
 /// <param name="Data">Null when the match data has nothing on the item for these heroes.</param>
 public sealed record BlendVerdict(double? Formula, double? Data, double Total);
@@ -69,7 +78,17 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public string? ItemId { get; private set; }
     [Reactive] public string ItemName { get; private set; } = IdleTitle;
     [Reactive] public Color ShopColor { get; private set; }
-    [Reactive] public DisplayAmount Total { get; private set; }
+
+    /// <summary>The number the list shows for the item: whatever it's ranked by.</summary>
+    [Reactive] public DisplayAmount Headline { get; private set; }
+
+    /// <summary>What the hero cards add up to, the formula's score.</summary>
+    [Reactive] public DisplayAmount FormulaTotal { get; private set; }
+
+    /// <summary>The headline isn't the formula's score, so the cards get a total of their own.</summary>
+    [Reactive] public bool ShowsFormulaTotal { get; private set; }
+    [Reactive] public string? FormulaTotalTip { get; private set; }
+
     [Reactive] public bool NoContributions { get; private set; }
     [Reactive] public IReadOnlyList<ContributionCard> Contributions { get; private set; } = [];
     [Reactive] public MatchDataCard? MatchData { get; private set; }
@@ -86,14 +105,21 @@ public class ExplainViewModel : ViewModelBase
     /// <summary>The model editors are shown, so the header offers Go to Item Formula on right-click.</summary>
     [Reactive] public bool ShowsEditors { get; set; }
 
+    /// <summary>
+    /// Each line's arithmetic, where its coefficient came from, and what scaled a hero's share. Without
+    /// it, the cards say who counts and how much, and the rest shows on hover.
+    /// </summary>
+    [Reactive] public bool ShowsMath { get; set; } = true;
+
     public ExplainViewModel()
     {
         OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
     }
 
+    /// <param name="rankBy">What the list is ranked by, which the headline shows.</param>
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
-        BlendScale? blend = null)
+        RankBy rankBy = RankBy.Formula, BlendScale? blend = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -110,16 +136,26 @@ public class ExplainViewModel : ViewModelBase
         ItemId = itemId;
         ItemName = item.ItemName;
         ShopColor = Palette.ShopColor(item.Category);
-        Total = new DisplayAmount(total);
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(contribution => Card(contribution, TypicalInfo(store, item, contribution, contributions))).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId);
         var self = match.SelfHero;
         MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
-        Verdict = blend is { } scale
-            ? ExplainText.Verdict(new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category,
-                ItemScoring.DataScores(store, match, itemId)), scale, NoContributions)
-            : null;
+
+        var scored = new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category, ItemScoring.DataScores(store, match, itemId));
+        Verdict = rankBy == RankBy.Both && blend is { } scale ? ExplainText.Verdict(scored, scale, NoContributions) : null;
+        // Ranked by more than the formula, the headline is another number, so the cards get a total of their own.
+        var (headline, formulaTip) = rankBy switch
+        {
+            RankBy.MatchData => (scored.DataStrength, ExplainText.FormulaTotalByDataTip),
+            RankBy.Both when Verdict is { Formula: { } part } verdict => (verdict.Total, ExplainText.FormulaTotalInBlendTip(part)),
+            RankBy.Both when Verdict is { } verdict => (verdict.Total, null),
+            _ => (total, null),
+        };
+        Headline = new DisplayAmount(headline);
+        FormulaTotal = new DisplayAmount(total);
+        FormulaTotalTip = NoContributions ? null : formulaTip;
+        ShowsFormulaTotal = FormulaTotalTip is not null;
     }
 
     private void ShowIdle()
@@ -127,7 +163,10 @@ public class ExplainViewModel : ViewModelBase
         HasItem = false;
         ItemId = null;
         ItemName = IdleTitle;
-        Total = default;
+        Headline = default;
+        FormulaTotal = default;
+        ShowsFormulaTotal = false;
+        FormulaTotalTip = null;
         NoContributions = false;
         Contributions = [];
         MatchData = null;
@@ -168,7 +207,8 @@ public class ExplainViewModel : ViewModelBase
                 ExplainText.CoefficientSource(part),
                 ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
                 ExplainText.Arithmetic(part),
-                new DisplayAmount(part.Share))).ToList(),
+                new DisplayAmount(part.Share),
+                IsSole: contribution.Parts.Count == 1)).ToList(),
             notes.Count > 0 ? string.Join(" · ", notes) : null,
             tips.Count > 0 ? string.Join("\n\n", tips) : null,
             info);

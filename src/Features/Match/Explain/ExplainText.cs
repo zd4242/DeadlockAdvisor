@@ -30,6 +30,14 @@ public static class ExplainText
 
     public const string VerdictTip = "Ranked by the formula and the match data added together. " + BlendScaleNote;
 
+    /// <summary>For the formula's total over the hero cards, when the list ranks by the formula and the data together.</summary>
+    public static string FormulaTotalInBlendTip(double part) =>
+        $"The formula's score, which the heroes below add up to. In the ranking it counts as {Format.SignedFixed(part, 1)}, "
+        + "scaled so the formula and the match data count equally.";
+
+    public const string FormulaTotalByDataTip =
+        "The formula's score, which the heroes below add up to. The list is ranked by the match data instead.";
+
     /// <summary>"Vindicta builds this 1/12 as often as the average player, so the gains against the enemies count ×0.33 …"</summary>
     public static string RarelyBuilt(string who, double ratio) =>
         ratio <= 0
@@ -76,11 +84,11 @@ public static class ExplainText
 
     /// <summary>
     /// "(80 − 61 avg) × 3": how far the hero sits from the roster's average, times the effective coefficient,
-    /// and on a best-target line times its rank's factor: "(80 − 61 avg) × 3 × 0.5".
+    /// and on a best-target line below the best times its rank's factor: "(80 − 61 avg) × 3 × 0.5".
     /// </summary>
     public static string Arithmetic(TraitPart part) =>
         $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}"
-        + (part.Rank is null ? "" : $" × {Format.Num(part.RankFactor)}");
+        + (part.RankFactor == 1 ? "" : $" × {Format.Num(part.RankFactor)}");
 
     /// <summary>"(80 − 61 avg)", or just "80" when the roster averages 0 on the trait.</summary>
     public static string Deviation(TraitPart part)
@@ -104,10 +112,13 @@ public static class ExplainText
         item.Data.Count == 0 ? null : scale.DataUnits(item),
         scale.Blend(item));
 
-    /// <summary>"best target ×1", "2nd target ×0.5": where a single-target item counts this hero, or null when it sums.</summary>
-    public static string? Rank(int? rank) => rank is { } value
-        ? $"{(value == 1 ? "best" : Ordinal(value))} target ×{Format.Num(BestTargets.RankFactor(value))}"
-        : null;
+    /// <summary>"best target", "2nd target ×0.5": where a single-target item counts this hero, or null when it sums.</summary>
+    public static string? Rank(int? rank) => rank switch
+    {
+        null => null,
+        1 => "best target",
+        { } value => $"{Ordinal(value)} target ×{Format.Num(BestTargets.RankFactor(value))}",
+    };
 
     /// <summary>The typical team's line: "a typical team of 6, taken off".</summary>
     public static string Typical(int count) => $"a typical team of {count}, taken off";
