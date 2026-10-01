@@ -55,7 +55,7 @@ public class MatchBoardViewModel : ViewModelBase
             .Subscribe(s =>
             {
                 DetectKey = s.Gesture(ShortcutAction.Detect) is { } detect ? ShortcutKeys.Label(detect) : null;
-                RandomTip = ShortcutKeys.WithKey("Fill the match with random heroes, for testing", s.Gesture(ShortcutAction.Randomize));
+                RandomGesture = s.Gesture(ShortcutAction.Randomize);
                 RandomKeepSelfGesture = s.Gesture(ShortcutAction.RandomizeKeepSelf);
                 RandomKeepTeamGesture = s.Gesture(ShortcutAction.RandomizeKeepTeam);
             })
@@ -101,12 +101,12 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>Whether the hero picker is showing. It starts hidden, on the assumption detection gets the match right.</summary>
     [Reactive] public bool IsPickerOpen { get; set; }
 
-    /// <summary>Whether the match bar offers Random, which a setting can hide; its keys go with it, so a stray one can't wipe a detected match.</summary>
+    /// <summary>Whether the match bar's menu offers Random, which a setting can hide; its keys go with it, so a stray one can't wipe a detected match.</summary>
     [Reactive] public bool ShowsRandom { get; private set; }
 
-    /// <summary>The keys Settings → Shortcuts has Detect and Random on, as the match bar shows them; Detect's is null when taken away.</summary>
+    /// <summary>The keys Settings → Shortcuts has Detect and Random on, as the match bar shows them; null when taken away.</summary>
     [Reactive] public string? DetectKey { get; private set; }
-    [Reactive] public string RandomTip { get; private set; } = "";
+    [Reactive] public KeyGesture? RandomGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepSelfGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepTeamGesture { get; private set; }
 

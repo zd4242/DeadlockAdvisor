@@ -39,7 +39,7 @@
     <!-- The match as the game's top bar shows it: your team on the left, the enemy on the right. -->
     <Border Classes="card">
         <StackPanel Spacing="10">
-            <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+            <Grid ColumnDefinitions="Auto,*,Auto">
                 <StackPanel Orientation="Horizontal" Spacing="6">
                     <TextBlock Classes="section" Text="CURRENT MATCH" VerticalAlignment="Center"/>
                     <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static board:MatchBoardViewModel.RosterHint}"/>
@@ -67,48 +67,38 @@
                             Command="{Binding ReviewDetectionCommand}"
                             IsVisible="{Binding CanReviewDetection}"
                             ToolTip.Tip="See what the last detection read, applied without asking because every hero was certain"/>
-                    <Button Content="Import match…"
-                            Command="{Binding ImportCommand}"
-                            ToolTip.Tip="Look up a finished match by its ID and bring in its heroes"/>
-                </StackPanel>
-                <ToggleButton Grid.Column="3"
-                              Content="Edit heroes"
-                              Margin="6,0,0,0"
-                              IsChecked="{Binding IsPickerOpen}"
-                              ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
-                <StackPanel Grid.Column="4"
-                            Orientation="Horizontal"
-                            Margin="6,0,0,0"
-                            IsVisible="{Binding ShowsRandom}">
-                    <Button Classes="ghost"
-                            Content="Random"
-                            Command="{Binding RandomizeCommand}"
-                            CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"
-                            ToolTip.Tip="{Binding RandomTip}"/>
-                    <Button Classes="ghost"
-                            Content="▾"
-                            Padding="6,6"
-                            ToolTip.Tip="Randomize while keeping part of the match">
+                    <ToggleButton Content="Edit heroes"
+                                  IsChecked="{Binding IsPickerOpen}"
+                                  ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
+                    <!-- The rarer ways to fill or empty the match, out of the way of detecting and fixing it. -->
+                    <Button x:Name="MoreButton" Classes="glyph" ToolTip.Tip="Import a match, random heroes, or clear the match">
+                        <Path Classes="solid"
+                              Data="M1.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 M6.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 M11.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0"/>
                         <Button.Flyout>
                             <MenuFlyout Placement="BottomEdgeAlignedRight">
-                                <MenuItem Header="Random, keeping your hero"
+                                <MenuItem Header="Import match by ID…" Command="{Binding ImportCommand}"/>
+                                <Separator IsVisible="{Binding ShowsRandom}"/>
+                                <MenuItem Header="Random match"
+                                          InputGesture="{Binding RandomGesture}"
+                                          Command="{Binding RandomizeCommand}"
+                                          CommandParameter="{x:Static enums:RandomizeKeep.Nothing}"
+                                          IsVisible="{Binding ShowsRandom}"/>
+                                <MenuItem Header="Random match, keeping your hero"
                                           InputGesture="{Binding RandomKeepSelfGesture}"
                                           Command="{Binding RandomizeCommand}"
-                                          CommandParameter="{x:Static enums:RandomizeKeep.Self}"/>
+                                          CommandParameter="{x:Static enums:RandomizeKeep.Self}"
+                                          IsVisible="{Binding ShowsRandom}"/>
                                 <MenuItem Header="Random enemies, keeping your team"
                                           InputGesture="{Binding RandomKeepTeamGesture}"
                                           Command="{Binding RandomizeCommand}"
-                                          CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"/>
+                                          CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"
+                                          IsVisible="{Binding ShowsRandom}"/>
+                                <Separator/>
+                                <MenuItem Header="Clear match" Command="{Binding ClearCommand}"/>
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>
                 </StackPanel>
-                <Button Grid.Column="5"
-                        Classes="ghost"
-                        Content="Clear"
-                        Margin="6,0,0,0"
-                        Command="{Binding ClearCommand}"
-                        ToolTip.Tip="Remove every hero from the match"/>
             </Grid>
 
             <Grid ColumnDefinitions="*,Auto,*">

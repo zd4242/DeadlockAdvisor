@@ -51,8 +51,8 @@
                                      Description="Each line's arithmetic, where its coefficient comes from, and what scaled a hero's share, such as best-target rank or net worth. Turned off, the panel says who counts and by how much, and hovering a line shows the rest.">
                     <ToggleSwitch IsChecked="{Binding ShowExplainMath}"/>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Show the Random buttons"
-                                     Description="Random and its ▾ menu on the match bar fill the match with random heroes, for trying things out. Their keys only work while they're shown.">
+                <settings:SettingRow Title="Offer random matches"
+                                     Description="The match bar's ⋯ menu can fill the match with random heroes, for trying things out. Their keys only work while this is on.">
                     <ToggleSwitch IsChecked="{Binding ShowRandomButtons}"/>
                 </settings:SettingRow>
             </StackPanel>

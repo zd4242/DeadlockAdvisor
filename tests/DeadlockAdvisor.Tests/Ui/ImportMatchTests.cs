@@ -18,8 +18,12 @@ public class ImportMatchTests
         MatchImportTests.Serve(ui.Api);
         ui.Show();
 
-        var import = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Import match…"));
-        import.Command!.Execute(null);
+        var more = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "MoreButton");
+        var menu = (MenuFlyout)more.Flyout!;
+        menu.ShowAt(more);
+        UiHarness.Settle();
+        menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "Import match by ID…")).Command!.Execute(null);
+        menu.Hide();
         UiHarness.Settle();
 
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();

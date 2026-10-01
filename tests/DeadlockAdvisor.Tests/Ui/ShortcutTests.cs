@@ -87,8 +87,14 @@ public class ShortcutTests
         ui.Show();
         ui.Window.FocusManager!.ClearFocus();
         var board = ui.ViewModel.Match.Board;
-        var random = ui.Window.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Random"));
-        Assert.True(random.IsEffectivelyVisible);
+        var more = ui.Window.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "MoreButton");
+        var menu = (MenuFlyout)more.Flyout!;
+        List<MenuItem> Randoms() => menu.Items.OfType<MenuItem>().Where(item => ((string)item.Header!).StartsWith("Random", StringComparison.Ordinal)).ToList();
+        menu.ShowAt(more);
+        UiHarness.Settle();
+        Assert.Equal(3, Randoms().Count);
+        Assert.All(Randoms(), item => Assert.True(item.IsVisible));
+        menu.Hide();
 
         ui.ViewModel.Settings.General.ShowRandomButtons = false;
         UiHarness.Settle();
@@ -96,7 +102,10 @@ public class ShortcutTests
         UiHarness.Settle();
 
         Assert.False(ui.Settings.Current.ShowRandomButtons);
-        Assert.False(random.IsEffectivelyVisible);
+        menu.ShowAt(more);
+        UiHarness.Settle();
+        Assert.All(Randoms(), item => Assert.False(item.IsVisible));
+        menu.Hide();
         Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.Null(slot.HeroId));
     }
 
@@ -118,7 +127,7 @@ public class ShortcutTests
         });
         UiHarness.Settle();
         Assert.False(detectKey.IsEffectivelyVisible);
-        Assert.EndsWith("(F2)", board.RandomTip);
+        Assert.Equal(new KeyGesture(Key.F2), board.RandomGesture);
 
         ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
         UiHarness.Settle();

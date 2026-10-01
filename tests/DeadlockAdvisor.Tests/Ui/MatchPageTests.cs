@@ -91,6 +91,26 @@ public class MatchPageTests
         Assert.False(match.Explain.HasItem);
     }
 
+    /// <summary>The match bar keeps Detect and Edit heroes in view; importing, random heroes and clearing sit in its menu.</summary>
+    [AvaloniaFact]
+    public void TheMatchBarsMenuClearsTheMatch()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        var more = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "MoreButton");
+        var menu = (MenuFlyout)more.Flyout!;
+        menu.ShowAt(more);
+        ui.Screenshot("match_bar_menu.png");
+
+        menu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "Clear match")).Command!.Execute(null);
+        menu.Hide();
+        UiHarness.Settle();
+
+        Assert.Empty(ui.ViewModel.Match.Match.OwnTeam);
+        Assert.Empty(ui.ViewModel.Match.Match.Enemies);
+    }
+
     [AvaloniaFact]
     public void TheTieredViewAndEmptyStateRender()
     {
