@@ -448,10 +448,11 @@
     <Style Selector="TextBox.clearButton[AcceptsReturn=False][IsReadOnly=False]:not(:empty)">
         <Setter Property="InnerRightContent">
             <Template>
-                <Button Classes="textBoxClearButton"
-                        Theme="{StaticResource FluentTextBoxButton}"
+                <Button Theme="{StaticResource FluentTextBoxButton}"
                         Command="{Binding $parent[TextBox].Clear}"
-                        ClipToBounds="True"/>
+                        ClipToBounds="True">
+                    <PathIcon Data="{StaticResource TextBoxClearButtonData}" Width="10" Height="10"/>
+                </Button>
             </Template>
         </Setter>
     </Style>

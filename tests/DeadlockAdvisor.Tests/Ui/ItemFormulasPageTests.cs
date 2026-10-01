@@ -41,15 +41,18 @@ public class ItemFormulasPageTests
         var search = ui.Window.ItemFormulasPage.ByItemPanel.SearchBox;
         Assert.False(search.IsFocused);
 
-        var clear = search.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("textBoxClearButton"));
+        var clear = search.GetVisualDescendants().OfType<Button>().Single();
+        var glyph = clear.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single();
         Assert.True(clear.IsEffectivelyVisible);
+        Assert.NotNull(glyph.Fill);
+        Assert.True(glyph.Bounds.Width > 0 && glyph.Bounds.Height > 0);
         var centre = clear.TranslatePoint(new Point(clear.Bounds.Width / 2, clear.Bounds.Height / 2), ui.Window)!.Value;
         ui.Window.MouseDown(centre, MouseButton.Left);
         ui.Window.MouseUp(centre, MouseButton.Left);
         UiHarness.Settle();
 
         Assert.Equal("", page.SearchText);
-        Assert.DoesNotContain(search.GetVisualDescendants().OfType<Button>(), button => button.Classes.Contains("textBoxClearButton"));
+        Assert.Empty(search.GetVisualDescendants().OfType<Button>());
     }
 
     [AvaloniaFact]
