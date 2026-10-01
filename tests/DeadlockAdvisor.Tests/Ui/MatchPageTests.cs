@@ -6,6 +6,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
@@ -313,6 +314,33 @@ public class MatchPageTests
         Assert.NotNull(match.Explain.MatchData);
         var shown = Assert.Single(cards, card => card.IsEffectivelyVisible);
         Assert.Equal(cards.First(), shown);
+    }
+
+    /// <summary>The filters button's glyph styles stop at its own icon, so the check marks in its menu keep theirs.</summary>
+    [AvaloniaFact]
+    public void TheFiltersMenusCheckBoxesShowTheirCheckMarks()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ResultsHideRarelyBuilt = true);
+        ui.Show();
+        var button = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "FiltersButton");
+        Assert.Contains("active", button.Classes);
+
+        button.Flyout!.ShowAt(button);
+        UiHarness.Settle();
+        ui.Screenshot("match_filters_menu.png");
+        var checkBoxes = ((Control)((Flyout)button.Flyout).Content!).GetLogicalDescendants().OfType<CheckBox>()
+            .Where(box => box.IsChecked == true)
+            .ToList();
+
+        Assert.NotEmpty(checkBoxes);
+        Assert.All(checkBoxes, checkBox =>
+        {
+            var glyph = checkBox.GetVisualDescendants().OfType<Avalonia.Controls.Shapes.Path>().Single(path => path.Name == "CheckGlyph");
+            Assert.Null(glyph.Stroke);
+            var expected = checkBox.FindResource(checkBox.IsEffectivelyEnabled ? "CheckBoxCheckGlyphForegroundChecked" : "CheckBoxCheckGlyphForegroundCheckedDisabled");
+            Assert.Equal(((ISolidColorBrush)expected!).Color, ((ISolidColorBrush)glyph.Fill!).Color);
+        });
+        button.Flyout.Hide();
     }
 
     [AvaloniaFact]

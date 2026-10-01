@@ -9,7 +9,7 @@
              x:DataType="match:MatchViewModel">
 
     <UserControl.Styles>
-        <Style Selector="Button.glyph.active Path">
+        <Style Selector="Button.glyph.active > Path">
             <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
         </Style>
