@@ -46,10 +46,10 @@ public class ExplainViewModelTests
         var lowHp = explain.Contributions.Single(card => card.HeroId == "low_hp");
         Assert.Equal("2nd target ×0.5", lowHp.Note);
         Assert.Contains(ExplainText.PartlyRankedTip, lowHp.NoteTip);
-        Assert.Equal([("Has High Max HP", Math.Round(-8.0 / 3, 9)), ("Deals Spirit Damage", -2.0)],
+        Assert.Equal([("Deals Spirit Damage", -2.0), ("Has High Max HP", Math.Round(-8.0 / 3, 9))],
             lowHp.Traits.Select(line => (line.TraitName, Math.Round(line.Share.Value, 9))));
-        Assert.Equal("(0 − 2 avg) × 2 × 0.5", lowHp.Traits[1].Arithmetic);
-        Assert.DoesNotContain("0.5", lowHp.Traits[0].Arithmetic);
+        Assert.Equal("(0 − 2 avg) × 2 × 0.5", lowHp.Traits[0].Arithmetic);
+        Assert.DoesNotContain("0.5", lowHp.Traits[1].Arithmetic);
         Assert.Equal(-2 - 8.0 / 3, lowHp.Amount.Value, 9);
         Assert.False(lowHp.Traits[0].IsSole);
         // The best target counts in full, which needs no "×1".

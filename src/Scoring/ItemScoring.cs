@@ -179,7 +179,7 @@ public static class ItemScoring
             }
             var parts = contribution.Parts
                 .Select(part => store.OnBestTargets(itemId, part.CategoryId, relation) ? part with { Rank = rank } : part)
-                .OrderBy(part => -Math.Abs(part.Share))
+                .OrderByDescending(part => part.Share)
                 .ToList();
             var amount = 0.0;
             foreach (var part in parts)
@@ -216,7 +216,7 @@ public static class ItemScoring
     }
 
     /// <summary>
-    /// One hero's share of one item's score, biggest trait first; null when no trait of the item
+    /// One hero's share of one item's score, biggest increase first; null when no trait of the item
     /// touches the hero, or the hero isn't profiled yet.
     /// </summary>
     /// <param name="ranked">Only the best-target lines (true) or only the summed ones (false); every line when null.</param>
@@ -247,7 +247,7 @@ public static class ItemScoring
         if (parts.Count == 0)
             return null;
 
-        parts = parts.OrderBy(part => -Math.Abs(part.Amount)).ToList();
+        parts = parts.OrderByDescending(part => part.Amount).ToList();
         var amount = 0.0;
         foreach (var part in parts)
             amount += part.Amount;

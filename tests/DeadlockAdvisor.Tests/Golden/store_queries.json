@@ -18629,20 +18629,6 @@
        "stat_parts": []
       },
       {
-       "category_id": "does_melee_damage",
-       "category_name": "Does Melee Damage",
-       "hero_score": 0.0,
-       "baseline": 11.710526315789474,
-       "coefficient": 0.0,
-       "weight": 1.0,
-       "from_stats": 3.25,
-       "effective_coefficient": 3.25,
-       "amount": -38.059210526315795,
-       "stat_parts": [
-        "Melee Resist 25% × 0.13 = 3.25"
-       ]
-      },
-      {
        "category_id": "applies_slows",
        "category_name": "Applies Slows",
        "hero_score": 30.0,
@@ -18654,6 +18640,20 @@
        "amount": 24.60526315789474,
        "stat_parts": [
         "Slow Resist 50% × 0.17 = 8.5"
+       ]
+      },
+      {
+       "category_id": "does_melee_damage",
+       "category_name": "Does Melee Damage",
+       "hero_score": 0.0,
+       "baseline": 11.710526315789474,
+       "coefficient": 0.0,
+       "weight": 1.0,
+       "from_stats": 3.25,
+       "effective_coefficient": 3.25,
+       "amount": -38.059210526315795,
+       "stat_parts": [
+        "Melee Resist 25% × 0.13 = 3.25"
        ]
       }
      ]
@@ -18677,20 +18677,6 @@
        "stat_parts": []
       },
       {
-       "category_id": "does_melee_damage",
-       "category_name": "Does Melee Damage",
-       "hero_score": 0.0,
-       "baseline": 11.710526315789474,
-       "coefficient": 0.0,
-       "weight": 1.0,
-       "from_stats": 3.25,
-       "effective_coefficient": 3.25,
-       "amount": -38.059210526315795,
-       "stat_parts": [
-        "Melee Resist 25% × 0.13 = 3.25"
-       ]
-      },
-      {
        "category_id": "applies_slows",
        "category_name": "Applies Slows",
        "hero_score": 30.0,
@@ -18702,6 +18688,20 @@
        "amount": 24.60526315789474,
        "stat_parts": [
         "Slow Resist 50% × 0.17 = 8.5"
+       ]
+      },
+      {
+       "category_id": "does_melee_damage",
+       "category_name": "Does Melee Damage",
+       "hero_score": 0.0,
+       "baseline": 11.710526315789474,
+       "coefficient": 0.0,
+       "weight": 1.0,
+       "from_stats": 3.25,
+       "effective_coefficient": 3.25,
+       "amount": -38.059210526315795,
+       "stat_parts": [
+        "Melee Resist 25% × 0.13 = 3.25"
        ]
       }
      ]
@@ -18725,20 +18725,6 @@
        "stat_parts": []
       },
       {
-       "category_id": "applies_slows",
-       "category_name": "Applies Slows",
-       "hero_score": 20.0,
-       "baseline": 27.105263157894736,
-       "coefficient": 0.0,
-       "weight": 1.0,
-       "from_stats": 8.5,
-       "effective_coefficient": 8.5,
-       "amount": -60.39473684210526,
-       "stat_parts": [
-        "Slow Resist 50% × 0.17 = 8.5"
-       ]
-      },
-      {
        "category_id": "does_melee_damage",
        "category_name": "Does Melee Damage",
        "hero_score": 0.0,
@@ -18750,6 +18736,20 @@
        "amount": -38.059210526315795,
        "stat_parts": [
         "Melee Resist 25% × 0.13 = 3.25"
+       ]
+      },
+      {
+       "category_id": "applies_slows",
+       "category_name": "Applies Slows",
+       "hero_score": 20.0,
+       "baseline": 27.105263157894736,
+       "coefficient": 0.0,
+       "weight": 1.0,
+       "from_stats": 8.5,
+       "effective_coefficient": 8.5,
+       "amount": -60.39473684210526,
+       "stat_parts": [
+        "Slow Resist 50% × 0.17 = 8.5"
        ]
       }
      ]
@@ -18871,18 +18871,6 @@
        ]
       },
       {
-       "category_id": "cares_about_firerate",
-       "category_name": "Cares About Firerate",
-       "hero_score": 20.0,
-       "baseline": 29.07894736842105,
-       "coefficient": 10.0,
-       "weight": 1.0,
-       "from_stats": 0.0,
-       "effective_coefficient": 10.0,
-       "amount": -90.78947368421052,
-       "stat_parts": []
-      },
-      {
        "category_id": "does_melee_damage",
        "category_name": "Does Melee Damage",
        "hero_score": 0.0,
@@ -18895,6 +18883,18 @@
        "stat_parts": [
         "Melee Resist 25% × 0.13 = 3.25"
        ]
+      },
+      {
+       "category_id": "cares_about_firerate",
+       "category_name": "Cares About Firerate",
+       "hero_score": 20.0,
+       "baseline": 29.07894736842105,
+       "coefficient": 10.0,
+       "weight": 1.0,
+       "from_stats": 0.0,
+       "effective_coefficient": 10.0,
+       "amount": -90.78947368421052,
+       "stat_parts": []
       }
      ]
     },
@@ -18917,20 +18917,6 @@
        "stat_parts": []
       },
       {
-       "category_id": "does_melee_damage",
-       "category_name": "Does Melee Damage",
-       "hero_score": 0.0,
-       "baseline": 11.710526315789474,
-       "coefficient": 0.0,
-       "weight": 1.0,
-       "from_stats": 3.25,
-       "effective_coefficient": 3.25,
-       "amount": -38.059210526315795,
-       "stat_parts": [
-        "Melee Resist 25% × 0.13 = 3.25"
-       ]
-      },
-      {
        "category_id": "applies_slows",
        "category_name": "Applies Slows",
        "hero_score": 30.0,
@@ -18943,6 +18929,20 @@
        "stat_parts": [
         "Slow Resist 50% × 0.17 = 8.5"
        ]
+      },
+      {
+       "category_id": "does_melee_damage",
+       "category_name": "Does Melee Damage",
+       "hero_score": 0.0,
+       "baseline": 11.710526315789474,
+       "coefficient": 0.0,
+       "weight": 1.0,
+       "from_stats": 3.25,
+       "effective_coefficient": 3.25,
+       "amount": -38.059210526315795,
+       "stat_parts": [
+        "Melee Resist 25% × 0.13 = 3.25"
+       ]
       }
      ]
     },
@@ -18950,7 +18950,7 @@
      "hero_id": "kelvin",
      "hero_name": "Kelvin",
      "relation": "against",
-     "amount": 290.7565789473684,
+     "amount": 290.7565789473683,
      "parts": [
       {
        "category_id": "applies_slows",
@@ -18967,18 +18967,6 @@
        ]
       },
       {
-       "category_id": "cares_about_firerate",
-       "category_name": "Cares About Firerate",
-       "hero_score": 0.0,
-       "baseline": 29.07894736842105,
-       "coefficient": 10.0,
-       "weight": 1.0,
-       "from_stats": 0.0,
-       "effective_coefficient": 10.0,
-       "amount": -290.7894736842105,
-       "stat_parts": []
-      },
-      {
        "category_id": "does_melee_damage",
        "category_name": "Does Melee Damage",
        "hero_score": 0.0,
@@ -18991,6 +18979,18 @@
        "stat_parts": [
         "Melee Resist 25% × 0.13 = 3.25"
        ]
+      },
+      {
+       "category_id": "cares_about_firerate",
+       "category_name": "Cares About Firerate",
+       "hero_score": 0.0,
+       "baseline": 29.07894736842105,
+       "coefficient": 10.0,
+       "weight": 1.0,
+       "from_stats": 0.0,
+       "effective_coefficient": 10.0,
+       "amount": -290.7894736842105,
+       "stat_parts": []
       }
      ]
     }

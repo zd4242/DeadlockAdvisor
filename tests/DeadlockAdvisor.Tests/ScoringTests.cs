@@ -357,7 +357,7 @@ public class ScoringTests
         Assert.Equal(
             [("heavy_spirit", Math.Round(6 + 4.0 / 3, 9), (int?)1), ("", Math.Round(-5.0 / 3, 9), null), ("low_hp", Math.Round(-2 - 8.0 / 3, 9), 2)],
             explained.Select(contribution => (contribution.HeroId, Math.Round(contribution.Amount, 9), contribution.Rank)));
-        Assert.Equal([("max_hp", null, Math.Round(-8.0 / 3, 9)), ("deals_spirit_damage_general", (int?)2, -2.0)],
+        Assert.Equal([("deals_spirit_damage_general", (int?)2, -2.0), ("max_hp", null, Math.Round(-8.0 / 3, 9))],
             explained[2].Parts.Select(part => (part.CategoryId, part.Rank, Math.Round(part.Share, 9))));
         Assert.True(explained[2].PartlyRanked);
         Assert.Equal(-2, explained[2].RankedAmount, 9);
