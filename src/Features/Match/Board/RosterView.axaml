@@ -124,7 +124,11 @@
                       Margin="16,0"
                       VerticalAlignment="Center">
                     <StackPanel Spacing="2" HorizontalAlignment="Right">
-                        <TextBlock Classes="section ally" Text="ALLIES" HorizontalAlignment="Right"/>
+                        <!-- The section style's letter spacing trails the last letter too, which would push it off the divider. -->
+                        <TextBlock Classes="section ally"
+                                   Text="ALLIES"
+                                   HorizontalAlignment="Right"
+                                   Margin="0,0,-2,0"/>
                         <TextBlock Classes="value"
                                    HorizontalAlignment="Right"
                                    Text="{Binding AllyNetWorth}"
