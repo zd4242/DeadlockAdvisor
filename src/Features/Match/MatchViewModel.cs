@@ -42,6 +42,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public const string HideRarelyBuiltLabel = "Hide items your hero rarely builds";
 
+    public const string FiltersTip = "Filters: which items are listed, how they're laid out, and which matches the data comes from";
+
     public static readonly string HideRarelyBuiltTip =
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
         + "Needs your hero picked and match stats fetched (Data → Fetch Match Stats).";
@@ -147,13 +149,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
-        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.ByNetWorth, vm => vm.Board.HasNetWorth,
-                vm => vm.HideRarelyBuilt, vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter)
-            .Select(_ => ChangedFilterCount())
-            .Subscribe(changed =>
+        this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter,
+                vm => vm.DataRanks.From, vm => vm.DataRanks.To)
+            .Select(_ => ActiveFilters())
+            .Subscribe(active =>
             {
-                ChangedFilters = changed;
-                HasChangedFilters = changed > 0;
+                HasActiveFilters = active.Count > 0;
+                FiltersButtonTip = HasActiveFilters ? $"{FiltersTip}\n\nOn now:\n• {string.Join("\n• ", active)}" : FiltersTip;
             })
             .DisposeWith(Disposables);
 
@@ -185,9 +187,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Leave out the items your hero rarely builds (<see cref="ScoredItem.RarelyBuilt"/>).</summary>
     [Reactive] public bool HideRarelyBuilt { get; set; }
 
-    /// <summary>The options changed from their defaults, counted on the filters button since they're out of sight.</summary>
-    [Reactive] public int ChangedFilters { get; private set; }
-    [Reactive] public bool HasChangedFilters { get; private set; }
+    /// <summary>
+    /// A filter is changing the list in a way it doesn't show, so the filters button lights up and its
+    /// tip says which. The cutoff shows in the summary line and the tiers in the list, so they don't count.
+    /// </summary>
+    [Reactive] public bool HasActiveFilters { get; private set; }
+    [Reactive] public string FiltersButtonTip { get; private set; } = FiltersTip;
 
     public IReadOnlyList<CutoffPreset> Cutoffs => CutoffPresets;
     public IReadOnlyList<RankPreset> Ranks => RankPresets;
@@ -214,15 +219,15 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         RefreshExplain();
     }
 
-    private int ChangedFilterCount() =>
-        new[]
-        {
-            SelectedCutoff.Percent != DefaultCutoffPercent,
-            ByTier,
-            ByNetWorth && Board.HasNetWorth,
-            HideRarelyBuilt,
-            DataRanks.RankedOnly && DataRanks.CanFilter,
-        }.Count(changed => changed);
+    private List<string> ActiveFilters()
+    {
+        var active = new List<string>();
+        if (HideRarelyBuilt)
+            active.Add("Items your hero rarely builds are hidden");
+        if (DataRanks is { RankedOnly: true, CanFilter: true, From: { } from, To: { } to })
+            active.Add(from == to ? $"Match data from {from} matches only" : $"Match data from {from} to {to} matches only");
+        return active;
+    }
 
     private NetWorthWeights NetWorth() => ByNetWorth ? NetWorthWeights.For(Match) : NetWorthWeights.None;
 

@@ -406,7 +406,7 @@ public class MatchPageTests
         using var ui = new UiHarness();
         ui.Show();
         var button = ui.Window.MatchPage.GetVisualDescendants().OfType<Button>().Single(b => b.Name == "FiltersButton");
-        Assert.Equal(0, ui.ViewModel.Match.ChangedFilters);
+        Assert.False(ui.ViewModel.Match.HasActiveFilters);
 
         button.Flyout!.ShowAt(button);
         UiHarness.Settle();
@@ -431,30 +431,30 @@ public class MatchPageTests
         UiHarness.Settle();
 
         Assert.False(radios[0].IsChecked);
-        Assert.Equal(1, ui.ViewModel.Match.ChangedFilters);
+        Assert.Contains("active", button.Classes);
+        Assert.Contains($"Match data from {from.SelectedItem} to {ui.ViewModel.Match.DataRanks.To} matches only", ui.ViewModel.Match.FiltersButtonTip);
         Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }
 
     [AvaloniaFact]
-    public void TheFiltersButtonCountsTheOptionsChangedFromTheirDefaults()
+    public void TheFiltersButtonLightsUpOnlyForWhatTheListDoesNotShow()
     {
         using var ui = new UiHarness();
         var match = ui.ViewModel.Match;
-        Assert.Equal((0, false), (match.ChangedFilters, match.HasChangedFilters));
+        Assert.False(match.HasActiveFilters);
 
+        // The cutoff shows in the summary line and the tiers in the list; leaning on net worth is the default.
         match.ByTier = true;
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
-        Assert.Equal((2, true), (match.ChangedFilters, match.HasChangedFilters));
-
-        // Leaning on net worth only counts once there's a reading to lean on.
         match.ByNetWorth = true;
-        Assert.Equal(2, match.ChangedFilters);
         SetUpMatch(ui);
-        Assert.Equal(3, match.ChangedFilters);
+        Assert.False(match.HasActiveFilters);
+        Assert.Equal(MatchViewModel.FiltersTip, match.FiltersButtonTip);
 
         match.HideRarelyBuilt = true;
-        Assert.Equal(4, match.ChangedFilters);
+        Assert.True(match.HasActiveFilters);
+        Assert.EndsWith("On now:\n• Items your hero rarely builds are hidden", match.FiltersButtonTip);
         Assert.True(ui.Settings.Current.ResultsHideRarelyBuilt);
     }
 }

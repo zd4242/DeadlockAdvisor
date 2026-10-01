@@ -53,7 +53,9 @@ scoring under 20/40/60% of the best, **Group by tier** splits the list
 into collapsible tiers, and **Match data from** picks which ranks the
 match data comes from: every match, or ranked matches from one rank to
 another. That's worked out on the spot from the last fetch, and stays set
-until changed. The button counts the filters changed from their defaults.
+until changed. The button fills in while a filter the list doesn't show is
+on (hiding rarely built items, or ranked match data only), and its tooltip
+says which.
 
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
