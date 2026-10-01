@@ -18,6 +18,7 @@ abrams,has_healing_sustain,75
 abrams,has_utility_item_slots,0
 abrams,applies_debuffs,70
 abrams,applies_slows,20
+abrams,applies_cc,0
 abrams,picks_out_teammates,0
 abrams,countered_by_slowing_hex,0
 abrams,countered_by_silence,10
@@ -44,6 +45,7 @@ apollo,has_healing_sustain,25
 apollo,has_utility_item_slots,0
 apollo,applies_debuffs,10
 apollo,applies_slows,10
+apollo,applies_cc,0
 apollo,picks_out_teammates,0
 apollo,countered_by_slowing_hex,0
 apollo,countered_by_silence,100
@@ -70,6 +72,7 @@ bebop,has_healing_sustain,20
 bebop,has_utility_item_slots,0
 bebop,applies_debuffs,10
 bebop,applies_slows,10
+bebop,applies_cc,0
 bebop,picks_out_teammates,0
 bebop,countered_by_slowing_hex,0
 bebop,countered_by_silence,15
@@ -96,6 +99,7 @@ billy,has_healing_sustain,10
 billy,has_utility_item_slots,0
 billy,applies_debuffs,20
 billy,applies_slows,0
+billy,applies_cc,0
 billy,picks_out_teammates,0
 billy,countered_by_slowing_hex,0
 billy,countered_by_silence,85
@@ -122,6 +126,7 @@ calico,has_healing_sustain,10
 calico,has_utility_item_slots,0
 calico,applies_debuffs,20
 calico,applies_slows,0
+calico,applies_cc,0
 calico,picks_out_teammates,0
 calico,countered_by_slowing_hex,0
 calico,countered_by_silence,80
@@ -148,6 +153,7 @@ celeste,has_healing_sustain,30
 celeste,has_utility_item_slots,0
 celeste,applies_debuffs,40
 celeste,applies_slows,20
+celeste,applies_cc,0
 celeste,picks_out_teammates,0
 celeste,countered_by_slowing_hex,0
 celeste,countered_by_silence,35
@@ -174,6 +180,7 @@ drifter,has_healing_sustain,10
 drifter,has_utility_item_slots,0
 drifter,applies_debuffs,60
 drifter,applies_slows,0
+drifter,applies_cc,0
 drifter,picks_out_teammates,0
 drifter,countered_by_slowing_hex,0
 drifter,countered_by_silence,15
@@ -200,6 +207,7 @@ dynamo,has_healing_sustain,15
 dynamo,has_utility_item_slots,0
 dynamo,applies_debuffs,10
 dynamo,applies_slows,20
+dynamo,applies_cc,0
 dynamo,picks_out_teammates,0
 dynamo,countered_by_slowing_hex,0
 dynamo,countered_by_silence,45
@@ -226,6 +234,7 @@ graves,has_healing_sustain,5
 graves,has_utility_item_slots,0
 graves,applies_debuffs,40
 graves,applies_slows,10
+graves,applies_cc,0
 graves,picks_out_teammates,0
 graves,countered_by_slowing_hex,0
 graves,countered_by_silence,10
@@ -252,6 +261,7 @@ grey_talon,has_healing_sustain,0
 grey_talon,has_utility_item_slots,0
 grey_talon,applies_debuffs,20
 grey_talon,applies_slows,20
+grey_talon,applies_cc,0
 grey_talon,picks_out_teammates,0
 grey_talon,countered_by_slowing_hex,0
 grey_talon,countered_by_silence,10
@@ -278,6 +288,7 @@ haze,has_healing_sustain,15
 haze,has_utility_item_slots,0
 haze,applies_debuffs,60
 haze,applies_slows,30
+haze,applies_cc,0
 haze,picks_out_teammates,0
 haze,countered_by_slowing_hex,0
 haze,countered_by_silence,5
@@ -304,6 +315,7 @@ holliday,has_healing_sustain,0
 holliday,has_utility_item_slots,0
 holliday,applies_debuffs,80
 holliday,applies_slows,60
+holliday,applies_cc,0
 holliday,picks_out_teammates,0
 holliday,countered_by_slowing_hex,0
 holliday,countered_by_silence,35
@@ -330,6 +342,7 @@ infernus,has_healing_sustain,20
 infernus,has_utility_item_slots,0
 infernus,applies_debuffs,100
 infernus,applies_slows,40
+infernus,applies_cc,0
 infernus,picks_out_teammates,0
 infernus,countered_by_slowing_hex,0
 infernus,countered_by_silence,20
@@ -356,6 +369,7 @@ ivy,has_healing_sustain,25
 ivy,has_utility_item_slots,0
 ivy,applies_debuffs,40
 ivy,applies_slows,60
+ivy,applies_cc,0
 ivy,picks_out_teammates,0
 ivy,countered_by_slowing_hex,0
 ivy,countered_by_silence,35
@@ -382,6 +396,7 @@ kelvin,has_healing_sustain,60
 kelvin,has_utility_item_slots,0
 kelvin,applies_debuffs,10
 kelvin,applies_slows,100
+kelvin,applies_cc,0
 kelvin,picks_out_teammates,0
 kelvin,countered_by_slowing_hex,0
 kelvin,countered_by_silence,20
@@ -408,6 +423,7 @@ lady_geist,has_healing_sustain,80
 lady_geist,has_utility_item_slots,0
 lady_geist,applies_debuffs,10
 lady_geist,applies_slows,30
+lady_geist,applies_cc,0
 lady_geist,picks_out_teammates,0
 lady_geist,countered_by_slowing_hex,0
 lady_geist,countered_by_silence,80
@@ -434,6 +450,7 @@ lash,has_healing_sustain,25
 lash,has_utility_item_slots,0
 lash,applies_debuffs,10
 lash,applies_slows,60
+lash,applies_cc,0
 lash,picks_out_teammates,0
 lash,countered_by_slowing_hex,0
 lash,countered_by_silence,65
@@ -460,6 +477,7 @@ mcginnis,has_healing_sustain,15
 mcginnis,has_utility_item_slots,0
 mcginnis,applies_debuffs,10
 mcginnis,applies_slows,10
+mcginnis,applies_cc,0
 mcginnis,picks_out_teammates,0
 mcginnis,countered_by_slowing_hex,0
 mcginnis,countered_by_silence,15
@@ -486,6 +504,7 @@ mina,has_healing_sustain,10
 mina,has_utility_item_slots,0
 mina,applies_debuffs,30
 mina,applies_slows,20
+mina,applies_cc,0
 mina,picks_out_teammates,0
 mina,countered_by_slowing_hex,0
 mina,countered_by_silence,65
@@ -512,6 +531,7 @@ mirage,has_healing_sustain,35
 mirage,has_utility_item_slots,0
 mirage,applies_debuffs,80
 mirage,applies_slows,30
+mirage,applies_cc,0
 mirage,picks_out_teammates,0
 mirage,countered_by_slowing_hex,0
 mirage,countered_by_silence,25
@@ -538,6 +558,7 @@ mo_and_krill,has_healing_sustain,70
 mo_and_krill,has_utility_item_slots,0
 mo_and_krill,applies_debuffs,70
 mo_and_krill,applies_slows,30
+mo_and_krill,applies_cc,0
 mo_and_krill,picks_out_teammates,0
 mo_and_krill,countered_by_slowing_hex,0
 mo_and_krill,countered_by_silence,20
@@ -564,6 +585,7 @@ paige,has_healing_sustain,20
 paige,has_utility_item_slots,0
 paige,applies_debuffs,40
 paige,applies_slows,30
+paige,applies_cc,0
 paige,picks_out_teammates,0
 paige,countered_by_slowing_hex,0
 paige,countered_by_silence,10
@@ -590,6 +612,7 @@ paradox,has_healing_sustain,0
 paradox,has_utility_item_slots,0
 paradox,applies_debuffs,10
 paradox,applies_slows,50
+paradox,applies_cc,0
 paradox,picks_out_teammates,0
 paradox,countered_by_slowing_hex,0
 paradox,countered_by_silence,5
@@ -616,6 +639,7 @@ pocket,has_healing_sustain,5
 pocket,has_utility_item_slots,0
 pocket,applies_debuffs,90
 pocket,applies_slows,20
+pocket,applies_cc,0
 pocket,picks_out_teammates,0
 pocket,countered_by_slowing_hex,0
 pocket,countered_by_silence,70
@@ -642,6 +666,7 @@ rem,has_healing_sustain,90
 rem,has_utility_item_slots,0
 rem,applies_debuffs,40
 rem,applies_slows,20
+rem,applies_cc,0
 rem,picks_out_teammates,0
 rem,countered_by_slowing_hex,0
 rem,countered_by_silence,20
@@ -668,6 +693,7 @@ seven,has_healing_sustain,20
 seven,has_utility_item_slots,0
 seven,applies_debuffs,60
 seven,applies_slows,20
+seven,applies_cc,0
 seven,picks_out_teammates,0
 seven,countered_by_slowing_hex,0
 seven,countered_by_silence,10
@@ -694,6 +720,7 @@ shiv,has_healing_sustain,15
 shiv,has_utility_item_slots,0
 shiv,applies_debuffs,80
 shiv,applies_slows,20
+shiv,applies_cc,0
 shiv,picks_out_teammates,0
 shiv,countered_by_slowing_hex,0
 shiv,countered_by_silence,25
@@ -720,6 +747,7 @@ silver,has_healing_sustain,15
 silver,has_utility_item_slots,0
 silver,applies_debuffs,40
 silver,applies_slows,30
+silver,applies_cc,0
 silver,picks_out_teammates,0
 silver,countered_by_slowing_hex,0
 silver,countered_by_silence,30
@@ -746,6 +774,7 @@ doorman,has_healing_sustain,0
 doorman,has_utility_item_slots,0
 doorman,applies_debuffs,20
 doorman,applies_slows,20
+doorman,applies_cc,0
 doorman,picks_out_teammates,0
 doorman,countered_by_slowing_hex,0
 doorman,countered_by_silence,20
@@ -772,6 +801,7 @@ sinclair,has_healing_sustain,0
 sinclair,has_utility_item_slots,0
 sinclair,applies_debuffs,50
 sinclair,applies_slows,0
+sinclair,applies_cc,0
 sinclair,picks_out_teammates,0
 sinclair,countered_by_slowing_hex,0
 sinclair,countered_by_silence,45
@@ -798,6 +828,7 @@ venator,has_healing_sustain,15
 venator,has_utility_item_slots,0
 venator,applies_debuffs,20
 venator,applies_slows,0
+venator,applies_cc,0
 venator,picks_out_teammates,0
 venator,countered_by_slowing_hex,0
 venator,countered_by_silence,5
@@ -824,6 +855,7 @@ victor,has_healing_sustain,100
 victor,has_utility_item_slots,0
 victor,applies_debuffs,10
 victor,applies_slows,90
+victor,applies_cc,0
 victor,picks_out_teammates,0
 victor,countered_by_slowing_hex,0
 victor,countered_by_silence,25
@@ -850,6 +882,7 @@ vindicta,has_healing_sustain,0
 vindicta,has_utility_item_slots,0
 vindicta,applies_debuffs,50
 vindicta,applies_slows,20
+vindicta,applies_cc,0
 vindicta,picks_out_teammates,0
 vindicta,countered_by_slowing_hex,0
 vindicta,countered_by_silence,15
@@ -876,6 +909,7 @@ viscous,has_healing_sustain,20
 viscous,has_utility_item_slots,0
 viscous,applies_debuffs,10
 viscous,applies_slows,20
+viscous,applies_cc,0
 viscous,picks_out_teammates,0
 viscous,countered_by_slowing_hex,0
 viscous,countered_by_silence,65
@@ -902,6 +936,7 @@ vyper,has_healing_sustain,0
 vyper,has_utility_item_slots,0
 vyper,applies_debuffs,10
 vyper,applies_slows,20
+vyper,applies_cc,0
 vyper,picks_out_teammates,0
 vyper,countered_by_slowing_hex,0
 vyper,countered_by_silence,10
@@ -928,6 +963,7 @@ warden,has_healing_sustain,0
 warden,has_utility_item_slots,0
 warden,applies_debuffs,40
 warden,applies_slows,20
+warden,applies_cc,0
 warden,picks_out_teammates,0
 warden,countered_by_slowing_hex,0
 warden,countered_by_silence,15
@@ -954,6 +990,7 @@ wraith,has_healing_sustain,35
 wraith,has_utility_item_slots,0
 wraith,applies_debuffs,40
 wraith,applies_slows,30
+wraith,applies_cc,0
 wraith,picks_out_teammates,0
 wraith,countered_by_slowing_hex,0
 wraith,countered_by_silence,60
@@ -980,6 +1017,7 @@ yamato,has_healing_sustain,20
 yamato,has_utility_item_slots,0
 yamato,applies_debuffs,20
 yamato,applies_slows,40
+yamato,applies_cc,0
 yamato,picks_out_teammates,0
 yamato,countered_by_slowing_hex,0
 yamato,countered_by_silence,85
