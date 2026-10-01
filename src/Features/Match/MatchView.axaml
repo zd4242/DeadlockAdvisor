@@ -85,6 +85,11 @@
                                         <CheckBox Content="{x:Static match:MatchViewModel.HideRarelyBuiltLabel}"
                                                   IsChecked="{Binding HideRarelyBuilt}"
                                                   ToolTip.Tip="{x:Static match:MatchViewModel.HideRarelyBuiltTip}"/>
+                                        <CheckBox Content="{x:Static match:MatchViewModel.HideDisagreedLabel}"
+                                                  IsChecked="{Binding HideDisagreed}"
+                                                  IsEnabled="{Binding RanksByBoth}"
+                                                  ToolTip.Tip="{x:Static match:MatchViewModel.HideDisagreedTip}"
+                                                  ToolTip.ShowOnDisabled="True"/>
 
                                         <Border Classes="hline" Margin="0,4"/>
 

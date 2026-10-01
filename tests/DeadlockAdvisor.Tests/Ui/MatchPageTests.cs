@@ -553,4 +553,22 @@ public class MatchPageTests
         Assert.EndsWith("On now:\n• Items your hero rarely builds are hidden", match.FiltersButtonTip);
         Assert.True(ui.Settings.Current.ResultsHideRarelyBuilt);
     }
+
+    [AvaloniaFact]
+    public void HidingDisagreedItemsCountsOnlyWhileRankingByBoth()
+    {
+        using var ui = new UiHarness();
+        var match = ui.ViewModel.Match;
+        SetUpMatch(ui);
+        Assert.False(match.HideDisagreed);
+        Assert.True(match.RanksByBoth);
+
+        match.HideDisagreed = true;
+        Assert.True(ui.Settings.Current.ResultsHideDisagreed);
+        Assert.EndsWith("On now:\n• Items the formula and data disagree on are hidden", match.FiltersButtonTip);
+
+        match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);
+        Assert.False(match.RanksByBoth);
+        Assert.False(match.HasActiveFilters);
+    }
 }

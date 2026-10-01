@@ -34,7 +34,8 @@ public class ResultRowViewModel : ViewModelBase
         var (likes, dislikes) = formulaLikes ? ("formula", "match data") : ("match data", "formula");
         return $"The formula and the match data clearly disagree: the {likes} rates this item well, the {dislikes} poorly.\n"
             + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
-            + "who buys the item more than what it does.";
+            + "who buys the item more than what it does.\n"
+            + $"Filters → \"{MatchViewModel.HideDisagreedLabel}\" leaves these items out of the list.";
     }
 
     public ResultRowViewModel(string itemId, string name, string shopCategory, int tier)

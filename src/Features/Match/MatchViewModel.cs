@@ -48,6 +48,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
         + "Needs your hero picked and match stats fetched (Data → Fetch Match Stats).";
 
+    public const string HideDisagreedLabel = "Hide items the formula and data disagree on";
+
+    public const string HideDisagreedTip =
+        "Leave out the items marked DISAGREE: the formula rates them well and the match data poorly, or the other way round.\n"
+        + "Only when ranking by formula + match data, which puts the two on one scale.";
+
     // Relative to the best item rather than a fixed count or score, so the cutoff adapts to how many
     // heroes are picked and to a match where one item runs away with it.
     public static readonly IReadOnlyList<CutoffPreset> CutoffPresets =
@@ -99,6 +105,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
         HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
+        HideDisagreed = settings.Current.ResultsHideDisagreed;
         ApplyDisplay();
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
@@ -128,7 +135,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             .Subscribe(show => Explain.ShowsMath = show)
             .DisposeWith(Disposables);
 
-        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData, vm => vm.HideRarelyBuilt)
+        this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData, vm => vm.HideRarelyBuilt,
+                vm => vm.HideDisagreed)
             .Skip(1)
             .Subscribe(_ =>
             {
@@ -138,6 +146,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                     s.ResultsByTier = ByTier;
                     s.ResultsRankBy = SelectedRank.RankBy;
                     s.ResultsHideRarelyBuilt = HideRarelyBuilt;
+                    s.ResultsHideDisagreed = HideDisagreed;
                 });
                 var reranked = SelectedRank != _appliedRank;
                 ApplyDisplay();
@@ -156,8 +165,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
-        this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter,
-                vm => vm.DataRanks.From, vm => vm.DataRanks.To)
+        this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.HideDisagreed, vm => vm.RanksByBoth, vm => vm.DataRanks.RankedOnly,
+                vm => vm.DataRanks.CanFilter, vm => vm.DataRanks.From, vm => vm.DataRanks.To)
             .Select(_ => ActiveFilters())
             .Subscribe(active =>
             {
@@ -193,6 +202,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>Leave out the items your hero rarely builds (<see cref="ScoredItem.RarelyBuilt"/>).</summary>
     [Reactive] public bool HideRarelyBuilt { get; set; }
+
+    /// <summary>Leave out the items the formula and the data disagree on (<see cref="BlendScale.Disagree"/>), ranking by both.</summary>
+    [Reactive] public bool HideDisagreed { get; set; }
+
+    /// <summary>The list adds the formula and the data together, the only ranking that can tell when they disagree.</summary>
+    [Reactive] public bool RanksByBoth { get; private set; }
 
     /// <summary>
     /// A filter is changing the list in a way it doesn't show, so the filters button lights up and its
@@ -231,6 +246,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var active = new List<string>();
         if (HideRarelyBuilt)
             active.Add("Items your hero rarely builds are hidden");
+        if (HideDisagreed && RanksByBoth)
+            active.Add("Items the formula and data disagree on are hidden");
         if (DataRanks is { RankedOnly: true, CanFilter: true, From: { } from, To: { } to })
             active.Add(from == to ? $"Match data from {from} matches only" : $"Match data from {from} to {to} matches only");
         return active;
@@ -287,7 +304,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private void ApplyDisplay()
     {
         _appliedRank = SelectedRank;
-        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt);
+        RanksByBoth = EffectiveRankBy == RankBy.Both;
+        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt, HideDisagreed);
     }
 
     private void RefreshExplain() => ShowExplain(Results.SelectedItemId);

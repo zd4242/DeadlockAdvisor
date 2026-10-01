@@ -154,6 +154,7 @@ public class ResultsViewModelTests
         var rows = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId);
         Assert.Equal(["c"], rows.Values.Where(row => row.Disagrees).Select(row => row.ItemId));
         Assert.Contains("the match data rates this item well, the formula poorly", rows["c"].DisagreeTip);
+        Assert.EndsWith("Filters → \"Hide items the formula and data disagree on\" leaves these items out of the list.", rows["c"].DisagreeTip);
         Assert.Null(rows["a"].DisagreeTip);
 
         results.SetDisplay(RankBy.Formula, false, null);
@@ -199,6 +200,23 @@ public class ResultsViewModelTests
         // "b" is the best listed item, so the cutoff is half of its score rather than of the hidden "a"'s.
         Assert.Equal(["b", "c"], results.Entries.OfType<ResultRowViewModel>().Select(row => row.ItemId));
         Assert.Equal("2 items above 0", results.Summary);
+    }
+
+    [Fact]
+    public void HidingDisagreedItemsLeavesThemOutBeforeTheCutoffOnlyWhenBlending()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults([Scored("a", 10, against: -2.0), Scored("b", 4, against: 0.5), Scored("c", 3)], "", () => new BlendScale(1, 1));
+
+        results.SetDisplay(RankBy.Both, false, 0.5, hideDisagreed: true);
+
+        // The formula rates "a" 10 and the data -2. "b" is then the best listed item at 4.5, so the cutoff is half of that rather than of a's 8.
+        Assert.Equal(["b", "c"], Rows(results));
+        Assert.Equal("2 items above 0", results.Summary);
+
+        // Ranked by the formula alone, there's no second opinion on the same scale to disagree with.
+        results.SetDisplay(RankBy.Formula, false, 0.5, hideDisagreed: true);
+        Assert.Equal(["a"], Rows(results));
     }
 
     [Fact]

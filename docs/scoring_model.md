@@ -197,7 +197,8 @@ so the two are weighted equally.
   below 0 when negative: the formula's part on top and the data's below. The row
   tip gives the working.
 - **DISAGREE** marks an item the two rate at least a unit each in opposite
-  directions (`BlendScale.Disagree`).
+  directions (`BlendScale.Disagree`). The Match tab's "Hide items the formula and
+  data disagree on" filter drops them from this ranking's list; it never changes a score.
 - **The explain panel** heads the item with the verdict, such as "Formula +1.6 · data
   +0.7 → +2.3", and says when either opinion has nothing to add.
 
