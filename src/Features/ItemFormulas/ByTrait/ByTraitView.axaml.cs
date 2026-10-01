@@ -23,6 +23,7 @@ public partial class ByTraitView : ReactiveUserControl<ByTraitViewModel>
                 e.Handled = true;
         };
         Grid.AddHandler(CoefficientGrid.CoefficientEditedEvent, (_, e) => ViewModel?.SetCoefficient(e.Row, e.Value));
+        Grid.AddHandler(CoefficientGrid.BestTargetToggledEvent, (_, e) => ViewModel?.ToggleBestTarget(e.Row));
         Grid.AddHandler(ScrollingGrid.SortRequestedEvent,(_, e) => ViewModel?.SortCommand.Execute(e.Column).Subscribe());
         Scroller.PropertyChanged += (_, e) =>
         {

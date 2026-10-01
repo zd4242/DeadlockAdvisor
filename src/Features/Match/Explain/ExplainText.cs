@@ -109,10 +109,11 @@ public static class ExplainText
     public static string Typical(int count) => $"a typical team of {count}, taken off";
 
     /// <summary>
-    /// Why a single-target item's score takes a typical team off, in this match's numbers.
+    /// Why a best-target score takes a typical team off, in this match's numbers.
     /// <paramref name="targets"/> is what the heroes on the team come to as ranked targets, before it's taken off.
     /// </summary>
-    public static string TypicalInfo(string itemName, Relation relation, int count, double typical, double targets)
+    /// <param name="castOn">The item is cast on one hero of this team; otherwise some of its rules are marked best-target.</param>
+    public static string TypicalInfo(string itemName, Relation relation, bool castOn, int count, double typical, double targets)
     {
         var (one, many) = relation == Relation.Against ? ("enemy", "enemies") : ("ally", "allies");
         var net = targets - typical;
@@ -122,7 +123,10 @@ public static class ExplainText
             < 0 => $"so these {many} are worse targets for it than usual.",
             _ => $"so these {many} are about as good targets for it as usual.",
         };
-        return $"{itemName} is cast on one {one} at a time, so it's scored on its best targets, not on every {one}: "
+        var why = castOn
+            ? $"{itemName} is cast on one {one} at a time, so it's scored on its best targets, not on every {one}: "
+            : $"One {one} is enough to make {itemName} pay off, so its best-target rules score its best targets, not every {one}: ";
+        return why
             + "the best counts in full, the next ×0.5, then ×0.25 and so on.\n\n"
             + $"Almost every team has someone it works well on, so even a typical team of {count} {many} "
             + $"comes to {Format.SignedFixed(typical, 1)}. A score says how much more this match wants the item "
@@ -132,7 +136,7 @@ public static class ExplainText
     }
 
     public const string BestTargetsTip =
-        "Cast on one hero at a time: the best target counts in full, the next ×0.5, then ×0.25 and so on,\n"
+        "Works on one hero at a time: the best target counts in full, the next ×0.5, then ×0.25 and so on,\n"
         + "less what the same comes to for a typical team the same size.";
 
     private static string Ordinal(int value) => value switch

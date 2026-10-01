@@ -4,6 +4,7 @@ using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.ItemFormulas.ByItem;
 using DeadlockAdvisor.Features.Shared.Modals.Choice;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Support;
@@ -150,6 +151,38 @@ public sealed class ItemFormulasTests : IDisposable
     }
 
     [Fact]
+    public void ACardsBestTargetMarkCoversItsAllyLineAndKeepsAsOnTheCard()
+    {
+        var page = Select(FocusLens);
+        var card = page.Rules.Single(card => card.IsWith);
+        Assert.False(card.IsBestTarget);
+        Assert.True(card.CanToggleBestTarget);
+
+        card.ToggleBestTargetCommand.Execute().Subscribe();
+
+        Assert.True(Store.OnBestTargets(FocusLens, SpiritDamage, Relation.With));
+        Assert.False(Store.OnBestTargets(FocusLens, SpiritDamage, Relation.As));
+        var marked = page.Rules.Single(card => card.IsWith);
+        Assert.True(marked.IsAs && marked.IsBestTarget);
+        Assert.Contains(new CoefficientKey(FocusLens, SpiritDamage, Relation.With), _fixture.Saved().BestTargetLines);
+
+        marked.RemoveCommand.Execute().Subscribe();
+        Assert.Empty(Store.BestTargetLines);
+    }
+
+    [Fact]
+    public void ACastItemsCardIsAlreadyOnItsBestTargets()
+    {
+        var cast = Store.ItemsSorted().First(item => item.CastOn == Relation.Against && Store.RuleCount(item.ItemId) > 0);
+        var page = Select(cast.ItemId);
+        var card = page.Rules.First(card => card.IsAgainst);
+
+        Assert.True(card.IsBestTarget);
+        Assert.False(card.CanToggleBestTarget);
+        Assert.Equal(FormulaText.BestTargetFromCastTip, card.BestTargetTip);
+    }
+
+    [Fact]
     public void CopyRulesReplacesTheItemsRulesWithAnothers()
     {
         ChoiceModalViewModel? modal = null;
@@ -282,6 +315,33 @@ public sealed class ItemFormulasTests : IDisposable
         Assert.Equal(0, Store.Coefficient(rows[1].ItemId, SpiritDamage, Relation.Against));
         Assert.Same(rows[2], page.CurrentRow);
         Assert.Equal(4, _fixture.Saved().Coefficient(rows[0].ItemId, SpiritDamage, Relation.Against));
+    }
+
+    [Fact]
+    public void BTogglesBestTargetInPlaceExceptOnACastItemOrAsMe()
+    {
+        var page = _vm.ByTrait;
+        var row = page.Rows.First(row => !row.BestTargetFromCast);
+        page.CurrentRow = row;
+
+        page.HandleText("b");
+
+        Assert.True(row.BestTarget);
+        Assert.Same(row, page.CurrentRow);
+        Assert.Contains("1 on best targets", page.Summary);
+        Assert.Contains(new CoefficientKey(row.ItemId, SpiritDamage, Relation.Against), _fixture.Saved().BestTargetLines);
+        page.HandleText("B");
+        Assert.False(row.BestTarget);
+
+        var cast = page.Rows.First(row => row.BestTargetFromCast);
+        page.ToggleBestTarget(cast);
+        Assert.True(cast.BestTarget);
+        Assert.Empty(Store.BestTargetLines);
+
+        page.SetRelationCommand.Execute(Relation.As).Subscribe();
+        page.HandleText("b");
+        Assert.False(page.CurrentRow!.BestTargetApplies);
+        Assert.Empty(Store.BestTargetLines);
     }
 
     [Fact]

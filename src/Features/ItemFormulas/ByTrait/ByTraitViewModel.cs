@@ -26,7 +26,8 @@ public class ByTraitViewModel : ViewModelBase
 
     public const string Hint =
         "Type a digit to set a coefficient and drop to the next item.\n"
-        + "\"-\" first to discourage an item.\nBackspace clears.";
+        + "\"-\" first to discourage an item.\nBackspace clears.\n"
+        + "B, or a click in its column, toggles Best target.";
 
     public const string WeightTip =
         "Scales every item on this trait + relation at once -- typed and\n"
@@ -42,8 +43,9 @@ public class ByTraitViewModel : ViewModelBase
         + "It's added to the coefficient you type, and the trait weight\n"
         + "scales the sum. Hover a cell for the arithmetic.";
 
-    public static readonly IReadOnlyList<string> ColumnNames = ["Item", "Tier", "Shop", "Coefficient", "From stats"];
+    public static readonly IReadOnlyList<string> ColumnNames = ["Item", "Tier", "Shop", "Coefficient", "From stats", "Best target"];
     public const int CoefficientColumn = 3;
+    public const int BestTargetColumn = 5;
     private const double _coefficientLimit = 20;
 
     private readonly IDataService _data;
@@ -205,7 +207,8 @@ public class ByTraitViewModel : ViewModelBase
                 1 => Sort(rows, row => row.Item.Tier, Comparer<int>.Default),
                 2 => Sort(rows, row => row.Shop.ToLowerInvariant(), StringComparer.Ordinal),
                 3 => Sort(rows, row => row.Coefficient, Comparer<double>.Default),
-                _ => Sort(rows, row => row.FromStats, Comparer<double>.Default),
+                4 => Sort(rows, row => row.FromStats, Comparer<double>.Default),
+                _ => Sort(rows, row => row.BestTarget, Comparer<bool>.Default),
             };
         }
         _ordered = rows.ToList();
@@ -253,7 +256,23 @@ public class ByTraitViewModel : ViewModelBase
         _data.MarkEdited(DataFiles.ItemCoefficients);
     }
 
-    /// <summary>A digit sets the current item's coefficient and drops to the next; "-" first makes it negative.</summary>
+    /// <summary>Flip whether this item's line counts its best targets; a line the item's cast already ranks stays as it is.</summary>
+    public void ToggleBestTarget(CoefficientRow row)
+    {
+        if (CategoryId is not { } categoryId || !row.BestTargetApplies || row.BestTargetFromCast)
+            return;
+        if (!_data.Store.SetBestTarget(row.ItemId, categoryId, Relation, !row.BestTarget))
+            return;
+        row.Refresh(_data.Store, categoryId, Relation);
+        Revision++;
+        RefreshSummary();
+        _data.MarkEdited(DataFiles.ItemCoefficients);
+    }
+
+    /// <summary>
+    /// A digit sets the current item's coefficient and drops to the next; "-" first makes it negative.
+    /// "b" toggles Best target and stays put.
+    /// </summary>
     public bool HandleText(string text)
     {
         if (CurrentRow is null)
@@ -276,6 +295,11 @@ public class ByTraitViewModel : ViewModelBase
                 }
                 SetCoefficient(row, value);
                 Advance(row);
+                handled = true;
+            }
+            else if (character is 'b' or 'B' && CurrentRow is { } current)
+            {
+                ToggleBestTarget(current);
                 handled = true;
             }
         }
@@ -442,7 +466,9 @@ public class ByTraitViewModel : ViewModelBase
         var tagged = store.ItemsForCategory(categoryId, Relation).Count;
         var derived = store.DerivedItemsForCategory(categoryId, Relation).Count;
         var weight = store.TraitWeight(categoryId, Relation);
+        var bestTargets = store.BestTargetLines.Count(key => key.CategoryId == categoryId && key.Relation == Relation);
         Summary = $"{tagged} item(s) typed + {derived} from stats for this trait/relation"
+                  + (bestTargets > 0 ? $" · {bestTargets} on best targets" : "")
                   + (weight != 1 ? $" · all scaled × {Format.Num(weight)}" : "")
                   + $" · {store.ItemCoefficients.Count} rules total";
     }

@@ -8,6 +8,7 @@
              xmlns:models="using:DeadlockAdvisor.Models"
              xmlns:enums="using:DeadlockAdvisor.Enums"
              xmlns:sys="using:System"
+             xmlns:theme="using:DeadlockAdvisor.Theme"
              x:Class="DeadlockAdvisor.Features.ItemFormulas.ByItem.ByItemView"
              x:DataType="byItem:ByItemViewModel">
 
@@ -199,6 +200,14 @@
                                                                               Command="{Binding ToggleRelationCommand}"
                                                                               CommandParameter="{x:Static enums:Relation.As}"
                                                                               ToolTip.Tip="Buy this when YOUR OWN hero has this trait."/>
+                                                                <ToggleButton Classes="pill"
+                                                                              Margin="6,0,0,0"
+                                                                              Content="best target"
+                                                                              IsChecked="{Binding IsBestTarget, Mode=OneWay}"
+                                                                              IsEnabled="{Binding CanToggleBestTarget}"
+                                                                              Command="{Binding ToggleBestTargetCommand}"
+                                                                              ToolTip.Tip="{Binding BestTargetTip}"
+                                                                              ToolTip.ShowOnDisabled="True"/>
                                                             </StackPanel>
                                                             <controls:RichText Classes="faint"
                                                                                Margin="8,0,0,0"
@@ -227,15 +236,21 @@
                                             <DataTemplate x:DataType="byItem:DerivedRuleEntry">
                                                 <Border Classes="inset" Padding="8,6">
                                                     <StackPanel Spacing="3">
-                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
+                                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto" ColumnSpacing="8">
                                                             <Ellipse Width="8" Height="8" VerticalAlignment="Center">
                                                                 <Ellipse.Fill>
                                                                     <SolidColorBrush Color="{Binding TraitColor}"/>
                                                                 </Ellipse.Fill>
                                                             </Ellipse>
                                                             <TextBlock Grid.Column="1" Classes="dim" VerticalAlignment="Center" Text="{Binding CategoryName}"/>
-                                                            <controls:Badge Grid.Column="2" VerticalAlignment="Center" Text="{Binding RelationText}" Color="{Binding RelationColor}"/>
-                                                            <TextBlock Grid.Column="3"
+                                                            <controls:Badge Grid.Column="2"
+                                                                            VerticalAlignment="Center"
+                                                                            Text="BEST TARGET"
+                                                                            Color="{x:Static theme:Palette.Accent}"
+                                                                            IsVisible="{Binding BestTarget}"
+                                                                            ToolTip.Tip="{x:Static itemFormulas:FormulaText.BestTargetTip}"/>
+                                                            <controls:Badge Grid.Column="3" VerticalAlignment="Center" Text="{Binding RelationText}" Color="{Binding RelationColor}"/>
+                                                            <TextBlock Grid.Column="4"
                                                                        VerticalAlignment="Center"
                                                                        FontWeight="Bold"
                                                                        Foreground="{DynamicResource TextDimBrush}"

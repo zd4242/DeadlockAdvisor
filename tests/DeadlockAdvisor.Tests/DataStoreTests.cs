@@ -45,6 +45,20 @@ public class DataStoreTests
     }
 
     [Fact]
+    public void CopyAndClearItemRulesCarryTheBestTargetMarks()
+    {
+        var store = TestStore.Make();
+        store.SetBestTarget("spirit_resist_t1", "deals_spirit_damage_general", Relation.Against, true);
+
+        store.CopyItemRules("spirit_resist_t1", "irrelevant_t1");
+        Assert.True(store.OnBestTargets("irrelevant_t1", "deals_spirit_damage_general", Relation.Against));
+
+        Assert.True(store.ClearItemRules("irrelevant_t1"));
+        Assert.False(store.OnBestTargets("irrelevant_t1", "deals_spirit_damage_general", Relation.Against));
+        Assert.True(store.OnBestTargets("spirit_resist_t1", "deals_spirit_damage_general", Relation.Against));
+    }
+
+    [Fact]
     public void CoverageAndUncoveredItems()
     {
         var store = TestStore.Make();
@@ -93,6 +107,9 @@ public class DataStoreTests
             "category_id,category_name,scale_min,scale_max,description\n"
             + "deals_spirit_damage_general,Deals Spirit Damage,0,5,\nmax_hp,Has High Max HP,-5,5,\n");
         store.SetHeroScore("generic", "max_hp", -2.5);
+        store.SetBestTarget("spirit_resist_t1", "deals_spirit_damage_general", Relation.Against, true);
+        // A mark on a line with no typed number, for the part its stats give it.
+        store.SetBestTarget("irrelevant_t1", "max_hp", Relation.With, true);
         store.SaveAll();
 
         var reloaded = DataStore.Load(temp.Path);
@@ -100,6 +117,8 @@ public class DataStoreTests
         Assert.Equal(-2.5, reloaded.HeroScore("generic", "max_hp"));
         Assert.Equal(5, reloaded.HeroScore("heavy_spirit", "deals_spirit_damage_general"));
         Assert.Equal(store.ItemCoefficients, reloaded.ItemCoefficients);
+        Assert.Equal(2, reloaded.BestTargetLines.Count);
+        Assert.True(store.BestTargetLines.SetEquals(reloaded.BestTargetLines));
         Assert.Equal(0, reloaded.Heroes["generic"].GameId);
         Assert.Equal(0, reloaded.Items["spirit_resist_t1"].Cost);
         // no trait_weights / stat_rules / item_stats files is fine too

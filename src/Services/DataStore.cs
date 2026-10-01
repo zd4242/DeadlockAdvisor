@@ -67,6 +67,13 @@ public sealed class DataStore
     /// <summary>Keyed so the same triple can't appear twice and double-count.</summary>
     public OrderedDictionary<CoefficientKey, double> ItemCoefficients { get; set; } = [];
 
+    /// <summary>
+    /// Item × trait × relation lines scored on their best targets (<see cref="BestTargets"/>) on top of what
+    /// <see cref="Item.CastOn"/> already covers: an item that pays off once per cooldown, however many heroes
+    /// have the trait. Covers the line's typed and stat-derived parts alike. Never "as": that's one hero.
+    /// </summary>
+    public HashSet<CoefficientKey> BestTargetLines { get; set; } = [];
+
     /// <summary>Absent means 1.</summary>
     public OrderedDictionary<WeightKey, double> TraitWeights { get; set; } = [];
 
@@ -221,10 +228,13 @@ public sealed class DataStore
                 continue;
             if (!Relations.TryParse(row.Get("relation")?.Trim(), out var relation))
                 continue;
+            var key = new CoefficientKey(row.Required("item_id"), row.Required("category_id"), relation);
+            // A row with no typed number can still mark a stat-derived line as best-target.
+            if (relation != Relation.As && IsTrue(row.Get("best_target")))
+                BestTargetLines.Add(key);
             var value = NumberFormat.ToFloat(row.Get("coefficient"));
-            if (value == 0)
-                continue;
-            ItemCoefficients[new CoefficientKey(row.Required("item_id"), row.Required("category_id"), relation)] = value;
+            if (value != 0)
+                ItemCoefficients[key] = value;
         }
     }
 
@@ -449,6 +459,19 @@ public sealed class DataStore
         return result;
     }
 
+    /// <summary>The game sync found the item cast on one hero, which puts every line on this relation on its best targets.</summary>
+    public bool CastOnCovers(string itemId, Relation relation) =>
+        Items.TryGetValue(itemId, out var item) && item.CastOn is { } castOn && BestTargets.AppliesTo(castOn, relation);
+
+    /// <summary>Whether this line counts its best targets (<see cref="BestTargets"/>) rather than summing over the team.</summary>
+    public bool OnBestTargets(string itemId, string categoryId, Relation relation) =>
+        CastOnCovers(itemId, relation) || BestTargetLines.Contains(new CoefficientKey(itemId, categoryId, relation));
+
+    /// <summary>Any line of the item that scores something on this relation counts its best targets.</summary>
+    public bool HasBestTargetLines(string itemId, Relation relation) =>
+        Categories.Keys.Any(categoryId =>
+            OnBestTargets(itemId, categoryId, relation) && EffectiveCoefficient(itemId, categoryId, relation) != 0);
+
     /// <summary>
     /// Every (category, relation, coefficient) rule on one item, ordered the way the categories are,
     /// so the list is stable as you edit.
@@ -553,6 +576,15 @@ public sealed class DataStore
         else
             ItemCoefficients[key] = value;
         return true;
+    }
+
+    /// <summary>Mark or unmark one line as scored on its best targets; refused on "as", which is only ever one hero.</summary>
+    public bool SetBestTarget(string itemId, string categoryId, Relation relation, bool onBestTargets)
+    {
+        if (relation == Relation.As)
+            return false;
+        var key = new CoefficientKey(itemId, categoryId, relation);
+        return onBestTargets ? BestTargetLines.Add(key) : BestTargetLines.Remove(key);
     }
 
     /// <summary>Scale a whole (trait, relation) at once. 1 removes the row: the table is sparse, like the coefficients.</summary>
@@ -691,7 +723,8 @@ public sealed class DataStore
         var keys = ItemCoefficients.Keys.Where(key => key.ItemId == itemId).ToList();
         foreach (var key in keys)
             ItemCoefficients.Remove(key);
-        return keys.Count > 0;
+        var flags = BestTargetLines.RemoveWhere(key => key.ItemId == itemId);
+        return keys.Count > 0 || flags > 0;
     }
 
     public bool CopyItemRules(string sourceItemId, string targetItemId)
@@ -700,6 +733,11 @@ public sealed class DataStore
         foreach (var (categoryId, relation, value) in RulesForItem(sourceItemId))
         {
             if (SetCoefficient(targetItemId, categoryId, relation, value))
+                changed = true;
+        }
+        foreach (var key in BestTargetLines.Where(key => key.ItemId == sourceItemId).ToList())
+        {
+            if (SetBestTarget(targetItemId, key.CategoryId, key.Relation, true))
                 changed = true;
         }
         return changed;
@@ -718,12 +756,14 @@ public sealed class DataStore
     {
         var itemOrder = IndexOf(Items.Keys);
         var categoryOrder = CategoryOrder();
-        var rows = ItemCoefficients
-            .OrderBy(entry => itemOrder.GetValueOrDefault(entry.Key.ItemId, _missingOrder))
-            .ThenBy(entry => categoryOrder.GetValueOrDefault(entry.Key.CategoryId, _missingOrder))
-            .ThenBy(entry => entry.Key.Relation)
-            .Select(entry => Row(entry.Key.ItemId, entry.Key.CategoryId, entry.Key.Relation.Key(), NumberFormat.Python(entry.Value)));
-        WriteCsv(ItemCoefficientsFile, ["item_id", "category_id", "relation", "coefficient"], rows);
+        var rows = ItemCoefficients.Keys
+            .Concat(BestTargetLines.Where(key => !ItemCoefficients.ContainsKey(key)))
+            .OrderBy(key => itemOrder.GetValueOrDefault(key.ItemId, _missingOrder))
+            .ThenBy(key => categoryOrder.GetValueOrDefault(key.CategoryId, _missingOrder))
+            .ThenBy(key => key.Relation)
+            .Select(key => Row(key.ItemId, key.CategoryId, key.Relation.Key(), NumberFormat.Python(ItemCoefficients.GetValueOrDefault(key)),
+                BestTargetLines.Contains(key) ? "1" : ""));
+        WriteCsv(ItemCoefficientsFile, ["item_id", "category_id", "relation", "coefficient", "best_target"], rows);
     }
 
     public void SaveTraitWeights()
@@ -863,6 +903,7 @@ public sealed class DataStore
             ItemCoefficients.Remove(key);
             removed++;
         }
+        removed += BestTargetLines.RemoveWhere(key => !Items.ContainsKey(key.ItemId) || !Categories.ContainsKey(key.CategoryId));
         foreach (var key in TraitWeights.Keys.Where(k => !Categories.ContainsKey(k.CategoryId)).ToList())
         {
             TraitWeights.Remove(key);

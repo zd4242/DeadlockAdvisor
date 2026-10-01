@@ -31,7 +31,7 @@ public sealed class ExcelExportService : IExcelExportService
         ("Heroes", DataStore.HeroesFile, [20, 24, 12]),
         ("Items", DataStore.ItemsFile, [26, 30, 12, 8, 14, 8]),
         ("HeroCategoryScores", DataStore.HeroScoresFile, [20, 34, 10]),
-        ("ItemFormulaCoefficients", DataStore.ItemCoefficientsFile, [28, 34, 14, 14]),
+        ("ItemFormulaCoefficients", DataStore.ItemCoefficientsFile, [28, 34, 14, 14, 12]),
         ("TraitWeights", DataStore.TraitWeightsFile, [34, 14, 10]),
         ("StatRules", DataStore.StatRulesFile, [28, 34, 14, 10, 18, 80]),
         ("ItemStats", DataStore.ItemStatsFile, [26, 30, 24, 10, 8, 12]),

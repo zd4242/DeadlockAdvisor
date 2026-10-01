@@ -18,10 +18,16 @@ public class CoefficientEditedEventArgs(RoutedEvent routedEvent, CoefficientRow 
     public double Value { get; } = value;
 }
 
+public class BestTargetToggledEventArgs(RoutedEvent routedEvent, CoefficientRow row) : RoutedEventArgs(routedEvent)
+{
+    public CoefficientRow Row { get; } = row;
+}
+
 /// <summary>
 /// Every item against one trait + relation, drawn as one control: Item (with icon), Tier, Shop, the
-/// heat-shaded Coefficient, and what the item's stats add. The header sorts; keys go to the view
-/// model through the view, and this control handles the mouse, F2 and drawing.
+/// heat-shaded Coefficient, what the item's stats add, and whether the line counts its best targets.
+/// The header sorts; keys go to the view model through the view, and this control handles the mouse,
+/// F2 and drawing.
 /// </summary>
 public class CoefficientGrid : ScrollingGrid
 {
@@ -30,8 +36,9 @@ public class CoefficientGrid : ScrollingGrid
     private const double _icon = 20;
     private const double _pad = 5;
     private const double _scrollBarGutter = 12;
-    // Tier, Shop, Coefficient, From stats; Item takes the rest.
-    private static readonly double[] _fixedWidths = [60, 90, 120, 110];
+    // Tier, Shop, Coefficient, From stats, Best target; Item takes the rest.
+    private static readonly double[] _fixedWidths = [60, 90, 120, 110, 100];
+    private static readonly int _columns = _fixedWidths.Length + 1;
     private const double _heatLimit = 10;
 
     public static readonly StyledProperty<IReadOnlyList<CoefficientRow>> RowsProperty =
@@ -45,6 +52,9 @@ public class CoefficientGrid : ScrollingGrid
 
     public static readonly RoutedEvent<CoefficientEditedEventArgs> CoefficientEditedEvent =
         RoutedEvent.Register<CoefficientGrid, CoefficientEditedEventArgs>("CoefficientEdited", RoutingStrategies.Bubble);
+
+    public static readonly RoutedEvent<BestTargetToggledEventArgs> BestTargetToggledEvent =
+        RoutedEvent.Register<CoefficientGrid, BestTargetToggledEventArgs>("BestTargetToggled", RoutingStrategies.Bubble);
 
     private int _hoverColumn = -1;
     private object? _tipKey;
@@ -99,9 +109,9 @@ public class CoefficientGrid : ScrollingGrid
     private double[] ColumnEdges()
     {
         var right = Bounds.Width - (Bounds.Height > Viewport.Height + 0.5 ? _scrollBarGutter : 0);
-        var edges = new double[6];
-        edges[5] = right;
-        for (var column = 4; column >= 1; column--)
+        var edges = new double[_columns + 1];
+        edges[_columns] = right;
+        for (var column = _columns - 1; column >= 1; column--)
             edges[column] = edges[column + 1] - _fixedWidths[column - 1];
         edges[0] = 0;
         return edges;
@@ -129,7 +139,7 @@ public class CoefficientGrid : ScrollingGrid
     {
         var edges = ColumnEdges();
         var column = -1;
-        for (var index = 0; index < 5; index++)
+        for (var index = 0; index < _columns; index++)
         {
             if (point.X >= edges[index] && point.X < edges[index + 1])
                 column = index;
@@ -169,9 +179,10 @@ public class CoefficientGrid : ScrollingGrid
             return;
         SetCurrentValue(CurrentRowProperty, Rows[row]);
         Focus();
-        // Only the coefficient is editable.
         if (e.ClickCount == 2 && column == ByTraitViewModel.CoefficientColumn)
             BeginEditCurrent();
+        else if (column == ByTraitViewModel.BestTargetColumn)
+            RaiseEvent(new BestTargetToggledEventArgs(BestTargetToggledEvent, Rows[row]));
         e.Handled = true;
     }
 
@@ -238,6 +249,10 @@ public class CoefficientGrid : ScrollingGrid
             tip = ByTraitViewModel.FromStatsTip;
         else if (!header && row >= 0 && column == 4)
             tip = Rows[row].FromStatsTip;
+        else if (header && column == ByTraitViewModel.BestTargetColumn)
+            tip = FormulaText.BestTargetTip;
+        else if (!header && row >= 0 && column == ByTraitViewModel.BestTargetColumn && Rows[row].BestTargetFromCast)
+            tip = FormulaText.BestTargetFromCastTip;
 
         var key = (header, row, column);
         if (Equals(key, _tipKey))
@@ -280,7 +295,7 @@ public class CoefficientGrid : ScrollingGrid
     private void PaintRow(DrawingContext context, CoefficientRow row, int index, double[] edges)
     {
         var y = HeaderHeight + index * RowHeight;
-        var width = edges[5];
+        var width = edges[_columns];
         var selected = ReferenceEquals(row, CurrentRow);
         // Stripes follow the sorted order, hidden rows included, as the Python grid's did.
         var alternate = row.OrderIndex % 2 == 1;
@@ -310,6 +325,14 @@ public class CoefficientGrid : ScrollingGrid
 
         if (row.FromStatsText.Length > 0)
             DrawCentered(context, CachedText(row.FromStatsText, 13, text ?? Palette.TextDim), new Rect(edges[4], y, edges[5] - edges[4], RowHeight));
+
+        // A line the item's cast already ranks is dimmed: clicking it can't turn it off.
+        if (row.BestTargetApplies)
+        {
+            DrawCentered(context, row.BestTarget
+                ? CachedText("✓", 14, row.BestTargetFromCast ? Palette.TextFaint : Palette.Accent, bold: true)
+                : CachedText("·", 12, Palette.TextFaint), new Rect(edges[5], y, edges[6] - edges[5], RowHeight));
+        }
     }
 
     private void PaintHeader(DrawingContext context, Rect view, double[] edges)
@@ -317,7 +340,7 @@ public class CoefficientGrid : ScrollingGrid
         var border = new Pen(new SolidColorBrush(Palette.Border), 1);
         var top = view.Y;
         context.FillRectangle(new SolidColorBrush(Palette.Surface2), new Rect(view.X, top, view.Width, HeaderHeight));
-        for (var column = 0; column < 5; column++)
+        for (var column = 0; column < _columns; column++)
         {
             var rect = new Rect(edges[column], top, edges[column + 1] - edges[column], HeaderHeight);
             var hovered = column == _hoverColumn;

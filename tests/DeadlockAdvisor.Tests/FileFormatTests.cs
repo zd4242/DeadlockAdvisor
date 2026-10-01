@@ -8,7 +8,7 @@ using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Every file the app writes must come out byte-identical to what the Python app writes.</summary>
+/// <summary>Every file the app writes must come out byte-identical to its golden copy, which began as the Python app's output.</summary>
 public class FileFormatTests
 {
     public static TheoryData<string> WrittenFiles() =>
@@ -35,6 +35,11 @@ public class FileFormatTests
         store.SaveItemTooltips();
         store.SaveMatchLift();
 
+        if (Golden.Updating)
+        {
+            Golden.CopyFile(data.File(fileName), "csv_roundtrip", fileName);
+            return;
+        }
         AssertEx.BytesEqual(Golden.PathOf("csv_roundtrip", fileName), data.File(fileName));
     }
 

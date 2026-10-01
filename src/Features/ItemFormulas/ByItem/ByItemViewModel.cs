@@ -254,21 +254,10 @@ public class ByItemViewModel : ViewModelBase
                 ? "No rules yet — this item scores 0 in every match.\nAdd a rule for each hero trait that should make you want it."
                 : "No hand-typed rules — only its stats count (below).\nAdd a rule for anything the stats don't capture, like an active.";
 
-        // One card per trait + coefficient, with every relation sharing that number checked on it.
         var categories = store.CategoriesOrdered();
-        var cards = new OrderedDictionary<(string CategoryId, double Coefficient), List<Relation>>();
-        foreach (var (categoryId, relation, coefficient) in rules)
-        {
-            if (!cards.TryGetValue((categoryId, coefficient), out var relations))
-            {
-                relations = [];
-                cards[(categoryId, coefficient)] = relations;
-            }
-            relations.Add(relation);
-        }
         var oldCards = Rules.ToList();
-        Rules.ReplaceAll(cards.Select(card => new RuleCardViewModel(
-            store, itemId, categories, new RuleTarget(card.Key.CategoryId, card.Value), card.Key.Coefficient,
+        Rules.ReplaceAll(RuleCards(store, itemId, rules).Select(card => new RuleCardViewModel(
+            store, itemId, categories, new RuleTarget(card.Key.CategoryId, card.Value), card.Key.Coefficient, card.Key.BestTarget,
             _traitColors[card.Key.CategoryId], OnRuleChanged, OnRuleRemoved)));
         foreach (var card in oldCards)
             card.Dispose();
@@ -278,10 +267,39 @@ public class ByItemViewModel : ViewModelBase
                 rule.Relation,
                 Format.Num(NumberFormat.Round(DataStore.SumAmounts(rule.Parts), 3)),
                 rule.Parts.Select(part => part.Describe()).ToList(),
-                _traitColors[rule.CategoryId]))
+                _traitColors[rule.CategoryId],
+                store.OnBestTargets(itemId, rule.CategoryId, rule.Relation)))
             .ToList();
 
         RenderPreview();
+    }
+
+    /// <summary>
+    /// One card per trait, coefficient and Best target mark, with every relation sharing them checked on it.
+    /// "as" is never marked, so it joins the marked card when nothing else on that number is unmarked.
+    /// </summary>
+    private static OrderedDictionary<(string CategoryId, double Coefficient, bool BestTarget), List<Relation>> RuleCards(
+        DataStore store, string itemId, IEnumerable<(string CategoryId, Relation Relation, double Coefficient)> rules)
+    {
+        var cards = new OrderedDictionary<(string CategoryId, double Coefficient, bool BestTarget), List<Relation>>();
+        foreach (var (categoryId, relation, coefficient) in rules)
+        {
+            var key = (categoryId, coefficient, store.BestTargetLines.Contains(new CoefficientKey(itemId, categoryId, relation)));
+            if (!cards.TryGetValue(key, out var relations))
+            {
+                relations = [];
+                cards[key] = relations;
+            }
+            relations.Add(relation);
+        }
+        foreach (var (key, relations) in cards.ToList())
+        {
+            if (key.BestTarget || relations is not [Relation.As] || !cards.TryGetValue(key with { BestTarget = true }, out var marked))
+                continue;
+            marked.Add(Relation.As);
+            cards.Remove(key);
+        }
+        return cards;
     }
 
     private void RenderPreview()
@@ -331,23 +349,24 @@ public class ByItemViewModel : ViewModelBase
 
     // -- edits ----------------------------------------------------------------------
 
-    private void OnRuleChanged(RuleTarget old, RuleTarget now, double coefficient)
+    private void OnRuleChanged(RuleTarget old, RuleTarget now, double coefficient, bool bestTarget)
     {
         if (CurrentItem is not { } item)
             return;
         var store = _data.Store;
         var retargeted = !old.Equals(now);
         if (retargeted)
-        {
-            foreach (var relation in old.Relations)
-                store.SetCoefficient(item.ItemId, old.CategoryId, relation, 0);
-        }
+            ClearLines(item.ItemId, old);
+        var remarked = false;
         foreach (var relation in now.Relations)
+        {
             store.SetCoefficient(item.ItemId, now.CategoryId, relation, coefficient);
+            remarked |= store.SetBestTarget(item.ItemId, now.CategoryId, relation, bestTarget);
+        }
 
-        if (retargeted)
-            // Retargeting moves the card in the sorted list, so the cards are rebuilt: deferred,
-            // since we're inside a change coming from the card that rebuild replaces.
+        if (retargeted || remarked)
+            // Retargeting moves the card in the sorted list, and a new mark shows on the stat rules too, so
+            // the detail is rebuilt: deferred, since we're inside a change coming from the card it replaces.
             RxApp.MainThreadScheduler.Schedule(() => AfterEdit(rerenderRules: true));
         else
             AfterEdit(rerenderRules: false);
@@ -357,9 +376,18 @@ public class ByItemViewModel : ViewModelBase
     {
         if (CurrentItem is not { } item)
             return;
-        foreach (var relation in target.Relations)
-            _data.Store.SetCoefficient(item.ItemId, target.CategoryId, relation, 0);
+        ClearLines(item.ItemId, target);
         AfterEdit(rerenderRules: true);
+    }
+
+    /// <summary>Drop the number and the Best target mark a card held: the card is all the mark shows on.</summary>
+    private void ClearLines(string itemId, RuleTarget target)
+    {
+        foreach (var relation in target.Relations)
+        {
+            _data.Store.SetCoefficient(itemId, target.CategoryId, relation, 0);
+            _data.Store.SetBestTarget(itemId, target.CategoryId, relation, false);
+        }
     }
 
     /// <summary>"+ Add rule": the first trait without an against rule, at a mild 2.</summary>

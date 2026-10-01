@@ -112,7 +112,7 @@ public class ExplainViewModel : ViewModelBase
         ShopColor = Palette.ShopColor(item.Category);
         Total = new DisplayAmount(total);
         NoContributions = contributions.Count == 0;
-        Contributions = contributions.Select(contribution => Card(contribution, TypicalInfo(item.ItemName, contribution, contributions))).ToList();
+        Contributions = contributions.Select(contribution => Card(contribution, TypicalInfo(store, item, contribution, contributions))).ToList();
         var parts = ItemScoring.DataParts(store, match, itemId);
         var self = match.SelfHero;
         MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
@@ -135,14 +135,15 @@ public class ExplainViewModel : ViewModelBase
     }
 
     /// <summary>The typical team's explanation, against what the same relation's ranked heroes come to; null for a hero.</summary>
-    private static string? TypicalInfo(string itemName, HeroContribution contribution, IReadOnlyList<HeroContribution> contributions)
+    private static string? TypicalInfo(DataStore store, Item item, HeroContribution contribution, IReadOnlyList<HeroContribution> contributions)
     {
         if (contribution.TypicalOf is not { } count)
             return null;
         var targets = contributions
             .Where(other => other.Relation == contribution.Relation && other.Rank is not null)
             .Sum(other => other.Amount);
-        return ExplainText.TypicalInfo(itemName, contribution.Relation, count, -contribution.Amount, targets);
+        return ExplainText.TypicalInfo(item.ItemName, contribution.Relation, store.CastOnCovers(item.ItemId, contribution.Relation),
+            count, -contribution.Amount, targets);
     }
 
     private static ContributionCard Card(HeroContribution contribution, string? info)

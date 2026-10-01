@@ -26,6 +26,19 @@ public static class FormulaText
         + "2 = mild, 6 = strong, 10 = this item exists for this trait.\n"
         + "Negative to actively discourage the item.";
 
+    public const string BestTargetTip =
+        "Count only the best hero on the team for this trait in full, the next\n"
+        + "×0.5, then ×0.25 and so on, instead of every hero who has it. For an\n"
+        + "item one hero is enough to trigger: Reactive Barrier procs once per\n"
+        + "cooldown, however many enemies can stun you. Covers the typed and\n"
+        + "from-stats coefficients alike; never 'as', which is one hero.";
+
+    public const string BestTargetFromCastTip =
+        "Cast on one hero at a time (found by Data → Sync from Game API),\n"
+        + "so every rule on this side already counts its best targets.";
+
+    public const string BestTargetAsOnlyTip = "Only 'against' and 'with' can count best targets: 'as' is one hero.";
+
     public static string Who(Relation relation) => relation switch
     {
         Relation.Against => "an ENEMY",

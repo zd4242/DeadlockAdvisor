@@ -336,6 +336,34 @@ public class ScoringTests
     }
 
     [Fact]
+    public void ABestTargetLineRanksItsShareWhileTheItemsOtherLinesSum()
+    {
+        var store = TestStore.Make();
+        store.ItemCoefficients[new CoefficientKey("spirit_resist_t1", "max_hp", Relation.Against)] = 1.0;
+        Assert.True(store.SetBestTarget("spirit_resist_t1", "deals_spirit_damage_general", Relation.Against, true));
+        Assert.False(store.SetBestTarget("spirit_resist_t1", "max_hp", Relation.As, true));
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+
+        // Spirit damage is ranked: 6 + -4/2, less a typical pair's 5/3. Max HP (average -4/3) sums: 4/3 + -8/3.
+        Assert.Equal(5.0 / 3, matrix.Typical("spirit_resist_t1", Relation.Against, 2), 9);
+        Assert.Equal(4 - 5.0 / 3 + 4.0 / 3 - 8.0 / 3, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(match)), 9);
+        Assert.Equal(6 + 4.0 / 3, matrix[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)], 9);
+
+        // Each hero shows twice: the ranked share at its rank, and the summed share.
+        var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
+        Assert.Equal(
+            [("heavy_spirit", 6.0, (int?)1), ("heavy_spirit", Math.Round(4.0 / 3, 9), null), ("", Math.Round(-5.0 / 3, 9), null),
+                ("low_hp", -2.0, 2), ("low_hp", Math.Round(-8.0 / 3, 9), null)],
+            explained.Select(contribution => (contribution.HeroId, Math.Round(contribution.Amount, 9), contribution.Rank)));
+        Assert.Equal(["deals_spirit_damage_general"], explained[0].Parts.Select(part => part.CategoryId));
+        Assert.Equal(["max_hp"], explained[1].Parts.Select(part => part.CategoryId));
+        Assert.Equal(1, explained.Sum(contribution => contribution.Amount), 9);
+    }
+
+    [Fact]
     public void BlendScalesAreTheSpreadOfNonzeroOpinionsOverRandomLineUps()
     {
         var store = TestStore.Make();

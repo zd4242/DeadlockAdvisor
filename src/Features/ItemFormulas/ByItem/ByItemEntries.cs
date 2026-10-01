@@ -4,7 +4,9 @@ using DeadlockAdvisor.Enums;
 namespace DeadlockAdvisor.Features.ItemFormulas.ByItem;
 
 /// <summary>A rule the item gets from its stats via stat_rules.csv. Read-only here: change the stat rule (or re-sync the item) instead.</summary>
-public sealed record DerivedRuleEntry(string CategoryName, Relation Relation, string Value, IReadOnlyList<string> Parts, Color TraitColor)
+/// <param name="BestTarget">The line counts its best targets: marked on By Trait or a rule card on its trait, or the item's cast.</param>
+public sealed record DerivedRuleEntry(string CategoryName, Relation Relation, string Value, IReadOnlyList<string> Parts, Color TraitColor,
+    bool BestTarget = false)
 {
     public string RelationText => Relation.Key().ToUpperInvariant();
     public Color RelationColor => Theme.Palette.RelationColor(Relation);

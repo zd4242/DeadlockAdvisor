@@ -21,9 +21,10 @@ score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) 
 ```
 
 `factor` is 1 unless the scores lean on net worth (see "Net worth" below). A
-single-target item replaces the sum over the team it's cast on (and, for an
-ally-cast item, the enemies too) with its best targets (see "Best-target items"
-below).
+best-target line, which is every line of a single-target item on the team it's cast on
+(and, for an ally-cast item, the enemies too) or a line marked Best target, is
+counted on its best targets instead of summed over the team (see "Best-target
+items" below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
@@ -42,7 +43,7 @@ Where this lives in the code:
 | Piece | Where |
 |---|---|
 | Baselines | `DataStore.TraitBaselines()`, computed on demand, never cached, because `SetHeroScore` doesn't trigger a rebuild |
-| Weight matrix | `ItemScoring.BuildWeightMatrix` → `WeightMatrix`, which also holds the single-target items and their typical best-target sums |
+| Weight matrix | `ItemScoring.BuildWeightMatrix` → `WeightMatrix`, each weight split into its summed and best-target parts, with the typical best-target sums |
 | One line-up's score | `ItemScoring.Total` over a `LineUp`, shared by `ScoreAll` (every item, whatever it scores: the Match page's lists and `DataOnlyPicks`) and the model health simulation |
 | Best-target maths | `BestTargets` (`Sum`, `Expected`, `RankFactor`) |
 | The match data's verdict | `ItemScoring.DataStrength`: enemies lift ÷ `PickMinAgainst` + your lift ÷ `PickMinAs`, in "bars"; 1 or more is a standout |
@@ -127,6 +128,38 @@ stopped being single-target or switched sides, and flags a `_notSingleTarget` or
 `_forceSingleTarget` entry that no longer matches.
 The explain panel ranks each hero ("2nd target ×0.5") and takes the typical team
 off as a line of its own.
+
+#### Best-target lines
+
+Some items have no targeted active but still pay off once per cooldown, however
+many heroes give them a reason to. Reactive Barrier gives one barrier when you're
+first crowd-controlled, so one stunner on the enemy team triggers it every fight,
+and a fifth adds next to nothing. A plain sum gets this wrong both ways: four
+low-CC enemies cancel out the one stunner, and six stunners count six times.
+
+So any item × trait × relation line can be marked to count its best targets:
+the Best target column on By Trait (click it, or press B), or the "best target"
+pill on a By Item rule card. The mark lives in `item_formula_coefficients.csv`'s
+`best_target` column (`DataStore.BestTargetLines`). A row with coefficient 0 marks a line
+that only has a stats part. The mark covers the line's typed and stats parts alike,
+and never applies to `as`.
+
+Mark only the lines that trigger once per cooldown, not the whole item.
+Indomitable's Applies Crowd Control line is one, but its bullet and spirit
+resist lines (from `stat_rules.csv`) protect against every enemy's damage and keep summing.
+
+On one relation, the marked lines and any line `CastOn` covers
+(`DataStore.OnBestTargets`) form one best-target part per hero. The other lines
+form a summed part:
+
+```
+relation score = Σ summed parts + best-target sum of the ranked parts − its typical value
+```
+
+Heroes are ranked by their ranked part alone, and the typical value comes from the
+ranked parts too, so every item still averages 0. The explain panel shows a hero
+with both parts twice: once at their rank, and once summed. Copying an item's
+rules copies its marks, and clearing or deleting a rule card clears them.
 
 ## Match data on the Match page
 

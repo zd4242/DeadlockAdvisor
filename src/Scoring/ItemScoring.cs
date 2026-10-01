@@ -37,9 +37,11 @@ public static class ItemScoring
     {
         var baselines = store.TraitBaselines();
         var profiled = store.Heroes.Keys.Where(store.IsProfiled).ToList();
-        var weights = new Dictionary<MatrixKey, double>();
+        var summed = new Dictionary<MatrixKey, double>();
+        var ranked = new Dictionary<MatrixKey, double>();
         foreach (var (key, coefficient) in store.EffectiveCoefficients())
         {
+            var weights = store.OnBestTargets(key.ItemId, key.CategoryId, key.Relation) ? ranked : summed;
             var baseline = baselines.GetValueOrDefault(key.CategoryId);
             foreach (var heroId in profiled)
             {
@@ -50,10 +52,7 @@ public static class ItemScoring
                 weights[cell] = weights.GetValueOrDefault(cell) + deviation * coefficient;
             }
         }
-        var castOn = store.Items.Values
-            .Where(item => item.CastOn is not null)
-            .ToDictionary(item => item.ItemId, item => item.CastOn!.Value);
-        return new WeightMatrix(weights, profiled, castOn);
+        return new WeightMatrix(summed, ranked, profiled);
     }
 
     /// <summary>The match's line-up; without <paramref name="netWorth"/> every hero counts the same.</summary>
@@ -104,8 +103,8 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
-    /// you, each hero's weight times their net worth factor. A single-target item's heroes on the teams
-    /// <see cref="BestTargets.AppliesTo"/> names count by <see cref="BestTargets"/> instead of summing.
+    /// you, each hero's weight times their net worth factor. The part of a weight from best-target lines
+    /// (<see cref="DataStore.OnBestTargets"/>) counts by <see cref="BestTargets"/> over its team instead of summing.
     /// </summary>
     public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
@@ -113,16 +112,15 @@ public static class ItemScoring
         Dictionary<Relation, List<double>>? targets = null;
         foreach (var (heroId, relation) in lineUp.Members())
         {
-            var weight = lineUp.NetWorth.Factor(heroId) * matrix.GetValueOrDefault(new MatrixKey(itemId, heroId, relation));
+            var key = new MatrixKey(itemId, heroId, relation);
+            var factor = lineUp.NetWorth.Factor(heroId);
+            total += factor * matrix.Summed(key);
             if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
-            {
-                total += weight;
                 continue;
-            }
             targets ??= [];
             if (!targets.TryGetValue(relation, out var team))
                 targets[relation] = team = [];
-            team.Add(weight);
+            team.Add(factor * matrix.Ranked(key));
         }
         foreach (var (relation, team) in targets ?? [])
             total += BestTargets.Sum(team) - matrix.Typical(itemId, relation, team.Count);
@@ -133,31 +131,35 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score broken down per hero, then per trait, biggest contributor first. Recomputed
-    /// from the store because the per-trait detail isn't kept in the matrix. A single-target item's heroes
-    /// on its best-target teams are counted at their rank, with a typical team's sum taken off as one more line.
+    /// from the store because the per-trait detail isn't kept in the matrix. On a relation with best-target
+    /// lines, those lines' share of each hero is counted at the hero's rank, apart from the share that sums,
+    /// with a typical team's sum taken off as one more line.
     /// </summary>
     public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
     {
         var lineUp = RelevantHeroes(match, netWorth);
         var baselines = store.TraitBaselines();
-        var castOn = store.Items.GetValueOrDefault(itemId)?.CastOn;
         var contributions = new List<HeroContribution>();
         foreach (var relation in new[] { Relation.Against, Relation.With, Relation.As })
         {
             var team = lineUp.Members().Where(member => member.Relation == relation).Select(member => member.HeroId).ToList();
-            var found = team
-                .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId)))
+            List<HeroContribution> Found(bool? ranked) => team
+                .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId), ranked))
                 .OfType<HeroContribution>()
                 .ToList();
-            contributions.AddRange(castOn is { } cast && BestTargets.AppliesTo(cast, relation)
-                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), found)
-                : found);
+            if (!store.HasBestTargetLines(itemId, relation))
+            {
+                contributions.AddRange(Found(null));
+                continue;
+            }
+            contributions.AddRange(Found(false));
+            contributions.AddRange(OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), Found(true)));
         }
         return contributions.OrderBy(contribution => -contribution.Amount).ToList();
     }
 
     /// <summary>
-    /// A single-target item's heroes on one best-target relation at their <see cref="BestTargets"/> rank, then the
+    /// The best-target lines' share of each hero on one relation at their <see cref="BestTargets"/> rank, then the
     /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
     /// no rule touches, exactly as <see cref="Total"/> counts them.
     /// </summary>
@@ -183,7 +185,7 @@ public static class ItemScoring
             yield break;
         var roster = store.Heroes.Keys
             .Where(store.IsProfiled)
-            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation)?.Amount ?? 0.0)
+            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, ranked: true)?.Amount ?? 0.0)
             .ToList();
         var typical = BestTargets.Expected(roster, Math.Min(team.Count, BestTargets.MaxTeam));
         if (typical != 0)
@@ -210,9 +212,10 @@ public static class ItemScoring
     /// One hero's share of one item's score, biggest trait first; null when no trait of the item
     /// touches the hero, or the hero isn't profiled yet.
     /// </summary>
+    /// <param name="ranked">Only the best-target lines (true) or only the summed ones (false); every line when null.</param>
     private static HeroContribution? Contribution(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation,
-        NetWorthStanding? netWorth = null)
+        NetWorthStanding? netWorth = null, bool? ranked = null)
     {
         if (!store.IsProfiled(heroId))
             return null;
@@ -220,6 +223,8 @@ public static class ItemScoring
         foreach (var (categoryId, category) in store.Categories)
         {
             if (store.EffectiveCoefficient(itemId, categoryId, relation) == 0)
+                continue;
+            if (ranked is { } wanted && store.OnBestTargets(itemId, categoryId, relation) != wanted)
                 continue;
             var heroScore = store.HeroScore(heroId, categoryId);
             var baseline = baselines.GetValueOrDefault(categoryId);
