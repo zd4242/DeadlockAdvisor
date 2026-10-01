@@ -1,7 +1,9 @@
 using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.VisualTree;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.ItemFormulas.ByTrait;
 using DeadlockAdvisor.Services;
@@ -27,6 +29,27 @@ public class ItemFormulasPageTests
         Assert.NotEmpty(page.Rules);
         Assert.NotEmpty(page.DerivedRules);
         Assert.NotEmpty(page.Preview!);
+    }
+
+    [AvaloniaFact]
+    public void AFilledSearchShowsItsClearButtonWithoutFocus()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
+        var page = ui.ViewModel.ItemFormulas.ByItem;
+        page.SearchText = "asdf";
+        ui.Show();
+        var search = ui.Window.ItemFormulasPage.ByItemPanel.SearchBox;
+        Assert.False(search.IsFocused);
+
+        var clear = search.GetVisualDescendants().OfType<Button>().Single(button => button.Classes.Contains("textBoxClearButton"));
+        Assert.True(clear.IsEffectivelyVisible);
+        var centre = clear.TranslatePoint(new Point(clear.Bounds.Width / 2, clear.Bounds.Height / 2), ui.Window)!.Value;
+        ui.Window.MouseDown(centre, MouseButton.Left);
+        ui.Window.MouseUp(centre, MouseButton.Left);
+        UiHarness.Settle();
+
+        Assert.Equal("", page.SearchText);
+        Assert.DoesNotContain(search.GetVisualDescendants().OfType<Button>(), button => button.Classes.Contains("textBoxClearButton"));
     }
 
     [AvaloniaFact]

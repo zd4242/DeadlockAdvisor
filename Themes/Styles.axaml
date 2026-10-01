@@ -444,9 +444,16 @@
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="Padding" Value="10,6,8,6"/>
     </Style>
-    <!-- Fluent only shows the clear button while the box has focus -->
-    <Style Selector="TextBox.clearButton[AcceptsReturn=False][IsReadOnly=False]:not(:empty) /template/ Button#PART_ClearButton">
-        <Setter Property="IsVisible" Value="True"/>
+    <!-- Fluent's clear button, kept while the box has text rather than only while it has focus -->
+    <Style Selector="TextBox.clearButton[AcceptsReturn=False][IsReadOnly=False]:not(:empty)">
+        <Setter Property="InnerRightContent">
+            <Template>
+                <Button Classes="textBoxClearButton"
+                        Theme="{StaticResource FluentTextBoxButton}"
+                        Command="{Binding $parent[TextBox].Clear}"
+                        ClipToBounds="True"/>
+            </Template>
+        </Setter>
     </Style>
 
     <!-- Spin boxes as narrow as Qt's: the number, then small up/down arrows stacked on the right -->
