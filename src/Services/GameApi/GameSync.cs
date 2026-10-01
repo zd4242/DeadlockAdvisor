@@ -156,6 +156,20 @@ public static partial class GameSync
     /// </summary>
     private static readonly Dictionary<string, Relation> _forceSingleTarget = new() { ["Counterspell"] = Relation.Against };
 
+    /// <summary>
+    /// Shop → the stat its investment bonus raises. Every soul spent in a shop adds to that bonus, so
+    /// each of its items carries a share of it: cost × the bonus per soul (<see cref="ShopBonuses"/>).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, (string Stat, string Label, string Unit)> ShopBonusStats =
+        new Dictionary<string, (string, string, string)>
+        {
+            ["weapon"] = ("ShopWeaponDamage", "Weapon Damage (shop bonus)", "%"),
+            ["spirit"] = ("ShopSpiritPower", "Spirit Power (shop bonus)", ""),
+            ["vitality"] = ("ShopBaseHealth", "Base Health (shop bonus)", "%"),
+        };
+
+    private static readonly HashSet<string> _shopBonusStatNames = ShopBonusStats.Values.Select(stat => stat.Stat).ToHashSet();
+
     private static readonly string[] _shownKeys = ["properties", "important_properties", "elevated_properties"];
 
     // -- names ----------------------------------------------------------------------
@@ -239,9 +253,10 @@ public static partial class GameSync
     /// <summary>
     /// One stat per (stat, conditional) the item has, summing the properties folded into it. Only
     /// stats the tooltip shows count: the game files carry leftovers the game never applies
-    /// (Refresher still has resists on file from before its rework).
+    /// (Refresher still has resists on file from before its rework). With <paramref name="shopBonuses"/>,
+    /// the item also carries its share of its shop's investment bonus.
     /// </summary>
-    public static List<ItemStat> ExtractStats(string itemId, JsonNode record)
+    public static List<ItemStat> ExtractStats(string itemId, JsonNode record, IReadOnlyDictionary<string, ShopBonus>? shopBonuses = null)
     {
         var name = NameOf(record);
         var properties = ShownProperties(record);
@@ -267,6 +282,13 @@ public static partial class GameSync
             meta[stat.Stat] = (stat.Label, stat.Unit);
         }
 
+        var shop = PyJson.Text(record, "item_slot_type");
+        if (shopBonuses?.GetValueOrDefault(shop) is { } bonus && ShopBonusStats.TryGetValue(shop, out var shopStat))
+        {
+            totals[(shopStat.Stat, false)] = bonus.Share(PyJson.Int(record, "cost"));
+            meta[shopStat.Stat] = (shopStat.Label, shopStat.Unit);
+        }
+
         return totals
             .OrderBy(pair => pair.Key.Stat, StringComparer.Ordinal)
             .ThenBy(pair => pair.Key.Conditional)
@@ -274,6 +296,32 @@ public static partial class GameSync
             .Select(pair => new ItemStat(itemId, pair.Key.Stat, meta[pair.Key.Stat].Label, NumberFormat.Round(pair.Value, 4),
                 meta[pair.Key.Stat].Unit, pair.Key.Conditional))
             .ToList();
+    }
+
+    /// <summary>
+    /// Each shop's investment bonus, from the heroes' <c>cost_bonuses</c> curves. Every hero has the
+    /// same curves, so the first hero with any speaks for all; empty when none has them.
+    /// </summary>
+    public static Dictionary<string, ShopBonus> ShopBonuses(IEnumerable<JsonNode> heroRecords)
+    {
+        foreach (var record in heroRecords)
+        {
+            var bonuses = new Dictionary<string, ShopBonus>();
+            foreach (var (shop, curve) in PyJson.Get(record, "cost_bonuses") as JsonObject ?? [])
+            {
+                var top = (curve as JsonArray ?? [])
+                    .Select(step => new ShopBonus(
+                        Number(PyJson.Get(step, "bonus")) ?? 0,
+                        Number(PyJson.Get(step, "gold_threshold")) ?? 0))
+                    .Where(step => step.Souls > 0)
+                    .MaxBy(step => step.Souls);
+                if (top is not null)
+                    bonuses[shop] = top;
+            }
+            if (bonuses.Count > 0)
+                return bonuses;
+        }
+        return [];
     }
 
     private static bool IsPerStack(string? name, string key) => _perStack.Contains(key) || _forcePerStack.Contains((name, key));
@@ -560,10 +608,11 @@ public static partial class GameSync
     public static SyncReport Apply(DataStore store, IEnumerable<JsonNode?> heroRecords, IEnumerable<JsonNode?> itemRecords)
     {
         var report = new SyncReport();
-        var knownItems = store.Items.Keys.ToHashSet();
-        ApplyHeroes(store, heroRecords.OfType<JsonNode>().ToList(), report);
+        var knownItems = store.Items.Values.ToDictionary(item => item.ItemId);
+        var heroes = heroRecords.OfType<JsonNode>().ToList();
+        ApplyHeroes(store, heroes, report);
         var recordsByItem = ApplyItems(store, itemRecords.OfType<JsonNode>().ToList(), report);
-        ApplyStats(store, recordsByItem, knownItems, report);
+        ApplyStats(store, recordsByItem, knownItems, ShopBonuses(heroes), report);
         ApplyTooltips(store, recordsByItem, report);
         var records = recordsByItem.Values.ToList();
         report.UnmappedStats.AddRange(UnmappedStats(records));
@@ -707,12 +756,13 @@ public static partial class GameSync
 
     /// <param name="knownItems">The items before this sync: a new item's stats are news, not changes.</param>
     private static void ApplyStats(
-        DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, IReadOnlySet<string> knownItems, SyncReport report)
+        DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, IReadOnlyDictionary<string, Item> knownItems,
+        IReadOnlyDictionary<string, ShopBonus> shopBonuses, SyncReport report)
     {
         var fresh = new OrderedDictionary<string, List<ItemStat>>();
         foreach (var (itemId, record) in recordsByItem)
         {
-            var stats = ExtractStats(itemId, record);
+            var stats = ExtractStats(itemId, record, shopBonuses);
             if (stats.Count > 0)
                 fresh[itemId] = stats;
         }
@@ -724,8 +774,10 @@ public static partial class GameSync
         // With no stats on file there's nothing to compare against: every row would read as new.
         if (store.ItemStats.Count > 0)
         {
-            foreach (var itemId in recordsByItem.Keys.Where(knownItems.Contains))
+            var known = recordsByItem.Keys.Where(knownItems.ContainsKey).ToList();
+            foreach (var itemId in known)
                 report.StatChanges.AddRange(StatChanges(store.Items[itemId].ItemName, store.ItemStats.GetValueOrDefault(itemId), fresh.GetValueOrDefault(itemId)));
+            report.ShopBonusChanges.AddRange(ShopBonusChanges(store.ItemStats, known.Select(itemId => knownItems[itemId]), shopBonuses));
         }
         store.ItemStats = fresh;
         store.RebuildDerived();
@@ -739,6 +791,9 @@ public static partial class GameSync
         var now = (after ?? []).ToDictionary(stat => (stat.Stat, stat.Conditional));
         foreach (var key in old.Keys.Concat(now.Keys).Distinct().OrderBy(key => key.Stat, StringComparer.Ordinal).ThenBy(key => key.Conditional))
         {
+            // A shop bonus only moves with the item's cost or shop, already reported, or with the whole curve (ShopBonusChanges).
+            if (_shopBonusStatNames.Contains(key.Stat))
+                continue;
             old.TryGetValue(key, out var was);
             now.TryGetValue(key, out var becomes);
             if (was?.Value == becomes?.Value)
@@ -756,6 +811,29 @@ public static partial class GameSync
         { Unit: "%" } => Format.Num(stat.Value) + "%",
         _ => $"{Format.Num(stat.Value)} {stat.Unit}",
     };
+
+    /// <summary>
+    /// "weapon: Weapon Damage (shop bonus) 115% at 28800 souls", one line per shop whose curve moved,
+    /// instead of one per item in it. An item's old share is checked against its old cost under the new
+    /// curve, so a cost change alone doesn't count.
+    /// </summary>
+    private static IEnumerable<string> ShopBonusChanges(
+        IReadOnlyDictionary<string, List<ItemStat>> oldStats, IEnumerable<Item> knownItems, IReadOnlyDictionary<string, ShopBonus> shopBonuses)
+    {
+        var items = knownItems.ToList();
+        foreach (var (shop, stat) in ShopBonusStats)
+        {
+            var bonus = shopBonuses.GetValueOrDefault(shop);
+            var moved = items.Where(item => item.Category == shop).Any(item =>
+                (oldStats.GetValueOrDefault(item.ItemId)?.FirstOrDefault(old => old.Stat == stat.Stat)?.Value ?? 0)
+                != (bonus?.Share(item.Cost) ?? 0));
+            if (!moved)
+                continue;
+            yield return bonus is null
+                ? $"{shop}: the game data has no shop bonus any more"
+                : $"{shop}: {stat.Label} {Format.Num(bonus.Bonus)}{stat.Unit} at {Format.Num(bonus.Souls)} souls";
+        }
+    }
 
     private static void ApplyTooltips(DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, SyncReport report)
     {

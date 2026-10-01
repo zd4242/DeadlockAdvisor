@@ -284,6 +284,52 @@ public class GameApiTests
         Assert.Equal(["Spirit Resist Trinket"], report.ReviewRules);
     }
 
+    private static JsonArray HeroesWithShopCurves(int weaponTop = 115) => JsonNode.Parse($$$"""
+        [{"id": 13, "name": "Heavy Spirit"},
+         {"id": 2, "name": "Low HP", "cost_bonuses": {
+           "weapon": [{"gold_threshold": 800, "bonus": 9.0}, {"gold_threshold": 28800, "bonus": {{{weaponTop}}}}],
+           "spirit": [{"gold_threshold": 28800, "bonus": 100.0}, {"gold_threshold": 800, "bonus": 7.0}],
+           "vitality": [{"gold_threshold": 28800, "bonus": 66.0}]}}]
+        """)!.AsArray();
+
+    [Fact]
+    public void ShopItemsCarryTheirCostsShareOfTheShopBonus()
+    {
+        var bonuses = GameSync.ShopBonuses(HeroesWithShopCurves().OfType<JsonNode>());
+
+        ItemStat ShopStat(string slot, int cost) =>
+            Assert.Single(GameSync.ExtractStats("x", FakeItem("Item", 1, 1, slot, cost), bonuses));
+        var weapon = ShopStat("weapon", 6400);
+        Assert.Equal(("ShopWeaponDamage", 25.6, false), (weapon.Stat, weapon.Value, weapon.Conditional));
+        var spirit = ShopStat("spirit", 3200);
+        Assert.Equal(("ShopSpiritPower", 11.1), (spirit.Stat, spirit.Value));
+        var vitality = ShopStat("vitality", 800);
+        Assert.Equal(("ShopBaseHealth", 1.8, "Base Health (shop bonus)"), (vitality.Stat, vitality.Value, vitality.Label));
+        Assert.Empty(GameSync.ExtractStats("x", FakeItem("Item", 1, 1, "weapon", 800)));
+        Assert.Empty(GameSync.ShopBonuses(JsonNode.Parse("""[{"id": 13, "cost_bonuses": {}}]""")!.AsArray().OfType<JsonNode>()));
+    }
+
+    [Fact]
+    public void AShopCurveChangeIsOneLineAndACostChangeNone()
+    {
+        JsonArray Items(int cost) => new(
+            FakeItem("Spirit Resist Trinket", 101, 1, "vitality", 800, Prop("TechResist", "8")),
+            FakeItem("Gun One", 201, 1, "weapon", cost),
+            FakeItem("Gun Two", 202, 2, "weapon", 1600));
+        var store = TestStore.Make();
+        GameSync.Apply(store, HeroesWithShopCurves(), Items(800));
+
+        var costChange = GameSync.Apply(store, HeroesWithShopCurves(), Items(1600));
+        Assert.Contains("Gun One: cost 800 -> 1600", costChange.Changed);
+        Assert.Empty(costChange.ShopBonusChanges);
+        Assert.Empty(costChange.StatChanges);
+
+        var curveChange = GameSync.Apply(store, HeroesWithShopCurves(weaponTop: 144), Items(1600));
+        Assert.Equal(["weapon: Weapon Damage (shop bonus) 144% at 28800 souls"], curveChange.ShopBonusChanges);
+        Assert.Empty(curveChange.StatChanges);
+        Assert.Equal(8.0, store.ItemStats["gun_two"].Single().Value);
+    }
+
     [Fact]
     public void TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides()
     {

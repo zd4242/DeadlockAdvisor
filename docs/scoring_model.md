@@ -339,6 +339,24 @@ Game API. Never hand-edit them; fix the extraction instead.
   sibling properties are flagged. Three per-item override sets handle the known
   exceptions: `_forceConditional`, `_forceShown` and `_selfInflicted`.
 
+**The shop bonus.** Every soul spent in a shop raises that shop's investment bonus:
+Weapon Damage for weapon items, Spirit Power for spirit items, and % base health for
+vitality items. The curves are in every hero's `cost_bonuses` in the API, and every hero
+has the same ones (`GameSync.ShopBonuses`). Each item gets one unconditional stat for its share of the bonus:
+`ShopWeaponDamage`, `ShopSpiritPower` or `ShopBaseHealth` (`GameSync.ShopBonusStats`).
+
+```
+share = cost × (bonus at the top of the curve ÷ souls at the top)     e.g. 6400 × 115 ÷ 28800 = 25.6%
+```
+
+The curve has steps, such as +28% Weapon Damage at 4,800 souls. Which step an item
+tips you over depends on the build, so each item gets the average rate. The
+`stat_rules.csv` lines read these stats on `as` at half the rate of the matching
+real stat. That way the bonus nudges a spirit hero toward spirit items without
+deciding the list. Every item in the same shop and tier shifts by the same amount,
+so the bonus reorders shops, not items within one. The sync report gives one line
+per shop whose curve moved, instead of a stat change for every item in it.
+
 **The rule for new properties:** every property the tooltip shows under a label
 a scored stat uses (such as "Fire Rate" or "Spirit Resist") must be either an
 alias in `Stats` or an entry in `Unscored`. Two things enforce this:

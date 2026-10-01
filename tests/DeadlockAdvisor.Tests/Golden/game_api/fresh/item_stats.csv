@@ -3,319 +3,467 @@ active_reload,BonusClipSizePercent,Max Ammo,20,%,0
 active_reload,BonusFireRate,Fire Rate,25,%,1
 active_reload,BonusMoveSpeed,Move Speed,0.75,m/s,1
 active_reload,BulletLifestealPercent,Bullet Lifesteal,16,%,1
+active_reload,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
+alchemical_fire,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 alchemical_fire,TechPower,Spirit Power,10,,0
 arcane_surge,BonusAbilityDurationPercent,Ability Duration,15,%,1
+arcane_surge,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 arcane_surge,TechPower,Spirit Power,20,,1
 arcane_surge,TechRangeMultiplier,Ability Range,12,%,1
+arctic_blast,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 arctic_blast,TechResist,Spirit Resist,10,%,0
 armor_piercing_rounds,BaseAttackDamagePercent,Weapon Damage,8,%,0
+armor_piercing_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 ballistic_enchantment,BaseAttackDamagePercent,Weapon Damage,40,%,1
+ballistic_enchantment,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 ballistic_enchantment,TechRangeMultiplier,Ability Range,22,%,1
 battle_vest,BaseAttackDamagePercent,Weapon Damage,18,%,1
 battle_vest,BonusFireRate,Fire Rate,7,%,1
 battle_vest,BulletResist,Bullet Resist,18,%,0
 battle_vest,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
+battle_vest,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 berserker,BaseAttackDamagePercent,Weapon Damage,70,%,1
 berserker,BulletResist,Bullet Resist,8,%,0
+berserker,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 blood_tribute,BonusFireRate,Fire Rate,35,%,1
 blood_tribute,BonusMoveSpeed,Move Speed,2,m/s,1
 blood_tribute,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
+blood_tribute,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 blood_tribute,StatusResistancePercent,Debuff Resist,8,%,0
 blood_tribute,StatusResistancePercent,Debuff Resist,35,%,1
 blood_tribute,TechResist,Spirit Resist,8,%,0
 boundless_spirit,BonusHealth,Bonus Health,75,,0
 boundless_spirit,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
+boundless_spirit,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 boundless_spirit,TechPower,Spirit Power,30,,0
 boundless_spirit,TechPowerPercent,Spirit Power,15,%,0
 bullet_lifesteal,BaseAttackDamagePercent,Weapon Damage,6,%,0
 bullet_lifesteal,BonusHealth,Bonus Health,90,,0
 bullet_lifesteal,BulletLifestealPercent,Bullet Lifesteal,13,%,0
+bullet_lifesteal,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 bullet_resilience,BulletResist,Bullet Resist,30,%,0
 bullet_resilience,BulletResist,Bullet Resist,15,%,1
 bullet_resilience,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
+bullet_resilience,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 bullet_resist_shredder,BaseAttackDamagePercent,Weapon Damage,9,%,0
 bullet_resist_shredder,BulletResist,Bullet Resist,9,%,0
+bullet_resist_shredder,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 burst_fire,BonusFireRate,Fire Rate,10,%,0
 burst_fire,BonusFireRate,Fire Rate,32,%,1
 burst_fire,BonusMoveSpeed,Move Speed,1.25,m/s,1
+burst_fire,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 capacitor,BonusFireRate,Fire Rate,5,%,0
+capacitor,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 cheat_death,BonusHealth,Bonus Health,200,,0
 cheat_death,BulletResist,Bullet Resist,15,%,0
+cheat_death,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 close_quarters,BaseAttackDamagePercent,Weapon Damage,20,%,1
 close_quarters,MeleeResistPercent,Melee Resist,20,%,0
+close_quarters,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
+cold_front,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 cold_front,TechResist,Spirit Resist,6,%,0
 colossus,BaseAttackDamagePercent,Weapon Damage,15,%,0
 colossus,BonusBaseHealth,Base Health,25,%,0
 colossus,BonusMeleeDamagePercent,Melee Damage,30,%,1
 colossus,BulletResist,Bullet Resist,35,%,1
+colossus,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 colossus,TechResist,Spirit Resist,35,%,1
 compress_cooldown,CooldownReduction,Cooldown Reduction,18,%,0
+compress_cooldown,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 counterspell,BonusHealth,Bonus Health,50,,0
 counterspell,BonusMoveSpeed,Move Speed,1.75,m/s,1
+counterspell,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 counterspell,TechPower,Spirit Power,5,,0
 counterspell,TechPower,Spirit Power,20,,1
 crippling_headshot,BonusHealth,Bonus Health,125,,0
 crippling_headshot,HealAmpReceivePenaltyPercent,Healing Reduction,35,%,1
+crippling_headshot,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 crushing_fists,BonusMeleeDamagePercent,Melee Damage,22,%,0
 crushing_fists,BulletResist,Bullet Resist,12,%,0
+crushing_fists,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 cultist_sacrifice,BaseAttackDamagePercent,Weapon Damage,10,%,1
 cultist_sacrifice,BonusHealth,Bonus Health,50,,1
 cultist_sacrifice,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+cultist_sacrifice,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 cultist_sacrifice,TechRangeMultiplier,Ability Range,12,%,1
+cursed_relic,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 debuff_reducer,BonusHealth,Bonus Health,90,,0
+debuff_reducer,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 debuff_reducer,StatusResistancePercent,Debuff Resist,25,%,0
 decay,BonusHealth,Bonus Health,65,,0
 decay,HealAmpReceivePenaltyPercent,Healing Reduction,50,%,1
+decay,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 decay,TechPower,Spirit Power,8,,0
 disarming_hex,BonusHealth,Bonus Health,75,,0
 disarming_hex,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+disarming_hex,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 dispel_magic,BonusMoveSpeed,Move Speed,2,m/s,1
+dispel_magic,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 dispel_magic,TechResist,Spirit Resist,10,%,0
 divine_barrier,Barrier,Barrier,600,,1
 divine_barrier,BonusMoveSpeed,Move Speed,2.75,m/s,1
 divine_barrier,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
+divine_barrier,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 divine_barrier,TechRangeMultiplier,Ability Range,10,%,0
 diviners_kevlar,Barrier,Barrier,1000,,1
 diviners_kevlar,BonusAbilityDurationPercent,Ability Duration,15,%,0
+diviners_kevlar,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 diviners_kevlar,TechPower,Spirit Power,40,,1
 duration_extender,BonusAbilityDurationPercent,Ability Duration,22,%,0
+duration_extender,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 echo_shard,BulletResist,Bullet Resist,5,%,0
+echo_shard,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 echo_shard,TechResist,Spirit Resist,5,%,0
 enchanters_emblem,CooldownReduction,Cooldown Reduction,5,%,1
 enchanters_emblem,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+enchanters_emblem,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 enchanters_emblem,TechPower,Spirit Power,15,,1
 enchanters_emblem,TechResist,Spirit Resist,18,%,0
 enduring_speed,BonusMoveSpeed,Move Speed,2,m/s,0
 enduring_speed,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+enduring_speed,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 enduring_speed,SlowResistancePercent,Slow Resist,25,%,0
+escalating_exposure,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 escalating_exposure,TechResist,Spirit Resist,17,%,0
 escalating_resilience,BaseAttackDamagePercent,Weapon Damage,18,%,0
 escalating_resilience,BonusClipSizePercent,Max Ammo,35,%,0
 escalating_resilience,BonusHealth,Bonus Health,75,,0
 escalating_resilience,BulletResist,Bullet Resist,30,%,1
+escalating_resilience,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 ethereal_shift,BonusMoveSpeed,Move Speed,3,m/s,1
+ethereal_shift,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 ethereal_shift,TechPower,Spirit Power,20,,1
 ethereal_shift,TechResist,Spirit Resist,30,%,1
 express_shot,BaseAttackDamagePercent,Weapon Damage,8,%,0
+express_shot,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 extended_magazine,BaseAttackDamagePercent,Weapon Damage,8,%,0
 extended_magazine,BonusClipSizePercent,Max Ammo,30,%,0
+extended_magazine,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
+extra_charge,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 extra_health,BonusHealth,Bonus Health,210,,0
+extra_health,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 extra_regen,BonusHealthRegen,Health Regen,2.5,,0
 extra_regen,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
+extra_regen,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
+extra_spirit,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 extra_spirit,TechPower,Spirit Power,10,,0
+extra_stamina,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 fleetfoot,BaseAttackDamagePercent,Weapon Damage,6,%,0
 fleetfoot,BonusMoveSpeed,Move Speed,3,m/s,1
 fleetfoot,BulletResist,Bullet Resist,6,%,0
+fleetfoot,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 fleetfoot,SlowResistancePercent,Slow Resist,40,%,1
 focus_lens,BonusFireRate,Fire Rate,10,%,0
+focus_lens,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 fortitude,BonusHealth,Bonus Health,375,,0
 fortitude,BonusMoveSpeed,Move Speed,1.5,m/s,1
+fortitude,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 frenzy,BonusFireRate,Fire Rate,15,%,0
 frenzy,BonusFireRate,Fire Rate,40,%,1
 frenzy,BonusHealth,Bonus Health,160,,0
 frenzy,BonusMoveSpeed,Move Speed,4,m/s,1
 frenzy,BulletLifestealPercent,Bullet Lifesteal,10,%,0
+frenzy,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 frenzy,StatusResistancePercent,Debuff Resist,40,%,1
 fury_trance,BaseAttackDamagePercent,Weapon Damage,6,%,0
 fury_trance,BonusFireRate,Fire Rate,32,%,1
 fury_trance,BonusHealth,Bonus Health,100,,0
 fury_trance,BonusMoveSpeed,Move Speed,1,m/s,1
 fury_trance,BulletLifestealPercent,Bullet Lifesteal,14,%,0
+fury_trance,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 fury_trance,TechResist,Spirit Resist,40,%,1
 glass_cannon,BaseAttackDamagePercent,Weapon Damage,80,%,0
+glass_cannon,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 golden_goose_egg,BonusSprintSpeed,Sprint Speed,1,m/s,0
 golden_goose_egg,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
+golden_goose_egg,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
+greater_expansion,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 greater_expansion,TechRangeMultiplier,Ability Range,30,%,0
 greater_expansion,TechResist,Spirit Resist,10,%,0
 grit,Barrier,Barrier,200,,1
 grit,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
+grit,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 guardian_ward,BonusMoveSpeed,Move Speed,2.75,m/s,1
 guardian_ward,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
+guardian_ward,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 guardian_ward,TechRangeMultiplier,Ability Range,8,%,0
 headhunter,BaseAttackDamagePercent,Weapon Damage,5,%,0
 headhunter,BonusHealth,Bonus Health,50,,0
 headhunter,BonusMoveSpeed,Move Speed,1.75,m/s,1
+headhunter,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 headshot_booster,BonusHealth,Bonus Health,30,,0
+headshot_booster,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
 healbane,HealAmpReceivePenaltyPercent,Healing Reduction,35,%,1
+healbane,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 healbane,TechPower,Spirit Power,7,,0
 healing_booster,BonusHealthRegen,Health Regen,3,,0
 healing_booster,HealAmpCastPercent,Healing Effectiveness,20,%,0
 healing_booster,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
+healing_booster,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
+healing_nova,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 healing_nova,TechPower,Spirit Power,8,,0
 healing_nova,TechRangeMultiplier,Ability Range,5,%,0
 healing_rite,BonusSprintSpeed,Sprint Speed,2,m/s,1
+healing_rite,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 healing_tempo,BonusFireRate,Fire Rate,35,%,0
 healing_tempo,BonusHealthRegen,Health Regen,6,,0
 healing_tempo,BonusMoveSpeed,Move Speed,1.25,m/s,0
 healing_tempo,HealAmpCastPercent,Healing Effectiveness,25,%,0
 healing_tempo,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
+healing_tempo,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 healing_tempo,TechResist,Spirit Resist,10,%,0
 heroic_aura,BonusFireRate,Fire Rate,26,%,1
 heroic_aura,BonusMoveSpeed,Move Speed,2.25,m/s,1
 heroic_aura,BonusSprintSpeed,Sprint Speed,1.5,m/s,0
 heroic_aura,BulletResist,Bullet Resist,17,%,0
+heroic_aura,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 high_velocity_rounds,BaseAttackDamagePercent,Weapon Damage,8,%,0
+high_velocity_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
 hollow_point,BaseAttackDamagePercent,Weapon Damage,35,%,1
 hollow_point,BonusHealth,Bonus Health,125,,0
 hollow_point,OutOfCombatHealthRegen,Out of Combat Regen,4.5,,0
+hollow_point,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 hunters_aura,BonusHealth,Bonus Health,100,,0
 hunters_aura,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+hunters_aura,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 improved_spirit,OutOfCombatHealthRegen,Out of Combat Regen,1.5,,0
+improved_spirit,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 improved_spirit,TechPower,Spirit Power,18,,0
 indomitable,Barrier,Barrier,325,,1
 indomitable,BulletResist,Bullet Resist,10,%,0
 indomitable,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+indomitable,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 indomitable,TechResist,Spirit Resist,10,%,0
 infuser,AbilityLifestealPercentHero,Spirit Lifesteal,13,%,0
 infuser,AbilityLifestealPercentHero,Spirit Lifesteal,70,%,1
 infuser,BonusHealth,Bonus Health,100,,0
+infuser,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 infuser,TechPower,Spirit Power,6,,0
 infuser,TechPower,Spirit Power,30,,1
 infuser,TechResist,Spirit Resist,10,%,0
 inhibitor,BaseAttackDamagePercent,Weapon Damage,10,%,0
 inhibitor,BonusHealth,Bonus Health,150,,0
 inhibitor,HealAmpReceivePenaltyPercent,Healing Reduction,40,%,1
+inhibitor,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 intensifying_magazine,BaseAttackDamagePercent,Weapon Damage,45,%,1
 intensifying_magazine,BonusClipSizePercent,Max Ammo,20,%,0
+intensifying_magazine,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 juggernaut,BonusHealthRegen,Health Regen,8,,0
 juggernaut,BonusMoveSpeed,Move Speed,2.5,m/s,0
 juggernaut,MeleeResistPercent,Melee Resist,25,%,0
+juggernaut,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 juggernaut,SlowResistancePercent,Slow Resist,50,%,0
 kinetic_dash,BonusFireRate,Fire Rate,25,%,1
+kinetic_dash,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 knockdown,BonusHealth,Bonus Health,75,,0
+knockdown,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 knockdown,TechRangeMultiplier,Ability Range,5,%,0
 leech,AbilityLifestealPercentHero,Spirit Lifesteal,28,%,0
 leech,BaseAttackDamagePercent,Weapon Damage,12,%,0
 leech,BonusHealth,Bonus Health,180,,0
 leech,BulletLifestealPercent,Bullet Lifesteal,28,%,0
+leech,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 leech,TechPower,Spirit Power,12,,0
 lifestrike,BonusHealth,Bonus Health,125,,0
 lifestrike,BonusMeleeDamagePercent,Melee Damage,16,%,0
+lifestrike,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 lightning_scroll,BonusHealth,Bonus Health,50,,0
 lightning_scroll,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+lightning_scroll,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 long_range,BaseAttackDamagePercent,Weapon Damage,40,%,1
 long_range,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+long_range,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 lucky_shot,BonusClipSizePercent,Max Ammo,30,%,0
+lucky_shot,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 magic_carpet,BonusAbilityDurationPercent,Ability Duration,15,%,0
 magic_carpet,BonusHealth,Bonus Health,125,,0
+magic_carpet,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 magic_carpet,TechPower,Spirit Power,14,,0
 majestic_leap,Barrier,Barrier,200,,1
+majestic_leap,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 melee_charge,BonusMeleeDamagePercent,Melee Damage,10,%,0
 melee_charge,BulletResist,Bullet Resist,6,%,0
+melee_charge,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 melee_lifesteal,BonusMeleeDamagePercent,Melee Damage,12,%,0
+melee_lifesteal,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 mercurial_magnum,BonusClipSizePercent,Max Ammo,20,%,0
 mercurial_magnum,BonusFireRate,Fire Rate,22,%,1
+mercurial_magnum,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 mercurial_magnum,TechPower,Spirit Power,7,,0
 metal_skin,BulletResist,Bullet Resist,12,%,0
+metal_skin,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 monster_rounds,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
+monster_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
+mystic_burst,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
+mystic_expansion,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 mystic_expansion,TechRangeMultiplier,Ability Range,20,%,0
 mystic_regeneration,BonusHealth,Bonus Health,50,,0
+mystic_regeneration,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 mystic_reverb,AbilityLifestealPercentHero,Spirit Lifesteal,8,%,0
+mystic_reverb,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
+mystic_shot,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 mystic_shot,TechPower,Spirit Power,7,,0
 mystic_slow,BonusHealth,Bonus Health,50,,0
 mystic_slow,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+mystic_slow,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
+mystic_vulnerability,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 mystic_vulnerability,TechResist,Spirit Resist,8,%,0
 opening_rounds,BaseAttackDamagePercent,Weapon Damage,8,%,0
 opening_rounds,BaseAttackDamagePercent,Weapon Damage,25,%,1
+opening_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 opening_rounds,TechPower,Spirit Power,7,,0
 phantom_strike,BaseAttackDamagePercent,Weapon Damage,15,%,0
+phantom_strike,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 phantom_strike,TechPower,Spirit Power,8,,0
 plated_armor,BonusHealth,Bonus Health,130,,0
+plated_armor,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 point_blank,BaseAttackDamagePercent,Weapon Damage,50,%,1
 point_blank,BonusHealth,Bonus Health,75,,0
 point_blank,MeleeResistPercent,Melee Resist,30,%,0
+point_blank,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 quicksilver_reload,BonusFireRate,Fire Rate,10,%,1
+quicksilver_reload,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 radiant_regeneration,BonusHealth,Bonus Health,90,,0
 radiant_regeneration,BonusMoveSpeed,Move Speed,1.75,m/s,0
+radiant_regeneration,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
+rapid_recharge,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 rapid_rounds,BonusFireRate,Fire Rate,9,%,0
+rapid_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
 reactive_barrier,Barrier,Barrier,325,,1
 reactive_barrier,OutOfCombatHealthRegen,Out of Combat Regen,1,,0
+reactive_barrier,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 rebuttal,BonusHealth,Bonus Health,75,,0
 rebuttal,MeleeResistPercent,Melee Resist,18,%,0
+rebuttal,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 recharging_rush,BaseAttackDamagePercent,Weapon Damage,10,%,0
 recharging_rush,BonusClipSizePercent,Max Ammo,20,%,0
+recharging_rush,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
+refresher,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 rescue_beam,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+rescue_beam,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 rescue_beam,TechRangeMultiplier,Ability Range,6,%,0
+restorative_locket,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 restorative_locket,TechResist,Spirit Resist,8,%,0
 restorative_shot,BaseAttackDamagePercent,Weapon Damage,6,%,0
+restorative_shot,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
 return_fire,BulletResist,Bullet Resist,10,%,0
+return_fire,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 ricochet,BonusFireRate,Fire Rate,18,%,0
+ricochet,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 rusted_barrel,BonusHealth,Bonus Health,60,,0
 rusted_barrel,BonusSprintSpeed,Sprint Speed,0.5,m/s,0
+rusted_barrel,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 scourge,BonusHealth,Bonus Health,100,,0
+scourge,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 scourge,StatusResistancePercent,Debuff Resist,20,%,1
 scourge,TechResist,Spirit Resist,40,%,1
 shadow_weave,BonusFireRate,Fire Rate,25,%,1
 shadow_weave,BonusMeleeDamagePercent,Melee Damage,25,%,1
 shadow_weave,BonusSprintSpeed,Sprint Speed,2,m/s,0
 shadow_weave,OutOfCombatHealthRegen,Out of Combat Regen,5,,0
+shadow_weave,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 shadow_weave,TechPower,Spirit Power,25,,1
 sharpshooter,BaseAttackDamagePercent,Weapon Damage,10,%,0
 sharpshooter,BaseAttackDamagePercent,Weapon Damage,60,%,1
 sharpshooter,BonusMoveSpeed,Move Speed,-0.7,m/s,0
 sharpshooter,BonusSprintSpeed,Sprint Speed,1,m/s,0
+sharpshooter,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 silence_wave,BonusHealth,Bonus Health,50,,0
+silence_wave,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
+silencer,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 silencer,TechResist,Spirit Resist,12,%,0
 siphon_bullets,BaseAttackDamagePercent,Weapon Damage,15,%,0
 siphon_bullets,BulletResist,Bullet Resist,10,%,0
+siphon_bullets,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
+slowing_bullets,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 slowing_hex,BonusSprintSpeed,Sprint Speed,0.5,m/s,0
+slowing_hex,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 spellbreaker,BonusHealth,Bonus Health,90,,0
+spellbreaker,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 spellbreaker,StatusResistancePercent,Debuff Resist,25,%,0
 spellbreaker,TechResist,Spirit Resist,18,%,0
 spellslinger,BonusFireRate,Fire Rate,66,%,1
 spellslinger,CooldownReduction,Cooldown Reduction,5,%,0
+spellslinger,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 spirit_burn,HealAmpReceivePenaltyPercent,Healing Reduction,70,%,1
+spirit_burn,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 spirit_burn,TechRangeMultiplier,Ability Range,6,%,0
 spirit_lifesteal,AbilityLifestealPercentHero,Spirit Lifesteal,13,%,0
 spirit_lifesteal,BonusHealth,Bonus Health,90,,0
+spirit_lifesteal,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 spirit_lifesteal,TechPower,Spirit Power,6,,0
 spirit_rend,AbilityLifestealPercentHero,Spirit Lifesteal,10,%,1
 spirit_rend,BonusHealth,Bonus Health,75,,0
+spirit_rend,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 spirit_resilience,OutOfCombatHealthRegen,Out of Combat Regen,3,,0
+spirit_resilience,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 spirit_resilience,TechResist,Spirit Resist,30,%,0
 spirit_resilience,TechResist,Spirit Resist,15,%,1
 spirit_sap,BonusHealth,Bonus Health,50,,0
+spirit_sap,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 spirit_shielding,Barrier,Barrier,300,,1
 spirit_shielding,OutOfCombatHealthRegen,Out of Combat Regen,2.5,,0
+spirit_shielding,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 spirit_shielding,TechResist,Spirit Resist,18,%,1
 spirit_shredder_bullets,AbilityLifestealPercentHero,Spirit Lifesteal,10,%,1
+spirit_shredder_bullets,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 spirit_snatch,BonusHealth,Bonus Health,75,,0
 spirit_snatch,BonusMeleeDamagePercent,Melee Damage,7,%,0
+spirit_snatch,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
+spirit_strike,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 spiritual_overflow,AbilityLifestealPercentHero,Spirit Lifesteal,13,%,0
 spiritual_overflow,AbilityLifestealPercentHero,Spirit Lifesteal,10,%,1
 spiritual_overflow,BonusAbilityDurationPercent,Ability Duration,13,%,0
 spiritual_overflow,BonusFireRate,Fire Rate,25,%,1
 spiritual_overflow,BonusHealth,Bonus Health,90,,0
+spiritual_overflow,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 spiritual_overflow,TechPower,Spirit Power,6,,0
 spiritual_overflow,TechPower,Spirit Power,30,,1
 split_shot,BaseAttackDamagePercent,Weapon Damage,40,%,1
+split_shot,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 sprint_boots,BonusSprintSpeed,Sprint Speed,2,m/s,0
 sprint_boots,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+sprint_boots,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
 stalker,BonusHealth,Bonus Health,50,,0
 stalker,BonusMoveSpeed,Move Speed,1.5,m/s,1
+stalker,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
+stamina_mastery,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 superior_cooldown,CooldownReduction,Cooldown Reduction,20,%,0
 superior_cooldown,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
+superior_cooldown,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 superior_duration,BonusAbilityDurationPercent,Ability Duration,28,%,0
 superior_duration,BulletResist,Bullet Resist,8,%,0
+superior_duration,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 suppressor,BulletResist,Bullet Resist,8,%,0
+suppressor,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 suppressor,TechPower,Spirit Power,6,,0
 surge_of_power,BonusFireRate,Fire Rate,20,%,1
 surge_of_power,BonusMoveSpeed,Move Speed,1.75,m/s,1
+surge_of_power,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 swift_striker,BonusFireRate,Fire Rate,20,%,0
 swift_striker,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+swift_striker,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 tankbuster,BonusHealth,Bonus Health,50,,0
+tankbuster,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
+tesla_bullets,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 titanic_magazine,BaseAttackDamagePercent,Weapon Damage,14,%,0
 titanic_magazine,BonusClipSizePercent,Max Ammo,100,%,0
+titanic_magazine,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 torment_pulse,BonusHealth,Bonus Health,100,,0
 torment_pulse,MeleeResistPercent,Melee Resist,18,%,0
+torment_pulse,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 toxic_bullets,HealAmpReceivePenaltyPercent,Healing Reduction,35,%,1
+toxic_bullets,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 transcendent_cooldown,CooldownReduction,Cooldown Reduction,25,%,0
 transcendent_cooldown,OutOfCombatHealthRegen,Out of Combat Regen,4,,0
+transcendent_cooldown,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 trophy_collector,BonusSprintSpeed,Sprint Speed,2,m/s,0
 trophy_collector,BonusSprintSpeed,Sprint Speed,2.4,m/s,1
 trophy_collector,OutOfCombatHealthRegen,Out of Combat Regen,2,,0
+trophy_collector,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 trophy_collector,TechRangeMultiplier,Ability Range,12,%,1
 unstoppable,BonusHealth,Bonus Health,125,,0
+unstoppable,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 unstoppable,StatusResistancePercent,Debuff Resist,25,%,0
 vampiric_burst,BaseAttackDamagePercent,Weapon Damage,6,%,0
 vampiric_burst,BonusFireRate,Fire Rate,34,%,1
@@ -323,18 +471,26 @@ vampiric_burst,BonusHealth,Bonus Health,100,,0
 vampiric_burst,BulletLifestealPercent,Bullet Lifesteal,13,%,0
 vampiric_burst,BulletLifestealPercent,Bullet Lifesteal,70,%,1
 vampiric_burst,BulletResist,Bullet Resist,10,%,0
+vampiric_burst,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 veil_walker,BonusHealth,Bonus Health,125,,0
 veil_walker,BonusMoveSpeed,Move Speed,3.5,m/s,1
+veil_walker,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 veil_walker,TechPower,Spirit Power,6,,0
 vortex_web,BonusSprintSpeed,Sprint Speed,0.75,m/s,0
+vortex_web,ShopSpiritPower,Spirit Power (shop bonus),22.2,,0
 vortex_web,TechRangeMultiplier,Ability Range,8,%,0
 warp_stone,BulletResist,Bullet Resist,30,%,1
+warp_stone,ShopBaseHealth,Base Health (shop bonus),7.3,%,0
 weakening_headshot,BonusHealth,Bonus Health,60,,0
+weakening_headshot,ShopWeaponDamage,Weapon Damage (shop bonus),6.4,%,0
 weapon_shielding,Barrier,Barrier,300,,1
 weapon_shielding,BulletResist,Bullet Resist,18,%,1
 weapon_shielding,OutOfCombatHealthRegen,Out of Combat Regen,2.5,,0
+weapon_shielding,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 weighted_shots,BaseAttackDamagePercent,Weapon Damage,30,%,0
 weighted_shots,BonusMoveSpeed,Move Speed,-0.5,m/s,0
+weighted_shots,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 weighted_shots,StatusResistancePercent,Debuff Resist,22,%,0
+witchmail,ShopBaseHealth,Base Health (shop bonus),14.7,%,0
 witchmail,TechPower,Spirit Power,14,,0
 witchmail,TechResist,Spirit Resist,22,%,0

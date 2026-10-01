@@ -8,6 +8,47 @@
    "icon_image_small": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_sm.png",
    "minimap_image": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_mm.png",
    "top_bar_vertical_image": "https://assets-bucket.deadlock-api.com/assets-api-res/images/heroes/inferno_vertical.png"
+  },
+  "cost_bonuses": {
+   "weapon": [
+    {"gold_threshold": 800, "bonus": 9.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 1600, "bonus": 12.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 2400, "bonus": 15.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 3200, "bonus": 18.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 4800, "bonus": 46.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 6400, "bonus": 54.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 8000, "bonus": 62.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 11200, "bonus": 74.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 16000, "bonus": 86.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 22400, "bonus": 100.0, "percent_on_graph": 11.0},
+    {"gold_threshold": 28800, "bonus": 115.0, "percent_on_graph": 11.0}
+   ],
+   "vitality": [
+    {"gold_threshold": 800, "bonus": 9.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 1600, "bonus": 12.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 2400, "bonus": 15.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 3200, "bonus": 20.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 4800, "bonus": 38.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 6400, "bonus": 42.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 8000, "bonus": 46.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 11200, "bonus": 50.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 16000, "bonus": 54.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 22400, "bonus": 60.0, "percent_on_graph": 11.0},
+    {"gold_threshold": 28800, "bonus": 66.0, "percent_on_graph": 11.0}
+   ],
+   "spirit": [
+    {"gold_threshold": 800, "bonus": 7.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 1600, "bonus": 11.0, "percent_on_graph": 7.0},
+    {"gold_threshold": 2400, "bonus": 15.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 3200, "bonus": 19.0, "percent_on_graph": 8.0},
+    {"gold_threshold": 4800, "bonus": 38.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 6400, "bonus": 45.0, "percent_on_graph": 9.0},
+    {"gold_threshold": 8000, "bonus": 52.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 11200, "bonus": 59.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 16000, "bonus": 66.0, "percent_on_graph": 10.0},
+    {"gold_threshold": 22400, "bonus": 75.0, "percent_on_graph": 11.0},
+    {"gold_threshold": 28800, "bonus": 100.0, "percent_on_graph": 11.0}
+   ]
   }
  },
  {

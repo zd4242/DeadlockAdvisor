@@ -18,6 +18,9 @@ public sealed class SyncReport
     /// <summary>"Long Range: Weapon Damage (conditional) none -> 40%": each stat a patch moved.</summary>
     public List<string> StatChanges { get; } = [];
 
+    /// <summary>Shops whose investment bonus curve moved, which shifts every item in them (<see cref="GameSync.ShopBonusStats"/>).</summary>
+    public List<string> ShopBonusChanges { get; } = [];
+
     /// <summary>Items that started or stopped being scored on their best targets, or switched sides (<see cref="GameSync.CastOn"/>).</summary>
     public List<string> TargetingChanges { get; } = [];
 
@@ -61,6 +64,11 @@ public sealed class SyncReport
         {
             lines.Add($"{StatChanges.Count} item stat(s) changed:");
             lines.AddRange(StatChanges.Select(line => $"  {line}"));
+        }
+        if (ShopBonusChanges.Count > 0)
+        {
+            lines.Add("Shop investment bonus changed -- every item in the shop carries its cost's share:");
+            lines.AddRange(ShopBonusChanges.Select(line => $"  {line}"));
         }
         if (NotInGame.Count > 0)
         {

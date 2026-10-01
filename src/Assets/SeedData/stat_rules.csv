@@ -16,3 +16,6 @@ BonusHealth,max_hp,as,-0.001,0.5,Flat health is a bigger share of a low-HP hero'
 Barrier,max_hp,as,-0.001,0.5,"A barrier is temporary flat health, so it leans towards low-HP heroes like Bonus Health does"
 TechResist,max_hp,as,0.01,0.75,"Resist scales with the pool it protects, like % base health; spirit is ~2/3 of the roster's damage, so 2/3 of that rule"
 BulletResist,max_hp,as,0.005,0.5,"Resist scales with the pool it protects, like % base health; bullets are ~1/3 of the roster's damage, so 1/3 of that rule"
+ShopWeaponDamage,cares_about_weapon_damage,as,0.03,1,"The weapon shop's investment bonus; half the Weapon Damage rate, so it nudges rather than decides"
+ShopSpiritPower,scales_with_spirit_power,as,0.03,1,"The spirit shop's investment bonus; half the Spirit Power rate, so it nudges rather than decides"
+ShopBaseHealth,max_hp,as,0.0075,1,"The vitality shop's investment bonus is % base health; half that rule's rate, so it nudges rather than decides"

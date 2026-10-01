@@ -36,7 +36,7 @@
   "fresh": {
    "report": {
     "lines": [
-     "Item stats refreshed: 339 stat row(s).",
+     "Item stats refreshed: 495 stat row(s).",
      "43 item stat(s) changed:",
      "  Opening Rounds: Weapon Damage (conditional) none -> 25%",
      "  Close Quarters: Weapon Damage (conditional) none -> 20%",
@@ -80,7 +80,11 @@
      "  Indomitable: Barrier (conditional) none -> 325",
      "  Split Shot: Weapon Damage (conditional) none -> 40%",
      "  Spellslinger: Fire Rate (conditional) 11% -> 66%",
-     "  Ballistic Enchantment: Weapon Damage (conditional) none -> 40%"
+     "  Ballistic Enchantment: Weapon Damage (conditional) none -> 40%",
+     "Shop investment bonus changed -- every item in the shop carries its cost's share:",
+     "  weapon: Weapon Damage (shop bonus) 115% at 28800 souls",
+     "  spirit: Spirit Power (shop bonus) 100 at 28800 souls",
+     "  vitality: Base Health (shop bonus) 66% at 28800 souls"
     ],
     "added_heroes": [],
     "added_items": [],
@@ -90,7 +94,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": true,
-    "stat_rows": 339,
+    "stat_rows": 495,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": true
@@ -107,7 +111,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 339,
+    "stat_rows": 495,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -134,7 +138,7 @@
      "  Monster Rounds: cost 1 -> 800",
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
-     "Item stats refreshed: 339 stat row(s).",
+     "Item stats refreshed: 495 stat row(s).",
      "Item tooltips refreshed: 156 item(s).",
      "",
      "Single-target changes -- these items are now scored on their best targets on the side they're cast on, or no longer:",
@@ -158,7 +162,7 @@
     "heroes_changed": true,
     "items_changed": true,
     "stats_changed": true,
-    "stat_rows": 339,
+    "stat_rows": 495,
     "tooltips_changed": true,
     "tooltip_count": 156,
     "anything_changed": true
@@ -175,7 +179,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 339,
+    "stat_rows": 495,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
