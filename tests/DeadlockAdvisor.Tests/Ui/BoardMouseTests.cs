@@ -70,6 +70,16 @@ public class BoardMouseTests
         menu.MouseUp(Center(setAlly, menu), MouseButton.Left);
         UiHarness.Settle();
         Assert.Equal(Role.Ally, board.RoleOf("haze"));
+
+        // Clicking a teammate makes them you, and the previous you stays in their place as an ally.
+        Click(ui.Window, Slot(ui, "AllyRow", 1));
+        Assert.Equal(Role.Self, board.RoleOf("haze"));
+        Assert.Equal(Role.Ally, board.RoleOf("wraith"));
+        Assert.Equal(["wraith", "haze"], board.AllySlots.Take(2).Select(slot => slot.HeroId));
+        await Task.Delay(TimeSpan.FromMilliseconds(700));
+        Click(ui.Window, Slot(ui, "AllyRow", 0));
+        Assert.Equal(Role.Self, board.RoleOf("wraith"));
+
         Click(ui.Window, Slot(ui, "AllyRow", 1, remove: true));
         Assert.Equal(Role.None, board.RoleOf("haze"));
         board.SetMode(Role.Ally);

@@ -60,13 +60,16 @@ public class MatchStateTests
         Assert.Equal(["me", "b", "c"], match.OwnTeam);
         Assert.Equal(["x", "y", "a"], match.Enemies);
 
-        // ...but becoming you, on the same team, keeps your place.
+        // ...but a teammate becoming you trades places with nobody: the previous you stays on as an ally.
         match.SetRole("b", Role.Self);
-        Assert.Equal(["b", "c"], match.OwnTeam);
+        Assert.Equal(["me", "b", "c"], match.OwnTeam);
+        Assert.Equal("b", match.SelfHero);
+        Assert.Equal(Role.Ally, match.RoleOf("me"));
 
         var restored = new MatchState();
         restored.LoadSaved(match.ToSaved(), ["me", "b", "c", "x", "y", "a"]);
-        Assert.Equal(["b", "c"], restored.OwnTeam);
+        Assert.Equal(["me", "b", "c"], restored.OwnTeam);
+        Assert.Equal("b", restored.SelfHero);
         Assert.Equal(["x", "y", "a"], restored.Enemies);
     }
 
@@ -77,6 +80,12 @@ public class MatchStateTests
         VisionApply.ApplyToMatch(match, ["me", "a", "b", null, null, null, "x", "y", null, null, null, null], 0);
         Assert.Equal([("me", 0), ("a", 1), ("b", 2), ("x", 6), ("y", 7)], match.Slots.Select(entry => (entry.Key, entry.Value)));
         Assert.Equal("x", match.HeroInSlot(6));
+
+        // Switching who's you leaves both where the game's top bar has them.
+        match.SetRole("a", Role.Self);
+        Assert.Equal([("me", 0), ("a", 1), ("b", 2), ("x", 6), ("y", 7)], match.Slots.Select(entry => (entry.Key, entry.Value)));
+        match.SetRole("me", Role.Self);
+        Assert.Equal(Role.Ally, match.RoleOf("a"));
 
         match.SetRole("a", Role.None);
         match.SetRole("b", Role.Enemy);

@@ -24,19 +24,24 @@ public sealed class MatchState
 
     public Role RoleOf(string heroId) => RoleMap.GetValueOrDefault(heroId, Role.None);
 
-    /// <summary>Only one hero can be you at a time: assigning Self clears it from whoever had it.</summary>
+    /// <summary>
+    /// Only one hero can be you at a time. A teammate who becomes you trades roles with the previous
+    /// you, who stays on the team in their own place; anyone else taking Self clears it from them.
+    /// </summary>
     public void SetRole(string heroId, Role role)
     {
-        if (role == Role.Self)
+        if (role == Role.Self && SelfHero is { } formerSelf && formerSelf != heroId)
         {
-            foreach (var (other, otherRole) in RoleMap.ToList())
+            if (RoleOf(heroId) == Role.Ally)
             {
-                if (otherRole != Role.Self || other == heroId)
-                    continue;
+                RoleMap[formerSelf] = Role.Ally;
+            }
+            else
+            {
                 // The Python app leaves the previous "you" in the map as unassigned rather than
                 // removing it; kept for identical saved matches.
-                RoleMap[other] = Role.None;
-                Slots.Remove(other);
+                RoleMap[formerSelf] = Role.None;
+                Slots.Remove(formerSelf);
             }
         }
 

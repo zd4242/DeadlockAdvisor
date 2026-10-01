@@ -16,7 +16,8 @@ namespace DeadlockAdvisor.Controls;
 /// poster-sized on a wide one.
 /// <para>
 /// Once the match has net worth, a pill under the portrait shows it the way the game's top bar does.
-/// A portrait click opens the role menu, its × removes, and an empty slot starts filling this team.
+/// A click on a teammate makes them you, so their items show; otherwise a portrait click opens the
+/// role menu (as a right click always does). Its × removes, and an empty slot starts filling this team.
 /// </para>
 /// </summary>
 public class RosterSlot : Control
@@ -60,6 +61,9 @@ public class RosterSlot : Control
 
     public static readonly RoutedEvent<HeroEventArgs> MenuRequestedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("MenuRequested", RoutingStrategies.Bubble);
+
+    public static readonly RoutedEvent<HeroEventArgs> SelfRequestedEvent =
+        RoutedEvent.Register<RosterSlot, HeroEventArgs>("SelfRequested", RoutingStrategies.Bubble);
 
     public static readonly RoutedEvent<RoutedEventArgs> EmptyClickedEvent =
         RoutedEvent.Register<RosterSlot, RoutedEventArgs>("EmptyClicked", RoutingStrategies.Bubble);
@@ -123,6 +127,9 @@ public class RosterSlot : Control
     }
 
     public bool IsEmpty => string.IsNullOrEmpty(HeroId);
+
+    /// <summary>An ally other than you, whom a click makes you.</summary>
+    private bool IsTeammate => !IsEmpty && Team == Role.Ally && !IsSelf;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
@@ -209,6 +216,8 @@ public class RosterSlot : Control
         var heroId = HeroId!;
         if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
             RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
+        else if (properties.IsLeftButtonPressed && IsTeammate)
+            RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
         else if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed)
             RaiseEvent(new HeroEventArgs(MenuRequestedEvent, heroId));
     }
@@ -220,6 +229,8 @@ public class RosterSlot : Control
             tip = $"Empty slot -- click to add an {Team.Label().ToLowerInvariant()}";
         else if (_overRemove)
             tip = $"Remove {HeroName} from the match";
+        else if (IsTeammate)
+            tip = $"{HeroName} -- click to see their items, right click to change";
         else
             tip = $"{HeroName}{(IsSelf ? " (you)" : "")} -- click to change";
         if (!IsEmpty && !_overRemove && NetWorth is { } souls)

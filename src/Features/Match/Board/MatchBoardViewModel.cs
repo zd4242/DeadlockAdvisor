@@ -25,7 +25,8 @@ public class MatchBoardViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
     public const string RosterHint =
-        "Click a portrait to change its role.\n× on a portrait removes the hero.\nAn empty slot adds a hero to that team.";
+        "Click a teammate to set them as You and see their items.\nRight click a portrait to change its role.\n"
+        + "× on a portrait removes the hero.\nAn empty slot adds a hero to that team.";
     public const string PickerHint =
         "Left click assigns a hero to the role chosen here.\nRight click picks a role for it.\nDouble click sets it as You.\n"
         + "Type a name and press Enter to assign the best match.\nEsc closes the picker.";
