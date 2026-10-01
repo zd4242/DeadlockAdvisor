@@ -16,8 +16,9 @@ namespace DeadlockAdvisor.Controls;
 /// poster-sized on a wide one.
 /// <para>
 /// Once the match has net worth, a pill under the portrait shows it the way the game's top bar does.
-/// A click on a teammate makes them you, so their items show; otherwise a portrait click opens the
-/// role menu (as a right click always does). Its × removes, and an empty slot starts filling this team.
+/// A click on anyone but you makes them you, so their items show (an enemy brings their side with
+/// them); a click on you, or a right click, opens the role menu. Its × removes, and an empty slot
+/// starts filling this team.
 /// </para>
 /// </summary>
 public class RosterSlot : Control
@@ -26,7 +27,7 @@ public class RosterSlot : Control
     private const double _minPortrait = 36;
     private const double _gap = 8;
     // Room above the portrait for the ring's stroke.
-    private const double _top = 1;
+    private const double _top = 2;
     private const double _nameHeight = 16;
     private const double _pillHeight = 16;
     private const double _radius = 8;
@@ -128,9 +129,6 @@ public class RosterSlot : Control
 
     public bool IsEmpty => string.IsNullOrEmpty(HeroId);
 
-    /// <summary>An ally other than you, whom a click makes you.</summary>
-    private bool IsTeammate => !IsEmpty && Team == Role.Ally && !IsSelf;
-
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
@@ -216,7 +214,7 @@ public class RosterSlot : Control
         var heroId = HeroId!;
         if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
             RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && IsTeammate)
+        else if (properties.IsLeftButtonPressed && !IsSelf)
             RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
         else if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed)
             RaiseEvent(new HeroEventArgs(MenuRequestedEvent, heroId));
@@ -229,10 +227,10 @@ public class RosterSlot : Control
             tip = $"Empty slot -- click to add an {Team.Label().ToLowerInvariant()}";
         else if (_overRemove)
             tip = $"Remove {HeroName} from the match";
-        else if (IsTeammate)
-            tip = $"{HeroName} -- click to see their items, right click to change";
+        else if (IsSelf)
+            tip = $"{HeroName} (you) -- click to change";
         else
-            tip = $"{HeroName}{(IsSelf ? " (you)" : "")} -- click to change";
+            tip = $"{HeroName} -- click to play as them and see their items, right click to change";
         if (!IsEmpty && !_overRemove && NetWorth is { } souls)
             tip += $"\nNet worth {Format.Compact(souls)}{(NetWorthChange is { } moved ? $" ({moved})" : "")}";
         ToolTip.SetTip(this, tip);
@@ -267,8 +265,10 @@ public class RosterSlot : Control
         var hovered = IsPointerOver;
 
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId!, HeroName, rect, _radius);
-        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), hovered ? 3 : 2);
+        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || hovered ? 3 : 2);
         context.DrawRectangle(null, ring, new RoundedRect(rect, _radius));
+        if (IsSelf)
+            PaintYouTag(context, rect);
 
         if (hovered)
         {
@@ -285,6 +285,15 @@ public class RosterSlot : Control
         var color = IsSelf || hovered ? Palette.Text : Palette.TextDim;
         var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf);
         context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + (_nameHeight - name.Height) / 2));
+    }
+
+    /// <summary>A gold "YOU" tag along the bottom of your portrait, so you stand out from your team at a glance.</summary>
+    private static void PaintYouTag(DrawingContext context, Rect portrait)
+    {
+        var text = Fonts.Text("YOU", 9, Palette.Bg, bold: true);
+        var tag = new Rect(portrait.X + (portrait.Width - (text.Width + 8)) / 2, portrait.Bottom - 3 - 13, text.Width + 8, 13);
+        context.DrawRectangle(new SolidColorBrush(Palette.Self), null, new RoundedRect(tag, 3));
+        context.DrawText(text, Fonts.InkCentered(text, tag));
     }
 
     /// <summary>The team-coloured pill under the portrait, as the game's top bar draws it.</summary>

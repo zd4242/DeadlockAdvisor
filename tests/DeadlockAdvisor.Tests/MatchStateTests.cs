@@ -87,6 +87,16 @@ public class MatchStateTests
         match.SetRole("me", Role.Self);
         Assert.Equal(Role.Ally, match.RoleOf("a"));
 
+        // An enemy becoming you swaps the teams, each in its own order, and nobody's slot moves.
+        match.SetRole("y", Role.Self);
+        Assert.Equal(["x", "y"], match.OwnTeam);
+        Assert.Equal("y", match.SelfHero);
+        Assert.Equal(["me", "a", "b"], match.Enemies);
+        Assert.Equal([("me", 0), ("a", 1), ("b", 2), ("x", 6), ("y", 7)], match.Slots.Select(entry => (entry.Key, entry.Value)));
+        match.SetRole("me", Role.Self);
+        Assert.Equal(["me", "a", "b"], match.OwnTeam);
+        Assert.Equal(["x", "y"], match.Enemies);
+
         match.SetRole("a", Role.None);
         match.SetRole("b", Role.Enemy);
         match.SetRole("me", Role.Self);

@@ -25,23 +25,28 @@ public sealed class MatchState
     public Role RoleOf(string heroId) => RoleMap.GetValueOrDefault(heroId, Role.None);
 
     /// <summary>
-    /// Only one hero can be you at a time. A teammate who becomes you trades roles with the previous
-    /// you, who stays on the team in their own place; anyone else taking Self clears it from them.
+    /// Only one hero can be you at a time. A hero already in the match who becomes you keeps everyone
+    /// in it: a teammate trades roles with the previous you, and an enemy brings their side with them,
+    /// so the teams trade places. A hero from outside the match clears Self from the previous you.
     /// </summary>
     public void SetRole(string heroId, Role role)
     {
         if (role == Role.Self && SelfHero is { } formerSelf && formerSelf != heroId)
         {
-            if (RoleOf(heroId) == Role.Ally)
+            switch (RoleOf(heroId))
             {
-                RoleMap[formerSelf] = Role.Ally;
-            }
-            else
-            {
-                // The Python app leaves the previous "you" in the map as unassigned rather than
-                // removing it; kept for identical saved matches.
-                RoleMap[formerSelf] = Role.None;
-                Slots.Remove(formerSelf);
+                case Role.Ally:
+                    RoleMap[formerSelf] = Role.Ally;
+                    break;
+                case Role.Enemy:
+                    SwapSides();
+                    break;
+                default:
+                    // The Python app leaves the previous "you" in the map as unassigned rather than
+                    // removing it; kept for identical saved matches.
+                    RoleMap[formerSelf] = Role.None;
+                    Slots.Remove(formerSelf);
+                    break;
             }
         }
 
@@ -60,6 +65,16 @@ public sealed class MatchState
             Slots.Remove(heroId);
         }
         RoleMap[heroId] = role;
+    }
+
+    /// <summary>Allies (you included) become enemies and enemies allies, each team keeping its order and top-bar slots.</summary>
+    private void SwapSides()
+    {
+        foreach (var (heroId, role) in RoleMap.ToList())
+        {
+            if (role != Role.None)
+                RoleMap[heroId] = role.Team() == Role.Ally ? Role.Enemy : Role.Ally;
+        }
     }
 
     /// <summary>

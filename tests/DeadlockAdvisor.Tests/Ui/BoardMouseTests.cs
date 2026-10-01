@@ -15,12 +15,12 @@ public class BoardMouseTests
     private static Point Center(Visual target, Visual root) =>
         target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), root)!.Value;
 
-    private static void Click(Window window, Point at, int times = 1)
+    private static void Click(Window window, Point at, int times = 1, MouseButton button = MouseButton.Left)
     {
         for (var i = 0; i < times; i++)
         {
-            window.MouseDown(at, MouseButton.Left);
-            window.MouseUp(at, MouseButton.Left);
+            window.MouseDown(at, button);
+            window.MouseUp(at, button);
         }
         UiHarness.Settle();
     }
@@ -62,8 +62,8 @@ public class BoardMouseTests
         Click(ui.Window, Center(Tile(ui, "infernus"), ui.Window));
         Assert.Equal(Role.None, board.RoleOf("infernus"));
 
-        // Clicking a match bar portrait opens the role menu; its × removes. An empty enemy slot picks Enemy.
-        Click(ui.Window, Slot(ui, "EnemyRow", 0));
+        // Right clicking a match bar portrait opens the role menu; its × removes. An empty enemy slot picks Enemy.
+        Click(ui.Window, Slot(ui, "EnemyRow", 0), button: MouseButton.Right);
         var setAlly = ui.Window.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "Set as Ally"));
         var menu = TopLevel.GetTopLevel(setAlly)!;
         menu.MouseDown(Center(setAlly, menu), MouseButton.Left);
@@ -79,6 +79,19 @@ public class BoardMouseTests
         await Task.Delay(TimeSpan.FromMilliseconds(700));
         Click(ui.Window, Slot(ui, "AllyRow", 0));
         Assert.Equal(Role.Self, board.RoleOf("wraith"));
+
+        // Clicking an enemy makes them you, and the teams trade sides with nobody dropped.
+        board.SetRole("lash", Role.Enemy);
+        await Task.Delay(TimeSpan.FromMilliseconds(700));
+        Click(ui.Window, Slot(ui, "EnemyRow", 0));
+        Assert.Equal(Role.Self, board.RoleOf("lash"));
+        Assert.Equal(["wraith", "haze"], board.EnemySlots.Take(2).Select(slot => slot.HeroId));
+        await Task.Delay(TimeSpan.FromMilliseconds(700));
+        Click(ui.Window, Slot(ui, "EnemyRow", 0));
+        Assert.Equal(Role.Self, board.RoleOf("wraith"));
+        Assert.Equal(Role.Ally, board.RoleOf("haze"));
+        Assert.Equal(Role.Enemy, board.RoleOf("lash"));
+        Click(ui.Window, Slot(ui, "EnemyRow", 0, remove: true));
 
         Click(ui.Window, Slot(ui, "AllyRow", 1, remove: true));
         Assert.Equal(Role.None, board.RoleOf("haze"));
