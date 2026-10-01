@@ -548,7 +548,10 @@ public static partial class GameSync
 
     // -- applying to the store ----------------------------------------------------------
 
-    /// <summary>Fold API records into the store in memory. Existing ids and names are kept; game ids, tiers, shop categories and costs follow the game.</summary>
+    /// <summary>
+    /// Fold API records into the store in memory. Existing ids are kept, since every other file keys on
+    /// them; names, game ids, tiers, shop categories and costs follow the game.
+    /// </summary>
     public static SyncReport Apply(DataStore store, IEnumerable<JsonNode?> heroRecords, IEnumerable<JsonNode?> itemRecords)
     {
         var report = new SyncReport();
@@ -565,19 +568,49 @@ public static partial class GameSync
         return report;
     }
 
+    /// <summary>
+    /// Finds our row for an API record. The game id comes first: it survives the game renaming the
+    /// hero or item, which a name match would take for a new row, orphaning the old one's rules. A
+    /// name only matches a row whose game id the game no longer uses (or that has none yet), so a new
+    /// record that takes over a renamed row's old name can't claim that row too.
+    /// </summary>
+    private sealed class RowLookup<T> where T : class
+    {
+        private readonly Dictionary<long, T> _byGameId = [];
+        private readonly Dictionary<string, T> _byName = [];
+
+        public RowLookup(IEnumerable<T> rows, Func<T, long> gameIdOf, Func<T, IEnumerable<string>> namesOf, IEnumerable<JsonNode> records)
+        {
+            var gameIds = records.Select(record => PyJson.Int(record, "id")).ToHashSet();
+            foreach (var row in rows)
+            {
+                var gameId = gameIdOf(row);
+                if (gameId != 0 && gameIds.Contains(gameId))
+                {
+                    _byGameId.TryAdd(gameId, row);
+                    continue;
+                }
+                foreach (var name in namesOf(row))
+                    _byName.TryAdd(Norm(name), row);
+            }
+        }
+
+        public T? Find(long gameId, string name) =>
+            _byGameId.TryGetValue(gameId, out var row) ? row : _byName.GetValueOrDefault(Norm(name));
+    }
+
+    /// <summary>The game's name for a row, unless ours only spells it differently ("Doorman" for "The Doorman").</summary>
+    private static string FollowName(string ours, string game) => Norm(ours) == Norm(game) ? ours : game;
+
     private static void ApplyHeroes(DataStore store, List<JsonNode> records, SyncReport report)
     {
-        var ours = new Dictionary<string, Hero>();
-        foreach (var hero in store.Heroes.Values)
-            ours[Norm(hero.HeroName)] = hero;
-        foreach (var hero in store.Heroes.Values)
-            ours[Norm(hero.HeroId)] = hero;
+        var ours = new RowLookup<Hero>(store.Heroes.Values, hero => hero.GameId, hero => [hero.HeroName, hero.HeroId], records);
 
         foreach (var record in records)
         {
             var name = PyJson.Text(record, "name");
             var gameId = PyJson.Int(record, "id");
-            if (!ours.TryGetValue(Norm(name), out var hero))
+            if (ours.Find(gameId, name) is not { } hero)
             {
                 var heroId = MakeId(name);
                 if (heroId.Length == 0 || store.Heroes.ContainsKey(heroId))
@@ -585,25 +618,27 @@ public static partial class GameSync
                 store.Heroes[heroId] = new Hero(heroId, name, gameId);
                 report.AddedHeroes.Add(name);
                 report.HeroesChanged = true;
+                continue;
             }
-            else if (hero.GameId != gameId)
-            {
-                store.Heroes[hero.HeroId] = hero with { GameId = gameId };
-                report.HeroesChanged = true;
-                if (hero.GameId != 0)
-                    report.Changed.Add($"{hero.HeroName}: game id {hero.GameId} -> {gameId}");
-                else
-                    report.Filled++;
-            }
+
+            var updated = hero with { HeroName = FollowName(hero.HeroName, name), GameId = gameId };
+            if (updated == hero)
+                continue;
+            if (updated.HeroName != hero.HeroName)
+                report.Changed.Add($"{hero.HeroName}: renamed to {updated.HeroName}");
+            if (hero.GameId != 0 && hero.GameId != gameId)
+                report.Changed.Add($"{hero.HeroName}: game id {hero.GameId} -> {gameId}");
+            else if (hero.GameId == 0)
+                report.Filled++;
+            store.Heroes[hero.HeroId] = updated;
+            report.HeroesChanged = true;
         }
     }
 
     /// <returns>Item id → API record, for every item the game still sells.</returns>
     private static OrderedDictionary<string, JsonNode> ApplyItems(DataStore store, List<JsonNode> records, SyncReport report)
     {
-        var ours = new Dictionary<string, Item>();
-        foreach (var item in store.Items.Values)
-            ours[Norm(item.ItemName)] = item;
+        var ours = new RowLookup<Item>(store.Items.Values, item => item.GameId, item => [item.ItemName], records);
         var matched = new OrderedDictionary<string, JsonNode>();
 
         foreach (var record in records)
@@ -615,7 +650,7 @@ public static partial class GameSync
             var cost = (int)PyJson.Int(record, "cost");
             var castOn = CastOn(record);
 
-            if (!ours.TryGetValue(Norm(name), out var current))
+            if (ours.Find(gameId, name) is not { } current)
             {
                 var itemId = MakeId(name);
                 if (itemId.Length == 0 || store.Items.ContainsKey(itemId))
@@ -630,14 +665,16 @@ public static partial class GameSync
             }
 
             matched[current.ItemId] = record;
-            var updated = new Item(current.ItemId, current.ItemName, category, tier, gameId, cost, castOn);
+            var updated = new Item(current.ItemId, FollowName(current.ItemName, name), category, tier, gameId, cost, castOn);
             if (updated == current)
                 continue;
             if (current.CastOn != castOn)
                 report.TargetingChanges.Add($"{current.ItemName}: {Targeting(castOn)}");
-            // A missing game id or cost is just the first sync filling columns in; a tier or shop
-            // move is a patch, and worth saying out loud.
+            // A missing game id or cost is just the first sync filling columns in; a rename, tier or
+            // shop move is a patch, and worth saying out loud.
             var before = report.Changed.Count;
+            if (updated.ItemName != current.ItemName)
+                report.Changed.Add($"{current.ItemName}: renamed to {updated.ItemName}");
             if (current.Tier != tier)
                 report.Changed.Add($"{current.ItemName}: tier {current.Tier} -> {tier}");
             if (current.Category != category)

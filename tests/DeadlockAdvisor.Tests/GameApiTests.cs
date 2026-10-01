@@ -342,6 +342,44 @@ public class GameApiTests
     }
 
     [Fact]
+    public void ARenameKeepsTheRowAndItsRulesAndTheOldNameCanBeTakenByANewItem()
+    {
+        var store = TestStore.Make();
+        var heroes = JsonNode.Parse("""[{"id": 13, "name": "Heavy Spirit"}]""")!.AsArray();
+        GameSync.Apply(store, heroes, [FakeItem("Spirit Resist Trinket", 101, 1, "vitality", 800, Prop("TechResist", "8"))]);
+
+        var renamedHeroes = JsonNode.Parse("""[{"id": 13, "name": "Weighty Spirit"}]""")!.AsArray();
+        var report = GameSync.Apply(store, renamedHeroes,
+        [
+            FakeItem("Spirit Ward", 101, 1, "vitality", 800, Prop("TechResist", "8")),
+            FakeItem("Spirit Resist Trinket", 105, 2, "vitality", 1600),
+        ]);
+
+        Assert.Equal("Spirit Ward", store.Items["spirit_resist_t1"].ItemName);
+        Assert.Equal(1, store.RuleCount("spirit_resist_t1"));
+        Assert.Equal(8.0, store.ItemStats["spirit_resist_t1"][0].Value);
+        Assert.Equal(105, store.Items["spirit_resist_trinket"].GameId);
+        Assert.Equal(["Spirit Resist Trinket (T2)"], report.AddedItems);
+        Assert.Equal("Weighty Spirit", store.Heroes["heavy_spirit"].HeroName);
+        Assert.Empty(report.AddedHeroes);
+        Assert.Equal(["Heavy Spirit: renamed to Weighty Spirit", "Spirit Resist Trinket: renamed to Spirit Ward"], report.Changed);
+    }
+
+    [Fact]
+    public void ANameOursOnlySpellsDifferentlyIsKept()
+    {
+        var store = TestStore.Make();
+        store.Heroes["doorman"] = new Hero("doorman", "Doorman", 1);
+        var heroes = JsonNode.Parse("""[{"id": 1, "name": "The Doorman"}]""")!.AsArray();
+
+        var report = GameSync.Apply(store, heroes, [FakeItem("Spirit-Resist trinket", 101, 1, "vitality", 800)]);
+
+        Assert.Equal("Doorman", store.Heroes["doorman"].HeroName);
+        Assert.Equal("Spirit Resist Trinket", store.Items["spirit_resist_t1"].ItemName);
+        Assert.Empty(report.Changed);
+    }
+
+    [Fact]
     public void TooltipTextKeepsEmphasisAndDropsIcons()
     {
         const string source = "Deals bonus <svg width=\"1\"><path d=\"M0 0\"/></svg>"
