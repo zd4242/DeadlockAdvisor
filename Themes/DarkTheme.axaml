@@ -15,6 +15,7 @@
     <SolidColorBrush x:Key="TextFaintBrush" Color="{x:Static theme:Palette.TextFaint}"/>
     <SolidColorBrush x:Key="AccentBrush" Color="{x:Static theme:Palette.Accent}"/>
     <SolidColorBrush x:Key="AccentDimBrush" Color="{x:Static theme:Palette.AccentDim}"/>
+    <SolidColorBrush x:Key="AccentTintBrush" Color="{x:Static theme:Palette.Accent}" Opacity="0.3"/>
     <SolidColorBrush x:Key="AllyBrush" Color="{x:Static theme:Palette.Ally}"/>
     <SolidColorBrush x:Key="EnemyBrush" Color="{x:Static theme:Palette.Enemy}"/>
     <SolidColorBrush x:Key="SelfBrush" Color="{x:Static theme:Palette.Self}"/>

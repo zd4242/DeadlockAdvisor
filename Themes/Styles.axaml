@@ -464,6 +464,10 @@
         <Setter Property="SelectionForegroundBrush" Value="{DynamicResource BgBrush}"/>
         <Setter Property="CaretBrush" Value="{DynamicResource TextBrush}"/>
     </Style>
+    <!-- A text block's selected text keeps its own colour, so it needs a fill it stays readable on -->
+    <Style Selector="SelectableTextBlock">
+        <Setter Property="SelectionBrush" Value="{DynamicResource AccentTintBrush}"/>
+    </Style>
     <Style Selector="TextBox.search">
         <Setter Property="FontSize" Value="15"/>
         <Setter Property="Padding" Value="10,6,8,6"/>
