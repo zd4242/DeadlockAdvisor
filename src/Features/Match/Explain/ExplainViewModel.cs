@@ -93,6 +93,9 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public IReadOnlyList<ContributionCard> Contributions { get; private set; } = [];
     [Reactive] public MatchDataCard? MatchData { get; private set; }
 
+    /// <summary>Ranked by the match data alone, so its card leads and the formula's follow.</summary>
+    [Reactive] public bool MatchDataFirst { get; private set; }
+
     /// <summary>Ranking by formula and data together: each one's part in the item's rank, and their sum.</summary>
     [Reactive] public BlendVerdict? Verdict { get; private set; }
 
@@ -141,6 +144,7 @@ public class ExplainViewModel : ViewModelBase
         var parts = ItemScoring.DataParts(store, match, itemId);
         var self = match.SelfHero;
         MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
+        MatchDataFirst = rankBy == RankBy.MatchData;
 
         var scored = new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category, ItemScoring.DataScores(store, match, itemId));
         Verdict = rankBy == RankBy.Both && blend is { } scale ? ExplainText.Verdict(scored, scale, NoContributions) : null;
@@ -170,6 +174,7 @@ public class ExplainViewModel : ViewModelBase
         NoContributions = false;
         Contributions = [];
         MatchData = null;
+        MatchDataFirst = false;
         Verdict = null;
     }
 

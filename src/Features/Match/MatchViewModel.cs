@@ -70,6 +70,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private readonly ISettingsService _settings;
     private readonly Func<double> _now;
 
+    /// <summary>The rank option the list was last laid out for, so picking another can start on its best item.</summary>
+    private RankPreset? _appliedRank;
+
     public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, ImportMatchAction import, DataRanksViewModel dataRanks)
         : this(data, settings, detect, import, dataRanks, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
     {
@@ -136,9 +139,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                     s.ResultsRankBy = SelectedRank.RankBy;
                     s.ResultsHideRarelyBuilt = HideRarelyBuilt;
                 });
+                var reranked = SelectedRank != _appliedRank;
                 ApplyDisplay();
-                // Trimming can drop the selected item, which clears the explanation.
-                RefreshExplain();
+                // A new ranking starts on its best item. Otherwise trimming can drop the selected item, which clears the explanation.
+                if (reranked)
+                    ShowTopPick();
+                else
+                    RefreshExplain();
             })
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.ByNetWorth)
@@ -279,6 +286,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyDisplay()
     {
+        _appliedRank = SelectedRank;
         Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt);
     }
 

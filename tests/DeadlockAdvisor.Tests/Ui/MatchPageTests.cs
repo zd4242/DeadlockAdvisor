@@ -253,7 +253,7 @@ public class MatchPageTests
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Both);
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.Percent == 0);
-        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
+        Assert.True(match.Results.Entries.OfType<ResultRowViewModel>().First().IsSelected);
         ui.Screenshot("match_rank_blend.png");
         Assert.All(match.Results.Entries.OfType<ResultRowViewModel>(), row => Assert.True(row.HasDataBar));
         Assert.NotNull(match.Explain.Verdict?.Formula);
@@ -265,6 +265,54 @@ public class MatchPageTests
 
         Assert.Contains(match.Results.Entries.OfType<ResultRowViewModel>(), row => row.IsNegative);
         Assert.Equal(RankBy.Formula, ui.Settings.Current.ResultsRankBy);
+    }
+
+    /// <summary>
+    /// Picking another ranking starts on its best item, and ranked by the match data alone the explanation
+    /// leads with it. Other display changes keep the pick.
+    /// </summary>
+    [AvaloniaTheory]
+    [InlineData(RankBy.Formula, RankBy.MatchData)]
+    [InlineData(RankBy.MatchData, RankBy.Both)]
+    [InlineData(RankBy.Both, RankBy.Formula)]
+    public void ChangingTheRankingSelectsItsBestItem(RankBy from, RankBy to)
+    {
+        using var ui = new UiHarness(settings => settings.Current.ResultsRankBy = from);
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        var picked = match.Results.Entries.OfType<ResultRowViewModel>().ElementAt(1);
+        match.Results.Select(picked);
+
+        match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
+        Assert.Equal(picked.ItemId, match.Results.SelectedItemId);
+        Assert.Equal(from == RankBy.MatchData, match.Explain.MatchDataFirst);
+
+        match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == to);
+
+        var top = match.Results.Entries.OfType<ResultRowViewModel>().First();
+        Assert.True(top.IsSelected);
+        Assert.Equal(top.ItemId, match.Explain.ItemId);
+        Assert.Equal(to == RankBy.MatchData, match.Explain.MatchDataFirst);
+    }
+
+    /// <summary>Ranked by the match data alone, its card sits above the formula's.</summary>
+    [AvaloniaFact]
+    public void RankedByMatchDataTheExplanationLeadsWithTheData()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ResultsRankBy = RankBy.MatchData);
+        SetUpMatch(ui);
+        ui.Show();
+        var match = ui.ViewModel.Match;
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
+        ui.Screenshot("match_explain_data_first.png");
+
+        var explain = ui.Window.MatchPage.GetVisualDescendants().OfType<ExplainView>().Single();
+        var cards = explain.GetVisualDescendants().OfType<ContentControl>()
+            .Where(control => control.Content is MatchDataCard)
+            .ToList();
+        Assert.NotNull(match.Explain.MatchData);
+        var shown = Assert.Single(cards, card => card.IsEffectivelyVisible);
+        Assert.Equal(cards.First(), shown);
     }
 
     [AvaloniaFact]
