@@ -30,6 +30,32 @@ public class ExplainViewModelTests
     }
 
     [Fact]
+    public void AHeroWithRankedAndSummedLinesHasOneCard()
+    {
+        var store = TestStore.Make();
+        store.ItemCoefficients[new CoefficientKey("spirit_resist_t1", "max_hp", Relation.Against)] = 1.0;
+        store.SetBestTarget("spirit_resist_t1", "deals_spirit_damage_general", Relation.Against, true);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        var explain = new ExplainViewModel();
+
+        explain.ShowItem(store, match, "spirit_resist_t1", now: 0);
+
+        // low_hp's spirit damage is the 2nd target, -4 at half; its max HP sums at (-4 + 1.3) × 1.
+        var lowHp = explain.Contributions.Single(card => card.HeroId == "low_hp");
+        Assert.Equal("2nd target ×0.5", lowHp.Note);
+        Assert.Contains(ExplainText.PartlyRankedTip, lowHp.NoteTip);
+        Assert.Equal([("Has High Max HP", Math.Round(-8.0 / 3, 9)), ("Deals Spirit Damage", -2.0)],
+            lowHp.Traits.Select(line => (line.TraitName, Math.Round(line.Share.Value, 9))));
+        Assert.Equal("(0 − 2 avg) × 2 × 0.5", lowHp.Traits[1].Arithmetic);
+        Assert.DoesNotContain("0.5", lowHp.Traits[0].Arithmetic);
+        Assert.Equal(-2 - 8.0 / 3, lowHp.Amount.Value, 9);
+        // The targets are the ranked lines only: 6 + -4/2.
+        Assert.Contains("These enemies come to +4.0 as targets", explain.Contributions.Single(card => card.Info is not null).Info);
+    }
+
+    [Fact]
     public void OnlyHeroCardsShowAPortrait()
     {
         var store = TestStore.Make();

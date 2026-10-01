@@ -352,14 +352,15 @@ public class ScoringTests
         Assert.Equal(4 - 5.0 / 3 + 4.0 / 3 - 8.0 / 3, ItemScoring.Total(matrix, "spirit_resist_t1", ItemScoring.RelevantHeroes(match)), 9);
         Assert.Equal(6 + 4.0 / 3, matrix[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)], 9);
 
-        // Each hero shows twice: the ranked share at its rank, and the summed share.
+        // One line per hero, its spirit damage at the hero's rank beside the max HP that sums.
         var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
         Assert.Equal(
-            [("heavy_spirit", 6.0, (int?)1), ("heavy_spirit", Math.Round(4.0 / 3, 9), null), ("", Math.Round(-5.0 / 3, 9), null),
-                ("low_hp", -2.0, 2), ("low_hp", Math.Round(-8.0 / 3, 9), null)],
+            [("heavy_spirit", Math.Round(6 + 4.0 / 3, 9), (int?)1), ("", Math.Round(-5.0 / 3, 9), null), ("low_hp", Math.Round(-2 - 8.0 / 3, 9), 2)],
             explained.Select(contribution => (contribution.HeroId, Math.Round(contribution.Amount, 9), contribution.Rank)));
-        Assert.Equal(["deals_spirit_damage_general"], explained[0].Parts.Select(part => part.CategoryId));
-        Assert.Equal(["max_hp"], explained[1].Parts.Select(part => part.CategoryId));
+        Assert.Equal([("max_hp", null, Math.Round(-8.0 / 3, 9)), ("deals_spirit_damage_general", (int?)2, -2.0)],
+            explained[2].Parts.Select(part => (part.CategoryId, part.Rank, Math.Round(part.Share, 9))));
+        Assert.True(explained[2].PartlyRanked);
+        Assert.Equal(-2, explained[2].RankedAmount, 9);
         Assert.Equal(1, explained.Sum(contribution => contribution.Amount), 9);
     }
 

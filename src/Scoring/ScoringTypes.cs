@@ -31,6 +31,7 @@ public sealed record ScoredItem(
 /// <summary>One trait's share of one hero's contribution to an item's score.</summary>
 /// <param name="Coefficient">The hand-typed part only.</param>
 /// <param name="Baseline">The roster's average on the trait: only how far the hero sits from it counts.</param>
+/// <param name="Rank">On a best-target line, its hero's <see cref="BestTargets"/> rank on the team; null when the line sums.</param>
 public sealed record TraitPart(
     string CategoryId,
     string CategoryName,
@@ -38,18 +39,23 @@ public sealed record TraitPart(
     double Coefficient,
     IReadOnlyList<StatPart> StatParts,
     double Weight = 1.0,
-    double Baseline = 0.0)
+    double Baseline = 0.0,
+    int? Rank = null)
 {
     public double FromStats => DataStore.SumAmounts(StatParts);
     public double EffectiveCoefficient => Weight * (Coefficient + FromStats);
     public double Deviation => HeroScore - Baseline;
     public double Amount => Deviation * EffectiveCoefficient;
+    public double RankFactor => Rank is { } rank ? BestTargets.RankFactor(rank) : 1.0;
+
+    /// <summary>What the line adds to its hero's share: <see cref="Amount"/> at its rank.</summary>
+    public double Share => Amount * RankFactor;
 }
 
 /// <summary>One hero's share of an item's score, trait by trait.</summary>
-/// <param name="Amount">The traits' sum times the hero's net worth factor, and times its <see cref="BestTargets.RankFactor"/>.</param>
+/// <param name="Amount">The traits' <see cref="TraitPart.Share"/>s summed, times the hero's net worth factor.</param>
 /// <param name="NetWorth">Where the hero stood, when their net worth weighted the score.</param>
-/// <param name="Rank">For an item scored on its best targets: 1 for the best target on this relation, 2 for the next…; null when the relation sums.</param>
+/// <param name="Rank">When some of its lines count best targets: 1 for the best target on this relation, 2 for the next…; null when every line sums.</param>
 /// <param name="TypicalOf">
 /// Not a hero: what <see cref="BestTargets"/> gives a typical team of this many, taken off as one line
 /// (<see cref="Amount"/> is its negative, <see cref="Parts"/> empty).
@@ -65,6 +71,12 @@ public sealed record HeroContribution(
     int? TypicalOf = null)
 {
     public double Factor => NetWorth?.Factor ?? 1.0;
+
+    /// <summary>The part of <see cref="Amount"/> from best-target lines, at the hero's rank.</summary>
+    public double RankedAmount => Factor * Parts.Where(part => part.Rank is not null).Sum(part => part.Share);
+
+    /// <summary>Some lines count at the hero's rank and others sum.</summary>
+    public bool PartlyRanked => Rank is not null && Parts.Any(part => part.Rank is null);
 }
 
 /// <summary>How many enemies and allies a line-up has, and whether you're in it: what the spread of its scores depends on.</summary>

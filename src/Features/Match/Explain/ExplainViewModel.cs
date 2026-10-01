@@ -141,7 +141,7 @@ public class ExplainViewModel : ViewModelBase
             return null;
         var targets = contributions
             .Where(other => other.Relation == contribution.Relation && other.Rank is not null)
-            .Sum(other => other.Amount);
+            .Sum(other => other.RankedAmount);
         return ExplainText.TypicalInfo(item.ItemName, contribution.Relation, store.CastOnCovers(item.ItemId, contribution.Relation),
             count, -contribution.Amount, targets);
     }
@@ -153,7 +153,7 @@ public class ExplainViewModel : ViewModelBase
             notes.Add(ExplainText.Typical(count));
         var tips = new List<string>();
         if (contribution.Rank is not null)
-            tips.Add(ExplainText.BestTargetsTip);
+            tips.Add(contribution.PartlyRanked ? $"{ExplainText.BestTargetsTip}\n{ExplainText.PartlyRankedTip}" : ExplainText.BestTargetsTip);
         if (contribution.NetWorth is { Factor: not 1.0 } standing)
             tips.Add(ExplainText.NetWorthTooltip(standing));
 
@@ -168,7 +168,7 @@ public class ExplainViewModel : ViewModelBase
                 ExplainText.CoefficientSource(part),
                 ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
                 ExplainText.Arithmetic(part),
-                new DisplayAmount(part.Amount))).ToList(),
+                new DisplayAmount(part.Share))).ToList(),
             notes.Count > 0 ? string.Join(" · ", notes) : null,
             tips.Count > 0 ? string.Join("\n\n", tips) : null,
             info);

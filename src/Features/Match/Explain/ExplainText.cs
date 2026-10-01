@@ -74,9 +74,13 @@ public static class ExplainText
         return string.Join("\n", lines);
     }
 
-    /// <summary>"(80 − 61 avg) × 3": how far the hero sits from the roster's average, times the effective coefficient.</summary>
+    /// <summary>
+    /// "(80 − 61 avg) × 3": how far the hero sits from the roster's average, times the effective coefficient,
+    /// and on a best-target line times its rank's factor: "(80 − 61 avg) × 3 × 0.5".
+    /// </summary>
     public static string Arithmetic(TraitPart part) =>
-        $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}";
+        $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}"
+        + (part.Rank is null ? "" : $" × {Format.Num(part.RankFactor)}");
 
     /// <summary>"(80 − 61 avg)", or just "80" when the roster averages 0 on the trait.</summary>
     public static string Deviation(TraitPart part)
@@ -138,6 +142,8 @@ public static class ExplainText
     public const string BestTargetsTip =
         "Works on one hero at a time: the best target counts in full, the next ×0.5, then ×0.25 and so on,\n"
         + "less what the same comes to for a typical team the same size.";
+
+    public const string PartlyRankedTip = "Only the lines showing the rank's factor count this way; the others count in full.";
 
     private static string Ordinal(int value) => value switch
     {

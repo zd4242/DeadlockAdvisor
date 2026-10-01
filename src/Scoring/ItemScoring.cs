@@ -132,8 +132,8 @@ public static class ItemScoring
     /// <summary>
     /// One item's score broken down per hero, then per trait, biggest contributor first. Recomputed
     /// from the store because the per-trait detail isn't kept in the matrix. On a relation with best-target
-    /// lines, those lines' share of each hero is counted at the hero's rank, apart from the share that sums,
-    /// with a typical team's sum taken off as one more line.
+    /// lines, each hero's best-target lines count at the hero's rank beside the lines that sum, with a
+    /// typical team's sum taken off as one more line.
     /// </summary>
     public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
     {
@@ -147,37 +147,44 @@ public static class ItemScoring
                 .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId), ranked))
                 .OfType<HeroContribution>()
                 .ToList();
-            if (!store.HasBestTargetLines(itemId, relation))
-            {
-                contributions.AddRange(Found(null));
-                continue;
-            }
-            contributions.AddRange(Found(false));
-            contributions.AddRange(OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), Found(true)));
+            contributions.AddRange(store.HasBestTargetLines(itemId, relation)
+                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), Found(null), Found(true))
+                : Found(null));
         }
         return contributions.OrderBy(contribution => -contribution.Amount).ToList();
     }
 
     /// <summary>
-    /// The best-target lines' share of each hero on one relation at their <see cref="BestTargets"/> rank, then the
+    /// Each hero on one relation with their best-target lines at the hero's <see cref="BestTargets"/> rank, then the
     /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
     /// no rule touches, exactly as <see cref="Total"/> counts them.
     /// </summary>
+    /// <param name="found">Each hero's every line.</param>
+    /// <param name="ranked">Each hero's best-target lines only: what ranks them.</param>
     private static IEnumerable<HeroContribution> OnBestTargets(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, Relation relation,
-        IReadOnlyList<string> team, IReadOnlyList<HeroContribution> found)
+        IReadOnlyList<string> team, IReadOnlyList<HeroContribution> found, IReadOnlyList<HeroContribution> ranked)
     {
         if (team.Count == 0)
             yield break;
-        var byHero = found.ToDictionary(contribution => contribution.HeroId);
-        var ranked = team
-            .Select(heroId => (HeroId: heroId, Weight: byHero.TryGetValue(heroId, out var contribution) ? contribution.Amount : 0.0))
-            .OrderByDescending(pair => pair.Weight)
-            .ToList();
-        for (var rank = 1; rank <= ranked.Count; rank++)
+        var weights = ranked.ToDictionary(contribution => contribution.HeroId, contribution => contribution.Amount);
+        var order = team.OrderByDescending(heroId => weights.GetValueOrDefault(heroId)).ToList();
+        foreach (var contribution in found)
         {
-            if (byHero.TryGetValue(ranked[rank - 1].HeroId, out var contribution))
-                yield return contribution with { Amount = contribution.Amount * BestTargets.RankFactor(rank), Rank = rank };
+            var rank = order.IndexOf(contribution.HeroId) + 1;
+            if (!weights.ContainsKey(contribution.HeroId))
+            {
+                yield return contribution;
+                continue;
+            }
+            var parts = contribution.Parts
+                .Select(part => store.OnBestTargets(itemId, part.CategoryId, relation) ? part with { Rank = rank } : part)
+                .OrderBy(part => -Math.Abs(part.Share))
+                .ToList();
+            var amount = 0.0;
+            foreach (var part in parts)
+                amount += part.Share;
+            yield return contribution with { Amount = contribution.Factor * amount, Parts = parts, Rank = rank };
         }
 
         // One hero's typical value is the roster's average weight, which is 0: nothing to take off.

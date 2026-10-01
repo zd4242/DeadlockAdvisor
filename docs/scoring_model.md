@@ -157,8 +157,9 @@ relation score = Σ summed parts + best-target sum of the ranked parts − its t
 ```
 
 Heroes are ranked by their ranked part alone, and the typical value comes from the
-ranked parts too, so every item still averages 0. The explain panel shows a hero
-with both parts twice: once at their rank, and once summed. Copying an item's
+ranked parts too, so every item still averages 0. The explain panel keeps one card
+per hero: the card notes the hero's rank, and each best-target line shows the rank's
+factor in its arithmetic ("× 0.25"), so the lines still add up to the card. Copying an item's
 rules copies its marks, and clearing or deleting a rule card clears them.
 
 ## Match data on the Match page

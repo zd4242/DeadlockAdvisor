@@ -82,5 +82,5 @@ public static class FormulaText
 
     /// <summary>"Slows: (80 − 27.1 avg) × 2.5 = +132.3".</summary>
     public static string Arithmetic(TraitPart part) =>
-        $"{part.CategoryName}: {ExplainText.Arithmetic(part)} = {Format.SignedFixed(part.Amount, 1)}";
+        $"{part.CategoryName}: {ExplainText.Arithmetic(part)} = {Format.SignedFixed(part.Share, 1)}";
 }
