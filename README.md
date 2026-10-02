@@ -25,7 +25,7 @@ both downloading in the background: the art from `deadlock-api.com`, the
 match data ready-made from this repo's [shared download](#shared-match-data).
 With the match data's "keep it up to date" on (the default, and in
 Settings → Data), later startups refresh it quietly when a newer patch is
-out or it's half a day old. Settings live beside it in `settings.json`.
+out or it's a day and a half old. Settings live beside it in `settings.json`.
 
 To build it yourself (.NET 10 SDK):
 
@@ -194,21 +194,21 @@ change older apps can't read, such as a new column, bumps
 
 Every install would otherwise make the same few hundred calls to
 `deadlock-api.com` for the same numbers. Instead, the **Match data**
-workflow (`.github/workflows/match-data.yml`) runs every 3 hours and
+workflow (`.github/workflows/match-data.yml`) runs daily and
 publishes them as assets of this repo's rolling
 [`match-data`](../../releases/tag/match-data) pre-release: a
 `manifest.json` and one gzipped file per patch, about half a megabyte
 each. It runs `tools/MatchSnapshot`, which is the app's own download code
-(`MatchSnapshotJob`): it restores the last run's files, syncs the heroes,
-and fetches only what's due, so most runs make one call for the patch
-list. The current patch is fetched again every 12 hours, a new or ended
-patch at the next run, and a finished one never.
+(`MatchSnapshotJob`): it restores the last run's files and fetches only
+what's due, so a run with nothing due makes one call, for the patch list.
+The current patch is fetched again every other day, a new or ended patch
+at the next run, and a finished one never.
 
 The app reads the manifest, checks each file's size and SHA-256, and
 falls back to asking `deadlock-api.com` itself when the manifest can't be
-reached or hasn't been updated for two days. GitHub turns scheduled
+reached or hasn't been updated for four days. GitHub turns scheduled
 workflows off after 60 days without activity in the repo; re-enable it
-from the Actions tab, or run it by hand with `gh workflow run match-data`.
+from the Actions tab, or run it by hand with `gh workflow run match-data.yml`.
 
 ## How scoring works
 

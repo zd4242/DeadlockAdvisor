@@ -137,14 +137,14 @@ public sealed class MatchSnapshotTests : IDisposable
     }
 
     [Fact]
-    public async Task ALaterRunOnlyChecksThePatchListUntilTheCurrentPatchIsDueAndThenFetchesJustThat()
+    public async Task ALaterRunOnlyAsksForThePatchListUntilTheCurrentPatchIsDueAndThenFetchesJustThat()
     {
         var first = await RunAsync(Api(), "first", restore: null, _now);
 
         var quiet = Api();
         var unchanged = await RunAsync(quiet, "quiet", Out("first"), _now + 3600);
 
-        Assert.Empty(ItemStats(quiet.Asked));
+        Assert.Equal([MatchStatsService.Patches], quiet.Asked);
         Assert.Equal(_now + 3600, unchanged.CheckedAt);
         Assert.Equal(first.Patches, unchanged.Patches);
 

@@ -570,13 +570,13 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdatesComeFromTheSharedDownloadOnceTheCurrentPatchIsHalfADayOld()
+    public async Task UpdatesComeFromTheSharedDownloadOnceTheCurrentPatchIsDue()
     {
         var now = SyntheticItemStatsApi.Now;
         var snapshot = await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
         _fixture.Settings.Current.WelcomeOffered = true;
         var store = _fixture.Data.Store;
-        foreach (var segment in await SegmentsAsync(now.AddHours(-13)))
+        foreach (var segment in await SegmentsAsync(now - MatchSnapshot.RefreshAfter - TimeSpan.FromHours(1)))
             store.PutMatchSegment(segment);
         using var menu = SharedMenu(now);
 
@@ -605,7 +605,7 @@ public sealed class DataMenuTests : IDisposable
 
         // A snapshot the job hasn't touched in days has stopped: deadlock-api.com is asked instead.
         _api.Asked.Clear();
-        await ServeSnapshotAsync(now.AddDays(-3), now.AddDays(-3));
+        await ServeSnapshotAsync(now - MatchSnapshot.StaleAfter, now - MatchSnapshot.StaleAfter);
         using var later = SharedMenu(now);
         later.OnStartup();
 

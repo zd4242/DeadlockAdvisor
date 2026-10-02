@@ -1,11 +1,12 @@
 name: Match data
 
 # Publishes the match counts the app downloads (src/Services/MatchSnapshot.cs) as assets of the rolling
-# "match-data" pre-release. Most runs make one call to deadlock-api.com, for the patch list: the current
-# patch is fetched again every 12 hours, a new or ended patch at the next run, and a finished one never.
+# "match-data" pre-release. Runs daily: the current patch is fetched again every other run, a new or ended
+# patch at the next run, and a finished one never. A run with nothing due makes one call to deadlock-api.com,
+# for the patch list. Start one by hand with: gh workflow run match-data.yml
 on:
   schedule:
-    - cron: '17 */3 * * *'
+    - cron: '17 6 * * *'
   workflow_dispatch:
 
 permissions:

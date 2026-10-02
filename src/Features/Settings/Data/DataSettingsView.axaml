@@ -44,7 +44,7 @@
                             ToolTip.Tip="See what a download would fetch and about how long it takes"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Keep match data up to date"
-                                     Description="On startup, refresh it in the background when a newer patch is out or it's half a day old. Finished patches are never fetched again.">
+                                     Description="On startup, refresh it in the background when a newer patch is out or it's a day and a half old. Finished patches are never fetched again.">
                     <ToggleSwitch IsChecked="{Binding AutoUpdateMatchData}" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Check for a newer patch on startup"

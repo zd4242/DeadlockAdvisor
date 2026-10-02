@@ -34,14 +34,18 @@ public sealed record MatchSnapshot(long CheckedAt, IReadOnlyList<SnapshotPatch> 
     public const string ReleaseUrl = "https://github.com/zd4242/DeadlockAdvisor/releases/download/match-data";
     public const string ManifestUrl = $"{ReleaseUrl}/{ManifestFile}";
 
-    /// <summary>A snapshot the job hasn't brought up to date for this long is taken to have stopped: deadlock-api.com is asked instead.</summary>
-    public static readonly TimeSpan StaleAfter = TimeSpan.FromDays(2);
+    /// <summary>
+    /// A snapshot the job hasn't brought up to date for this long is taken to have stopped: deadlock-api.com
+    /// is asked instead. The job runs daily, so this allows for a few runs failing or being skipped.
+    /// </summary>
+    public static readonly TimeSpan StaleAfter = TimeSpan.FromDays(4);
 
     /// <summary>
-    /// How often the job fetches the current patch again, and how old the app's copy gets before an
-    /// update fetches the snapshot's newer one. A new or ended patch is fetched at the job's next run.
+    /// How old the current patch's counts get before the daily job fetches them again, so every other run,
+    /// and before an app's update takes the snapshot's newer ones. A new or ended patch is fetched at the
+    /// job's next run.
     /// </summary>
-    public static readonly TimeSpan RefreshAfter = TimeSpan.FromHours(12);
+    public static readonly TimeSpan RefreshAfter = TimeSpan.FromHours(36);
 
     public static string UrlOf(SnapshotPatch patch) => $"{ReleaseUrl}/{patch.File}";
 

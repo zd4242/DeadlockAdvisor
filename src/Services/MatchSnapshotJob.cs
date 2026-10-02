@@ -8,10 +8,11 @@ namespace DeadlockAdvisor.Services;
 
 /// <summary>
 /// What the scheduled job behind <see cref="MatchSnapshot"/> does on each run (tools/MatchSnapshot runs it):
-/// starts a data folder from the bundled seed, puts back the patches the last run published, syncs the
-/// heroes with the game, and fetches what's due with the rank groups, exactly as the app's own download
-/// would. A patch that's over and settled is never fetched again, the current one at most every
-/// <see cref="MatchSnapshot.RefreshAfter"/>, so most runs make one call to the patch list and nothing else.
+/// starts a data folder from the bundled seed, puts back the patches the last run published, and, when
+/// something is due, syncs the heroes with the game and fetches it with the rank groups, exactly as the
+/// app's own download would. A patch that's over and settled is never fetched again, the current one at
+/// most every <see cref="MatchSnapshot.RefreshAfter"/>, so a run with nothing due makes one call, for the
+/// patch list.
 /// </summary>
 public sealed class MatchSnapshotJob
 {
@@ -46,13 +47,15 @@ public sealed class MatchSnapshotJob
         Restore(restoreDir, dataDir);
         var store = DataStore.Load(dataDir);
 
-        var sync = await new GameApiService(_api).SyncAsync(store, cancellationToken);
-        _log.WriteLine($"Heroes: {MatchStatsService.Heroes(store).Count}. " + string.Join(" ", sync.Lines().Take(3)));
-
         var stats = new MatchStatsService(_api, _utcNow, _delay);
-        var plan = stats.Plan(store, await stats.PatchesAsync(cancellationToken), includeRanks: true);
+        var patches = await stats.PatchesAsync(cancellationToken);
+        var plan = stats.Plan(store, patches, includeRanks: true);
         if (plan.IsDue(store.MatchSegments, MatchSnapshot.RefreshAfter))
         {
+            // A hero added since the seed was published is asked about too.
+            var sync = await new GameApiService(_api).SyncAsync(store, cancellationToken);
+            _log.WriteLine($"Heroes: {MatchStatsService.Heroes(store).Count}. " + string.Join(" ", sync.Lines().Take(3)));
+            plan = stats.Plan(store, patches, includeRanks: true);
             foreach (var step in plan.Describe())
                 _log.WriteLine($"{step.Patch}: {step.Text}");
             _log.WriteLine($"Fetching: {plan.Calls} calls.");

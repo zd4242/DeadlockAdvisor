@@ -28,8 +28,8 @@ public sealed class MatchDownloadViewModel : ViewModelBase
     /// <summary>What "keep it up to date" does, for every place that offers it.</summary>
     public const string AutoUpdateInfo =
         "When the app starts, it checks for newer match data: one quick request.\n"
-        + "If a new patch is out, a patch has ended since your last download, or the current patch's data is half a day old\n"
-        + "(a few days when the shared download isn't available and it has to ask deadlock-api.com itself),\n"
+        + "If a new patch is out, a patch has ended since your last download, or the current patch's data is a day and a half old\n"
+        + "(three days when the shared download isn't available and it has to ask deadlock-api.com itself),\n"
         + "it downloads just what changed, in the background. Patches you already have in full are never downloaded again.\n"
         + "It never starts a first download, and if an update fails it quietly tries again next time.\n"
         + "You can turn it off any time in Settings → Data.";
