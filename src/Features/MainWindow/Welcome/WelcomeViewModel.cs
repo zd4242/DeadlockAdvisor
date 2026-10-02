@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
@@ -9,7 +10,8 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.MainWindow.Welcome;
 
 /// <param name="MatchData">The match data plan to download; null for none.</param>
-public sealed record WelcomeChoice(bool Art, MatchFetchPlan? MatchData, bool Ranks, bool KeepUpToDate);
+/// <param name="Ranks">The rank groups choice, for downloads from deadlock-api.com; the shared download always has them.</param>
+public sealed record WelcomeChoice(bool Art, MatchDownloadPlan? MatchData, bool Ranks, bool KeepUpToDate);
 
 /// <summary>
 /// A first run's offer, in one go: the art the pages show and Detect reads, and the match data the
@@ -20,19 +22,29 @@ public sealed class WelcomeViewModel : ViewModelBase
 {
     public const string ArtSize = "about 22 MB";
 
-    private readonly MatchFetchPlan? _everyMatch;
-    private readonly MatchFetchPlan? _withRanks;
+    private readonly MatchDownloadPlan? _everyMatch;
+    private readonly MatchDownloadPlan? _withRanks;
 
-    /// <param name="everyMatch">Null when the patch list couldn't be fetched, so there's no match data to offer.</param>
-    public WelcomeViewModel(IModalService modals, MatchFetchPlan? everyMatch, MatchFetchPlan? withRanks, MatchFetchEstimate estimate,
-        bool keepUpToDate, Action<WelcomeChoice> start)
+    /// <param name="shared">The shared download's plan, which comes with the rank groups; null when it isn't available.</param>
+    /// <param name="everyMatch">
+    /// Without <paramref name="shared"/>, the download from deadlock-api.com. Null when the patch list couldn't be
+    /// fetched either, so there's no match data to offer.
+    /// </param>
+    public WelcomeViewModel(IModalService modals, SnapshotPlan? shared, MatchFetchPlan? everyMatch, MatchFetchPlan? withRanks,
+        MatchFetchEstimate estimate, bool includeRanks, bool keepUpToDate, Action<WelcomeChoice> start)
     {
-        _everyMatch = everyMatch;
-        _withRanks = withRanks;
-        CanDownloadMatchData = everyMatch is not null && withRanks is not null;
+        _everyMatch = shared ?? (MatchDownloadPlan?)everyMatch;
+        _withRanks = shared ?? (MatchDownloadPlan?)withRanks;
+        IsShared = shared is not null;
+        CanDownloadMatchData = _everyMatch is not null && _withRanks is not null;
         MatchData = CanDownloadMatchData;
         KeepUpToDate = keepUpToDate;
-        if (everyMatch is not null && withRanks is not null)
+        if (shared is not null)
+        {
+            MatchDataDetail = $"{MatchDownloadViewModel.SharedTime} · {MatchFetchEstimate.DescribeBytes(shared.Bytes)} · with the rank groups";
+            Ranks = includeRanks;
+        }
+        else if (everyMatch is not null && withRanks is not null)
         {
             MatchDataDetail = $"{MatchFetchEstimate.DescribeTime(estimate.Time(everyMatch))} · {MatchFetchEstimate.DescribeBytes(estimate.Bytes(everyMatch))}";
             var extra = TimeSpan.FromTicks(estimate.Time(withRanks).Ticks - estimate.Time(everyMatch).Ticks);
@@ -40,7 +52,7 @@ public sealed class WelcomeViewModel : ViewModelBase
         }
 
         this.WhenAnyValue(vm => vm.MatchData)
-            .Where(on => !on)
+            .Where(on => !on && !IsShared)
             .Subscribe(_ => Ranks = false);
 
         StartCommand = ReactiveCommand.Create(() =>
@@ -62,7 +74,10 @@ public sealed class WelcomeViewModel : ViewModelBase
 
     public string ArtText => $"Hero portraits, item icons and the top-bar art Detect reads ({ArtSize})";
 
-    /// <summary>The patch list came back, so there's a plan to offer.</summary>
+    /// <summary>From the shared download: the rank groups come with it, so there's no choice about them.</summary>
+    public bool IsShared { get; }
+
+    /// <summary>The shared download or deadlock-api.com's patch list came back, so there's a plan to offer.</summary>
     public bool CanDownloadMatchData { get; }
 
     [Reactive] public bool MatchData { get; set; }
@@ -77,7 +92,7 @@ public sealed class WelcomeViewModel : ViewModelBase
 
     [Reactive] public bool KeepUpToDate { get; set; }
 
-    public string Offline => "deadlock-api.com didn't answer, so the match data waits: Data → Download Match Data… any time.";
+    public string Offline => "Neither the shared download nor deadlock-api.com answered, so the match data waits: Data → Download Match Data… any time.";
 
     public ReactiveCommand<Unit, Unit> StartCommand { get; }
     public ReactiveCommand<Unit, Unit> NotNowCommand { get; }

@@ -39,6 +39,7 @@ public partial class App : Application
         services.AddSingleton<IDeadlockApi, DeadlockApi>();
         services.AddSingleton<IGameApiService, GameApiService>();
         services.AddSingleton<IMatchStatsService, MatchStatsService>();
+        services.AddSingleton<IMatchSnapshotService, MatchSnapshotService>();
         services.AddSingleton<IArtDownloadService, ArtDownloadService>();
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();

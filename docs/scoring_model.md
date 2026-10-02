@@ -275,6 +275,26 @@ heroes (`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats that. The cal
 start at most one per 0.4 s, two at a time (`RequestPacer`), and a 429 holds every
 start back for 30 s.
 
+#### The shared download
+
+Usually none of that runs in the app. A scheduled GitHub Actions job
+(`.github/workflows/match-data.yml`, running `tools/MatchSnapshot`) makes the
+same calls with the same code (`MatchSnapshotJob`) and publishes the segments as
+assets of the repo's rolling `match-data` release: `manifest.json` and one
+gzipped segment per patch, named by its hash (`MatchSnapshot`). The job restores
+the last run's files, so it follows the same plan as an app would: a new or ended
+patch at the next run, every 3 hours, and the current patch again every 12 hours
+(`MatchSnapshot.RefreshAfter`), always with the rank groups.
+
+The app prefers it (`MatchSnapshotService`, `SnapshotPlan`): a patch is fetched
+when the snapshot's copy is new, has ended or settled since, brings rank groups
+the stored one lacks, or is simply fetched later. Counts the app holds newer than
+the snapshot's are kept, and a snapshot without a patch the app already has is
+behind, so it isn't used. Each file is checked against the manifest's size and
+SHA-256 before it's applied, through the same `IMatchStatsService.Apply` as an API
+download. The app asks `deadlock-api.com` itself only when the manifest can't be
+had or hasn't been updated for two days (`MatchSnapshot.StaleAfter`).
+
 ### Weighing the patches
 
 Right after a patch, the new patch has few matches and the old one many, but
@@ -477,12 +497,13 @@ afterwards (see "Tests and goldens" below).
    - **Overrides that no longer match the game**: remove or fix the entry in
      `_forceConditional`, `_forceShown`, `_selfInflicted`, `_forcePerStack` or
      `_assumedStacks`, or give an uncapped per-stack item a count.
-2. **Match data.** With updates on (`AppSettings.AutoUpdateMatchData`), the next
-   startup refreshes it in the background (`MatchFetchPlan.IsDue`): it fetches the
-   new patch and finishes the one before, and older patches are kept as they are.
-   It also refreshes the current patch once its counts are three days old.
-   **Data → Download Match Data…** does the same on demand. Updates never start a
-   first download, and a failed one says nothing.
+2. **Match data.** The shared download picks the new patch up within 3 hours.
+   With updates on (`AppSettings.AutoUpdateMatchData`), the next startup refreshes
+   it in the background (`MatchDownloadPlan.IsDue`): it fetches the new patch and
+   finishes the one before, and older patches are kept as they are. It also
+   refreshes the current patch once its counts are half a day old (three days when
+   it has to ask the API itself). **Data → Download Match Data…** does the same on
+   demand. Updates never start a first download, and a failed one says nothing.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 
 ## Model health report (`Scoring/ModelHealth.cs`)

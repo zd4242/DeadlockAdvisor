@@ -41,6 +41,9 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
 
     public List<string> Asked { get; } = [];
 
+    /// <summary>Answers to other URLs, such as the game's heroes and shop for a sync.</summary>
+    public Dictionary<string, Func<JsonNode>> Also { get; } = [];
+
     /// <summary>Throws what it returns for a URL instead of answering.</summary>
     public Func<string, Exception?>? FailWith { get; set; }
 
@@ -53,6 +56,7 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
             throw failure;
         JsonNode answer = url switch
         {
+            _ when Also.TryGetValue(url, out var also) => also(),
             MatchStatsService.Patches => new JsonArray(PatchTitles.Select(title => (JsonNode)new JsonObject { ["title"] = title }).ToArray()),
             MatchStatsService.Ranks => new JsonArray(
                 new[] { "Obscurus", "Initiate", "Seeker", "Acolyte", "Sentinel", "Mystic", "Ritualist", "Emissary", "Oracle", "Phantom", "Ascendant", "Eternus" }

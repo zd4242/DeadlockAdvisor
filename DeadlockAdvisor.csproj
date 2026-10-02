@@ -7,8 +7,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>src\Assets\app.ico</ApplicationIcon>
-    <!-- The test project lives beneath this one; keep its sources out of the app's default globs. -->
-    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**</DefaultItemExcludes>
+    <!-- The test and tool projects live beneath this one; keep their sources out of the app's default globs. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;tools\**</DefaultItemExcludes>
   </PropertyGroup>
 
   <ItemGroup>

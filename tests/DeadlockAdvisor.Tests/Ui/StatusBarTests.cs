@@ -145,6 +145,37 @@ public class StatusBarTests
     }
 
     [AvaloniaFact]
+    public async Task TheSharedDownloadsDialogHasNoChoiceToMake()
+    {
+        using var data = Support.Golden.CopyData();
+        var store = DataStore.Load(data.Path);
+        await SyntheticItemStatsApi.DownloadAsync(store);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
+        var fetched = DateTimeOffset.UtcNow.AddHours(-3).ToUnixTimeSeconds();
+        var entries = new List<SnapshotPatch>();
+        foreach (var segment in store.MatchSegments.Select(segment => segment.Ended ? segment : segment with { Until = fetched, FetchedAt = fetched }))
+        {
+            var (entry, gzipped) = MatchSnapshot.Pack(segment);
+            ui.Api.Bytes[MatchSnapshot.UrlOf(entry)] = gzipped;
+            entries.Add(entry);
+        }
+        ui.Api.Bytes[MatchSnapshot.ManifestUrl] = new MatchSnapshot(fetched, entries).ToJsonBytes();
+        ui.Show();
+
+        await ui.ViewModel.DataMenu.DownloadMatchDataCommand.Execute();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var dialog = modal.GetVisualDescendants().OfType<MatchDownloadView>().Single();
+        Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
+        var shown = dialog.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToList();
+        Assert.Contains("All matches + rank groups", shown);
+        Assert.DoesNotContain("All matches", shown);
+        Assert.Equal(2, shown.Count(text => text == "New: downloading it, with rank groups"));
+        ui.ScreenshotModal("match_download_shared.png");
+    }
+
+    [AvaloniaFact]
     public void AnOfflinePatchCheckLeavesTheStatusAlone()
     {
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);

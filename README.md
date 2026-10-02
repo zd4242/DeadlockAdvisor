@@ -21,10 +21,11 @@ else needs installing.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,
-both from `deadlock-api.com` and both downloading in the background. With
-the match data's "keep it up to date" on (the default, and in Settings →
-Data), later startups refresh it quietly when a newer patch is out or it's
-three days old. Settings live beside it in `settings.json`.
+both downloading in the background: the art from `deadlock-api.com`, the
+match data ready-made from this repo's [shared download](#shared-match-data).
+With the match data's "keep it up to date" on (the default, and in
+Settings → Data), later startups refresh it quietly when a newer patch is
+out or it's half a day old. Settings live beside it in `settings.json`.
 
 To build it yourself (.NET 10 SDK):
 
@@ -146,14 +147,15 @@ change when the data does.
 - **Download Match Data…**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
   of the score. A dialog first shows the patches stored, what the download
-  will fetch, and about how long it takes and how big it is: every match
-  (under a minute a patch), or with the rank groups too (about 3 minutes a
-  patch), which let the Match page lean the data toward a range of ranks.
-  A finished patch is never fetched again, so a refresh only asks for the
-  current patch. It runs in the background; click its chip in the status
-  bar for each phase, and each patch's numbers are in use as soon as its
-  phase is done. The status bar turns red when a newer patch is out than
-  the data covers.
+  will fetch, and about how long it takes and how big it is. It comes from
+  the [shared download](#shared-match-data) in a few seconds, with the
+  rank groups that let the Match page lean the data toward a range of
+  ranks. When that isn't available it asks `deadlock-api.com` directly:
+  every match (under a minute a patch), or with the rank groups too
+  (about 3 minutes a patch), with each phase behind its chip in the status
+  bar. Either way a finished patch is never fetched again, each patch's
+  numbers are in use as soon as they arrive, and the status bar turns red
+  when a newer patch is out than the data covers.
 - **Model Health Report**: simulates 2,000 random matches and lists items
   recommended whatever the heroes, items never recommended (and why),
   traits no hero is scored on, and where real match data disagrees with
@@ -161,6 +163,26 @@ change when the data does.
 - **Reload from Disk** (Ctrl+R), **Export Snapshot to Excel** (a read-only
   `deadlock_advisor_data.xlsx`, never read back), **Open / Change Data
   Folder**, **Download Art…**.
+
+## Shared match data
+
+Every install would otherwise make the same few hundred calls to
+`deadlock-api.com` for the same numbers. Instead, the **Match data**
+workflow (`.github/workflows/match-data.yml`) runs every 3 hours and
+publishes them as assets of this repo's rolling
+[`match-data`](../../releases/tag/match-data) pre-release: a
+`manifest.json` and one gzipped file per patch, about half a megabyte
+each. It runs `tools/MatchSnapshot`, which is the app's own download code
+(`MatchSnapshotJob`): it restores the last run's files, syncs the heroes,
+and fetches only what's due, so most runs make one call for the patch
+list. The current patch is fetched again every 12 hours, a new or ended
+patch at the next run, and a finished one never.
+
+The app reads the manifest, checks each file's size and SHA-256, and
+falls back to asking `deadlock-api.com` itself when the manifest can't be
+reached or hasn't been updated for two days. GitHub turns scheduled
+workflows off after 60 days without activity in the repo; re-enable it
+from the Actions tab, or run it by hand with `gh workflow run match-data`.
 
 ## How scoring works
 

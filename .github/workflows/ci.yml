@@ -22,4 +22,5 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Test
-        run: dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release --logger "console;verbosity=minimal"
+        # The solution, so the match data tool is built too.
+        run: dotnet test DeadlockAdvisor.sln -c Release --logger "console;verbosity=minimal"

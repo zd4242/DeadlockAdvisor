@@ -41,6 +41,7 @@ public class DataMenuViewModel : ViewModelBase
     private readonly IDataService _data;
     private readonly IGameApiService _gameApi;
     private readonly IMatchStatsService _matchStats;
+    private readonly IMatchSnapshotService _snapshots;
     private readonly IExcelExportService _excel;
     private readonly IArtDownloadService _artDownload;
     private readonly IArtService _art;
@@ -50,14 +51,14 @@ public class DataMenuViewModel : ViewModelBase
     private readonly IFilePickerService _filePicker;
     private readonly ILoggingService _log;
 
-    public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats,
+    public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
         IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log)
-        : this(data, gameApi, matchStats, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
+        : this(data, gameApi, matchStats, snapshots, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
     {
     }
 
-    internal DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats,
+    internal DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
         IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log,
         IScheduler clock)
@@ -67,6 +68,7 @@ public class DataMenuViewModel : ViewModelBase
         _data = data;
         _gameApi = gameApi;
         _matchStats = matchStats;
+        _snapshots = snapshots;
         _excel = excel;
         _artDownload = artDownload;
         _art = art;
@@ -155,21 +157,29 @@ public class DataMenuViewModel : ViewModelBase
     /// <summary>Download what art is missing or changed, in the background: what Detect asks for when it has nothing to match.</summary>
     public void DownloadArt() => Launch(() => DownloadArtAsync(force: false));
 
-    /// <summary>The first run's dialog: art and match data, each with what it costs. Offline, it offers the art alone.</summary>
+    /// <summary>
+    /// The first run's dialog: art and match data, each with what it costs. The match data comes from the
+    /// shared download, else deadlock-api.com; offline, it offers the art alone.
+    /// </summary>
     private async Task OfferWelcomeAsync()
     {
+        var shared = await _snapshots.PlanAsync(_data.Store);
         MatchFetchPlan? everyMatch = null;
         MatchFetchPlan? withRanks = null;
-        try
+        if (shared is null)
         {
-            var patches = await _matchStats.PatchesAsync();
-            everyMatch = _matchStats.Plan(_data.Store, patches, includeRanks: false);
-            withRanks = _matchStats.Plan(_data.Store, patches, includeRanks: true);
+            try
+            {
+                var patches = await _matchStats.PatchesAsync();
+                everyMatch = _matchStats.Plan(_data.Store, patches, includeRanks: false);
+                withRanks = _matchStats.Plan(_data.Store, patches, includeRanks: true);
+            }
+            catch (Exception ex) when (IsNetworkFailure(ex))
+            {
+            }
         }
-        catch (Exception ex) when (IsNetworkFailure(ex))
-        {
-        }
-        _modals.ShowModal(new WelcomeViewModel(_modals, everyMatch, withRanks, Estimate, _settings.Current.AutoUpdateMatchData, choice =>
+        _modals.ShowModal(new WelcomeViewModel(_modals, shared, everyMatch, withRanks, Estimate, _settings.Current.MatchDataIncludeRanks,
+            _settings.Current.AutoUpdateMatchData, choice =>
         {
             _settings.Update(s =>
             {
@@ -184,9 +194,10 @@ public class DataMenuViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// With match data and updates on: one call to /v1/patches, which says whether a newer patch is out,
-    /// and a quiet refresh when one is due (<see cref="MatchFetchPlan.IsDue"/>). A check that fails says
-    /// nothing: it isn't worth interrupting anyone over. Without, just the newer-patch check, if that's on.
+    /// With match data and updates on: the shared download's manifest, or failing that one call to
+    /// /v1/patches, either of which says whether a newer patch is out, and a quiet refresh when one is due
+    /// (<see cref="MatchDownloadPlan.IsDue"/>). A check that fails says nothing: it isn't worth interrupting
+    /// anyone over. Without, just the newer-patch check, if that's on.
     /// </summary>
     private async Task CheckMatchDataAsync()
     {
@@ -194,6 +205,13 @@ public class DataMenuViewModel : ViewModelBase
         if (!_settings.Current.AutoUpdateMatchData || store.MatchSegments.Count == 0)
         {
             CheckForNewerPatch();
+            return;
+        }
+        if (await _snapshots.PlanAsync(store) is { } shared)
+        {
+            NewerPatch = MatchStatsMath.NewerPatch(store.MatchMeta, shared.Keep);
+            if (shared.IsDue(store.MatchSegments))
+                await DownloadMatchDataAsync(shared, quiet: true);
             return;
         }
         IReadOnlyList<Patch> patches;
@@ -316,12 +334,19 @@ public class DataMenuViewModel : ViewModelBase
     public void OfferRankDownload() => Launch(() => OfferMatchDownloadAsync(includeRanks: true));
 
     /// <summary>
-    /// The download dialog: what's stored, what a download would fetch with and without the rank groups,
-    /// and about how long each takes. Needs the patch list first, one quick call.
+    /// The download dialog: what's stored, what a download would fetch, and about how long it takes. From
+    /// the shared download when it's available, with the rank groups; otherwise from deadlock-api.com, with
+    /// and without them, which needs the patch list first, one quick call.
     /// </summary>
-    /// <param name="includeRanks">Which choice it starts on.</param>
+    /// <param name="includeRanks">Which choice it starts on, for a download from deadlock-api.com.</param>
     internal async Task OfferMatchDownloadAsync(bool includeRanks)
     {
+        if (await _snapshots.PlanAsync(_data.Store) is { } shared)
+        {
+            _modals.ShowModal(new MatchDownloadViewModel(_modals, _data.Store.MatchSegments, shared, includeRanks,
+                _settings.Current.AutoUpdateMatchData, StartMatchDownload));
+            return;
+        }
         IReadOnlyList<Patch> patches;
         try
         {
@@ -335,28 +360,32 @@ public class DataMenuViewModel : ViewModelBase
         var store = _data.Store;
         _modals.ShowModal(new MatchDownloadViewModel(_modals, store.MatchSegments,
             _matchStats.Plan(store, patches, includeRanks: false), _matchStats.Plan(store, patches, includeRanks: true),
-            Estimate, includeRanks, _settings.Current.AutoUpdateMatchData, choice =>
-            {
-                _settings.Update(s =>
-                {
-                    s.MatchDataIncludeRanks = choice.Ranks;
-                    s.AutoUpdateMatchData = choice.KeepUpToDate;
-                });
-                Launch(() => DownloadMatchDataAsync(choice.Plan));
-            }));
+            Estimate, includeRanks, _settings.Current.AutoUpdateMatchData, StartMatchDownload));
+    }
+
+    private void StartMatchDownload(MatchDownloadChoice choice)
+    {
+        _settings.Update(s =>
+        {
+            s.MatchDataIncludeRanks = choice.Ranks;
+            s.AutoUpdateMatchData = choice.KeepUpToDate;
+        });
+        Launch(() => DownloadMatchDataAsync(choice.Plan));
     }
 
     /// <summary>
-    /// A few minutes of calls, so it runs in the background, with its phases behind the chip. Each phase's
-    /// counts are put to use as they arrive, so stopping part-way keeps what's finished.
+    /// In the background: seconds from the shared download, a few minutes of calls from deadlock-api.com, with
+    /// its phases behind the chip. Each patch's counts are put to use as they arrive, so stopping part-way
+    /// keeps what's finished.
     /// </summary>
     /// <param name="quiet">An update nobody asked for: a failure goes without a word.</param>
-    internal async Task DownloadMatchDataAsync(MatchFetchPlan plan, bool quiet = false)
+    internal async Task DownloadMatchDataAsync(MatchDownloadPlan plan, bool quiet = false)
     {
         if (IsDownloadingMatchData)
             return;
         _data.FlushSaves();
-        var details = new MatchDownloadProgressViewModel(plan);
+        var details = plan is MatchFetchPlan calls ? new MatchDownloadProgressViewModel(calls) : null;
+        var source = plan is SnapshotPlan ? "the shared download" : "deadlock-api.com";
         var job = new BackgroundJobViewModel("Match data", _clock, cancel => _modals.Confirm(
             "Stop downloading match data? What has finished is kept and already in use; the rest stays as it was.",
             "Stop", cancel, cancelText: "Keep going")) { Details = details };
@@ -368,8 +397,13 @@ public class DataMenuViewModel : ViewModelBase
             var started = _clock.Now;
             var done = await RunInBackgroundAsync(job, async () =>
                 {
-                    await _matchStats.FetchAsync(_data.Store, plan, new BothProgress(details, job),
-                        segment => applied = ApplySegment(segment, plan), job.Token);
+                    void Finished(MatchSegment segment) => applied = ApplySegment(segment, plan);
+                    await (plan switch
+                    {
+                        SnapshotPlan shared => _snapshots.FetchAsync(shared, job, Finished, job.Token),
+                        MatchFetchPlan calls => _matchStats.FetchAsync(_data.Store, calls, new BothProgress(details!, job), Finished, job.Token),
+                        _ => throw new ArgumentOutOfRangeException(nameof(plan)),
+                    });
                     return plan;
                 },
                 failure =>
@@ -379,18 +413,21 @@ public class DataMenuViewModel : ViewModelBase
                     else
                         Failed(job, "Match data download failed", failure is IOException or UnauthorizedAccessException
                             ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
-                            : ["Couldn't download match data from deadlock-api.com:", "", failure.Message, "", Kept()]);
+                            : [$"Couldn't download match data from {source}:", "", failure.Message, "", Kept()]);
                 },
                 () => $"Stopped downloading match data. {Kept()}");
             if (done is null)
                 return;
 
-            var learned = Estimate.Learn(details.Done, _clock.Now - started, details.Bytes);
-            _settings.Update(s =>
+            if (details is not null)
             {
-                s.MatchFetchSecondsPerCall = learned.SecondsPerCall;
-                s.MatchFetchBytesPerCall = learned.BytesPerCall;
-            });
+                var learned = Estimate.Learn(details.Done, _clock.Now - started, details.Bytes);
+                _settings.Update(s =>
+                {
+                    s.MatchFetchSecondsPerCall = learned.SecondsPerCall;
+                    s.MatchFetchBytesPerCall = learned.BytesPerCall;
+                });
+            }
             var lines = applied?.Lines() ?? ["Every patch's counts were already complete: nothing to download."];
             lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
             lines.Add(plan.IncludesRanks || MatchStatsMath.RanksOf(_data.Store.MatchSegments).Count > 0
@@ -405,7 +442,7 @@ public class DataMenuViewModel : ViewModelBase
         }
     }
 
-    private FetchResult ApplySegment(MatchSegment segment, MatchFetchPlan plan)
+    private FetchResult ApplySegment(MatchSegment segment, MatchDownloadPlan plan)
     {
         var result = _matchStats.Apply(_data.Store, segment, plan.Keep);
         NewerPatch = null;
@@ -556,9 +593,12 @@ public class DataMenuViewModel : ViewModelBase
         }
     }
 
-    /// <summary>What the API calls throw when the site is down, slow or answering nonsense, or the answer has no patch dates.</summary>
+    /// <summary>
+    /// What the downloads throw when the site is down, slow or answering nonsense, the answer has no patch
+    /// dates, or a shared file didn't arrive intact.
+    /// </summary>
     private static bool IsNetworkFailure(Exception ex) =>
-        ex is HttpRequestException or TimeoutException or JsonException or InvalidOperationException;
+        ex is HttpRequestException or TimeoutException or JsonException or InvalidOperationException or InvalidDataException or FormatException;
 
     // -- art ------------------------------------------------------------------------
 

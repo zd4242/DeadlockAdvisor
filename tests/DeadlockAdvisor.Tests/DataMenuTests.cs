@@ -44,10 +44,12 @@ public sealed class DataMenuTests : IDisposable
         _menu = Menu();
     }
 
-    private DataMenuViewModel Menu(IMatchStatsService? matchStats = null, IArtDownloadService? artDownload = null)
+    private DataMenuViewModel Menu(IMatchStatsService? matchStats = null, IArtDownloadService? artDownload = null,
+        IMatchSnapshotService? snapshots = null)
     {
         var gameApi = new GameApiService(_api);
-        return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api), new ExcelExportService(),
+        return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api),
+            snapshots ?? new MatchSnapshotService(_api), new ExcelExportService(),
             artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
             _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _fixture.Clock);
     }
@@ -355,7 +357,8 @@ public sealed class DataMenuTests : IDisposable
         menu.OnStartup();
 
         Assert.Empty(menu.Jobs);
-        Assert.Equal([MatchStatsService.Patches], _api.Asked);
+        // The shared download can't be had here, so it's deadlock-api.com's patch list.
+        Assert.Equal([MatchSnapshot.ManifestUrl, MatchStatsService.Patches], _api.Asked);
     }
 
     [Fact]
@@ -499,5 +502,126 @@ public sealed class DataMenuTests : IDisposable
         Assert.Null(_menu.NewerPatch);
         Assert.Empty(_shown);
         Assert.Contains(MatchStatsService.Patches, _api.Asked);
+    }
+
+    // -- the shared download --------------------------------------------------------
+
+    /// <summary>Both of the synthetic API's patches with their rank groups, as a download brings them back.</summary>
+    private static readonly Lazy<Task<IReadOnlyList<MatchSegment>>> _sharedSegments = new(async () =>
+    {
+        using var data = CopyData();
+        var store = DataStore.Load(data.Path);
+        await SyntheticItemStatsApi.DownloadAsync(store);
+        return store.MatchSegments;
+    });
+
+    /// <summary>Those patches, the current one fetched <paramref name="fetched"/>.</summary>
+    private static async Task<List<MatchSegment>> SegmentsAsync(DateTimeOffset fetched) =>
+        (await _sharedSegments.Value)
+        .Select(segment => segment.Ended ? segment : segment with { Until = fetched.ToUnixTimeSeconds(), FetchedAt = fetched.ToUnixTimeSeconds() })
+        .ToList();
+
+    /// <summary>The shared download serving those patches, last brought up to date <paramref name="checkedAt"/>.</summary>
+    private async Task<MatchSnapshot> ServeSnapshotAsync(DateTimeOffset fetched, DateTimeOffset checkedAt)
+    {
+        var entries = new List<SnapshotPatch>();
+        foreach (var segment in await SegmentsAsync(fetched))
+        {
+            var (entry, gzipped) = MatchSnapshot.Pack(segment);
+            _api.Bytes[MatchSnapshot.UrlOf(entry)] = gzipped;
+            entries.Add(entry);
+        }
+        var snapshot = new MatchSnapshot(checkedAt.ToUnixTimeSeconds(), entries);
+        _api.Bytes[MatchSnapshot.ManifestUrl] = snapshot.ToJsonBytes();
+        return snapshot;
+    }
+
+    private DataMenuViewModel SharedMenu(DateTimeOffset now) => Menu(snapshots: new MatchSnapshotService(_api, () => now));
+
+    [Fact]
+    public async Task TheSharedDownloadIsOfferedWhenItsThereAndBringsEveryPatchWithItsRankGroups()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        using var menu = SharedMenu(now);
+
+        await menu.DownloadMatchDataCommand.Execute();
+
+        var dialog = Assert.IsType<MatchDownloadViewModel>(_shown[^1]);
+        Assert.True(dialog.IsShared);
+        Assert.Equal(["New: downloading it, with rank groups", "New: downloading it, with rank groups"], dialog.Steps.Select(step => step.Text));
+        Assert.StartsWith("a few seconds · ", dialog.SharedDetail);
+        Assert.Contains("last fetched from deadlock-api.com 1h ago", dialog.Intro);
+        await dialog.DownloadCommand.Execute();
+
+        var store = _fixture.Data.Store;
+        Assert.Equal(2, store.MatchSegments.Count);
+        Assert.All(store.MatchSegments, segment => Assert.True(segment.HasRanks));
+        Assert.NotEmpty(store.MatchLift);
+        Assert.False(Assert.Single(menu.Jobs).HasFailed);
+        Assert.Null(Assert.Single(menu.Jobs).Details);
+        Assert.DoesNotContain(_api.Asked, url => url.StartsWith("https://api.deadlock-api.com", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public async Task UpdatesComeFromTheSharedDownloadOnceTheCurrentPatchIsHalfADayOld()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        var snapshot = await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var store = _fixture.Data.Store;
+        foreach (var segment in await SegmentsAsync(now.AddHours(-13)))
+            store.PutMatchSegment(segment);
+        using var menu = SharedMenu(now);
+
+        menu.OnStartup();
+
+        // The patch before is complete, so only the current one is fetched.
+        Assert.Equal([MatchSnapshot.ManifestUrl, MatchSnapshot.UrlOf(snapshot.Patches[0])], _api.Asked);
+        Assert.Equal(snapshot.Patches[0].FetchedAt, store.MatchSegments[0].FetchedAt);
+        Assert.Empty(_shown);
+    }
+
+    [Fact]
+    public async Task FreshDataIsLeftAloneAndAStaleSharedDownloadFallsBackToTheApi()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        foreach (var segment in await SegmentsAsync(now.AddHours(-2)))
+            _fixture.Data.Store.PutMatchSegment(segment);
+        using var menu = SharedMenu(now);
+
+        menu.OnStartup();
+
+        Assert.Equal([MatchSnapshot.ManifestUrl], _api.Asked);
+        Assert.Empty(menu.Jobs);
+
+        // A snapshot the job hasn't touched in days has stopped: deadlock-api.com is asked instead.
+        _api.Asked.Clear();
+        await ServeSnapshotAsync(now.AddDays(-3), now.AddDays(-3));
+        using var later = SharedMenu(now);
+        later.OnStartup();
+
+        Assert.Equal([MatchSnapshot.ManifestUrl, MatchStatsService.Patches], _api.Asked);
+    }
+
+    [Fact]
+    public async Task ADamagedSharedFileFailsAndLeavesTheDataAsItWas()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        var snapshot = await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _api.Bytes[MatchSnapshot.UrlOf(snapshot.Patches[0])] = [1, 2, 3];
+        using var menu = SharedMenu(now);
+        var plan = await new MatchSnapshotService(_api, () => now).PlanAsync(_fixture.Data.Store);
+
+        await menu.DownloadMatchDataAsync(plan!);
+
+        var job = Assert.Single(menu.Jobs);
+        Assert.True(job.HasFailed);
+        Assert.Empty(_fixture.Data.Store.MatchSegments);
+        await job.OpenCommand.Execute();
+        Assert.Contains("Couldn't download match data from the shared download:", LastMessage().Body);
+        Assert.Contains("didn't arrive intact", LastMessage().Body);
     }
 }

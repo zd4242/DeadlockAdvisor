@@ -22,7 +22,7 @@
                     <TextBlock Classes="faint" Text="{Binding MatchDataDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
                 </StackPanel>
             </CheckBox>
-            <CheckBox Margin="28,0,0,0" IsChecked="{Binding Ranks}" IsEnabled="{Binding MatchData}">
+            <CheckBox Margin="28,0,0,0" IsChecked="{Binding Ranks}" IsEnabled="{Binding MatchData}" IsVisible="{Binding !IsShared}">
                 <StackPanel Spacing="2">
                     <TextBlock TextWrapping="Wrap" Text="With the rank groups, to lean the numbers toward the ranks you play"/>
                     <TextBlock Classes="faint" Text="{Binding RanksDetail}" IsVisible="{Binding CanDownloadMatchData}"/>

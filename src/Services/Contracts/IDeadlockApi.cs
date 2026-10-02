@@ -4,8 +4,9 @@ using System.Threading;
 namespace DeadlockAdvisor.Services.Contracts;
 
 /// <summary>
-/// HTTP to the community API at deadlock-api.com. Failures throw: <see cref="System.Net.Http.HttpRequestException"/>
-/// (with a status code for an HTTP error), <see cref="TimeoutException"/>, or a JSON parse error.
+/// HTTP to the community API at deadlock-api.com, and to GitHub for the shared match data. Failures throw:
+/// <see cref="System.Net.Http.HttpRequestException"/> (with a status code for an HTTP error), <see cref="TimeoutException"/>,
+/// or a JSON parse error.
 /// </summary>
 public interface IDeadlockApi
 {

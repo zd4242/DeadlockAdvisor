@@ -69,15 +69,20 @@
         <StackPanel Spacing="8">
             <StackPanel Orientation="Horizontal" Spacing="6">
                 <TextBlock Classes="section" VerticalAlignment="Center" Text="WHAT TO DOWNLOAD"/>
-                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.RanksInfo}"/>
+                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.RanksInfo}"
+                                    IsVisible="{Binding !IsShared}"/>
             </StackPanel>
-            <RadioButton GroupName="MatchDownload" IsChecked="{Binding EveryMatchOnly}">
+            <StackPanel Margin="16,0,0,0" Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsShared}">
+                <TextBlock Text="All matches + rank groups"/>
+                <TextBlock Classes="faint" Text="{Binding SharedDetail}"/>
+            </StackPanel>
+            <RadioButton GroupName="MatchDownload" IsChecked="{Binding EveryMatchOnly}" IsVisible="{Binding !IsShared}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <TextBlock Text="All matches"/>
                     <TextBlock Classes="faint" Text="{Binding EveryMatchDetail}"/>
                 </StackPanel>
             </RadioButton>
-            <RadioButton GroupName="MatchDownload" IsChecked="{Binding IncludeRanks}">
+            <RadioButton GroupName="MatchDownload" IsChecked="{Binding IncludeRanks}" IsVisible="{Binding !IsShared}">
                 <StackPanel Spacing="2">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <TextBlock Text="All matches + rank groups"/>

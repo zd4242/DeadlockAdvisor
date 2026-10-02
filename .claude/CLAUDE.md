@@ -8,6 +8,9 @@ Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_ru
 - Every property the tooltip shows under a scored stat's label must be an alias in `GameSync.Stats` or listed, with a reason, in `GameSync.Unscored`. `GameApiTests.TheSnapshotShopHasNoUnmappedStatsOrStaleOverrides` enforces this.
 - After a deliberate scoring or sync change, regenerate the goldens with `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter ...` and review the diff. Use Data → Model Health Report (`Scoring/ModelHealth.cs`) to check the effect on the whole model.
 
+# Shared match data
+A scheduled workflow (`.github/workflows/match-data.yml`) runs `tools/MatchSnapshot`, which runs the app's own download code (`MatchSnapshotJob`), and publishes the match counts as `match-data` release assets that every install downloads (`MatchSnapshotService`). Released apps read those files, so a change to what they hold (`MatchSegment`'s JSON, the manifest) must bump `MatchSegment.Version` or `MatchSnapshot.Version`. An app that reads an unknown version falls back to deadlock-api.com.
+
 # Detection model
 Read `docs/detection_model.md` before touching `src/Vision`, the detect flow (`Features/Match/Detect`) or the art download. The rules to follow:
 - Every portrait is cut from the hero's card at `TopbarDerivation.InGameFrame`, so it sits in the slot's box, and the final read only looks there. Don't widen that search to rescue one hero: fix the art or the grid.

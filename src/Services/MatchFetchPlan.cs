@@ -28,7 +28,47 @@ public enum FetchReason
 
 /// <summary>What a download does to one patch, for the dialog before it.</summary>
 /// <param name="Downloads">Whether anything of the patch is fetched; false when it's already up to date.</param>
-public sealed record PlanStep(string Patch, string Text, bool Downloads);
+public sealed record PlanStep(string Patch, string Text, bool Downloads)
+{
+    /// <param name="reason">Null when the patch is already up to date.</param>
+    /// <param name="withRanks">The patch comes with its rank groups.</param>
+    public static PlanStep For(Patch patch, FetchReason? reason, bool withRanks)
+    {
+        var ranks = withRanks ? ", with rank groups" : "";
+        var text = reason switch
+        {
+            FetchReason.New => $"New: downloading it{ranks}",
+            FetchReason.Refresh => $"Still going: downloading its latest matches{ranks}",
+            FetchReason.Finish => $"Ended since your last download: downloading its last matches{ranks}",
+            FetchReason.AddRanks => "Up to date: adding just its rank groups",
+            _ => "Up to date: skipped",
+        };
+        return new PlanStep($"Patch {patch.Label}", text, reason is not null);
+    }
+}
+
+/// <summary>
+/// What a match data download would do, whichever way it comes: from deadlock-api.com
+/// (<see cref="MatchFetchPlan"/>) or ready-made from the shared snapshot (<see cref="SnapshotPlan"/>).
+/// </summary>
+/// <param name="Now">Unix seconds, when the plan was made.</param>
+/// <param name="Keep">The patches the match data covers once it's done, newest first; any other patch's counts are dropped.</param>
+public abstract record MatchDownloadPlan(long Now, IReadOnlyList<Patch> Keep)
+{
+    /// <summary>Anything to download at all.</summary>
+    public abstract bool HasWork { get; }
+
+    public abstract bool IncludesRanks { get; }
+
+    /// <summary>Worth downloading without being asked, when updates are on.</summary>
+    public abstract bool IsDue(IReadOnlyList<MatchSegment> stored);
+
+    /// <summary>What happens to each patch kept, newest first, in plain words.</summary>
+    public abstract List<PlanStep> Describe();
+
+    /// <summary>About how much the kept patches' counts take on disk once this is done.</summary>
+    public abstract long DiskBytes(IReadOnlyList<MatchSegment> stored);
+}
 
 /// <summary>One step of a download: one part of one patch's matches, over one window.</summary>
 /// <param name="Until">Unix seconds, inclusive.</param>
@@ -49,8 +89,7 @@ public sealed record FetchPhase(FetchPart Part, Patch Patch, long From, long Unt
 /// a minute; the rank groups, five times the calls, follow.
 /// </summary>
 /// <param name="Now">Unix seconds: when the windows that are still open end.</param>
-/// <param name="Keep">The patches the match data covers, newest first; any other patch's counts are dropped.</param>
-public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOnlyList<FetchPhase> Phases)
+public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOnlyList<FetchPhase> Phases) : MatchDownloadPlan(Now, Keep)
 {
     /// <summary>Under this many days in the current and the previous patch together, the patch before them is kept too.</summary>
     public const int MinHistoryDays = 14;
@@ -67,36 +106,31 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
     /// <summary>The /item-stats calls the whole download takes.</summary>
     public int Calls => Phases.Sum(phase => phase.Calls);
 
+    public override bool HasWork => Calls > 0;
+
     /// <summary>
-    /// Worth fetching without being asked: a patch that's new or has ended since its counts were fetched,
-    /// rank groups wanted and missing, or the current patch's counts older than <see cref="RefreshAfter"/>.
+    /// A patch that's new or has ended since its counts were fetched, rank groups wanted and missing, or
+    /// the current patch's counts older than <see cref="RefreshAfter"/>.
     /// </summary>
-    public bool IsDue(IReadOnlyList<MatchSegment> stored) =>
+    public override bool IsDue(IReadOnlyList<MatchSegment> stored) => IsDue(stored, RefreshAfter);
+
+    /// <summary>As <see cref="IsDue(IReadOnlyList{MatchSegment})"/>, refreshing the current patch after <paramref name="refreshAfter"/>.</summary>
+    public bool IsDue(IReadOnlyList<MatchSegment> stored, TimeSpan refreshAfter) =>
         Phases.Any(phase => phase.Reason is FetchReason.New or FetchReason.Finish or FetchReason.AddRanks
                             || stored.FirstOrDefault(segment => segment.Patch.Start == phase.Patch.Start) is { } segment
-                            && Now - segment.FetchedAt >= RefreshAfter.TotalSeconds);
+                            && Now - segment.FetchedAt >= refreshAfter.TotalSeconds);
 
-    public bool IncludesRanks => Phases.Any(phase => phase.Part == FetchPart.Ranks);
+    public override bool IncludesRanks => Phases.Any(phase => phase.Part == FetchPart.Ranks);
 
-    /// <summary>What happens to each patch kept, newest first, in plain words.</summary>
-    public List<PlanStep> Describe() =>
+    public override List<PlanStep> Describe() =>
         Keep.Select(patch =>
         {
             var everyMatch = Phases.FirstOrDefault(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.EveryMatch);
             var ranks = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.Ranks);
-            var withRanks = ranks ? ", with rank groups" : "";
-            var text = everyMatch?.Reason switch
-            {
-                FetchReason.New => $"New: downloading it{withRanks}",
-                FetchReason.Refresh => $"Still going: downloading its latest matches{withRanks}",
-                FetchReason.Finish => $"Ended since your last download: downloading its last matches{withRanks}",
-                _ => ranks ? "Up to date: adding just its rank groups" : "Up to date: skipped",
-            };
-            return new PlanStep($"Patch {patch.Label}", text, everyMatch is not null || ranks);
+            return PlanStep.For(patch, everyMatch?.Reason ?? (ranks ? FetchReason.AddRanks : null), ranks);
         }).ToList();
 
-    /// <summary>About how much the kept patches' counts take on disk once this is done.</summary>
-    public long DiskBytes(IReadOnlyList<MatchSegment> stored) =>
+    public override long DiskBytes(IReadOnlyList<MatchSegment> stored) =>
         Keep.Sum(patch =>
         {
             var refreshed = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.EveryMatch);
