@@ -11,6 +11,9 @@ Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_ru
 # Shared match data
 A scheduled workflow (`.github/workflows/match-data.yml`) runs `tools/MatchSnapshot`, which runs the app's own download code (`MatchSnapshotJob`), and publishes the match counts as `match-data` release assets that every install downloads (`MatchSnapshotService`). Released apps read those files, so a change to what they hold (`MatchSegment`'s JSON, the manifest) must bump `MatchSegment.Version` or `MatchSnapshot.Version`. An app that reads an unknown version falls back to deadlock-api.com.
 
+# Formula updates
+`src/Assets/SeedData` is the published model: new installs start from it, and existing ones update from `main` on GitHub (`ModelUpdateService`). Its `model.json` lists each file's hash, and `ModelUpdateTests.TheSeedsModelJsonListsEveryModelFileByItsHash` fails until it's regenerated with `-e DEADLOCK_UPDATE_GOLDENS=1`. Pushing a changed seed publishes it to every install, so change it only when the user means to publish. A change older apps can't read, such as a new column, bumps `ModelManifest.CurrentFormat`.
+
 # Detection model
 Read `docs/detection_model.md` before touching `src/Vision`, the detect flow (`Features/Match/Detect`) or the art download. The rules to follow:
 - Every portrait is cut from the hero's card at `TopbarDerivation.InGameFrame`, so it sits in the slot's box, and the final read only looks there. Don't widen that search to rescue one hero: fix the art or the grid.

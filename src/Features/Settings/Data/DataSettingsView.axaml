@@ -44,12 +44,22 @@
                             ToolTip.Tip="See what a download would fetch and about how long it takes"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Keep match data up to date"
-                                     Description="On startup, refresh it in the background when a newer patch is out or it's three days old. Finished patches are never fetched again.">
+                                     Description="On startup, refresh it in the background when a newer patch is out or it's half a day old. Finished patches are never fetched again.">
                     <ToggleSwitch IsChecked="{Binding AutoUpdateMatchData}" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Check for a newer patch on startup"
                                      Description="With updates off, ask deadlock-api.com whether a patch is out that your match data predates, and say so in the status bar.">
                     <ToggleSwitch IsChecked="{Binding CheckForNewerPatch}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="FORMULAS"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Keep the hero ratings and item formulas up to date"
+                                     Description="On startup, take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks.">
+                    <ToggleSwitch IsChecked="{Binding AutoUpdateModel}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

@@ -126,6 +126,7 @@ Nothing locks the files, so don't edit them from two places at once.
 | `item_stats.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
 | `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
 | `match_counts/<patch date>.json` | | **generated** by Download Match Data: one patch's raw totals, every match and per rank; no backups |
+| `model.json` | | which published version of the model each file came from ([formula updates](#formula-updates)) |
 
 The CSVs are the source of truth and stay hand-editable. Every write
 keeps a timestamped copy of the previous file under `data/.backups/`
@@ -156,6 +157,9 @@ change when the data does.
   bar. Either way a finished patch is never fetched again, each patch's
   numbers are in use as soon as they arrive, and the status bar turns red
   when a newer patch is out than the data covers.
+- **Check for Formula Updates**: takes the newest published hero ratings
+  and item formulas ([formula updates](#formula-updates)), asking again
+  about files you kept your own changes in.
 - **Model Health Report**: simulates 2,000 random matches and lists items
   recommended whatever the heroes, items never recommended (and why),
   traits no hero is scored on, and where real match data disagrees with
@@ -163,6 +167,28 @@ change when the data does.
 - **Reload from Disk** (Ctrl+R), **Export Snapshot to Excel** (a read-only
   `deadlock_advisor_data.xlsx`, never read back), **Open / Change Data
   Folder**, **Download Art…**.
+
+## Formula updates
+
+The hero ratings, item formulas and the game data they're tuned against
+(everything in `src/Assets/SeedData` but the match lift) are the **model**.
+A new install starts from the copy built into the app, and later startups
+take the newest one published on this repo's `main` branch (Settings →
+Data turns that off; **Data → Check for Formula Updates** checks on
+demand). `model.json` lists each file's SHA-256, and a copy in the data
+folder records what was installed there, so the app can tell a file that's
+only out of date from one you've changed, by hand or with Sync from Game
+API. Files you haven't changed are replaced quietly, with the old ones
+kept in `data/.backups/`; for files you have changed, a dialog asks which
+to replace, and one you keep isn't asked about again for that version.
+
+To publish a new version of the model: copy the files from your data
+folder into `src/Assets/SeedData`, regenerate `model.json` with
+`dotnet test -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter
+"FullyQualifiedName~TheSeedsModelJsonListsEveryModelFileByItsHash"`, run
+the tests, commit and push. Installs pick it up at their next startup. A
+change older apps can't read, such as a new column, bumps
+`ModelManifest.CurrentFormat`, so only apps that know it take that version.
 
 ## Shared match data
 

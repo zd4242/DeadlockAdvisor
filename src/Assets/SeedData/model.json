@@ -1,0 +1,15 @@
+{
+  "format": 1,
+  "published": "2026-10-02",
+  "files": {
+    "categories.csv": "aef80c3bc7e4bbceaed46d5d5a48a6dca3914e2378409aba114ca14e5ae7a455",
+    "hero_category_scores.csv": "8adefe4b40df376c6fd3046046fdc6ce32e0080beabfdb44c4c96db14ab2780a",
+    "item_formula_coefficients.csv": "09909de29e51c6c6ea16bf6d300200e3426af42a5512bd8cf5572cd64acf531d",
+    "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
+    "stat_rules.csv": "8f2159dc6eca2483e381ad4794f9b1f2c4f4d820f008f88b92bd16ff4247b36e",
+    "heroes.csv": "b78c096a285b21aec60f00f6f4c0af693b83a3729441d8a7c1065576614c52b5",
+    "items.csv": "3e950d20b89efbc1a8ec2f2eec17219d9cf03dcf272d840c2b0b1b4c7b070f0f",
+    "item_stats.csv": "14046dc5e5a2fa133393d36750df8ee36b6edb2abcb912765116ad45ca15a2fe",
+    "item_tooltips.json": "d5a870c7665019a69b959878ea1785c15380c686bfeac6854652ed212adbb88c"
+  }
+}

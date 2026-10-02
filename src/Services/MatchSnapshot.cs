@@ -50,7 +50,7 @@ public sealed record MatchSnapshot(long CheckedAt, IReadOnlyList<SnapshotPatch> 
     public byte[] ToJsonBytes()
     {
         using var stream = new MemoryStream();
-        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true }))
+        using (var writer = new Utf8JsonWriter(stream, new JsonWriterOptions { Indented = true, NewLine = "\n" }))
         {
             writer.WriteStartObject();
             writer.WriteNumber("version", Version);

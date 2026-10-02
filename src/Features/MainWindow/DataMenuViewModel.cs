@@ -9,6 +9,7 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.MainWindow.ModelUpdate;
 using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
@@ -42,6 +43,7 @@ public class DataMenuViewModel : ViewModelBase
     private readonly IGameApiService _gameApi;
     private readonly IMatchStatsService _matchStats;
     private readonly IMatchSnapshotService _snapshots;
+    private readonly IModelUpdateService _models;
     private readonly IExcelExportService _excel;
     private readonly IArtDownloadService _artDownload;
     private readonly IArtService _art;
@@ -52,14 +54,14 @@ public class DataMenuViewModel : ViewModelBase
     private readonly ILoggingService _log;
 
     public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
-        IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
+        IModelUpdateService models, IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log)
-        : this(data, gameApi, matchStats, snapshots, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
+        : this(data, gameApi, matchStats, snapshots, models, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
     {
     }
 
     internal DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
-        IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
+        IModelUpdateService models, IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log,
         IScheduler clock)
     {
@@ -69,6 +71,7 @@ public class DataMenuViewModel : ViewModelBase
         _gameApi = gameApi;
         _matchStats = matchStats;
         _snapshots = snapshots;
+        _models = models;
         _excel = excel;
         _artDownload = artDownload;
         _art = art;
@@ -83,6 +86,7 @@ public class DataMenuViewModel : ViewModelBase
         DownloadMatchDataCommand = ReactiveCommand.CreateFromTask(OfferMatchDownloadAsync,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
+        CheckModelCommand = ReactiveCommand.CreateFromTask(() => CheckModelAsync(manual: true), idle);
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
         OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
@@ -116,6 +120,7 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> SyncGameApiCommand { get; }
     public ReactiveCommand<Unit, Unit> DownloadMatchDataCommand { get; }
     public ReactiveCommand<Unit, Unit> ModelHealthCommand { get; }
+    public ReactiveCommand<Unit, Unit> CheckModelCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
@@ -133,13 +138,15 @@ public class DataMenuViewModel : ViewModelBase
     private string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
 
     /// <summary>
-    /// Once the window is up: on a first run without art, offer it and the match data in one dialog.
-    /// Otherwise check the match data against the patch list in the background, and keep the top-bar
-    /// art detection matches against current: quietly, about weekly, and at once when this version cuts
-    /// portraits differently from the last.
+    /// Once the window is up: take a newer published model, if updates are on. On a first run without
+    /// art, offer it and the match data in one dialog. Otherwise check the match data against the patch
+    /// list in the background, and keep the top-bar art detection matches against current: quietly, about
+    /// weekly, and at once when this version cuts portraits differently from the last.
     /// </summary>
     public void OnStartup()
     {
+        if (_settings.Current.AutoUpdateModel)
+            Launch(() => CheckModelAsync(manual: false));
         if (!_settings.Current.WelcomeOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
         {
             _settings.Update(s => s.WelcomeOffered = true);
@@ -459,6 +466,87 @@ public class DataMenuViewModel : ViewModelBase
             job.Report(value.Overall);
         }
     }
+    // -- formulas -------------------------------------------------------------------
+
+    /// <summary>
+    /// The published model against this data folder's: files unchanged here update quietly, and ones
+    /// changed here are asked about. On startup, a failed check or a version already turned down says nothing.
+    /// </summary>
+    /// <param name="manual">From the Data menu: says how it went, and asks again about files kept over this version.</param>
+    internal async Task CheckModelAsync(bool manual)
+    {
+        var published = await _models.PublishedAsync();
+        if (published is null)
+        {
+            if (manual)
+                ShowMessage("Formula update", ["Couldn't reach GitHub for the published hero ratings and item formulas. Try again later."]);
+            return;
+        }
+        if (!_data.FlushSaves())
+            return;
+        var dataDir = _data.DataDir;
+        var update = ModelUpdatePlan.For(published, dataDir, askAgain: manual);
+        if (update.Edited.Count > 0)
+            _modals.ShowModal(new ModelUpdateViewModel(_modals, update, replace => Launch(() => InstallModelAsync(dataDir, update, replace, manual: true))));
+        else if (update.Quiet.Count > 0)
+            await InstallModelAsync(dataDir, update, new HashSet<string>(), manual);
+        else
+        {
+            WriteModelRecord(dataDir, update);
+            if (manual)
+                ShowMessage("Formula update", [$"The hero ratings and item formulas are up to date: the version published {published.Published}."]);
+        }
+    }
+
+    /// <summary>Download the files to replace, then write them in one go, so no edit can land in between.</summary>
+    private async Task InstallModelAsync(string dataDir, ModelUpdatePlan update, IReadOnlySet<string> replace, bool manual)
+    {
+        IReadOnlyDictionary<string, byte[]> downloaded;
+        try
+        {
+            downloaded = await _models.DownloadAsync(update.Published, update.Quiet.Concat(update.Edited.Where(replace.Contains)));
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex))
+        {
+            _log.Warning($"Formula update: failed\n{ex}");
+            if (manual)
+                _notifications.ShowError($"Couldn't download the formula update: {ex.Message}", _toastTime);
+            return;
+        }
+        // The data folder changed, or an edit couldn't be saved: writing now would lose something.
+        if (_data.DataDir != dataDir || !_data.FlushSaves())
+            return;
+
+        IReadOnlySet<string> written;
+        try
+        {
+            written = ModelUpdateService.Install(dataDir, update, downloaded);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _notifications.ShowError($"Writing to {dataDir} failed: {ex.Message}", ex);
+            return;
+        }
+        if (written.Count == 0)
+            return;
+        _data.Reload();
+        _notifications.ShowSuccess(
+            $"Updated to the formulas published {update.Published.Published}: {string.Join(", ", written.Select(ModelManifest.Title))}. "
+            + "The old files are in data\\.backups.", _toastTime);
+    }
+
+    private void WriteModelRecord(string dataDir, ModelUpdatePlan update)
+    {
+        try
+        {
+            ModelUpdateService.Record(dataDir, update.Record(new HashSet<string>()));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _log.Warning($"Formula update: couldn't write the record\n{ex}");
+        }
+    }
+
     // -- model health ---------------------------------------------------------------
 
     /// <summary>The simulation takes a moment, so it runs off the UI thread; busy meanwhile so no sync swaps the data under it.</summary>

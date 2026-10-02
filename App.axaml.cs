@@ -40,6 +40,7 @@ public partial class App : Application
         services.AddSingleton<IGameApiService, GameApiService>();
         services.AddSingleton<IMatchStatsService, MatchStatsService>();
         services.AddSingleton<IMatchSnapshotService, MatchSnapshotService>();
+        services.AddSingleton<IModelUpdateService, ModelUpdateService>();
         services.AddSingleton<IArtDownloadService, ArtDownloadService>();
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();

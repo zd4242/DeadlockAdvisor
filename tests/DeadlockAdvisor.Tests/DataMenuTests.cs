@@ -5,6 +5,7 @@ using ClosedXML.Excel;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.MainWindow.ModelUpdate;
 using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
@@ -49,7 +50,7 @@ public sealed class DataMenuTests : IDisposable
     {
         var gameApi = new GameApiService(_api);
         return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api),
-            snapshots ?? new MatchSnapshotService(_api), new ExcelExportService(),
+            snapshots ?? new MatchSnapshotService(_api), new ModelUpdateService(_api), new ExcelExportService(),
             artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
             _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _fixture.Clock);
     }
@@ -339,6 +340,7 @@ public sealed class DataMenuTests : IDisposable
     private DataMenuViewModel MenuWithData(DateTimeOffset fetched, DateTimeOffset now)
     {
         _fixture.Settings.Current.WelcomeOffered = true;
+        _fixture.Settings.Current.AutoUpdateModel = false;
         _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "09-29-2026"}, {"title": "09-16-2026 Update"}]""");
         var store = _fixture.Data.Store;
         store.PutMatchSegment(new MatchSegment(_patches[0], _patches[0].Start, fetched.ToUnixTimeSeconds(), false, fetched.ToUnixTimeSeconds(),
@@ -536,7 +538,11 @@ public sealed class DataMenuTests : IDisposable
         return snapshot;
     }
 
-    private DataMenuViewModel SharedMenu(DateTimeOffset now) => Menu(snapshots: new MatchSnapshotService(_api, () => now));
+    private DataMenuViewModel SharedMenu(DateTimeOffset now)
+    {
+        _fixture.Settings.Current.AutoUpdateModel = false;
+        return Menu(snapshots: new MatchSnapshotService(_api, () => now));
+    }
 
     [Fact]
     public async Task TheSharedDownloadIsOfferedWhenItsThereAndBringsEveryPatchWithItsRankGroups()
@@ -623,5 +629,90 @@ public sealed class DataMenuTests : IDisposable
         await job.OpenCommand.Execute();
         Assert.Contains("Couldn't download match data from the shared download:", LastMessage().Body);
         Assert.Contains("didn't arrive intact", LastMessage().Body);
+    }
+
+    // -- formula updates --------------------------------------------------------------
+
+    /// <summary>
+    /// The fixture's data recorded as the installed model, and a newer one published with
+    /// <paramref name="changed"/>; the fake API serves both.
+    /// </summary>
+    private ModelManifest PublishModel(params (string File, byte[] Bytes)[] changed)
+    {
+        var dataDir = _fixture.Data.DataDir;
+        ModelUpdateService.Record(dataDir, ModelManifest.Of(dataDir, "2026-10-02"));
+        var files = new Dictionary<string, string>();
+        foreach (var file in ModelManifest.ModelFiles)
+        {
+            var bytes = changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : File.ReadAllBytes(Path.Combine(dataDir, file));
+            _api.Bytes[ModelManifest.UrlOf(file)] = bytes;
+            files[file] = ModelManifest.Hash(bytes);
+        }
+        var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09", files, new Dictionary<string, string>());
+        _api.Bytes[ModelManifest.UrlOf(ModelManifest.FileName)] = published.ToJsonBytes();
+        return published;
+    }
+
+    private byte[] DataBytes(string file) => File.ReadAllBytes(Path.Combine(_fixture.Data.DataDir, file));
+
+    [Fact]
+    public void OnStartupANewerModelReplacesTheFilesNobodyChangedAndReloads()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var weights = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "1.3");
+        PublishModel((DataStore.TraitWeightsFile, weights));
+
+        _menu.OnStartup();
+
+        Assert.Empty(_shown);
+        Assert.Equal(weights, DataBytes(DataStore.TraitWeightsFile));
+        Assert.Equal(1, _replaced);
+        Assert.Equal("2026-10-09", ModelManifest.Installed(_fixture.Data.DataDir)!.Published);
+    }
+
+    [Fact]
+    public async Task ChangedFilesAreAskedAboutAndOnlyTheTickedOnesReplaced()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var theirScores = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.HeroScoresFile), "2");
+        var theirCoefficients = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.ItemCoefficientsFile), "4");
+        PublishModel((DataStore.HeroScoresFile, theirScores), (DataStore.ItemCoefficientsFile, theirCoefficients));
+        var myScores = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.HeroScoresFile), "1");
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.HeroScoresFile), myScores);
+        var myCoefficients = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.ItemCoefficientsFile), "3");
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.ItemCoefficientsFile), myCoefficients);
+
+        _menu.OnStartup();
+
+        var dialog = Assert.IsType<ModelUpdateViewModel>(_shown[^1]);
+        Assert.Equal(["Hero trait ratings", "Item formulas"], dialog.Choices.Select(choice => choice.Title));
+        Assert.All(dialog.Choices, choice => Assert.False(choice.Replace));
+        dialog.Choices[0].Replace = true;
+        await dialog.UpdateCommand.Execute();
+
+        Assert.Equal(theirScores, DataBytes(DataStore.HeroScoresFile));
+        Assert.Equal(myCoefficients, DataBytes(DataStore.ItemCoefficientsFile));
+        Assert.Equal(1, _replaced);
+
+        // The kept file isn't asked about again until asked for.
+        _shown.Clear();
+        using var later = Menu();
+        later.OnStartup();
+        Assert.DoesNotContain(_shown, shown => shown is ModelUpdateViewModel);
+        await later.CheckModelCommand.Execute();
+        Assert.Equal(["Item formulas"], Assert.IsType<ModelUpdateViewModel>(_shown[^1]).Choices.Select(choice => choice.Title));
+    }
+
+    [Fact]
+    public async Task CheckingForFormulaUpdatesSaysWhenThereAreNoneOrGitHubIsDown()
+    {
+        await _menu.CheckModelCommand.Execute();
+        Assert.Contains("Couldn't reach GitHub", LastMessage().Body);
+        _fixture.Modals.CloseModal();
+
+        PublishModel();
+        await _menu.CheckModelCommand.Execute();
+        Assert.Contains("up to date: the version published 2026-10-09", LastMessage().Body);
+        Assert.Equal(0, _replaced);
     }
 }

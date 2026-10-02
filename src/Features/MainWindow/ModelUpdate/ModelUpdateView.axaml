@@ -1,0 +1,43 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:update="using:DeadlockAdvisor.Features.MainWindow.ModelUpdate"
+             x:Class="DeadlockAdvisor.Features.MainWindow.ModelUpdate.ModelUpdateView"
+             x:DataType="update:ModelUpdateViewModel">
+    <StackPanel Margin="20" Spacing="12" Width="460">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Intro}"/>
+
+        <StackPanel Spacing="6">
+            <TextBlock Classes="section" Text="REPLACE YOUR CHANGES?"/>
+            <ItemsControl ItemsSource="{Binding Choices}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="update:ModelFileChoice">
+                        <CheckBox IsChecked="{Binding Replace}">
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <TextBlock Text="{Binding Title}"/>
+                                <TextBlock Classes="faint" Text="{Binding File}"/>
+                            </StackPanel>
+                        </CheckBox>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
+        <TextBlock TextWrapping="Wrap" Text="{Binding AlsoUpdated}" IsVisible="{Binding HasAlsoUpdated}"/>
+        <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Footer}"/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
+            <Button Classes="primary"
+                    Content="Update"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    Command="{Binding UpdateCommand}"/>
+            <Button Content="Not now"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsCancel="True"
+                    Command="{Binding NotNowCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

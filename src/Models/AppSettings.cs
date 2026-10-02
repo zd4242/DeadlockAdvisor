@@ -24,6 +24,9 @@ public class AppSettings
     // Refresh the match data in the background on startup when a newer patch is out or it's gone stale.
     public bool AutoUpdateMatchData { get; set; } = true;
 
+    // Take a newer published model (hero ratings, item formulas) on startup: files changed here are asked about.
+    public bool AutoUpdateModel { get; set; } = true;
+
     // How the last match data downloads went, for the next one's estimate; null until one has run.
     public double? MatchFetchSecondsPerCall { get; set; }
     public double? MatchFetchBytesPerCall { get; set; }

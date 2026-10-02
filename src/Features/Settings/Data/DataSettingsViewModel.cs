@@ -45,6 +45,12 @@ public class DataSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.AutoUpdateMatchData = value);
     }
 
+    public bool AutoUpdateModel
+    {
+        get => Current.AutoUpdateModel;
+        set => Change(s => s.AutoUpdateModel = value);
+    }
+
     [Reactive] public string MatchDataSummary { get; private set; } = "";
 
     public ICommand DownloadMatchDataCommand { get; }
