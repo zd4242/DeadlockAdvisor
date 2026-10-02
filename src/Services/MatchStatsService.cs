@@ -32,8 +32,11 @@ public sealed record MatchFetchProgress(int Phase, int PhaseDone, int PhaseTotal
 
 public interface IMatchStatsService
 {
-    /// <summary>What a download would fetch now, from the patch list: one cheap call.</summary>
-    Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default);
+    /// <summary>The patches, newest first: one cheap call. Throws <see cref="InvalidOperationException"/> if there are none.</summary>
+    Task<IReadOnlyList<Patch>> PatchesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>What a download would fetch now, given the patches.</summary>
+    MatchFetchPlan Plan(DataStore store, IReadOnlyList<Patch> patches, bool includeRanks);
 
     /// <summary>
     /// Fetch <paramref name="plan"/> phase by phase, handing each finished phase's segment to
@@ -58,6 +61,14 @@ public interface IMatchStatsService
 
     /// <summary>The latest patch if it's newer than the one the data was fetched under: one cheap call, the startup check.</summary>
     Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default);
+}
+
+public static class MatchStatsServiceExtensions
+{
+    /// <summary>What a download would fetch now, from the patch list: one cheap call.</summary>
+    public static async Task<MatchFetchPlan> PlanAsync(this IMatchStatsService service, DataStore store, bool includeRanks,
+        CancellationToken cancellationToken = default) =>
+        service.Plan(store, await service.PatchesAsync(cancellationToken), includeRanks);
 }
 
 /// <summary>
@@ -101,13 +112,14 @@ public sealed class MatchStatsService : IMatchStatsService
     /// <summary>The heroes a download asks about: the ones the game knows by an id.</summary>
     public static List<Hero> Heroes(DataStore store) => store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
 
-    public async Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<Patch>> PatchesAsync(CancellationToken cancellationToken = default)
     {
         var patches = await FetchPatchesAsync(cancellationToken);
-        if (patches.Count == 0)
-            throw new InvalidOperationException("Couldn't read any patch dates from /v1/patches.");
-        return MatchFetchPlan.For(store.MatchSegments, patches, Now, includeRanks, Heroes(store).Count);
+        return patches.Count > 0 ? patches : throw new InvalidOperationException("Couldn't read any patch dates from /v1/patches.");
     }
+
+    public MatchFetchPlan Plan(DataStore store, IReadOnlyList<Patch> patches, bool includeRanks) =>
+        MatchFetchPlan.For(store.MatchSegments, patches, Now, includeRanks, Heroes(store).Count);
 
     public async Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
         CancellationToken cancellationToken)

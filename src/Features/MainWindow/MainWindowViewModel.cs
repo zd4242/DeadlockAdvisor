@@ -69,7 +69,7 @@ public class MainWindowViewModel : ViewModelBase
         + "Click any recommendation to see exactly which hero and which trait\n"
         + "produced its score.\n\n"
         + "The small 'data' numbers are a separate second opinion from real\n"
-        + "matches (Data → Fetch Match Stats): win-rate points the item gains\n"
+        + "matches (Data → Download Match Data): win-rate points the item gains\n"
         + "against your enemies, and on your own hero. They're never added\n"
         + "into the score, but 'Rank by match data' orders the list by them\n"
         + "instead, and 'Formula + match data' (the default) adds the two, each\n"
@@ -199,6 +199,7 @@ public class MainWindowViewModel : ViewModelBase
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
         Match.ArtWanted.Subscribe(_ => DataMenu.DownloadArt()).DisposeWith(Disposables);
+        Match.DataRanks.RanksWanted.Subscribe(_ => DataMenu.OfferRankDownload()).DisposeWith(Disposables);
         settings.SettingsChanged
             .Select(s => ShortcutKeys.Defaults.Keys.Select(action => (action, gesture: s.Gesture(action))).ToEquatableList())
             .DistinctUntilChanged()

@@ -18,8 +18,16 @@ public sealed class HeldMatchStats : IMatchStatsService
 
     public IProgress<MatchFetchProgress>? Progress { get; private set; }
 
-    public Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default) =>
-        Task.FromResult(Plan);
+    /// <summary>The plans asked for, by whether they include the rank groups.</summary>
+    public List<bool> Planned { get; } = [];
+
+    public Task<IReadOnlyList<Patch>> PatchesAsync(CancellationToken cancellationToken = default) => Task.FromResult<IReadOnlyList<Patch>>([Patch]);
+
+    MatchFetchPlan IMatchStatsService.Plan(DataStore store, IReadOnlyList<Patch> patches, bool includeRanks)
+    {
+        Planned.Add(includeRanks);
+        return includeRanks ? Plan : Plan with { Phases = [Plan.Phases[0]] };
+    }
 
     public Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
         CancellationToken cancellationToken)

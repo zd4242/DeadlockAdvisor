@@ -1,3 +1,4 @@
+using System.Reactive.Linq;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
@@ -42,6 +43,18 @@ public sealed class DataRanksTests : IDisposable
         Assert.Empty(filter.Ranks);
         Assert.True(filter.EveryMatch);
         Assert.Equal("Enemies: 5928 measurements, reliability 0.71\nYour hero: 4421 measurements, reliability 0.93", filter.Status);
+    }
+
+    [Fact]
+    public async Task WithoutRankGroupsTheFilterAsksForThem()
+    {
+        using var filter = Filter();
+        var asked = 0;
+        using var _ = filter.RanksWanted.Subscribe(_ => asked++);
+
+        await filter.DownloadRanksCommand.Execute();
+
+        Assert.Equal(1, asked);
     }
 
     [Fact]

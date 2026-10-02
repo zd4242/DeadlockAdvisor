@@ -67,22 +67,30 @@
             Classes.failed="{Binding HasFailed}"
             ToolTip.Tip="{Binding ToolTipText}">
         <StackPanel Orientation="Horizontal" Spacing="4">
-            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsRunning}">
-                <TextBlock Classes="title" Text="{Binding Title}"/>
-                <ProgressBar Width="90"
-                             MinWidth="0"
-                             Height="4"
-                             MinHeight="4"
-                             CornerRadius="2"
-                             VerticalAlignment="Center"
-                             Minimum="0"
-                             Maximum="{Binding Total}"
-                             Value="{Binding Done}"
-                             IsIndeterminate="{Binding IsIndeterminate}"
-                             Foreground="{DynamicResource AccentBrush}"
-                             Background="{DynamicResource Surface4Brush}"/>
-                <TextBlock Text="{Binding StatusText}"/>
-            </StackPanel>
+            <!-- A job with details opens them when clicked; the others only show their tooltip. -->
+            <Button x:Name="Running" Classes="result" IsVisible="{Binding IsRunning}" IsHitTestVisible="{Binding HasDetails}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Classes="title" Text="{Binding Title}"/>
+                    <ProgressBar Width="90"
+                                 MinWidth="0"
+                                 Height="4"
+                                 MinHeight="4"
+                                 CornerRadius="2"
+                                 VerticalAlignment="Center"
+                                 Minimum="0"
+                                 Maximum="{Binding Total}"
+                                 Value="{Binding Done}"
+                                 IsIndeterminate="{Binding IsIndeterminate}"
+                                 Foreground="{DynamicResource AccentBrush}"
+                                 Background="{DynamicResource Surface4Brush}"/>
+                    <TextBlock Text="{Binding StatusText}"/>
+                </StackPanel>
+                <Button.Flyout>
+                    <Flyout Placement="TopEdgeAlignedRight">
+                        <ContentControl Content="{Binding Details}"/>
+                    </Flyout>
+                </Button.Flyout>
+            </Button>
 
             <Button Classes="result" IsVisible="{Binding IsFinished}" Command="{Binding OpenCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="6">

@@ -118,7 +118,7 @@ apps at once. **Data → Open Data Folder** opens it in Explorer.
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
 | `item_stats.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
 | `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
-| `match_counts/<patch date>.json` | | **generated** by Fetch Match Stats: one patch's raw totals, every match and per rank; no backups |
+| `match_counts/<patch date>.json` | | **generated** by Download Match Data: one patch's raw totals, every match and per rank; no backups |
 
 The CSVs are the source of truth and stay hand-editable. Every write
 keeps a timestamped copy of the previous file under `data/.backups/`
@@ -137,14 +137,17 @@ writes them.
   Run it after each patch: the report lists each item stat that moved,
   items with hand-typed rules whose tooltip changed, stats it doesn't know
   how to map, and per-item overrides that no longer match the game.
-- **Fetch Match Stats**: item win rates against, with and as each hero,
+- **Download Match Data…**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
-  of the score. It keeps each patch's counts, every match and each rank
-  group separately, so the Match page can lean the data toward a range of
-  ranks without fetching again: the numbers move only where those ranks
-  play detectably differently. A finished patch is never fetched again,
-  so a refresh only asks for the current patch (a few minutes). The status
-  bar turns red when a newer patch is out than the data covers.
+  of the score. A dialog first shows the patches stored, what the download
+  will fetch, and about how long it takes and how big it is: every match
+  (under a minute a patch), or with the rank groups too (about 3 minutes a
+  patch), which let the Match page lean the data toward a range of ranks.
+  A finished patch is never fetched again, so a refresh only asks for the
+  current patch. It runs in the background; click its chip in the status
+  bar for each phase, and each patch's numbers are in use as soon as its
+  phase is done. The status bar turns red when a newer patch is out than
+  the data covers.
 - **Model Health Report**: simulates 2,000 random matches and lists items
   recommended whatever the heroes, items never recommended (and why),
   traits no hero is scored on, and where real match data disagrees with

@@ -16,6 +16,13 @@ public class AppSettings
     // When the art was last checked against deadlock-api.com's, which is done about weekly.
     public DateTimeOffset? ArtCheckedAt { get; set; }
 
+    // Whether the last match data download took the rank groups too: the next one offers the same.
+    public bool MatchDataIncludeRanks { get; set; }
+
+    // How the last match data downloads went, for the next one's estimate; null until one has run.
+    public double? MatchFetchSecondsPerCall { get; set; }
+    public double? MatchFetchBytesPerCall { get; set; }
+
     // Preferences (the Settings page)
     public bool ReopenLastPage { get; set; } = true;
     public bool ReopenLastMatch { get; set; } = true;

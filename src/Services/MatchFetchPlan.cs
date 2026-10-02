@@ -1,4 +1,5 @@
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Services;
 
@@ -61,6 +62,35 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
 
     public bool IncludesRanks => Phases.Any(phase => phase.Part == FetchPart.Ranks);
 
+    /// <summary>
+    /// What happens to each patch kept, newest first: ("Patch 09-29", "refreshed, it's still collecting
+    /// matches · with rank groups"), or that it's kept as it is.
+    /// </summary>
+    public List<(string Patch, string Text)> Describe(IReadOnlyList<MatchSegment> stored) =>
+        Keep.Select(patch =>
+        {
+            var everyMatch = Phases.FirstOrDefault(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.EveryMatch);
+            var ranks = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.Ranks);
+            var text = everyMatch?.Reason switch
+            {
+                FetchReason.New => "new",
+                FetchReason.Refresh => "refreshed: it's still collecting matches",
+                FetchReason.Finish => "finished: it's over, so this is the last time",
+                _ => ranks ? "kept, adding its rank groups" : "kept as it is: complete",
+            };
+            return ($"Patch {patch.Label}", text + (ranks ? " · with rank groups" : ""));
+        }).ToList();
+
+    /// <summary>About how much the kept patches' counts take on disk once this is done.</summary>
+    public long DiskBytes(IReadOnlyList<MatchSegment> stored) =>
+        Keep.Sum(patch =>
+        {
+            var refreshed = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.EveryMatch);
+            var ranks = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.Ranks)
+                        || !refreshed && stored.Any(segment => segment.Patch.Start == patch.Start && segment.HasRanks);
+            return ranks ? MatchFetchEstimate.PatchWithRanksBytes : MatchFetchEstimate.PatchBytes;
+        });
+
     /// <param name="segments">What's stored now.</param>
     /// <param name="patches">Newest first, as <see cref="MatchStatsMath.ParsePatches"/> gives them.</param>
     public static MatchFetchPlan For(IReadOnlyList<MatchSegment> segments, IReadOnlyList<Patch> patches, long now, bool includeRanks, int heroCount)
@@ -93,4 +123,44 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
         }
         return new MatchFetchPlan(now, keep, [.. everyMatch, .. ranks]);
     }
+}
+
+/// <summary>What a download is likely to take, from how the last ones went.</summary>
+/// <param name="SecondsPerCall">The pace: the requests go out 0.4 s apart at best.</param>
+/// <param name="BytesPerCall">As they come over the wire, compressed.</param>
+public sealed record MatchFetchEstimate(double SecondsPerCall, double BytesPerCall)
+{
+    /// <summary>Measured on deadlock-api.com in October 2026: 560 calls in 227 s, 8.1 MiB.</summary>
+    public static readonly MatchFetchEstimate Measured = new(0.405, 15_200);
+
+    /// <summary>One patch's counts on disk, every match only, and with the rank groups too (measured alike).</summary>
+    public const long PatchBytes = 450_000;
+    public const long PatchWithRanksBytes = 1_150_000;
+
+    /// <summary>A run this short says little about the pace: the setup calls weigh too much.</summary>
+    public const int MinCallsToLearn = 40;
+
+    public TimeSpan Time(MatchFetchPlan plan) => TimeSpan.FromSeconds(plan.Calls * SecondsPerCall);
+
+    public long Bytes(MatchFetchPlan plan) => (long)(plan.Calls * BytesPerCall);
+
+    /// <summary>The estimate moved a third of the way toward how a finished run went.</summary>
+    public MatchFetchEstimate Learn(int calls, TimeSpan elapsed, long bytes)
+    {
+        if (calls < MinCallsToLearn)
+            return this;
+        return new MatchFetchEstimate(
+            SecondsPerCall + (elapsed.TotalSeconds / calls - SecondsPerCall) / 3,
+            BytesPerCall + ((double)bytes / calls - BytesPerCall) / 3);
+    }
+
+    /// <summary>"about 40 s", "about 3 min".</summary>
+    public static string DescribeTime(TimeSpan time) =>
+        time < TimeSpan.FromSeconds(55)
+            ? $"about {Math.Max(5, (int)Math.Round(time.TotalSeconds / 5) * 5)} s"
+            : $"about {(int)Math.Ceiling(time.TotalMinutes)} min";
+
+    /// <summary>"1.2 MB", "350 KB".</summary>
+    public static string DescribeBytes(long bytes) =>
+        bytes < 1_000_000 ? $"{Math.Max(1, bytes / 1000)} KB" : $"{NumberFormat.Fixed(bytes / 1_000_000.0, 1)} MB";
 }

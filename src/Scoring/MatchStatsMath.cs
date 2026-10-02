@@ -281,7 +281,7 @@ public static partial class MatchStatsMath
     public static string FamilyName(string relation) => relation == "against" ? "Enemies" : "Your hero";
 
     public const string OwnIncludedNote =
-        "The enemy numbers still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
+        "The enemy numbers still count each enemy's own purchases (downloaded before they could be taken out): download again.";
 
     // -- ranks ------------------------------------------------------------------
 
@@ -376,10 +376,10 @@ public static partial class MatchStatsMath
 
     /// <summary>"09-29 (2 days so far, 18%)", "09-16 (13 days, 82%, no rank groups)": a patch and its share of the weight, for the reports.</summary>
     public static string SegmentText(MatchSegment segment, double share) =>
-        $"{segment.Patch.Label} ({Span(segment.From, segment.Until, segment.Ended)}, {Percent(share)}{(segment.HasRanks ? "" : ", no rank groups")})";
+        $"{segment.Patch.Label} ({PatchSpan(segment.From, segment.Until, segment.Ended)}, {Percent(share)}{(segment.HasRanks ? "" : ", no rank groups")})";
 
-    /// <summary>"2 days so far", "13 days".</summary>
-    private static string Span(double from, double until, bool ended)
+    /// <summary>"2 days so far", "13 days": how long a patch's window is.</summary>
+    public static string PatchSpan(double from, double until, bool ended)
     {
         var days = Math.Max(1, (int)Math.Round((until - from) / 86400.0));
         return $"{days} day{(days == 1 ? "" : "s")}{(ended ? "" : " so far")}";
@@ -929,7 +929,7 @@ public static partial class MatchStatsMath
             return [("Patch", PatchLabel(meta))];
         return segments.OfType<JsonObject>().Select(segment =>
         {
-            var span = Span(Number(segment["start"]) ?? 0, Number(segment["until"]) ?? 0, IsTrue(segment["ended"]));
+            var span = PatchSpan(Number(segment["start"]) ?? 0, Number(segment["until"]) ?? 0, IsTrue(segment["ended"]));
             var share = Number(segment["share"]) is { } value ? $" · {Percent(value)}" : "";
             return ($"Patch {Text(segment["label"]) ?? "?"}", span + share);
         }).ToList();
@@ -1025,7 +1025,7 @@ public static partial class MatchStatsMath
         var lines = new List<string>();
         if (RankLabel(meta) is { } rank)
             lines.Add($"Leaning toward {rank} where it plays differently.");
-        lines.Add($"Fetched {Age(now - Number(meta["fetched_at"])!.Value)} (Data → Fetch Match Stats).");
+        lines.Add($"Fetched {Age(now - Number(meta["fetched_at"])!.Value)} (Data → Download Match Data).");
         return string.Join("\n", lines);
     }
 

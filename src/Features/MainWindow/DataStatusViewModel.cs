@@ -29,7 +29,7 @@ public class DataStatusViewModel : ViewModelBase
     {
         _data = data;
         _dataMenu = dataMenu;
-        FetchCommand = dataMenu.FetchMatchStatsCommand;
+        FetchCommand = dataMenu.DownloadMatchDataCommand;
 
         data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => Refresh()).DisposeWith(Disposables);
         dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => Refresh()).DisposeWith(Disposables);
@@ -83,7 +83,7 @@ public class DataStatusViewModel : ViewModelBase
             var age = MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0 - at);
             Label = IsOutdated ? $"Match data · patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"Match data · patch {patch} · {age}";
             Warning = IsOutdated
-                ? $"Patch {_dataMenu.NewerPatch!.Label} is out since these were fetched. Fetch again for numbers that match the game."
+                ? $"Patch {_dataMenu.NewerPatch!.Label} is out since these were fetched. Download again for numbers that match the game."
                 : null;
             Facts =
             [
@@ -95,7 +95,7 @@ public class DataStatusViewModel : ViewModelBase
             if (MatchStatsMath.DriftLine(meta) is { } drift)
                 families.Add(drift);
             Families = families;
-            FetchText = "Fetch again";
+            FetchText = "Download again…";
         }
         else
         {
@@ -103,7 +103,7 @@ public class DataStatusViewModel : ViewModelBase
             Warning = null;
             Facts = [];
             Families = [];
-            FetchText = "Fetch Match Stats";
+            FetchText = "Download Match Data…";
         }
 
         var coverage = _data.Store.Coverage();

@@ -90,7 +90,7 @@ public sealed class DataStore
     /// <summary>Each item's in-game tooltip, as the game sync wrote it.</summary>
     public OrderedDictionary<string, ItemTooltip> ItemTooltips { get; set; } = [];
 
-    /// <summary>Lifts from real matches. Empty until Fetch Match Stats has run; everything works without it.</summary>
+    /// <summary>Lifts from real matches. Empty until Download Match Data has run; everything works without it.</summary>
     public OrderedDictionary<MatchLiftKey, MatchLift> MatchLift { get; set; } = [];
 
     /// <summary>The sidecar: fetched_at, the rank range, per-family windows and reliability.</summary>

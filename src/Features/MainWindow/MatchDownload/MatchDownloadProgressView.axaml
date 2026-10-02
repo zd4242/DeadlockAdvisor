@@ -1,0 +1,72 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
+             x:Class="DeadlockAdvisor.Features.MainWindow.MatchDownload.MatchDownloadProgressView"
+             x:DataType="download:MatchDownloadProgressViewModel">
+
+    <!-- The card hangs off the status bar, whose dim text style would otherwise reach into it. -->
+    <UserControl.Styles>
+        <Style Selector="TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.dim, TextBlock.section">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.faint">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.warning">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.glyph">
+            <Setter Property="Width" Value="14"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.glyph.running">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.glyph.done">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <StackPanel Width="320" Spacing="8">
+        <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="DOWNLOADING MATCH DATA"/>
+        <ItemsControl ItemsSource="{Binding Phases}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="download:DownloadPhaseViewModel">
+                    <StackPanel Margin="0,0,0,6" Spacing="3">
+                        <Grid ColumnDefinitions="Auto,*,Auto">
+                            <Panel>
+                                <TextBlock Classes="glyph" Text="○" IsVisible="{Binding IsWaiting}"/>
+                                <TextBlock Classes="glyph running" Text="●" IsVisible="{Binding IsRunning}"/>
+                                <TextBlock Classes="glyph done" Text="✓" IsVisible="{Binding IsDone}"/>
+                            </Panel>
+                            <TextBlock Grid.Column="1" Text="{Binding Text}"/>
+                            <TextBlock Grid.Column="2" Classes="faint" Margin="8,0,0,0" Text="{Binding Detail}"/>
+                        </Grid>
+                        <ProgressBar Margin="14,0,0,0"
+                                     Height="3"
+                                     MinHeight="3"
+                                     CornerRadius="2"
+                                     Minimum="0"
+                                     Maximum="{Binding Total}"
+                                     Value="{Binding Done}"
+                                     Foreground="{DynamicResource AccentBrush}"
+                                     Background="{DynamicResource Surface4Brush}"
+                                     IsVisible="{Binding IsRunning}"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <TextBlock Classes="warning"
+                   TextWrapping="Wrap"
+                   Text="{Binding WaitText}"
+                   IsVisible="{Binding WaitText, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <StackPanel Orientation="Horizontal" Spacing="12">
+            <TextBlock Classes="dim" Text="{Binding CallsText}"/>
+            <TextBlock Classes="dim" Text="{Binding BytesText}"/>
+        </StackPanel>
+        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Each patch's numbers are in use as soon as its phase is done. Stopping keeps what's finished."/>
+    </StackPanel>
+</UserControl>

@@ -1,6 +1,8 @@
 using System.IO;
+using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
@@ -24,6 +26,7 @@ public class DataRanksViewModel : ViewModelBase
     private readonly IDataService _data;
     private readonly IMatchStatsService _matchStats;
     private readonly INotificationService _notifications;
+    private readonly Subject<Unit> _ranksWanted = new();
     private bool _loading;
 
     public DataRanksViewModel(IDataService data, IMatchStatsService matchStats, INotificationService notifications)
@@ -31,6 +34,7 @@ public class DataRanksViewModel : ViewModelBase
         _data = data;
         _matchStats = matchStats;
         _notifications = notifications;
+        DownloadRanksCommand = ReactiveCommand.Create(() => _ranksWanted.OnNext(Unit.Default));
         Load();
 
         this.WhenAnyValue(vm => vm.RankedOnly)
@@ -62,8 +66,13 @@ public class DataRanksViewModel : ViewModelBase
         data.StoreReplaced.Subscribe(_ => Load()).DisposeWith(Disposables);
     }
 
-    /// <summary>The match data was downloaded split by rank. Data from before that, or none, can't be filtered.</summary>
+    /// <summary>The match data was downloaded with its rank groups. Data from before that, or none, can't lean.</summary>
     [Reactive] public bool CanFilter { get; private set; }
+
+    /// <summary>Asks for a download with the rank groups, which leaning needs.</summary>
+    public ReactiveCommand<Unit, Unit> DownloadRanksCommand { get; }
+
+    public IObservable<Unit> RanksWanted => _ranksWanted.AsObservable();
 
     [Reactive] public IReadOnlyList<RankBucket> Ranks { get; private set; } = [];
 
@@ -126,5 +135,12 @@ public class DataRanksViewModel : ViewModelBase
             _notifications.ShowError($"Writing the match data to {_data.DataDir} failed: {ex.Message}", ex);
         }
         _data.NotifyReplaced();
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+            _ranksWanted.Dispose();
+        base.Dispose(disposing);
     }
 }

@@ -67,6 +67,11 @@ public sealed class BackgroundJobViewModel : ViewModelBase, IProgress<FetchProgr
     /// <summary>"Match data", "Art": what the status bar calls it.</summary>
     public string Title { get; }
 
+    /// <summary>More on how it's going, which clicking the running chip shows; null for none.</summary>
+    public ViewModelBase? Details { get; init; }
+
+    public bool HasDetails => Details is not null;
+
     [Reactive] public BackgroundJobState State { get; private set; }
     public bool IsRunning => State is BackgroundJobState.Running or BackgroundJobState.Cancelling;
     public bool IsFinished => !IsRunning;
@@ -114,7 +119,8 @@ public sealed class BackgroundJobViewModel : ViewModelBase, IProgress<FetchProgr
 
         var percent = $"{Math.Floor(Done * 100 / Total):0}%";
         StatusText = Remaining(value.Done, value.Total, now) is { } left ? $"{percent} · {DescribeRemaining(left)}" : percent;
-        ToolTipText = $"{Detail}\n{Format.Thousands(value.Done)} of {Format.Thousands(value.Total)} · {DescribeDuration(now - _started)} so far";
+        ToolTipText = $"{Detail}\n{Format.Thousands(value.Done)} of {Format.Thousands(value.Total)} · {DescribeDuration(now - _started)} so far"
+                      + (HasDetails ? "\nClick for more." : "");
     }
 
     /// <summary>Stop before the next step; the call in flight is dropped. Does nothing once it's stopping or over.</summary>
@@ -179,6 +185,7 @@ public sealed class BackgroundJobViewModel : ViewModelBase, IProgress<FetchProgr
         {
             _cancel.Dispose();
             _dismissed.Dispose();
+            Details?.Dispose();
         }
         base.Dispose(disposing);
     }

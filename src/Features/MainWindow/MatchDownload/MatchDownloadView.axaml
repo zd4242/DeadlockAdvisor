@@ -1,0 +1,71 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+             xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.MainWindow.MatchDownload.MatchDownloadView"
+             x:DataType="download:MatchDownloadViewModel">
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="mainWindow:StatusFact">
+            <Grid Margin="0,0,0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="PatchLabel"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Classes="dim" Margin="0,0,16,0" Text="{Binding Label}"/>
+                <TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}"/>
+            </Grid>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <StackPanel Margin="20" Spacing="12" Width="460" Grid.IsSharedSizeScope="True">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Intro}"/>
+
+        <StackPanel Spacing="6">
+            <TextBlock Classes="section" Text="YOU HAVE"/>
+            <ItemsControl ItemsSource="{Binding Stored}" IsVisible="{Binding HasStored}"/>
+            <TextBlock Classes="faint" Text="No match data downloaded yet." IsVisible="{Binding !HasStored}"/>
+        </StackPanel>
+
+        <StackPanel Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock Classes="section" VerticalAlignment="Center" Text="DOWNLOAD"/>
+                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.RanksInfo}"/>
+            </StackPanel>
+            <RadioButton GroupName="MatchDownload" IsChecked="{Binding EveryMatchOnly}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Every match"/>
+                    <TextBlock Classes="faint" Text="{Binding EveryMatchDetail}"/>
+                </StackPanel>
+            </RadioButton>
+            <RadioButton GroupName="MatchDownload" IsChecked="{Binding IncludeRanks}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <TextBlock Text="Every match + rank groups"/>
+                    <TextBlock Classes="faint" Text="{Binding WithRanksDetail}"/>
+                </StackPanel>
+            </RadioButton>
+        </StackPanel>
+
+        <StackPanel Spacing="6">
+            <TextBlock Classes="section" Text="THIS DOWNLOAD"/>
+            <ItemsControl ItemsSource="{Binding Steps}"/>
+            <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Summary}"/>
+        </StackPanel>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
+            <Button Classes="primary"
+                    Content="Download"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    Command="{Binding DownloadCommand}"/>
+            <Button Content="Cancel"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsCancel="True"
+                    Command="{Binding CancelCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

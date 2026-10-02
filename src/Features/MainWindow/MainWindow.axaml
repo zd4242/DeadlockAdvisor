@@ -161,8 +161,8 @@
                                     <MenuItem Header="Sync from Game API"
                                               Command="{Binding DataMenu.SyncGameApiCommand}"
                                               ToolTip.Tip="Pull item stats, costs, ids and new shop items from deadlock-api.com"/>
-                                    <MenuItem Header="Fetch Match Stats"
-                                              Command="{Binding DataMenu.FetchMatchStatsCommand}"
+                                    <MenuItem Header="Download Match Data…"
+                                              Command="{Binding DataMenu.DownloadMatchDataCommand}"
                                               ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (a few minutes, in the background)"/>
                                     <MenuItem Header="Model Health Report"
                                               Command="{Binding DataMenu.ModelHealthCommand}"

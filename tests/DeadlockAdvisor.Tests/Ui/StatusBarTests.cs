@@ -1,3 +1,4 @@
+using System.Reactive.Linq;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
@@ -6,6 +7,8 @@ using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Services;
@@ -50,7 +53,7 @@ public class StatusBarTests
         var card = (Control)((Flyout)chip.Flyout).Content!;
         var facts = card.GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
         Assert.Contains("Every match, ranked or not", facts);
-        Assert.Contains("Fetch again", card.GetLogicalDescendants().OfType<Button>().Select(button => button.Content as string));
+        Assert.Contains("Download again…", card.GetLogicalDescendants().OfType<Button>().Select(button => button.Content as string));
         ui.Screenshot("status_card.png");
     }
 
@@ -72,7 +75,7 @@ public class StatusBarTests
         var barHeight = ui.Window.StatusBar.Bounds.Height;
 
         var menu = ui.ViewModel.DataMenu;
-        menu.FetchMatchStatsCommand.Execute().Subscribe();
+        _ = menu.DownloadMatchDataAsync(HeldMatchStats.Plan);
         matchStats.Progress!.Report(new MatchFetchProgress(2, 52, 400, 812, 2600, "09-29 · Emissary – Oracle · Enemies: Haze", 0));
         var artRun = menu.DownloadArtAsync(force: false);
         art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 38, 0, [], [])]));
@@ -91,6 +94,53 @@ public class StatusBarTests
         ask.ConfirmCommand!.Execute(null);
         UiHarness.Settle();
         Assert.True(closed);
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheRunningMatchDataChipShowsEachPhase()
+    {
+        var matchStats = new HeldMatchStats();
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true,
+            services => services.AddSingleton<IMatchStatsService>(matchStats));
+        ui.Show();
+
+        _ = ui.ViewModel.DataMenu.DownloadMatchDataAsync(HeldMatchStats.Plan);
+        matchStats.Progress!.Report(new MatchFetchProgress(1, 120, 400, 200, 480, "09-29 · Emissary – Oracle · Enemies: Haze", 3_100_000));
+        UiHarness.Settle();
+        var running = ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Running");
+        running.Flyout!.ShowAt(running);
+        UiHarness.Settle();
+
+        var card = ((Flyout)running.Flyout).Content as Control;
+        var texts = card!.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
+        Assert.Contains("09-29 · every match", texts);
+        Assert.Contains("in use", texts);
+        Assert.Contains("Enemies: Haze", texts);
+        Assert.Contains("200 of 480 calls", texts);
+        ui.Screenshot("status_download_details.png");
+    }
+
+    [AvaloniaFact]
+    public async Task TheDownloadDialogSaysWhatItFetchesAndAboutHowLong()
+    {
+        var matchStats = new HeldMatchStats();
+        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true,
+            services => services.AddSingleton<IMatchStatsService>(matchStats));
+        ui.Show();
+
+        await ui.ViewModel.DataMenu.DownloadMatchDataCommand.Execute();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var dialog = modal.GetVisualDescendants().OfType<MatchDownloadView>().Single();
+        // Faded in, for the screenshot.
+        Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
+        var texts = dialog.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
+        Assert.Contains("No match data downloaded yet.", texts);
+        Assert.Contains("about 30 s · 1.2 MB", texts);
+        Assert.Contains("Patch 09-29", texts);
+        Assert.Contains("new", texts);
+        ui.ScreenshotModal("match_download_dialog.png");
     }
 
     [AvaloniaFact]
@@ -117,8 +167,8 @@ public class StatusBarTests
         Assert.False(status.HasData);
         Assert.Equal("No match data", status.Label);
         Assert.Empty(status.Facts);
-        Assert.Equal("Fetch Match Stats", status.FetchText);
-        Assert.Same(ui.ViewModel.DataMenu.FetchMatchStatsCommand, status.FetchCommand);
+        Assert.Equal("Download Match Data…", status.FetchText);
+        Assert.Same(ui.ViewModel.DataMenu.DownloadMatchDataCommand, status.FetchCommand);
         OpenCard(ui);
         ui.Screenshot("status_card_no_data.png");
     }

@@ -8,6 +8,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.Json;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -76,8 +77,8 @@ public class DataMenuViewModel : ViewModelBase
         var idle = this.WhenAnyValue(vm => vm.IsBusy).Select(busy => !busy);
         SyncNewDataCommand = ReactiveCommand.Create(SyncNewData);
         SyncGameApiCommand = ReactiveCommand.CreateFromTask(SyncGameApiAsync, idle);
-        FetchMatchStatsCommand = ReactiveCommand.CreateFromTask(FetchMatchStatsAsync,
-            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsFetchingMatchStats, (busy, fetching) => !busy && !fetching));
+        DownloadMatchDataCommand = ReactiveCommand.CreateFromTask(OfferMatchDownloadAsync,
+            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
@@ -89,7 +90,7 @@ public class DataMenuViewModel : ViewModelBase
         DownloadArtCommand = ReactiveCommand.Create(OfferArtDownload,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingArt, (busy, downloading) => !busy && !downloading));
 
-        this.WhenAnyValue(vm => vm.IsFetchingMatchStats, vm => vm.IsDownloadingArt)
+        this.WhenAnyValue(vm => vm.IsDownloadingMatchData, vm => vm.IsDownloadingArt)
             .Skip(1)
             .Subscribe(_ => this.RaisePropertyChanged(nameof(HasRunningJobs)))
             .DisposeWith(Disposables);
@@ -98,9 +99,9 @@ public class DataMenuViewModel : ViewModelBase
     /// <summary>A job behind a modal, or the model health report, is running; one at a time.</summary>
     [Reactive] public bool IsBusy { get; private set; }
 
-    [Reactive] public bool IsFetchingMatchStats { get; private set; }
+    [Reactive] public bool IsDownloadingMatchData { get; private set; }
     [Reactive] public bool IsDownloadingArt { get; private set; }
-    public bool HasRunningJobs => IsFetchingMatchStats || IsDownloadingArt;
+    public bool HasRunningJobs => IsDownloadingMatchData || IsDownloadingArt;
 
     /// <summary>The background downloads the status bar shows: running, or finished with a report not yet opened.</summary>
     public ObservableCollection<BackgroundJobViewModel> Jobs { get; } = [];
@@ -110,7 +111,7 @@ public class DataMenuViewModel : ViewModelBase
 
     public ReactiveCommand<Unit, Unit> SyncNewDataCommand { get; }
     public ReactiveCommand<Unit, Unit> SyncGameApiCommand { get; }
-    public ReactiveCommand<Unit, Unit> FetchMatchStatsCommand { get; }
+    public ReactiveCommand<Unit, Unit> DownloadMatchDataCommand { get; }
     public ReactiveCommand<Unit, Unit> ModelHealthCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
@@ -250,25 +251,65 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- match stats ----------------------------------------------------------------
 
+    private MatchFetchEstimate Estimate =>
+        _settings.Current is { MatchFetchSecondsPerCall: { } seconds, MatchFetchBytesPerCall: { } bytes }
+            ? new MatchFetchEstimate(seconds, bytes)
+            : MatchFetchEstimate.Measured;
+
+    private Task OfferMatchDownloadAsync() => OfferMatchDownloadAsync(_settings.Current.MatchDataIncludeRanks);
+
+    /// <summary>The download dialog, starting on the rank groups: what the filters ask for when there are none.</summary>
+    public void OfferRankDownload() => Launch(() => OfferMatchDownloadAsync(includeRanks: true));
+
     /// <summary>
-    /// A few minutes of calls, so it runs in the background. Each phase's counts are put to use as
-    /// they arrive, so stopping part-way keeps what's finished.
+    /// The download dialog: what's stored, what a download would fetch with and without the rank groups,
+    /// and about how long each takes. Needs the patch list first, one quick call.
     /// </summary>
-    private async Task FetchMatchStatsAsync()
+    /// <param name="includeRanks">Which choice it starts on.</param>
+    internal async Task OfferMatchDownloadAsync(bool includeRanks)
     {
+        IReadOnlyList<Patch> patches;
+        try
+        {
+            patches = await _matchStats.PatchesAsync();
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex))
+        {
+            _notifications.ShowError($"Couldn't reach deadlock-api.com for the patch list: {ex.Message}", _toastTime);
+            return;
+        }
+        var store = _data.Store;
+        _modals.ShowModal(new MatchDownloadViewModel(_modals, store.MatchSegments,
+            _matchStats.Plan(store, patches, includeRanks: false), _matchStats.Plan(store, patches, includeRanks: true),
+            Estimate, includeRanks, (plan, ranks) =>
+            {
+                _settings.Update(s => s.MatchDataIncludeRanks = ranks);
+                Launch(() => DownloadMatchDataAsync(plan));
+            }));
+    }
+
+    /// <summary>
+    /// A few minutes of calls, so it runs in the background, with its phases behind the chip. Each phase's
+    /// counts are put to use as they arrive, so stopping part-way keeps what's finished.
+    /// </summary>
+    internal async Task DownloadMatchDataAsync(MatchFetchPlan plan)
+    {
+        if (IsDownloadingMatchData)
+            return;
         _data.FlushSaves();
+        var details = new MatchDownloadProgressViewModel(plan);
         var job = new BackgroundJobViewModel("Match data", _clock, cancel => _modals.Confirm(
             "Stop downloading match data? What has finished is kept and already in use; the rest stays as it was.",
-            "Stop", cancel, cancelText: "Keep going"));
-        IsFetchingMatchStats = true;
+            "Stop", cancel, cancelText: "Keep going")) { Details = details };
+        IsDownloadingMatchData = true;
         FetchResult? applied = null;
         string Kept() => applied is null ? "Nothing was changed." : "What finished before that is kept.";
         try
         {
-            var plan = await RunInBackgroundAsync(job, async () =>
+            var started = _clock.Now;
+            var done = await RunInBackgroundAsync(job, async () =>
                 {
-                    var plan = await _matchStats.PlanAsync(_data.Store, includeRanks: true, job.Token);
-                    await _matchStats.FetchAsync(_data.Store, plan, new OverallProgress(job),
+                    await _matchStats.FetchAsync(_data.Store, plan, new BothProgress(details, job),
                         segment => applied = ApplySegment(segment, plan), job.Token);
                     return plan;
                 },
@@ -276,17 +317,25 @@ public class DataMenuViewModel : ViewModelBase
                     ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
                     : ["Couldn't download match data from deadlock-api.com:", "", failure.Message, "", Kept()]),
                 () => $"Stopped downloading match data. {Kept()}");
-            if (plan is null)
+            if (done is null)
                 return;
 
+            var learned = Estimate.Learn(details.Done, _clock.Now - started, details.Bytes);
+            _settings.Update(s =>
+            {
+                s.MatchFetchSecondsPerCall = learned.SecondsPerCall;
+                s.MatchFetchBytesPerCall = learned.BytesPerCall;
+            });
             var lines = applied?.Lines() ?? ["Every patch's counts were already complete: nothing to download."];
             lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
-            lines.Add("The Match page's filters (the funnel) lean it toward a range of ranks, without downloading again.");
+            lines.Add(plan.IncludesRanks || MatchStatsMath.RanksOf(_data.Store.MatchSegments).Count > 0
+                ? "The Match page's filters (the funnel) lean it toward a range of ranks, without downloading again."
+                : "Download the rank groups too for the Match page's filters to lean it toward your ranks.");
             Succeeded(job, "downloaded", "Match data downloaded", lines, "Match data downloaded: the recommendations now show it.");
         }
         finally
         {
-            IsFetchingMatchStats = false;
+            IsDownloadingMatchData = false;
         }
     }
 
@@ -298,12 +347,15 @@ public class DataMenuViewModel : ViewModelBase
         return result;
     }
 
-    /// <summary>The status bar chip shows the whole download; its phases are for the details.</summary>
-    private sealed class OverallProgress(IProgress<FetchProgress> job) : IProgress<MatchFetchProgress>
+    /// <summary>The details card follows every phase; the chip shows the whole download.</summary>
+    private sealed class BothProgress(IProgress<MatchFetchProgress> details, IProgress<FetchProgress> job) : IProgress<MatchFetchProgress>
     {
-        public void Report(MatchFetchProgress value) => job.Report(value.Overall);
+        public void Report(MatchFetchProgress value)
+        {
+            details.Report(value);
+            job.Report(value.Overall);
+        }
     }
-
     // -- model health ---------------------------------------------------------------
 
     /// <summary>The simulation takes a moment, so it runs off the UI thread; busy meanwhile so no sync swaps the data under it.</summary>

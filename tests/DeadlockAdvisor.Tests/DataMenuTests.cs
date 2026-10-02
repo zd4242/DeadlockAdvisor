@@ -4,6 +4,7 @@ using System.Text.Json.Nodes;
 using ClosedXML.Excel;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -106,34 +107,81 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task AFailedFetchStaysInTheStatusBarWithWhatWentWrong()
+    public async Task OfflineThePatchListSaysSoAndStartsNothing()
     {
-        await _menu.FetchMatchStatsCommand.Execute();
+        await _menu.DownloadMatchDataCommand.Execute();
+
+        Assert.Empty(_shown);
+        Assert.Empty(_menu.Jobs);
+        Assert.False(_menu.IsDownloadingMatchData);
+    }
+
+    [Fact]
+    public async Task AFailedDownloadStaysInTheStatusBarWithWhatWentWrong()
+    {
+        await _menu.DownloadMatchDataAsync(HeldMatchStats.Plan);
 
         Assert.Empty(_shown);
         var job = Assert.Single(_menu.Jobs);
         Assert.True(job.HasFailed);
-        Assert.False(_menu.IsFetchingMatchStats);
+        Assert.False(_menu.IsDownloadingMatchData);
         Assert.Equal(0, _replaced);
 
         await job.OpenCommand.Execute();
         var report = LastMessage();
         Assert.Equal("Match data download failed", report.Title);
         Assert.Contains("offline (test)", report.Body);
+        Assert.EndsWith("Nothing was changed.", report.Body);
         Assert.Empty(_menu.Jobs);
     }
 
     [Fact]
-    public async Task MatchStatsFetchInTheBackgroundAndAskBeforeStopping()
+    public async Task TheDialogStartsTheChosenPlanAndRemembersTheChoice()
     {
-        using var menu = Menu(matchStats: new HeldMatchStats());
-        var run = menu.FetchMatchStatsCommand.Execute().ToTask();
+        var matchStats = new HeldMatchStats();
+        using var menu = Menu(matchStats: matchStats);
+        await menu.DownloadMatchDataCommand.Execute();
+
+        var dialog = Assert.IsType<MatchDownloadViewModel>(_shown[^1]);
+        Assert.Equal([false, true], matchStats.Planned);
+        Assert.False(dialog.IncludeRanks);
+        dialog.IncludeRanks = true;
+        await dialog.DownloadCommand.Execute();
+
+        Assert.False(_fixture.Modals.IsModalOpen);
+        Assert.True(_fixture.Settings.Current.MatchDataIncludeRanks);
+        var details = Assert.IsType<MatchDownloadProgressViewModel>(Assert.Single(menu.Jobs).Details);
+        Assert.Equal(["09-29 · every match", "09-29 · rank groups"], details.Phases.Select(phase => phase.Text));
+
+        // The next time it starts on the rank groups.
+        using var again = Menu(matchStats: new HeldMatchStats());
+        await again.DownloadMatchDataCommand.Execute();
+        Assert.True(Assert.IsType<MatchDownloadViewModel>(_shown[^1]).IncludeRanks);
+    }
+
+    [Fact]
+    public async Task MatchDataDownloadsInTheBackgroundWithItsPhasesBehindTheChipAndAsksBeforeStopping()
+    {
+        var matchStats = new HeldMatchStats();
+        using var menu = Menu(matchStats: matchStats);
+        var run = menu.DownloadMatchDataAsync(HeldMatchStats.Plan);
 
         var job = Assert.Single(menu.Jobs);
+        var details = Assert.IsType<MatchDownloadProgressViewModel>(job.Details);
         Assert.Empty(_shown);
-        Assert.True(menu.IsFetchingMatchStats);
-        Assert.False(await menu.FetchMatchStatsCommand.CanExecute.FirstAsync());
+        Assert.True(menu.IsDownloadingMatchData);
+        Assert.False(await menu.DownloadMatchDataCommand.CanExecute.FirstAsync());
         Assert.False(await menu.ChangeDataFolderCommand.CanExecute.FirstAsync());
+        Assert.Equal(("0 of 480 calls", "80 calls"), (details.CallsText, details.Phases[0].Detail));
+
+        // The chip and the card follow the same reports.
+        matchStats.Progress!.Report(new MatchFetchProgress(1, 100, 400, 180, 480, "09-29 · Phantom – Eternus · Enemies: Haze", 2_500_000,
+            new FetchWait("deadlock-api.com asked to slow down", TimeSpan.FromSeconds(30))));
+        Assert.Equal((PhaseState.Done, PhaseState.Running), (details.Phases[0].State, details.Phases[1].State));
+        Assert.Equal(("in use", "Enemies: Haze", 100), (details.Phases[0].Detail, details.Phases[1].Detail, details.Phases[1].Done));
+        Assert.Equal(("180 of 480 calls", "2.5 MB received"), (details.CallsText, details.BytesText));
+        Assert.Equal("deadlock-api.com asked to slow down: waiting 30 s", details.WaitText);
+        Assert.Equal((180, 480), (job.Done, job.Total));
 
         await job.CancelCommand.Execute();
         var ask = Assert.IsType<ConfirmationModalViewModel>(_shown[^1]);
@@ -146,11 +194,10 @@ public sealed class DataMenuTests : IDisposable
         await run;
 
         Assert.Empty(menu.Jobs);
-        Assert.False(menu.IsFetchingMatchStats);
+        Assert.False(menu.IsDownloadingMatchData);
         Assert.True(await menu.ChangeDataFolderCommand.CanExecute.FirstAsync());
         Assert.Equal(0, _replaced);
     }
-
     [Fact]
     public async Task ArtDownloadsInTheBackgroundAndLeavesItsReportInTheStatusBar()
     {
@@ -203,14 +250,13 @@ public sealed class DataMenuTests : IDisposable
     [Fact]
     public async Task ANewRunReplacesTheLastOnesUnreadReport()
     {
-        await _menu.FetchMatchStatsCommand.Execute();
+        await _menu.DownloadMatchDataAsync(HeldMatchStats.Plan);
         var first = Assert.Single(_menu.Jobs);
 
-        await _menu.FetchMatchStatsCommand.Execute();
+        await _menu.DownloadMatchDataAsync(HeldMatchStats.Plan);
 
         Assert.NotSame(first, Assert.Single(_menu.Jobs));
     }
-
     [Fact]
     public async Task ExportWritesAReadOnlySnapshotWorkbook()
     {

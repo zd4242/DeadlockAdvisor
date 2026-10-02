@@ -17,7 +17,7 @@ public sealed record Disagreement(string ItemName, Relation Relation, double R, 
 public sealed record DataOnlyPair(string ItemName, string HeroName, Relation Relation, double Lift, double Weight, double Margin);
 
 /// <param name="Matches">How many matches were simulated; 0 when too few heroes are profiled to fill one.</param>
-/// <param name="HasMatchData">False skips the data sections: Fetch Match Stats hasn't run.</param>
+/// <param name="HasMatchData">False skips the data sections: Download Match Data hasn't run.</param>
 /// <param name="DataSource">Which patches and ranks the match data comes from, and how much it moves from patch to patch.</param>
 public sealed record ModelHealthReport(
     int Matches,
@@ -89,7 +89,7 @@ public sealed record ModelHealthReport(
         lines.Add("");
         if (!HasMatchData)
         {
-            lines.Add("No match data yet: Data → Fetch Match Stats adds a comparison with real match results.");
+            lines.Add("No match data yet: Data → Download Match Data adds a comparison with real match results.");
             return lines;
         }
         lines.AddRange(DataSource);

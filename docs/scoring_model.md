@@ -245,7 +245,7 @@ use the reduced sum.
 
 ### The counts behind the lifts
 
-Fetch Match Stats keeps the raw win and match totals per patch, in
+Download Match Data keeps the raw win and match totals per patch, in
 `data/match_counts/<patch date>.json` (`MatchSegment`). It keeps the current
 patch and the one before, plus the one before that when those two have under 14
 days between them (`MatchFetchPlan`). Each file covers its patch's window, split
@@ -265,6 +265,13 @@ itself, so a call over a day costs the same as one over a month: a download's
 cost is its number of calls, not how many days it covers. Every match comes
 first, for each patch, and goes into use as it arrives; the rank groups follow.
 A download stopped part-way keeps the phases it finished.
+
+Before it starts, the download dialog (`MatchDownloadViewModel`) lists the
+patches stored and what the plan does to each, with and without the rank groups.
+Each choice shows about how long it takes and how much it brings
+(`MatchFetchEstimate`). The estimate starts from a measured 0.405 s and 15 KB a
+call, and moves toward each finished run's pace. While it runs, the status-bar
+chip opens each phase's progress (`MatchDownloadProgressViewModel`).
 
 Each half of a window takes one call for every match, one for every hero's own
 purchases (`bucket=hero`), and one per enemy hero: 80 calls per patch with 38
@@ -474,7 +481,7 @@ afterwards (see "Tests and goldens" below).
    - **Overrides that no longer match the game**: remove or fix the entry in
      `_forceConditional`, `_forceShown`, `_selfInflicted`, `_forcePerStack` or
      `_assumedStacks`, or give an uncapped per-stack item a count.
-2. **Data → Fetch Match Stats** to refresh the real-match lifts. It fetches the
+2. **Data → Download Match Data…** to refresh the real-match lifts. It fetches the
    new patch and finishes the one before; older patches are kept as they are.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 

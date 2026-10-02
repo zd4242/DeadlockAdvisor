@@ -44,7 +44,7 @@
                                   SelectedItem="{Binding SelectedRank}"
                                   IsEnabled="{Binding HasMatchData}"
                                   ToolTip.ShowOnDisabled="True"
-                                  ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;and on your hero. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Fetch Match Stats).">
+                                  ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;and on your hero. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Download Match Data).">
                             <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
                             <ComboBox.Resources>
                                 <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
@@ -103,10 +103,10 @@
                                                                     ToolTip.Tip="{x:Static match:DataRanksViewModel.Info}"
                                                                     IsVisible="{Binding CanFilter}"/>
                                             </StackPanel>
-                                            <TextBlock Classes="faint"
-                                                       TextWrapping="Wrap"
-                                                       IsVisible="{Binding !CanFilter}"
-                                                       Text="Needs match stats fetched again, split by rank (Data → Fetch Match Stats)."/>
+                                            <StackPanel Spacing="6" IsVisible="{Binding !CanFilter}">
+                                                <TextBlock Classes="faint" TextWrapping="Wrap" Text="Leaning toward your ranks needs the rank groups downloaded."/>
+                                                <Button HorizontalAlignment="Left" Content="Download the rank groups…" Command="{Binding DownloadRanksCommand}"/>
+                                            </StackPanel>
                                             <StackPanel Spacing="8" IsEnabled="{Binding CanFilter}">
                                                 <RadioButton GroupName="DataRanks" Content="Every match, ranked or not" IsChecked="{Binding EveryMatch}"/>
                                                 <RadioButton GroupName="DataRanks" Content="Leaning toward ranks" IsChecked="{Binding RankedOnly}"/>
