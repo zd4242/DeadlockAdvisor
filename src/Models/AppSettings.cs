@@ -24,7 +24,7 @@ public class AppSettings
     public bool ShowModelEditors { get; set; }
     public bool CheckForNewerPatch { get; set; } = true;
     public bool DetectFromAnywhere { get; set; } = true;
-    public bool ComeUpForReview { get; set; } = true;
+    public bool ComeUpForReview { get; set; }
     public bool MinimizeToDetect { get; set; } = true;
     public bool KeepUnreadCaptures { get; set; } = true;
     public bool KeepDetectionCaptures { get; set; } = true;

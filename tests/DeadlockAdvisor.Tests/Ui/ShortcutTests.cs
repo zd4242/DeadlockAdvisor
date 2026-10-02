@@ -152,11 +152,15 @@ public class ShortcutTests
         Assert.All(fixedKeys, binding => Assert.NotNull(ShortcutKeys.Problem(binding.Gesture)));
     }
 
-    /// <summary>F9 held system-wide: from the game, it detects onto the Match page and brings the window up for what that shows.</summary>
+    /// <summary>F9 held system-wide: from the game, it detects onto the Match page and, when told to, brings the window up for what that shows.</summary>
     [AvaloniaFact]
     public async Task F9FromAnotherAppDetectsOntoTheMatchPageAndBringsTheWindowUp()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings =>
+        {
+            UiHarness.Editing(settings, 1);
+            settings.Current.ComeUpForReview = true;
+        });
         Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
         ui.Show();
         var broughtForward = 0;
@@ -181,11 +185,11 @@ public class ShortcutTests
         Assert.Equal(2, broughtForward);
     }
 
-    /// <summary>Told not to come up for a review, F9 in the game leaves what it found waiting behind it until pressed again.</summary>
+    /// <summary>By default, F9 in the game leaves what it found waiting behind it until pressed again.</summary>
     [AvaloniaFact]
-    public async Task F9FromTheGameCanLeaveWhatItFoundWaitingUntilPressedAgain()
+    public async Task F9FromTheGameLeavesWhatItFoundWaitingUntilPressedAgain()
     {
-        using var ui = new UiHarness(settings => settings.Current.ComeUpForReview = false);
+        using var ui = new UiHarness();
         Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
         ui.Show();
         var broughtForward = 0;
