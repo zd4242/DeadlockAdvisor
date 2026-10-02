@@ -8,7 +8,7 @@ using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Ported from the Python app's tests/test_scoring.py (the data layer's editing helpers).</summary>
+/// <summary>The data layer's loading, saving and editing helpers.</summary>
 public class DataStoreTests
 {
     [Fact]
@@ -186,7 +186,7 @@ public class DataStoreTests
         Assert.Equal(800, reloaded.Items["spirit_resist_t1"].Cost);
         Assert.Equal(7, reloaded.Heroes["generic"].GameId);
         Assert.Equal(0.75, reloaded.TraitWeight("max_hp", Relation.Against));
-        // Saved in items.csv order; Python's dict == ignores order too.
+        // Saved in items.csv order; only the set of items matters here.
         Assert.Equal(store.ItemStats.Keys.ToHashSet(), reloaded.ItemStats.Keys.ToHashSet());
         foreach (var (itemId, stats) in store.ItemStats)
             Assert.Equal(stats, reloaded.ItemStats[itemId]);
@@ -334,7 +334,7 @@ public class DataStoreTests
         loaded.LoadMatchLift();
 
         Assert.Equal(store.MatchLift, loaded.MatchLift);
-        Assert.Equal(PythonJson.ToFileBytes(store.MatchMeta, true), PythonJson.ToFileBytes(loaded.MatchMeta, true));
+        Assert.Equal(DataJson.ToFileBytes(store.MatchMeta, true), DataJson.ToFileBytes(loaded.MatchMeta, true));
     }
 
     [Fact]

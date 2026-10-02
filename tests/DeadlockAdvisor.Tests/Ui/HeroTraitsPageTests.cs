@@ -12,7 +12,7 @@ namespace DeadlockAdvisor.Tests.Ui;
 
 public class HeroTraitsPageTests
 {
-    /// <summary>The Python screenshot's state (scratchpad shoot_python_editors.py): Billy's Bullet Damage (General).</summary>
+    /// <summary>The screenshot's state: Billy's Bullet Damage (General).</summary>
     [AvaloniaTheory]
     [InlineData(2, "hero_traits.png")]
     [InlineData(5, "hero_traits_150.png")]

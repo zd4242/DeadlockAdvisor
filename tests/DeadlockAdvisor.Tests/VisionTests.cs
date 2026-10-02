@@ -8,8 +8,8 @@ using static DeadlockAdvisor.Tests.Support.VisionData;
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>
-/// The screen-detection pipeline, ported from test_vision.py. The role and assignment logic
-/// is pure arithmetic and tested without images; the rest runs against the golden captures.
+/// The screen-detection pipeline. The role and assignment logic is pure arithmetic and tested
+/// without images; the rest runs against the golden captures.
 /// </summary>
 public class VisionTests
 {
@@ -457,5 +457,49 @@ public class VisionTests
 
         static (double, double, double) Round((double H, double S, double V) hsv) =>
             (Math.Round(hsv.H), Math.Round(hsv.S, 2), Math.Round(hsv.V, 2));
+    }
+
+    // -- redactions -------------------------------------------------------------
+
+    /// <summary>
+    /// Every fixture or variant image with "redacted" rectangles in its .json, and the rectangles:
+    /// in the build's copy, or with <paramref name="source"/> in the source tree.
+    /// </summary>
+    public static List<(string Image, List<(int X, int Y, int Width, int Height)> Regions)> RedactedRegions(bool source = false)
+    {
+        var found = new List<(string, List<(int, int, int, int)>)>();
+        foreach (var folder in new[] { "fixtures", "variants" })
+        {
+            var dir = source ? Golden.SourcePathOf("vision", folder) : Golden.PathOf("vision", folder);
+            foreach (var json in Directory.GetFiles(dir, "*.json").Order(StringComparer.Ordinal))
+            {
+                if (JsonNode.Parse(File.ReadAllText(json))?["redacted"] is not JsonArray rectangles)
+                    continue;
+                var regions = rectangles.Select(rect => ((int)rect![0]!, (int)rect[1]!, (int)rect[2]!, (int)rect[3]!)).ToList();
+                found.Add((Path.ChangeExtension(json, ".png"), regions));
+            }
+        }
+        return found;
+    }
+
+    /// <summary>Frames off other people's videos keep their titles and overlays blacked out (VisionCorpusTools.RedactFixtures).</summary>
+    [Fact]
+    public void RedactedRegionsStayBlank()
+    {
+        var redacted = RedactedRegions();
+        Assert.NotEmpty(redacted);
+        foreach (var (path, regions) in redacted)
+        {
+            var image = ImageFile.Load(path);
+            foreach (var (x, y, width, height) in regions)
+            {
+                for (var row = y; row < Math.Min(y + height, image.Height); row++)
+                {
+                    var start = (row * image.Width + x) * 3;
+                    var span = image.Pixels.AsSpan(start, (Math.Min(x + width, image.Width) - x) * 3);
+                    Assert.True(span.IndexOfAnyExcept((byte)0) < 0, $"{Path.GetFileName(path)} isn't black at row {row} of [{x}, {y}, {width}, {height}]");
+                }
+            }
+        }
     }
 }

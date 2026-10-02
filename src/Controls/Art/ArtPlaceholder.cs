@@ -29,7 +29,7 @@ public static class ArtPlaceholder
         return new string(letters.Take(2).ToArray());
     }
 
-    /// <summary>QColor.fromHsv(h, s, v).toRgb(), with its 16-bit intermediate steps, so tiles match the Python app's.</summary>
+    /// <summary>QColor.fromHsv(h, s, v).toRgb(), with its 16-bit intermediate steps, so every tile keeps the colour it has always had.</summary>
     internal static Color FromQtHsv(int hue, int saturation, int value)
     {
         const double max = ushort.MaxValue;

@@ -236,7 +236,7 @@ public sealed record FetchResult(
             else
             {
                 lines.Add(head + $"left out -- reliability {reliability} is under "
-                               + $"{NumberFormat.Repr(MatchStatsMath.MinReliability)}, so the numbers would be mostly noise");
+                               + $"{NumberFormat.RoundTrip(MatchStatsMath.MinReliability)}, so the numbers would be mostly noise");
             }
         }
         return lines;

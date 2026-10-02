@@ -39,7 +39,7 @@ public static class BackedUpFile
 
     private static void TrimBackups(string backupDir, string stem)
     {
-        // Matches the Python app's glob of "<stem>.*.csv".
+        // Every "<stem>.*.csv".
         var existing = Directory.EnumerateFiles(backupDir)
             .Where(file =>
             {

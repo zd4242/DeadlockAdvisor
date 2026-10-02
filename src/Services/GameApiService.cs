@@ -32,7 +32,7 @@ public sealed class GameApiService(IDeadlockApi api) : IGameApiService
     {
         var records = await api.GetJsonAsync($"{GameSync.Api}/items/by-type/upgrade", cancellationToken) as JsonArray ?? [];
         return new JsonArray(records
-            .Where(record => PyJson.Truthy(PyJson.Get(record, "shopable")) && GameSync.ShopTiers.Contains(PyJson.Int(record, "item_tier")))
+            .Where(record => JsonRecord.Truthy(JsonRecord.Get(record, "shopable")) && GameSync.ShopTiers.Contains(JsonRecord.Int(record, "item_tier")))
             .Select(record => record!.DeepClone())
             .ToArray());
     }
@@ -41,7 +41,7 @@ public sealed class GameApiService(IDeadlockApi api) : IGameApiService
     {
         var records = await api.GetJsonAsync($"{GameSync.Api}/items", cancellationToken) as JsonArray ?? [];
         return new JsonArray(records
-            .Where(record => PyJson.Text(record, "type") == "upgrade")
+            .Where(record => JsonRecord.Text(record, "type") == "upgrade")
             .Select(record => record!.DeepClone())
             .ToArray());
     }

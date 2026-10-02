@@ -39,8 +39,8 @@ public class LiveMatchDataTests(ITestOutputHelper output)
         var single = await api.GetJsonAsync(MatchStatsService.ItemStatsUrl(new() { ["hero_ids"] = hero.GameId.ToString() }, from, until)) as JsonArray;
 
         var fromBuckets = MatchStatsMath.BucketTotals(bucketed!.Select(row =>
-            (PyJson.Int(row, "bucket"), PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))))[hero.GameId];
-        var asked = MatchStatsMath.Totals(single!.Select(row => (PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))));
+            (JsonRecord.Int(row, "bucket"), JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))))[hero.GameId];
+        var asked = MatchStatsMath.Totals(single!.Select(row => (JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
         Assert.NotEmpty(asked);
         Assert.Equal(asked.OrderBy(pair => pair.Key), fromBuckets.OrderBy(pair => pair.Key));
     }

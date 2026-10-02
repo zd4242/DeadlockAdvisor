@@ -390,7 +390,7 @@ public static class Layout
             ranked.Add((rank.Score, index, candidates[index]));
             progress?.Report(0.7 * (index + 1) / candidates.Count);
         }
-        // Stable, as Python's sort is: equal scores keep the smaller pitch first.
+        // A stable sort: equal scores keep the smaller pitch first.
         ranked = ranked.OrderByDescending(entry => entry.Score).ThenBy(entry => entry.Index).ToList();
 
         (double Score, Geometry Geometry)? best = null;

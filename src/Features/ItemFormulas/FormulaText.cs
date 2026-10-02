@@ -9,7 +9,7 @@ using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Features.ItemFormulas;
 
-/// <summary>The formula editors' wording and colours, from the Python app's item_formula_editor.py.</summary>
+/// <summary>The formula editors' wording and colours.</summary>
 public static class FormulaText
 {
     /// <summary>

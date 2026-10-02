@@ -8,7 +8,7 @@ using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Every file the app writes must come out byte-identical to its golden copy, which began as the Python app's output.</summary>
+/// <summary>Every file the app writes must come out byte-identical to its golden copy.</summary>
 public class FileFormatTests
 {
     public static TheoryData<string> WrittenFiles() =>
@@ -20,7 +20,7 @@ public class FileFormatTests
 
     [Theory]
     [MemberData(nameof(WrittenFiles))]
-    public void LoadThenSaveMatchesThePythonApp(string fileName)
+    public void LoadThenSaveIsByteIdentical(string fileName)
     {
         using var data = Golden.CopyData();
         var store = DataStore.Load(data.Path);
@@ -44,7 +44,7 @@ public class FileFormatTests
     }
 
     [Fact]
-    public void StatRuleEdgeCasesReadAndWriteLikeThePythonApp()
+    public void StatRuleEdgeCasesReadAndWriteBackUnchanged()
     {
         using var data = new TempDirectory();
         File.Copy(Golden.PathOf("format_edge", "stat_rules_input.csv"), data.File(DataStore.StatRulesFile));
@@ -57,13 +57,13 @@ public class FileFormatTests
     }
 
     [Fact]
-    public void JsonWithEscapesFloatsAndNestingRoundTripsLikeThePythonApp()
+    public void JsonWithEscapesFloatsAndNestingRoundTrips()
     {
         using var data = new TempDirectory();
         var expected = Golden.PathOf("format_edge", "meta_output.json");
         var store = new DataStore(data.Path)
         {
-            MatchMeta = PythonJson.Parse(File.ReadAllText(expected, Encoding.UTF8))!.AsObject(),
+            MatchMeta = DataJson.Parse(File.ReadAllText(expected, Encoding.UTF8))!.AsObject(),
         };
 
         store.SaveMatchLift();
@@ -73,7 +73,7 @@ public class FileFormatTests
     }
 
     [Fact]
-    public void TooltipsWithMarkupAndUnicodeWriteLikeThePythonApp()
+    public void TooltipsWithMarkupAndUnicodeWriteTheGoldenFile()
     {
         using var data = new TempDirectory();
         var store = new DataStore(data.Path);

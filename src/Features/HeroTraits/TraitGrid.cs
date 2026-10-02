@@ -432,7 +432,7 @@ public class TraitGrid : ScrollingGrid
         var limit = Math.Max(Math.Abs(category.ScaleMin), Math.Abs(category.ScaleMax));
         var current = row == CurrentRow && column == CurrentColumn;
 
-        // Alternate by the hero's place in the full sorted list, not on screen, as the Python grid does.
+        // Alternate by the hero's place in the full sorted list, not on screen, so stripes don't jump as rows hide.
         HeatCell.Paint(context, rect, value, limit, alternate: _orderIndex.GetValueOrDefault(row) % 2 == 1, selected: current);
 
         var border = new Pen(new SolidColorBrush(Palette.Border), 1);

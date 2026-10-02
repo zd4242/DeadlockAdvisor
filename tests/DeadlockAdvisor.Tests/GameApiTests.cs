@@ -9,7 +9,7 @@ using static DeadlockAdvisor.Tests.Support.Golden;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>The Python app's game sync tests (offline, on fake API records), then parity with its output on a real snapshot.</summary>
+/// <summary>The game sync, offline on fake API records, then on a real snapshot of the API against golden files.</summary>
 public class GameApiTests
 {
     private static JsonObject FakeItem(string name, long gameId, int tier, string slot, int cost, params (string Key, JsonObject Prop)[] props)
@@ -504,17 +504,17 @@ public class GameApiTests
         Assert.Equal("mo_and_krill", GameSync.MakeId("Mo & Krill"));
     }
 
-    // -- parity with the Python sync ------------------------------------------------------
+    // -- a real snapshot against the goldens ---------------------------------------------
 
     [Fact]
-    public void TooltipTextMatchesPythonForEveryDescriptionAndTheEdgeCases()
+    public void TooltipTextMatchesTheGoldensForEveryDescriptionAndTheEdgeCases()
     {
         foreach (var pair in Items(Json("game_api/tooltip_text.json")))
             Assert.Equal(Text(pair[1]), TooltipText.From(Text(pair[0])));
     }
 
     [Fact]
-    public void NamesAndNumbersMatchPython()
+    public void NamesAndNumbersMatchTheGoldens()
     {
         var misc = Json("game_api/misc.json");
         foreach (var pair in Items(misc["norm"]))
@@ -528,7 +528,7 @@ public class GameApiTests
     [Theory]
     [InlineData("fresh")]
     [InlineData("stale")]
-    public void SyncingTheSnapshotWritesWhatPythonWrites(string name)
+    public void SyncingTheSnapshotWritesTheGoldenFiles(string name)
     {
         var cases = Json("game_api/sync_cases.json");
         var expected = cases["cases"]![name]!;
@@ -593,7 +593,7 @@ public class GameApiTests
         Assert.Equal(expected["tooltips_changed"]!.GetValue<bool>(), actual.TooltipsChanged);
     }
 
-    /// <summary>export_golden.py's apply_stale_ops.</summary>
+    /// <summary>The edits that turn the fresh snapshot's data into the stale case's.</summary>
     private static void ApplyStaleOps(DataStore store, JsonNode ops)
     {
         foreach (var itemId in ops["drop_items"]!.AsArray().Select(Text))
@@ -620,7 +620,7 @@ public class GameApiTests
             store.ItemTooltips = [];
     }
 
-    /// <summary>export_golden.py's save_everything.</summary>
+    /// <summary>Writes every file the sync can touch, so all of them are compared.</summary>
     private static void SaveEverything(DataStore store)
     {
         store.SaveHeroes();

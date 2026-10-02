@@ -8,7 +8,7 @@ namespace DeadlockAdvisor.Vision;
 /// <summary>
 /// PNG in and out, as RGB. Decoding does what Pillow's <c>convert("RGB")</c> does: alpha is dropped,
 /// not composited or premultiplied, and no gamma or colour profile is applied, so the pixels match
-/// the ones the Python app matched against; <see cref="DecodeWithAlpha"/> hands the alpha back
+/// the ones the stored templates were built from; <see cref="DecodeWithAlpha"/> hands the alpha back
 /// separately. Every colour type, bit depth and interlacing is read.
 /// </summary>
 public static class Png

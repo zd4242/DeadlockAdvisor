@@ -216,7 +216,7 @@ public class ByTraitViewModel : ViewModelBase
             _ordered[index].OrderIndex = index;
     }
 
-    // Both directions are stable, as Python's sorted(reverse=True) is, so ties keep tier/name order.
+    // Both directions are stable sorts, so ties keep tier/name order.
     private IEnumerable<CoefficientRow> Sort<TKey>(IEnumerable<CoefficientRow> rows, Func<CoefficientRow, TKey> key, IComparer<TKey> comparer) =>
         SortDescending ? rows.OrderByDescending(key, comparer) : rows.OrderBy(key, comparer);
 

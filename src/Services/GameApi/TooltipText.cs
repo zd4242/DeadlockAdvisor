@@ -8,7 +8,7 @@ namespace DeadlockAdvisor.Services.GameApi;
 /// footnotes as &lt;i&gt;, coloured stat names as coloured spans, line breaks. Inline icons (SVGs,
 /// images) are dropped; the stat name they illustrate sits right next to them anyway.
 /// </summary>
-public sealed partial class TooltipText : PyHtmlParser
+public sealed partial class TooltipText : HtmlParser
 {
     private readonly StringBuilder _out = new();
     // One per open <span>: what closes it, or "" if it printed nothing.
@@ -25,7 +25,7 @@ public sealed partial class TooltipText : PyHtmlParser
         parser.Feed(source ?? "");
         parser.Close();
         var text = SpaceRun().Replace(parser._out.ToString(), " ");
-        return PyText.Strip(SpacedBreak().Replace(text, "<br>"));
+        return SyncText.Strip(SpacedBreak().Replace(text, "<br>"));
     }
 
     protected override void HandleStartTag(string tag, IReadOnlyList<(string Name, string? Value)> attrs)
@@ -51,7 +51,7 @@ public sealed partial class TooltipText : PyHtmlParser
                 else if (name == "style")
                     style = value;
             }
-            var classes = PyText.Split(classAttr ?? "");
+            var classes = SyncText.Split(classAttr ?? "");
             var color = Color().Match(style ?? "");
             var (opener, closer) = classes.Contains("highlight") ? ("<b>", "</b>")
                 : classes.Contains("diminish") ? ("<i>", "</i>")
@@ -73,15 +73,15 @@ public sealed partial class TooltipText : PyHtmlParser
     protected override void HandleData(string data)
     {
         if (_inSvg == 0)
-            _out.Append(PyText.Escape(data));
+            _out.Append(SyncText.Escape(data));
     }
 
-    [GeneratedRegex(@"color:" + PyText.Space + "*(#[0-9a-fA-F]{3,8})")]
+    [GeneratedRegex(@"color:" + SyncText.Space + "*(#[0-9a-fA-F]{3,8})")]
     private static partial Regex Color();
 
-    [GeneratedRegex(PyText.Space + "+")]
+    [GeneratedRegex(SyncText.Space + "+")]
     private static partial Regex SpaceRun();
 
-    [GeneratedRegex(PyText.Space + "*<br>" + PyText.Space + "*")]
+    [GeneratedRegex(SyncText.Space + "*<br>" + SyncText.Space + "*")]
     private static partial Regex SpacedBreak();
 }

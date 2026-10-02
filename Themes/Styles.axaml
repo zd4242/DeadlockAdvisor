@@ -1,7 +1,7 @@
 <Styles xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <!-- The Python app's QSS roles as style classes. Sizes are DIPs at 100% zoom; the window's
+    <!-- The app's text and control roles as style classes. Sizes are DIPs at 100% zoom; the window's
          root LayoutTransformControl does all zooming. -->
 
     <Styles.Resources>

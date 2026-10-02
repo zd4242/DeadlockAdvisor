@@ -18,7 +18,7 @@ public sealed record StatPart(
     /// <summary>"Spirit Resist 15% (conditional)"</summary>
     public string Short()
     {
-        var value = NumberFormat.Python(Value);
+        var value = NumberFormat.Short(Value);
         var amount = Unit == "%" ? value + Unit : $"{value} {Unit}".Trim();
         return $"{Label} {amount}" + (Conditional ? " (conditional)" : "");
     }
@@ -26,9 +26,9 @@ public sealed record StatPart(
     /// <summary>"Spirit Resist 15% (conditional) × 0.1 × 0.5 = 0.75"</summary>
     public string Describe()
     {
-        var text = $"{Short()} × {NumberFormat.Python(PerUnit)}";
+        var text = $"{Short()} × {NumberFormat.Short(PerUnit)}";
         if (Factor != 1)
-            text += $" × {NumberFormat.Python(Factor)}";
-        return $"{text} = {NumberFormat.Python(NumberFormat.Round(Amount, 3))}";
+            text += $" × {NumberFormat.Short(Factor)}";
+        return $"{text} = {NumberFormat.Short(NumberFormat.Round(Amount, 3))}";
     }
 }

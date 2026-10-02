@@ -15,8 +15,7 @@ public readonly record struct Bars(double Fraction, double? Data = null, string?
 
 /// <summary>
 /// One recommendation. Built once per item and updated in place: the list is re-sorted and
-/// re-filtered on every change to the match, and rebuilding rows each time is what made the
-/// Python app's lists lag.
+/// re-filtered on every change to the match, and rebuilding rows each time would make it lag.
 /// </summary>
 public class ResultRowViewModel : ViewModelBase
 {

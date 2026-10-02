@@ -3,26 +3,26 @@ using System.Text;
 
 namespace DeadlockAdvisor.Services.Formats;
 
-/// <summary>One CSV record keyed by the header row, like a row from Python's <c>csv.DictReader</c>.</summary>
+/// <summary>One CSV record keyed by the header row.</summary>
 public sealed class CsvRow(IReadOnlyDictionary<string, string> values)
 {
-    /// <summary>The field, or null where the row is too short to have one (DictReader's None).</summary>
+    /// <summary>The field, or null where the row is too short to have one.</summary>
     public string? Get(string column) => values.GetValueOrDefault(column);
 
-    /// <summary>The field where a missing one is an error, as <c>row["column"]</c> is in Python.</summary>
+    /// <summary>The field, where a missing one is an error.</summary>
     public string Required(string column) =>
         values.TryGetValue(column, out var value) ? value : throw new FormatException($"CSV row has no '{column}' column");
 
-    /// <summary>Python's <c>row.get(column) or fallback</c>: blank counts as missing.</summary>
+    /// <summary>The field, or <paramref name="fallback"/> where it's missing or blank.</summary>
     public string Or(string column, string fallback) =>
         values.GetValueOrDefault(column) is { Length: > 0 } value ? value : fallback;
 
-    /// <summary>Whether the field is present and non-empty, as <c>if row.get(column)</c> tests it.</summary>
+    /// <summary>Whether the field is present and non-empty.</summary>
     public bool Has(string column) => !string.IsNullOrEmpty(values.GetValueOrDefault(column));
 }
 
 /// <summary>
-/// Reads CSVs the way Python's csv module does with its default dialect: comma-separated, "-quoted,
+/// Reads CSVs: comma-separated, "-quoted,
 /// "" inside quotes for a quote, and \r\n, \n or \r between records.
 /// </summary>
 public static class CsvReader
@@ -31,7 +31,7 @@ public static class CsvReader
 
     public static List<CsvRow> ReadFile(string path) => Read(File.ReadAllText(path, Encoding.UTF8));
 
-    /// <summary>Every record as its list of fields, header and blank lines included, like Python's <c>csv.reader</c>.</summary>
+    /// <summary>Every record as its list of fields, header and blank lines included.</summary>
     public static List<List<string>> ReadRecords(string text) =>
         ParseRecords(text.Length > 0 && text[0] == _bom ? text[1..] : text);
 
@@ -140,7 +140,7 @@ public static class CsvReader
 }
 
 /// <summary>
-/// Writes CSVs byte-for-byte like Python's <c>csv.writer</c> defaults: fields quoted only when they
+/// Writes CSVs the same way every time, so an unchanged table saves byte for byte: fields quoted only when they
 /// hold a comma, quote, \r or \n; quotes doubled; every record ending \r\n; UTF-8 without a BOM.
 /// </summary>
 public static class CsvWriter

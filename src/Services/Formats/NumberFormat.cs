@@ -4,25 +4,24 @@ using System.Numerics;
 namespace DeadlockAdvisor.Services.Formats;
 
 /// <summary>
-/// Python's float formatting and parsing, reproduced digit for digit so both apps write the same
-/// files. Rounding works on the double's exact binary value, half to even, as Python's does.
+/// Number formatting and parsing for the data files and reports, exact to the digit so the files never
+/// change for nothing. Rounding works on the double's exact binary value, half to even.
 /// </summary>
 public static class NumberFormat
 {
     private static readonly CultureInfo _invariant = CultureInfo.InvariantCulture;
 
     /// <summary>
-    /// The data files' number style (<c>_fmt_number</c>): 3 rather than 3.0, anything else as
-    /// Python's <c>f"{value:g}"</c>.
+    /// The data files' number style: 3 rather than 3.0, anything else as <see cref="G"/>.
     /// </summary>
-    public static string Python(double value)
+    public static string Short(double value)
     {
         if (double.IsFinite(value) && value == Math.Truncate(value))
             return new BigInteger(value).ToString(_invariant);
         return G(value);
     }
 
-    /// <summary>Python's <c>format(value, f".{precision}g")</c>.</summary>
+    /// <summary>General format: <paramref name="precision"/> significant digits, trailing zeros dropped, and an exponent (e+07) outside 1e-4 to 1e<paramref name="precision"/>.</summary>
     public static string G(double value, int precision = 6)
     {
         if (!double.IsFinite(value))
@@ -53,7 +52,7 @@ public static class NumberFormat
         return sign + StripZeros(mantissaText) + Exponent(sciExp);
     }
 
-    /// <summary>Python's <c>f"{value:.{decimals}f}"</c>.</summary>
+    /// <summary>Exactly <paramref name="decimals"/> places, rounded half to even on the exact value.</summary>
     public static string Fixed(double value, int decimals)
     {
         if (!double.IsFinite(value))
@@ -64,7 +63,7 @@ public static class NumberFormat
         return (negative ? "-" : "") + PlaceDecimalPoint(rounded.ToString(_invariant), decimals);
     }
 
-    /// <summary>Python's <c>round(value, ndigits)</c> for a float.</summary>
+    /// <summary>The value rounded to <paramref name="ndigits"/> places, as <see cref="Fixed"/> rounds it.</summary>
     public static double Round(double value, int ndigits)
     {
         if (!double.IsFinite(value))
@@ -72,8 +71,8 @@ public static class NumberFormat
         return double.Parse(Fixed(value, ndigits), NumberStyles.Float, _invariant);
     }
 
-    /// <summary>Python's <c>repr(value)</c>: the shortest digits that read back as the same double.</summary>
-    public static string Repr(double value)
+    /// <summary>The shortest digits that read back as the same double, always with a decimal point: 3.0, 0.1, 1e-05.</summary>
+    public static string RoundTrip(double value)
     {
         if (double.IsNaN(value))
             return "nan";
@@ -98,7 +97,7 @@ public static class NumberFormat
         return sign + mantissaText + Exponent(decimalPoint - 1);
     }
 
-    /// <summary>Python's <c>float(text)</c>, false where that would raise.</summary>
+    /// <summary>Reads a float, inf and nan included; false for anything else.</summary>
     public static bool TryParseFloat(string? text, out double value)
     {
         value = 0;
@@ -108,7 +107,7 @@ public static class NumberFormat
         if (double.TryParse(trimmed, NumberStyles.Float, _invariant, out value))
             return true;
 
-        // Python also reads inf / infinity / nan in any case, with an optional sign.
+        // inf / infinity / nan in any case, with an optional sign.
         var negative = trimmed[0] == '-';
         var body = trimmed[0] is '-' or '+' ? trimmed[1..] : trimmed;
         switch (body.ToLowerInvariant())
@@ -125,21 +124,21 @@ public static class NumberFormat
         }
     }
 
-    /// <summary>The data layer's <c>_to_float</c>: blank or unreadable gives the default.</summary>
+    /// <summary>A float field: blank or unreadable gives the default.</summary>
     public static double ToFloat(string? text, double defaultValue = 0.0) =>
         TryParseFloat(text, out var value) ? value : defaultValue;
 
-    /// <summary>Python's <c>float(text)</c> where a bad value is an error.</summary>
+    /// <summary>Reads a float, where a bad value is an error.</summary>
     public static double ParseFloat(string? text) =>
         TryParseFloat(text, out var value) ? value : throw new FormatException($"could not convert string to float: '{text}'");
 
-    /// <summary>Python's <c>int(text)</c> for a string.</summary>
+    /// <summary>Reads an integer, where a bad value is an error.</summary>
     public static int ParseInt(string? text) =>
         int.TryParse(text?.Trim(), NumberStyles.AllowLeadingSign, _invariant, out var value)
             ? value
             : throw new FormatException($"invalid literal for int() with base 10: '{text}'");
 
-    /// <summary>Python's <c>int(x)</c> for a float: truncates toward zero.</summary>
+    /// <summary>Truncates toward zero.</summary>
     public static long Truncate(double value) => (long)Math.Truncate(value);
 
     private static string NonFinite(double value) =>

@@ -6,9 +6,9 @@ using DeadlockAdvisor.Services.Formats;
 namespace DeadlockAdvisor.Tests.Support;
 
 /// <summary>
-/// Reference outputs, copied next to the tests. They started as the Python app's export; now that it's
-/// retired, a deliberate behaviour change regenerates the affected ones from this app: run the tests
-/// with DEADLOCK_UPDATE_GOLDENS=1, review the diff under tests/DeadlockAdvisor.Tests/Golden, and commit.
+/// Reference outputs, copied next to the tests. A deliberate behaviour change regenerates the affected
+/// ones: run the tests with DEADLOCK_UPDATE_GOLDENS=1, review the diff under
+/// tests/DeadlockAdvisor.Tests/Golden, and commit.
 /// </summary>
 public static class Golden
 {
@@ -29,13 +29,13 @@ public static class Golden
     }
 
     /// <summary>
-    /// Rewrite a golden JSON file, in the source tree and the build's copy, in the shape the Python
-    /// export used, keeping the file's line endings so the diff shows only real changes.
+    /// Rewrite a golden JSON file, in the source tree and the build's copy, in the data files' JSON
+    /// layout (<see cref="DataJson"/>), keeping the file's line endings so the diff shows only real changes.
     /// </summary>
     public static void WriteJson(string name, JsonNode node)
     {
         var source = SourcePathOf(name);
-        var text = Encoding.UTF8.GetString(PythonJson.ToFileBytes(node, ensureAscii: false));
+        var text = Encoding.UTF8.GetString(DataJson.ToFileBytes(node, ensureAscii: false));
         if (File.Exists(source) && !File.ReadAllText(source).Contains("\r\n", StringComparison.Ordinal))
             text = text.Replace("\r\n", "\n", StringComparison.Ordinal);
         var bytes = new UTF8Encoding(encoderShouldEmitUTF8Identifier: false).GetBytes(text);
@@ -96,7 +96,7 @@ public sealed class TempDirectory : IDisposable
 
 public static class AssertEx
 {
-    /// <summary>Equal to about nine significant digits: float sums can come out in a different order than Python's.</summary>
+    /// <summary>Equal to about nine significant digits: float sums in a different order can differ in the last bits.</summary>
     public static void Close(double expected, double actual, double relative = 1e-9, string? because = null)
     {
         var tolerance = relative * Math.Max(1.0, Math.Max(Math.Abs(expected), Math.Abs(actual)));

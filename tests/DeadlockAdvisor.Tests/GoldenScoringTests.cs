@@ -8,7 +8,7 @@ using static DeadlockAdvisor.Tests.Support.Golden;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Scoring on the real data must reproduce the Python app's numbers, names and order.</summary>
+/// <summary>Scoring on the real data against its pinned numbers, names and order.</summary>
 public class GoldenScoringTests
 {
     private static Relation ParseRelation(JsonNode? node) =>

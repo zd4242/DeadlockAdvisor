@@ -64,6 +64,29 @@ public class VisionCorpusTools
     }
 
     /// <summary>
+    /// DEADLOCK_VISION_REDACT=1: blacks out the "redacted" rectangles ([x, y, width, height]) each
+    /// fixture and variant lists in its .json: a video's title, a streamer's overlay, anything in a
+    /// frame that isn't the game. The rectangles stay clear of the portraits and pills, so every reading
+    /// comes out the same; <see cref="VisionTests.RedactedRegionsStayBlank"/> keeps them black.
+    /// </summary>
+    [Fact]
+    public void RedactFixtures()
+    {
+        if (Environment.GetEnvironmentVariable("DEADLOCK_VISION_REDACT") != "1")
+            return;
+        foreach (var (image, regions) in VisionTests.RedactedRegions(source: true))
+        {
+            var pixels = ImageFile.Load(image);
+            foreach (var (x, y, width, height) in regions)
+            {
+                for (var row = y; row < Math.Min(y + height, pixels.Height); row++)
+                    Array.Clear(pixels.Pixels, (row * pixels.Width + x) * 3, (Math.Min(x + width, pixels.Width) - x) * 3);
+            }
+            Png.Save(pixels, image);
+        }
+    }
+
+    /// <summary>
     /// DEADLOCK_VISION_PROMOTE=&lt;captures folder&gt;: every label in Golden/vision/corpus without its
     /// image yet gets the capture it names as its "source", cut down to the strip: 1920 wide about the
     /// grid's centre and the top 180 rows, which keeps the portraits and pills and drops most of the

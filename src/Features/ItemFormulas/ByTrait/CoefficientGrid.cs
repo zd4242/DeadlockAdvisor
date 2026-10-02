@@ -297,7 +297,7 @@ public class CoefficientGrid : ScrollingGrid
         var y = HeaderHeight + index * RowHeight;
         var width = edges[_columns];
         var selected = ReferenceEquals(row, CurrentRow);
-        // Stripes follow the sorted order, hidden rows included, as the Python grid's did.
+        // Stripes follow the sorted order, hidden rows included, so they don't jump as rows hide.
         var alternate = row.OrderIndex % 2 == 1;
         var background = selected ? Palette.Surface4 : HeatCell.Background(alternate);
         context.FillRectangle(new SolidColorBrush(background), new Rect(0, y, width, RowHeight));

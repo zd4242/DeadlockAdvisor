@@ -15,7 +15,7 @@ public class ItemFormulasPageTests
     private const string Item = "focus_lens";
     private const string Trait = "deals_spirit_damage_general";
 
-    /// <summary>The Python screenshots' state (scratchpad shoot_python_editors.py).</summary>
+    /// <summary>The state the screenshots are taken in.</summary>
     [AvaloniaFact]
     public void ByItemPanelRenders()
     {

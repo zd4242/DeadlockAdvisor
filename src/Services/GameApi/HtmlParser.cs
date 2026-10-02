@@ -4,12 +4,12 @@ using System.Text.RegularExpressions;
 namespace DeadlockAdvisor.Services.GameApi;
 
 /// <summary>
-/// Python 3.12's <c>html.parser.HTMLParser</c> with <c>convert_charrefs=True</c>, ported state for
-/// state: the game sync turns the API's item descriptions into tooltip text with it, and the file
-/// it writes has to match the Python app's byte for byte, malformed markup included (an unclosed
-/// tag becomes text, a stray <c>&lt;</c> is data, and so on). Feed, then Close.
+/// An HTML tokenizer adapted state for state from CPython 3.12's <c>html.parser.HTMLParser</c>
+/// (with <c>convert_charrefs=True</c>). The game sync turns the API's item descriptions into tooltip
+/// text with it, and malformed markup has to come out the same every time: an unclosed tag becomes
+/// text, a stray <c>&lt;</c> is data, and so on. Feed, then Close.
 /// </summary>
-public abstract partial class PyHtmlParser
+public abstract partial class HtmlParser
 {
     private static readonly string[] _cdataContentElements = ["script", "style"];
 
@@ -73,7 +73,7 @@ public abstract partial class PyHtmlParser
             }
 
             if (i < j)
-                HandleData(_cdataElem is null ? PyText.Unescape(raw[i..j]) : raw[i..j]);
+                HandleData(_cdataElem is null ? SyncText.Unescape(raw[i..j]) : raw[i..j]);
             i = j;
             if (i == n)
                 break;
@@ -113,14 +113,14 @@ public abstract partial class PyHtmlParser
                 {
                     k += 1;
                 }
-                HandleData(_cdataElem is null ? PyText.Unescape(raw[i..k]) : raw[i..k]);
+                HandleData(_cdataElem is null ? SyncText.Unescape(raw[i..k]) : raw[i..k]);
             }
             i = k;
         }
 
         if (end && i < n && _cdataElem is null)
         {
-            HandleData(PyText.Unescape(raw[i..n]));
+            HandleData(SyncText.Unescape(raw[i..n]));
             i = n;
         }
         _raw = raw[i..];
@@ -161,7 +161,7 @@ public abstract partial class PyHtmlParser
         return gt < 0 ? -1 : gt + 1;
     }
 
-    /// <summary>_markupbase's marked sections: &lt;![CDATA[...]]&gt; and MS Office's &lt;![if ...]&gt;. Anything else fails, as in Python.</summary>
+    /// <summary>_markupbase's marked sections: &lt;![CDATA[...]]&gt; and MS Office's &lt;![if ...]&gt;. Anything else fails.</summary>
     private int ParseMarkedSection(int i)
     {
         var start = i + 3;
@@ -173,7 +173,7 @@ public abstract partial class PyHtmlParser
         if (start + name.Length == _raw.Length)
             return -1;
 
-        var section = PyText.Strip(name.Value).ToLowerInvariant();
+        var section = SyncText.Strip(name.Value).ToLowerInvariant();
         Match close;
         if (section is "temp" or "cdata" or "ignore" or "include" or "rcdata")
             close = MarkedSectionClose().Match(_raw, start);
@@ -209,12 +209,12 @@ public abstract partial class PyHtmlParser
                     value = "";
             }
             if (!string.IsNullOrEmpty(value))
-                value = PyText.Unescape(value);
+                value = SyncText.Unescape(value);
             attrs.Add((attr.Groups[1].Value.ToLowerInvariant(), value));
             k = attr.Index + attr.Length;
         }
 
-        var endText = PyText.Strip(_raw[k..endPos]);
+        var endText = SyncText.Strip(_raw[k..endPos]);
         if (endText is not (">" or "/>"))
         {
             HandleData(_raw[i..endPos]);
@@ -289,11 +289,11 @@ public abstract partial class PyHtmlParser
     private void SetCdataMode(string element)
     {
         _cdataElem = element;
-        _cdataEnd = new Regex(@"</" + PyText.Space + "*" + Regex.Escape(element) + PyText.Space + "*>", RegexOptions.IgnoreCase);
+        _cdataEnd = new Regex(@"</" + SyncText.Space + "*" + Regex.Escape(element) + SyncText.Space + "*>", RegexOptions.IgnoreCase);
     }
 
-    // Python's patterns, anchored with \G for re.match at a position; \s widened to Python's
-    // whitespace (U+001C-U+001F included).
+    // The tokenizer's patterns, anchored with \G to match at a position; \s widened to take in
+    // U+001C-U+001F as well.
     private const string S = @"\s\x1c-\x1f";
 
     [GeneratedRegex(@"[" + S + ";]")]

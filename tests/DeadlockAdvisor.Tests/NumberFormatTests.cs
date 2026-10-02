@@ -16,17 +16,17 @@ public class NumberFormatTests
 
     [Theory]
     [MemberData(nameof(Rows))]
-    public void MatchesPython(int index)
+    public void MatchesTheReferenceFormatting(int index)
     {
         var row = Golden.Json("number_format.json")[index]!;
         var value = Golden.Number(row["value"]);
 
-        Assert.Equal(Golden.Text(row["fmt_number"]), NumberFormat.Python(value));
+        Assert.Equal(Golden.Text(row["fmt_number"]), NumberFormat.Short(value));
         Assert.Equal(Golden.Text(row["g6"]), NumberFormat.G(value));
         Assert.Equal(Golden.Text(row["g2"]), NumberFormat.G(value, 2));
         Assert.Equal(Golden.Text(row["f3"]), NumberFormat.Fixed(value, 3));
         Assert.Equal(Golden.Text(row["f2"]), NumberFormat.Fixed(value, 2));
-        Assert.Equal(Golden.Text(row["repr"]), NumberFormat.Repr(value));
+        Assert.Equal(Golden.Text(row["repr"]), NumberFormat.RoundTrip(value));
         var round3 = Golden.Number(row["round3"]);
         Assert.Equal(round3, NumberFormat.Round(value, 3));
         Assert.Equal(double.IsNegative(round3), double.IsNegative(NumberFormat.Round(value, 3)));
@@ -39,7 +39,7 @@ public class NumberFormatTests
     [InlineData("-inf", double.NegativeInfinity)]
     [InlineData("Infinity", double.PositiveInfinity)]
     [InlineData(".5", 0.5)]
-    public void ParsesLikePythonFloat(string text, double expected)
+    public void ParsesFloatsInEveryForm(string text, double expected)
     {
         Assert.Equal(expected, NumberFormat.ToFloat(text));
     }

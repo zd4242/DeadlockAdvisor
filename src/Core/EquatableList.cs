@@ -4,7 +4,7 @@ namespace DeadlockAdvisor.Core;
 
 /// <summary>
 /// An immutable list compared by its contents, so records holding one keep value equality
-/// (the Python app compares whole tooltips with ==, e.g. to tell whether a sync changed anything).
+/// (whole tooltips are compared, e.g. to tell whether a sync changed anything).
 /// </summary>
 public sealed class EquatableList<T> : IReadOnlyList<T>, IEquatable<EquatableList<T>>
 {

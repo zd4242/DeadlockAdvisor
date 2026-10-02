@@ -5,7 +5,7 @@ using DeadlockAdvisor.Services;
 namespace DeadlockAdvisor.Tests.Support;
 
 /// <summary>
-/// The small synthetic dataset from the Python app's tests/test_scoring.py: fast, and the expected
+/// A small synthetic dataset: fast, and the expected
 /// numbers can be checked by hand.
 /// </summary>
 public static class TestStore

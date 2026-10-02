@@ -8,7 +8,7 @@ using DeadlockAdvisor.Services.Contracts;
 
 namespace DeadlockAdvisor.Services;
 
-/// <summary>One shared <see cref="HttpClient"/> for every call to deadlock-api.com, identified as the Python app identifies itself.</summary>
+/// <summary>One shared <see cref="HttpClient"/> for every call to deadlock-api.com, identified by <see cref="UserAgent"/>.</summary>
 public sealed class DeadlockApi : IDeadlockApi, IDisposable
 {
     public const string UserAgent = "deadlock-advisor/1.0";

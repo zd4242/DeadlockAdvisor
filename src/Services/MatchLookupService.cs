@@ -85,22 +85,22 @@ public sealed partial class MatchLookupService(IDeadlockApi api) : IMatchLookupS
             throw new MatchLookupException("deadlock-api.com's answer couldn't be read.", ex);
         }
 
-        var info = PyJson.Get(metadata, "match_info");
-        var players = PyJson.Items(info, "players")
-            .Select(player => new MatchPlayer(PyJson.Int(player, "account_id"), PyJson.Int(player, "hero_id"),
-                (int)PyJson.Int(player, "team"), (int)PyJson.Int(player, "player_slot")))
+        var info = JsonRecord.Get(metadata, "match_info");
+        var players = JsonRecord.Items(info, "players")
+            .Select(player => new MatchPlayer(JsonRecord.Int(player, "account_id"), JsonRecord.Int(player, "hero_id"),
+                (int)JsonRecord.Int(player, "team"), (int)JsonRecord.Int(player, "player_slot")))
             .OrderBy(player => player.Team)
             .ThenBy(player => player.PlayerSlot)
             .ToList();
         if (players.Count == 0)
             throw new MatchLookupException($"deadlock-api.com has match {matchId}, but no players in it.");
 
-        var start = PyJson.Int(info, "start_time");
-        var duration = PyJson.Int(info, "duration_s");
+        var start = JsonRecord.Int(info, "start_time");
+        var duration = JsonRecord.Int(info, "duration_s");
         return new LookedUpMatch(matchId,
             start > 0 ? DateTimeOffset.FromUnixTimeSeconds(start) : null,
             duration > 0 ? TimeSpan.FromSeconds(duration) : null,
-            PyJson.Get(info, "winning_team") is null ? null : (int)PyJson.Int(info, "winning_team"),
+            JsonRecord.Get(info, "winning_team") is null ? null : (int)JsonRecord.Int(info, "winning_team"),
             players);
     }
 
@@ -125,9 +125,9 @@ public sealed partial class MatchLookupService(IDeadlockApi api) : IMatchLookupS
 
         foreach (var profile in profiles as JsonArray ?? [])
         {
-            var name = PyJson.Text(profile, "personaname").Trim();
+            var name = JsonRecord.Text(profile, "personaname").Trim();
             if (name.Length > 0)
-                names[PyJson.Int(profile, "account_id")] = name;
+                names[JsonRecord.Int(profile, "account_id")] = name;
         }
         return names;
     }

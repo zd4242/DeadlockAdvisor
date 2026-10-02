@@ -4,7 +4,7 @@ using DeadlockAdvisor.Vision;
 
 namespace DeadlockAdvisor.Tests.Support;
 
-/// <summary>The reference art and captures the Python app's golden export copied into Golden/vision.</summary>
+/// <summary>The reference art and captures in Golden/vision.</summary>
 public static class VisionData
 {
     private static readonly Lazy<TemplateBank> _bank = new(() => TemplateBank.Load(TopbarDir));

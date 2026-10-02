@@ -97,8 +97,6 @@ public static class TopbarDerivation
             if (cards.Any(card => card is not null))
                 derived.Add(hero);
         }
-        if (derived.Count > 0)
-            TemplateBank.InvalidatePythonCache(topbarDir);
         SaveState(topbarDir, inputs);
         return new Outcome(derived, failed);
     }

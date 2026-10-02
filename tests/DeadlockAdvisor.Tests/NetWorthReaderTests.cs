@@ -215,7 +215,7 @@ public class NetWorthReaderTests
             return;
         var path = Path.Combine(UiHarness.RepoRoot(), "src", "Vision", "net_worth_glyphs.json");
         File.WriteAllText(path, NetWorthGlyphs.ToJson(frames).ToJsonString(new System.Text.Json.JsonSerializerOptions { WriteIndented = true }) + "\n");
-        SaveContactSheet(frames, Path.Combine(UiHarness.RepoRoot(), "mockups", "net_worth_glyphs.png"));
+        SaveContactSheet(frames, UiHarness.MockupPath("net_worth_glyphs.png"));
     }
 
     private static void SaveContactSheet(List<(char Digit, float[] Frame)> frames, string path)

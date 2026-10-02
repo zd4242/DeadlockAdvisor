@@ -3,16 +3,16 @@ using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Core;
 
-/// <summary>The Python app's display formatting, so numbers read the same in both apps.</summary>
+/// <summary>How numbers are shown in the UI.</summary>
 public static class Format
 {
     /// <summary><c>_num</c>: 3 rather than 3.0, anything else as <c>:g</c>.</summary>
-    public static string Num(double value) => NumberFormat.Python(value);
+    public static string Num(double value) => NumberFormat.Short(value);
 
     /// <summary><c>_signed</c>: a leading + for zero and up.</summary>
     public static string Signed(double value) => (value >= 0 ? "+" : "") + Num(value);
 
-    /// <summary>Python's <c>f"{value:+.{decimals}f}"</c>; a negative that rounds to zero keeps its minus.</summary>
+    /// <summary>Always signed, to <paramref name="decimals"/> places; a negative that rounds to zero keeps its minus.</summary>
     public static string SignedFixed(double value, int decimals) =>
         (double.IsNegative(value) ? "" : "+") + NumberFormat.Fixed(value, decimals);
 
@@ -32,10 +32,10 @@ public static class Format
         return count.ToString(CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Python's <c>f"{value:,}"</c> for an int: thousands separated by commas.</summary>
+    /// <summary>Thousands separated by commas: 12,345.</summary>
     public static string Thousands(long value) => value.ToString("#,0", CultureInfo.InvariantCulture);
 
-    /// <summary>Python's <c>str.title()</c>: every run of letters capitalised, the rest lowercased.</summary>
+    /// <summary>Title case: every run of letters capitalised, the rest lowercased.</summary>
     public static string Title(string text)
     {
         var chars = text.ToCharArray();

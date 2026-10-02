@@ -6,13 +6,13 @@ using System.Text.RegularExpressions;
 namespace DeadlockAdvisor.Services.GameApi;
 
 /// <summary>
-/// The few Python string helpers the game sync's text handling leans on, reproduced exactly:
-/// <c>html.unescape</c> (with the full HTML5 entity table, generated from Python into
-/// html5_entities.json), <c>html.escape(quote=False)</c> and <c>str.isspace</c>.
+/// The text helpers the game sync's tooltip handling leans on: HTML character references decoded
+/// as HTML5 defines them (the full named-entity table is in html5_entities.json), HTML escaping
+/// without quotes, and whitespace that also counts the separators U+001C-U+001F.
 /// </summary>
-public static partial class PyText
+public static partial class SyncText
 {
-    /// <summary>Python's <c>\s</c> in a str pattern: .NET's <c>\s</c> plus the four separators U+001C-U+001F.</summary>
+    /// <summary>Whitespace in a pattern: .NET's <c>\s</c> plus the four separators U+001C-U+001F.</summary>
     public const string Space = @"[\s\x1c-\x1f]";
 
     private static readonly Lazy<EntityTables> _tables = new(LoadTables);
@@ -24,7 +24,7 @@ public static partial class PyText
 
     public static bool IsSpace(char c) => char.IsWhiteSpace(c) || c is >= '\x1c' and <= '\x1f';
 
-    /// <summary>Python's <c>str.strip()</c>.</summary>
+    /// <summary>The text without whitespace (<see cref="IsSpace"/>) at either end.</summary>
     public static string Strip(string text)
     {
         var start = 0;
@@ -36,15 +36,15 @@ public static partial class PyText
         return text[start..end];
     }
 
-    /// <summary>Python's <c>str.split()</c> with no arguments: runs of whitespace, no empty parts.</summary>
+    /// <summary>The text split at runs of whitespace, with no empty parts.</summary>
     public static string[] Split(string text) =>
         SpaceRun().Split(text).Where(part => part.Length > 0).ToArray();
 
-    /// <summary><c>html.escape(text, quote=False)</c>.</summary>
+    /// <summary>&amp;, &lt; and &gt; escaped; quotes left alone.</summary>
     public static string Escape(string text) =>
         text.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;");
 
-    /// <summary><c>html.unescape</c>: numeric and named character references, as HTML5 defines them.</summary>
+    /// <summary>Numeric and named character references decoded, as HTML5 defines them.</summary>
     public static string Unescape(string text)
     {
         if (!text.Contains('&'))
@@ -85,7 +85,7 @@ public static partial class PyText
 
     private static EntityTables LoadTables()
     {
-        using var stream = typeof(PyText).Assembly.GetManifestResourceStream("GameApi/html5_entities.json")
+        using var stream = typeof(SyncText).Assembly.GetManifestResourceStream("GameApi/html5_entities.json")
                            ?? throw new FileNotFoundException("The embedded HTML entity table is missing.");
         using var document = JsonDocument.Parse(stream);
         var root = document.RootElement;

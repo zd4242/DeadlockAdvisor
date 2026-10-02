@@ -8,8 +8,8 @@ public enum ResampleFilter
 
 /// <summary>
 /// An 8-bit RGB image, three bytes a pixel, row after row: what Pillow's "RGB" mode holds, and all
-/// detection ever needs. Crops and resizes reproduce Pillow's byte for byte, so descriptors match
-/// the Python app's.
+/// detection ever needs. Crops and resizes reproduce Pillow's byte for byte, the reference the
+/// stored descriptors were built against.
 /// </summary>
 public sealed class RgbImage
 {

@@ -5,10 +5,6 @@ Read this before changing scoring code, formula data (`stat_rules.csv`,
 game sync. It describes how items are scored, why the formula works the way it
 does, and how the data is kept correct across game patches.
 
-The scoring started as a port of the Python app, but it has since diverged on
-purpose (September 2026). **The C# code is now the source of truth for scoring.**
-Don't "restore parity" with the Python `scoring.py`.
-
 ## The formula
 
 ```
@@ -526,9 +522,8 @@ rather than what it does.
   spirit damage (heroes score 5, 0 and 1) and −4/3 on max HP. Keep new scoring
   tests small enough to check by hand.
 - `ModelHealthTests` builds a 12-hero roster so the simulation can run.
-- Golden files in `tests/DeadlockAdvisor.Tests/Golden/` are regression snapshots
-  now, not Python parity. The Python exporter is retired. After a deliberate
-  behaviour change, regenerate the affected goldens with:
+- Golden files in `tests/DeadlockAdvisor.Tests/Golden/` are regression snapshots.
+  After a deliberate behaviour change, regenerate the affected goldens with:
 
   ```
   dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenScoringTests|FullyQualifiedName~SyncingTheSnapshot|FullyQualifiedName~ADownloadWritesEachPatch|FullyQualifiedName~GoldenMatchStatsTests"

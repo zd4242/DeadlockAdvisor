@@ -8,7 +8,7 @@ namespace DeadlockAdvisor.Tests;
 public class ArtPlaceholderTests
 {
     [Fact]
-    public void PlaceholderColoursAndInitialsMatchThePythonApp()
+    public void PlaceholderColoursAndInitialsStayTheSame()
     {
         foreach (var row in Items(Json("art_placeholders.json")))
         {

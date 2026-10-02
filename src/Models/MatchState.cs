@@ -13,7 +13,7 @@ public sealed class MatchState
     public const int MaxAllies = TeamSize - 1;
     public const int MaxEnemies = TeamSize;
 
-    // Insertion-ordered, like the Python dicts: each team comes out in this order, which is the
+    // Insertion-ordered: each team comes out in this order, which is the
     // game's top-bar order after a detection and pick order otherwise.
     public OrderedDictionary<string, Role> RoleMap { get; } = [];
 
@@ -42,8 +42,8 @@ public sealed class MatchState
                     SwapSides();
                     break;
                 default:
-                    // The Python app leaves the previous "you" in the map as unassigned rather than
-                    // removing it; kept for identical saved matches.
+                    // The previous "you" stays in the map, unassigned, rather than being removed,
+                    // so saved matches keep their order.
                     RoleMap[formerSelf] = Role.None;
                     Slots.Remove(formerSelf);
                     break;

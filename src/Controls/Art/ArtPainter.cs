@@ -34,7 +34,7 @@ public static class ArtPainter
     private static readonly Typeface _bold = new("Segoe UI", FontStyle.Normal, FontWeight.Bold);
     private static readonly IBrush _placeholderText = new SolidColorBrush(Palette.Bg);
 
-    /// <summary>The corner radius the Python app gives art of this size.</summary>
+    /// <summary>The corner radius art of this size gets.</summary>
     public static double DefaultRadius(ArtKind kind, double size) =>
         Math.Max(3, Math.Round(size * (kind == ArtKind.Hero ? 0.18 : 0.22), MidpointRounding.ToEven));
 

@@ -21,7 +21,7 @@ public class SettingsTests
         var service = new JsonSettingsService(new FakeLoggingService(), folder.Path);
         service.Update(s =>
         {
-            s.DataRoot = @"D:\Dev\Python\deadlock_advisor";
+            s.DataRoot = @"C:\Games\DeadlockAdvisor";
             s.ZoomIndex = 5;
             s.LastMatch = match.ToSaved();
             s.ResultsMinPercent = 60;
@@ -34,7 +34,7 @@ public class SettingsTests
         await reloaded.LoadAsync();
 
         var settings = reloaded.Current;
-        Assert.Equal(@"D:\Dev\Python\deadlock_advisor", settings.DataRoot);
+        Assert.Equal(@"C:\Games\DeadlockAdvisor", settings.DataRoot);
         Assert.Equal(5, settings.ZoomIndex);
         Assert.Equal(60, settings.ResultsMinPercent);
         Assert.True(settings.ResultsByTier);

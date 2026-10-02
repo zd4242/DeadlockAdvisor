@@ -58,13 +58,11 @@ public sealed record TemplateSource(string Hero, string Path, TemplateKind Kind,
 /// slot's box the way the cut portraits all do, and some are out of date.
 /// </para>
 /// <para>
-/// Descriptors are rebuilt on every load, in milliseconds; the Python app's _templates.npz cache is
-/// left for the Python app.
+/// Descriptors are rebuilt on every load, in milliseconds, so nothing is cached.
 /// </para>
 /// </summary>
 public sealed class TemplateBank
 {
-    public const string PythonCacheName = "_templates.npz";
 
     /// <param name="rowsHero">Each vector's hero, as an index into <paramref name="heroes"/>; rows are grouped by hero, in hero order.</param>
     public TemplateBank(IReadOnlyList<string> heroes, IReadOnlyList<int> rowsHero, IReadOnlyList<float[]> vectors,
@@ -146,7 +144,7 @@ public sealed class TemplateBank
         return total;
     }
 
-    /// <summary>hero_id → every image that can stand in for them, sorted the way Python's sorted(iterdir()) is.</summary>
+    /// <summary>hero_id → every image that can stand in for them, sorted by name, ordinally.</summary>
     private static SortedDictionary<string, List<TemplateSource>> VariantFiles(string directory)
     {
         var found = new SortedDictionary<string, List<TemplateSource>>(StringComparer.Ordinal);
@@ -178,7 +176,7 @@ public sealed class TemplateBank
         }
     }
 
-    // Windows paths compare case-insensitively in Python's pathlib, by their lowercased names.
+    // Windows file names compare case-insensitively, so they're matched by their lowercased names.
     private static string LowerName(string path) => Path.GetFileName(path).ToLowerInvariant();
 
     private static bool IsImage(string path) => ImageFile.Suffixes.Contains(Path.GetExtension(path).ToLowerInvariant());
@@ -223,7 +221,7 @@ public sealed class TemplateBank
 
     /// <summary>
     /// Write a corrected crop into the hero's variant folder, from the review modal, so today's
-    /// misread becomes tomorrow's reference. Drops the Python app's descriptor cache so it rebuilds too.
+    /// misread becomes tomorrow's reference.
     /// </summary>
     public static string SaveVariant(string directory, string heroId, RgbImage image, string label = "variant")
     {
@@ -235,7 +233,6 @@ public sealed class TemplateBank
         var path = Path.Combine(folder, $"{label}_{index:00}.png");
         Png.Save(image, path);
         RetireLearned(directory, heroId, MaxLearned);
-        InvalidatePythonCache(directory);
         return path;
     }
 
@@ -280,19 +277,5 @@ public sealed class TemplateBank
             target = Path.Combine(folder, $"{Path.GetFileNameWithoutExtension(path)}_{copy}{Path.GetExtension(path)}");
         File.Move(path, target);
         return target;
-    }
-
-    /// <summary>Drop the Python app's descriptor cache after adding art, so it rebuilds from what's on disk.</summary>
-    public static void InvalidatePythonCache(string directory)
-    {
-        var cache = Path.Combine(directory, PythonCacheName);
-        try
-        {
-            if (File.Exists(cache))
-                File.Delete(cache);
-        }
-        catch (IOException)
-        {
-        }
     }
 }

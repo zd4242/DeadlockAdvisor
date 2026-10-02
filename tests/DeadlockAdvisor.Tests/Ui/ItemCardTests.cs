@@ -13,7 +13,7 @@ namespace DeadlockAdvisor.Tests.Ui;
 public class ItemCardTests
 {
     [AvaloniaFact]
-    public void CardsRenderLikeThePythonAppsMockup()
+    public void CardsRenderForEveryKindOfItem()
     {
         using var ui = new UiHarness();
         var store = ui.Data.Store;
@@ -44,7 +44,7 @@ public class ItemCardTests
         UiHarness.Settle();
 
         var frame = window.CaptureRenderedFrame()!;
-        frame.Save(Path.Combine(UiHarness.RepoRoot(), "mockups", "item_cards.png"));
+        frame.Save(UiHarness.MockupPath("item_cards.png"));
         window.Close();
 
         Assert.All(row.Children, card => Assert.True(card.Bounds.Height > 80));

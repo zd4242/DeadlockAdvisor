@@ -82,7 +82,7 @@ public static class ImageOps
     }
 
     /// <summary>
-    /// The separable moving average the Python app applies (as two small matrices, same arithmetic):
+    /// A separable moving average:
     /// a (2r+1)-wide window, edge-padded, over rows then columns.
     /// </summary>
     internal static void BoxBlur(ReadOnlySpan<float> plane, Span<float> output)

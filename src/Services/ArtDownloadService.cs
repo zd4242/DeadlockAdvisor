@@ -63,7 +63,7 @@ public interface IArtDownloadService
 }
 
 /// <summary>
-/// The Python app's download_assets.py and download_topbar_art.py. Matching is by name, not id: the
+/// Downloads the hero and item art and the top-bar portraits. Matching is by name, not id: the
 /// API's ids are Valve class names that don't line up with ours, but the display names do once
 /// punctuation and case are ignored. Anything unmatched is listed rather than guessed at: a wrong
 /// portrait is worse than a placeholder tile.
@@ -138,7 +138,7 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
     {
         var byKey = new Dictionary<string, JsonNode>();
         foreach (var record in group.Records.OfType<JsonNode>())
-            byKey.TryAdd(GameSync.Norm(PyJson.Text(record, "name")), record);
+            byKey.TryAdd(GameSync.Norm(JsonRecord.Text(record, "name")), record);
         Directory.CreateDirectory(group.Directory);
 
         var downloaded = 0;
@@ -214,8 +214,8 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
 
     private static string? PickImage(JsonNode record, IEnumerable<string> keys)
     {
-        var images = PyJson.Get(record, "images") is { } nested && PyJson.Truthy(nested) ? nested : record;
-        return keys.Select(key => PyJson.Get(images, key)).Where(PyJson.Truthy).Select(PyJson.Str).FirstOrDefault();
+        var images = JsonRecord.Get(record, "images") is { } nested && JsonRecord.Truthy(nested) ? nested : record;
+        return keys.Select(key => JsonRecord.Get(images, key)).Where(JsonRecord.Truthy).Select(JsonRecord.Str).FirstOrDefault();
     }
 
     private static string? Existing(string directory, string stem) =>

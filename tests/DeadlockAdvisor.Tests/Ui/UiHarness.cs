@@ -13,11 +13,12 @@ namespace DeadlockAdvisor.Tests.Ui;
 
 /// <summary>
 /// The main window wired exactly as the app wires it, but over a throwaway copy of the golden data,
-/// scratch settings, and the Python repo's art when it's there.
+/// scratch settings, and real art when DEADLOCK_ASSETS points at a folder of it (an app data folder's
+/// assets/, for screenshots with portraits and icons).
 /// </summary>
 public sealed class UiHarness : IDisposable
 {
-    public const string PythonAssets = @"D:\Dev\Python\deadlock_advisor\assets";
+    public static string? ArtFolder => Environment.GetEnvironmentVariable("DEADLOCK_ASSETS") is { Length: > 0 } dir && Directory.Exists(dir) ? dir : null;
 
     private readonly TempDirectory _root = new();
     private readonly ServiceProvider _services;
@@ -31,6 +32,8 @@ public sealed class UiHarness : IDisposable
 
         Settings = new FakeSettingsService();
         Settings.Current.DataRoot = _root.Path;
+        // Past the first run: without art, its welcome would cover every page.
+        Settings.Current.WelcomeOffered = true;
         configure?.Invoke(Settings);
 
         var services = new ServiceCollection();
@@ -47,7 +50,7 @@ public sealed class UiHarness : IDisposable
         Data = _services.GetRequiredService<IDataService>();
         Data.Initialize();
         Art = _services.GetRequiredService<IArtService>();
-        Art.SetAssetsDir(Directory.Exists(PythonAssets) ? PythonAssets : Data.AssetsDir);
+        Art.SetAssetsDir(ArtFolder ?? Data.AssetsDir);
 
         ViewModel = _services.GetRequiredService<MainWindowViewModel>();
         Window = new MainWindow(_services.GetRequiredService<IModalService>(), Settings, Art, Data,
@@ -125,9 +128,16 @@ public sealed class UiHarness : IDisposable
     {
         Settle();
         var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("Nothing was rendered");
+        var path = MockupPath(name);
+        frame.Save(path);
+        return path;
+    }
+
+    /// <summary>A file in mockups/, the git-ignored folder the tests write screenshots and reports to; the folder is made if missing.</summary>
+    public static string MockupPath(string name)
+    {
         var path = Path.Combine(RepoRoot(), "mockups", name);
         Directory.CreateDirectory(Path.GetDirectoryName(path)!);
-        frame.Save(path);
         return path;
     }
 

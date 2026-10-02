@@ -7,15 +7,16 @@ using DeadlockAdvisor.Services.Formats;
 namespace DeadlockAdvisor.Services.GameApi;
 
 /// <summary>
-/// Reading API records the way the Python sync does: <c>record.get(key) or default</c> with
-/// Python truthiness, <c>str()</c> and <c>int()</c> of whatever JSON scalar turns up.
+/// Lenient reading of API records: a missing key, a JSON null, and an empty or zero value all count
+/// as absent, and whatever JSON scalar turns up can be read as text or as an integer.
 /// </summary>
-internal static class PyJson
+internal static class JsonRecord
 {
-    /// <summary><c>record.get(key)</c>: null for a missing key, a JSON null, or a record that isn't an object.</summary>
+    /// <summary>The value at <paramref name="key"/>: null for a missing key, a JSON null, or a record that isn't an object.</summary>
     public static JsonNode? Get(JsonNode? record, string key) =>
         record is JsonObject obj && obj.TryGetPropertyValue(key, out var value) ? value : null;
 
+    /// <summary>Whether a value counts as present: not null, false, zero, an empty string, list or object.</summary>
     public static bool Truthy(JsonNode? node) => node switch
     {
         null => false,
@@ -35,11 +36,11 @@ internal static class PyJson
     /// <summary>A JSON number as a double, whether it was parsed or built in code from an integer.</summary>
     private static double Double(JsonValue value) => double.Parse(value.ToJsonString(), CultureInfo.InvariantCulture);
 
-    /// <summary><c>record.get(key) or ""</c> for a text field.</summary>
+    /// <summary>A text field, "" when it's absent.</summary>
     public static string Text(JsonNode? record, string key) =>
         Get(record, key) is { } node && Truthy(node) ? Str(node) : "";
 
-    /// <summary>Python's <c>str()</c> of a JSON scalar: 16 stays "16", 16.0 is "16.0", true is "True".</summary>
+    /// <summary>A JSON scalar as text: 16 stays "16", 16.0 is "16.0", true is "True", null is "None".</summary>
     public static string Str(JsonNode? node)
     {
         if (node is not JsonValue value)
@@ -56,13 +57,13 @@ internal static class PyJson
                 var raw = value.ToJsonString();
                 return raw.IndexOfAny(['.', 'e', 'E']) < 0
                     ? BigInteger.Parse(raw, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)
-                    : NumberFormat.Repr(double.Parse(raw, CultureInfo.InvariantCulture));
+                    : NumberFormat.RoundTrip(double.Parse(raw, CultureInfo.InvariantCulture));
             default:
                 return "None";
         }
     }
 
-    /// <summary><c>int(record.get(key) or 0)</c>.</summary>
+    /// <summary>A field as an integer, 0 when it's absent; a fraction is truncated toward zero.</summary>
     public static long Int(JsonNode? record, string key)
     {
         var node = Get(record, key);
@@ -70,14 +71,14 @@ internal static class PyJson
             return 0;
         if (node is JsonValue value && value.GetValueKind() == JsonValueKind.Number)
             return (long)Math.Truncate(Double(value));
-        return long.Parse(PyText.Strip(Str(node)), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
+        return long.Parse(SyncText.Strip(Str(node)), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
     }
 
-    /// <summary>Iterating <c>record.get(key) or ()</c>: a list's items; anything else gives nothing.</summary>
+    /// <summary>A list field's items; anything else gives nothing.</summary>
     public static IEnumerable<JsonNode?> Items(JsonNode? record, string key) =>
         Get(record, key) as JsonArray ?? [];
 
-    /// <summary><c>needle in record.get(key) or []</c>: membership in a list, or a substring of a string.</summary>
+    /// <summary>Whether a list field holds <paramref name="needle"/>, or a text field contains it.</summary>
     public static bool Contains(JsonNode? record, string key, string needle) => Get(record, key) switch
     {
         JsonArray array => array.Any(entry => entry is JsonValue v && v.GetValueKind() == JsonValueKind.String && v.GetValue<string>() == needle),

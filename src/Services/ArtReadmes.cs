@@ -1,6 +1,6 @@
 namespace DeadlockAdvisor.Services;
 
-/// <summary>The README dropped into each art folder the first time it's created, as the Python app does.</summary>
+/// <summary>The README dropped into each art folder the first time it's created.</summary>
 public static class ArtReadmes
 {
     public const string Heroes = """

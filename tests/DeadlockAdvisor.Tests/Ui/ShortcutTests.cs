@@ -217,7 +217,7 @@ public class ShortcutTests
 
     /// <summary>A modal closed while it waited for the window, such as Detect's progress, never opens.</summary>
     [AvaloniaFact]
-    public void AModalClosedWhileWaitingBehindAnotherAppNeverOpens()
+    public async Task AModalClosedWhileWaitingBehindAnotherAppNeverOpens()
     {
         using var ui = new UiHarness();
         ui.Show();
@@ -229,11 +229,12 @@ public class ShortcutTests
         UiHarness.Settle();
         Assert.Empty(ui.Window.OwnedWindows.OfType<ModalWindow>());
 
-        // With no art, F9 offers to download it, and comes up for that alone.
+        // With no art, F9 offers to download it, and comes up for that alone. The art is looked for off
+        // the UI thread, so the offer takes a moment.
         ui.Foreground.IsAnotherAppInFront = false;
         ui.Hotkey.Press();
-        UiHarness.Settle();
 
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Window.OwnedWindows.OfType<ModalWindow>().Any()));
         var modal = Assert.Single(ui.Window.OwnedWindows.OfType<ModalWindow>());
         Assert.IsType<ConfirmationModalViewModel>(((ModalViewModel)modal.DataContext!).Content);
     }

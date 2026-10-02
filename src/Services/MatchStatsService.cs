@@ -215,7 +215,7 @@ public sealed class MatchStatsService : IMatchStatsService
         var answers = await pacer.RunAsync(requests, cancellationToken);
 
         static Dictionary<long, WinTotals> Totals(JsonArray rows) =>
-            MatchStatsMath.Totals(rows.Select(row => (PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))));
+            MatchStatsMath.Totals(rows.Select(row => (JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
         Halves HalvesAt(int subject) => new(Totals(answers[2 * subject]), Totals(answers[2 * subject + 1]));
 
         // Bucketed by the buyer's hero; a hero the store doesn't know is only in every match.
@@ -232,7 +232,7 @@ public sealed class MatchStatsService : IMatchStatsService
 
     private static Dictionary<long, Dictionary<long, WinTotals>> BucketTotals(JsonArray rows) =>
         MatchStatsMath.BucketTotals(rows.Select(row =>
-            (PyJson.Int(row, "bucket"), PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))));
+            (JsonRecord.Int(row, "bucket"), JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
 
     /// <summary>
     /// The API leaves out an item with under 20 matches unless told otherwise, and the rank groups are
@@ -303,7 +303,7 @@ public sealed class MatchStatsService : IMatchStatsService
     public async Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default)
     {
         // Without data from a known patch there's nothing to be out of date against, and no call to make.
-        if (!PyJson.Truthy(PyJson.Get(PyJson.Get(meta, "latest_patch"), "start")))
+        if (!JsonRecord.Truthy(JsonRecord.Get(JsonRecord.Get(meta, "latest_patch"), "start")))
             return null;
         return MatchStatsMath.NewerPatch(meta, await FetchPatchesAsync(cancellationToken));
     }
@@ -311,7 +311,7 @@ public sealed class MatchStatsService : IMatchStatsService
     private async Task<List<Patch>> FetchPatchesAsync(CancellationToken cancellationToken)
     {
         var records = await _api.GetJsonAsync(Patches, cancellationToken) as JsonArray ?? [];
-        return MatchStatsMath.ParsePatches(records.Select(record => PyJson.Get(record, "title") is JsonValue title
+        return MatchStatsMath.ParsePatches(records.Select(record => JsonRecord.Get(record, "title") is JsonValue title
                                                                    && title.TryGetValue<string>(out var text) ? text : null));
     }
 
@@ -321,8 +321,8 @@ public sealed class MatchStatsService : IMatchStatsService
         var names = new Dictionary<int, string>();
         foreach (var rank in await _api.GetJsonAsync(Ranks, cancellationToken) as JsonArray ?? [])
         {
-            if (PyJson.Get(rank, "name") is JsonValue name && name.TryGetValue<string>(out var text))
-                names[(int)PyJson.Int(rank, "tier")] = text;
+            if (JsonRecord.Get(rank, "name") is JsonValue name && name.TryGetValue<string>(out var text))
+                names[(int)JsonRecord.Int(rank, "tier")] = text;
         }
         return names;
     }

@@ -10,7 +10,7 @@ public sealed record TextSpan(string Text, Color? Color = null, bool Bold = fals
 }
 
 /// <summary>
-/// A text block built from styled spans, for the few labels the Python app writes as HTML: a bold
+/// A text block built from styled spans, for the few labels that mix styles: a bold
 /// name, a faint aside, a word in its relation's colour.
 /// </summary>
 public class RichText : TextBlock

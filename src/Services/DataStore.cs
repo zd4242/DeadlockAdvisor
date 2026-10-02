@@ -33,8 +33,7 @@ public sealed record StatCatalogEntry(string Label, string Unit, int ItemCount);
 /// (category, relation) at once.
 /// </para>
 /// <para>
-/// Every table keeps insertion order, as the Python dicts it mirrors do: several outputs, and the
-/// order rows are saved in, depend on it.
+/// Every table keeps insertion order: several outputs, and the order rows are saved in, depend on it.
 /// </para>
 /// </summary>
 public sealed class DataStore
@@ -304,7 +303,7 @@ public sealed class DataStore
         var path = PathOf(ItemTooltipsFile);
         if (!File.Exists(path))
             return;
-        if (PythonJson.Parse(File.ReadAllText(path, Encoding.UTF8)) is not JsonObject tooltips)
+        if (DataJson.Parse(File.ReadAllText(path, Encoding.UTF8)) is not JsonObject tooltips)
             return;
         foreach (var (itemId, data) in tooltips)
         {
@@ -338,7 +337,7 @@ public sealed class DataStore
         }
 
         var meta = PathOf(MatchMetaFile);
-        if (File.Exists(meta) && PythonJson.Parse(File.ReadAllText(meta, Encoding.UTF8)) is JsonObject metaObject)
+        if (File.Exists(meta) && DataJson.Parse(File.ReadAllText(meta, Encoding.UTF8)) is JsonObject metaObject)
             MatchMeta = metaObject;
     }
 
@@ -777,7 +776,7 @@ public sealed class DataStore
     public void SaveHeroScores()
     {
         var rows = Heroes.Keys.SelectMany(heroId => Categories.Keys.Select(categoryId =>
-            Row(heroId, categoryId, NumberFormat.Python(HeroScore(heroId, categoryId)))));
+            Row(heroId, categoryId, NumberFormat.Short(HeroScore(heroId, categoryId)))));
         WriteCsv(HeroScoresFile, ["hero_id", "category_id", "score"], rows);
     }
 
@@ -790,7 +789,7 @@ public sealed class DataStore
             .OrderBy(key => itemOrder.GetValueOrDefault(key.ItemId, _missingOrder))
             .ThenBy(key => categoryOrder.GetValueOrDefault(key.CategoryId, _missingOrder))
             .ThenBy(key => key.Relation)
-            .Select(key => Row(key.ItemId, key.CategoryId, key.Relation.Key(), NumberFormat.Python(ItemCoefficients.GetValueOrDefault(key)),
+            .Select(key => Row(key.ItemId, key.CategoryId, key.Relation.Key(), NumberFormat.Short(ItemCoefficients.GetValueOrDefault(key)),
                 BestTargetLines.Contains(key) ? "1" : ""));
         WriteCsv(ItemCoefficientsFile, ["item_id", "category_id", "relation", "coefficient", "best_target"], rows);
     }
@@ -801,15 +800,15 @@ public sealed class DataStore
         var rows = TraitWeights
             .OrderBy(entry => categoryOrder.GetValueOrDefault(entry.Key.CategoryId, _missingOrder))
             .ThenBy(entry => entry.Key.Relation)
-            .Select(entry => Row(entry.Key.CategoryId, entry.Key.Relation.Key(), NumberFormat.Python(entry.Value)));
+            .Select(entry => Row(entry.Key.CategoryId, entry.Key.Relation.Key(), NumberFormat.Short(entry.Value)));
         WriteCsv(TraitWeightsFile, ["category_id", "relation", "weight"], rows);
     }
 
     public void SaveStatRules()
     {
         var rows = StatRules.Values.Select(rule => Row(
-            rule.Stat, rule.CategoryId, rule.Relation.Key(), NumberFormat.Python(rule.PerUnit),
-            NumberFormat.Python(rule.ConditionalFactor), rule.Note));
+            rule.Stat, rule.CategoryId, rule.Relation.Key(), NumberFormat.Short(rule.PerUnit),
+            NumberFormat.Short(rule.ConditionalFactor), rule.Note));
         WriteCsv(StatRulesFile, ["stat", "category_id", "relation", "per_unit", "conditional_factor", "note"], rows);
     }
 
@@ -835,7 +834,7 @@ public sealed class DataStore
             .ThenBy(itemId => itemId, StringComparer.Ordinal)
             .SelectMany(itemId => ItemStats[itemId])
             .Select(stat => Row(
-                stat.ItemId, stat.Stat, stat.Label, NumberFormat.Python(stat.Value), stat.Unit, stat.Conditional ? "1" : "0"));
+                stat.ItemId, stat.Stat, stat.Label, NumberFormat.Short(stat.Value), stat.Unit, stat.Conditional ? "1" : "0"));
         WriteCsv(ItemStatsFile, ["item_id", "stat", "label", "value", "unit", "conditional"], rows);
     }
 
@@ -853,7 +852,7 @@ public sealed class DataStore
         {
             data[itemId] = ItemTooltips[itemId].ToJson();
         }
-        AtomicFile.Write(PathOf(ItemTooltipsFile), PythonJson.ToFileBytes(data, ensureAscii: false));
+        AtomicFile.Write(PathOf(ItemTooltipsFile), DataJson.ToFileBytes(data, ensureAscii: false));
     }
 
     /// <summary>
@@ -862,7 +861,7 @@ public sealed class DataStore
     /// </summary>
     public void SaveMatchLift()
     {
-        // Only lifts leaning toward a rank range have a shift, so every match's keep the Python app's columns.
+        // Only lifts leaning toward a rank range have a shift, so every match's keep the file's original columns.
         var leaning = MatchLift.Values.Any(lift => lift.RankShift != 0);
         var itemOrder = IndexOf(Items.Keys);
         var rows = MatchLift.Values
@@ -877,7 +876,7 @@ public sealed class DataStore
             ]);
         IReadOnlyList<string> header = ["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk", .. leaning ? ["rank_shift"] : Array.Empty<string>()];
         AtomicFile.Write(PathOf(MatchLiftFile), CsvWriter.ToBytes(header, rows));
-        AtomicFile.Write(PathOf(MatchMetaFile), PythonJson.ToFileBytes(MatchMeta, ensureAscii: true));
+        AtomicFile.Write(PathOf(MatchMetaFile), DataJson.ToFileBytes(MatchMeta, ensureAscii: true));
     }
 
     /// <summary>Downloaded, and big: no backup, the next download fetches it again.</summary>
@@ -987,7 +986,7 @@ public sealed class DataStore
         return index;
     }
 
-    /// <summary>Left-to-right, as Python's sum() adds, so totals match to the last bit.</summary>
+    /// <summary>Added left to right, always, so totals come out the same to the last bit.</summary>
     internal static double SumAmounts(IEnumerable<StatPart> parts)
     {
         var total = 0.0;

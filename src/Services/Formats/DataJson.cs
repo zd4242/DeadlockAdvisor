@@ -6,11 +6,11 @@ using System.Text.Json.Nodes;
 namespace DeadlockAdvisor.Services.Formats;
 
 /// <summary>
-/// Writes JSON exactly as the Python app's <c>json.dump(data, f, indent=1)</c> followed by a newline,
-/// through a Windows text-mode file (so every line ends \r\n). System.Text.Json can't produce this
-/// shape: one-space indents, "key": value, empty containers as [] / {}, and floats as Python's repr.
+/// Writes the data files' JSON layout: one-space indents, "key": value, empty containers as [] / {},
+/// floats in their shortest round-trip form (<see cref="NumberFormat.RoundTrip"/>), every line ending
+/// \r\n and a newline at the end. System.Text.Json can't produce this shape.
 /// </summary>
-public static class PythonJson
+public static class DataJson
 {
     private static readonly UTF8Encoding _utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
     private const string _newline = "\r\n";
@@ -139,8 +139,8 @@ public static class PythonJson
                 break;
             case JsonValueKind.Number:
                 var raw = element.GetRawText();
-                // Python reads a number with a fraction or exponent as a float and writes its repr;
-                // anything else is an int and comes back out as written.
+                // A number with a fraction or exponent is a float, written in its shortest round-trip
+                // form; anything else is an integer and comes back out as written.
                 if (raw.AsSpan().IndexOfAny(".eE") >= 0)
                     builder.Append(FloatText(double.Parse(raw, NumberStyles.Float, CultureInfo.InvariantCulture)));
                 else
@@ -157,7 +157,7 @@ public static class PythonJson
             return "NaN";
         if (double.IsInfinity(value))
             return value > 0 ? "Infinity" : "-Infinity";
-        return NumberFormat.Repr(value);
+        return NumberFormat.RoundTrip(value);
     }
 
     private static void WriteString(StringBuilder builder, string text, bool ensureAscii)

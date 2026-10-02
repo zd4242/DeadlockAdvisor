@@ -17,9 +17,9 @@
 
   <ItemGroup>
     <AvaloniaResource Include="src\Assets\**" Exclude="src\Assets\SeedData\**" />
-    <!-- A copy of the Python app's data/, written to a fresh data folder on first run. -->
+    <!-- The starter data/, written to a fresh data folder on first run. -->
     <EmbeddedResource Include="src\Assets\SeedData\*" LogicalName="SeedData/%(Filename)%(Extension)" />
-    <!-- html.unescape's tables, generated from Python, for tooltip text identical to the Python sync's. -->
+    <!-- The HTML5 named character references, for decoding the API's tooltip text. -->
     <EmbeddedResource Include="src\Services\GameApi\html5_entities.json" LogicalName="GameApi/html5_entities.json" />
     <!-- Reference digits for reading net worth off the top bar, cut from the labelled test captures. -->
     <EmbeddedResource Include="src\Vision\net_worth_glyphs.json" LogicalName="Vision/net_worth_glyphs.json" />

@@ -1,5 +1,5 @@
 # Project Context
-This is a dotnet project using Avalonia and Reactive UI, a C# port of the PyQt6 Deadlock Item Advisor (`D:\Dev\Python\deadlock_advisor`), which recommends in-game items based on the heroes in your match. The port plan is `D:\Dev\Python\deadlock_advisor\docs\csharp_port_plan.md`. The Python app is retired: read it to understand the original behaviour, but don't edit or run it. **This repo is now the source of truth, and scoring has diverged from Python on purpose.**
+This is a dotnet project using Avalonia and Reactive UI: Deadlock Item Advisor, a Windows desktop app that recommends in-game items based on the heroes in your match. It can read the match off the screen, and takes a second opinion from real match results on deadlock-api.com. The repo is public on GitHub under the MIT license, so keep personal data, local paths and anything that isn't ours (beyond the Valve art and API data the README credits) out of it.
 
 # Scoring model
 Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_rules.csv`, `item_formula_coefficients.csv`, `trait_weights.csv`, `categories.csv`) or `GameSync`. The rules to follow:

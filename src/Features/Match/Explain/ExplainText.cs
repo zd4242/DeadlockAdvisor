@@ -5,7 +5,7 @@ using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
-/// <summary>The explain panel's wording, from the Python app's results_view.py.</summary>
+/// <summary>The explain panel's wording.</summary>
 public static class ExplainText
 {
     public static string RelationWord(Relation relation) => relation switch

@@ -22,8 +22,7 @@ public class VisionCorpusTests
     {
         var outcomes = _outcomes.Value;
         Assert.NotEmpty(outcomes);
-        var report = Path.Combine(UiHarness.RepoRoot(), "mockups", "detection_report.md");
-        Directory.CreateDirectory(Path.GetDirectoryName(report)!);
+        var report = UiHarness.MockupPath("detection_report.md");
         File.WriteAllText(report, VisionEval.Markdown(outcomes, Bank));
 
         var pinned = VisionEval.Pinned(outcomes);
@@ -109,7 +108,7 @@ public class VisionCorpusTests
             $"# Where each cut portrait sits: {frames.Count} heroes, {width:0.000} pitches wide\n\n| hero | n | dx | dy | scale |\n|---|---|---|---|---|\n"));
         foreach (var (row, (frame, n)) in frames.OrderBy(pair => bank.Sources[pair.Key].Hero, StringComparer.Ordinal))
             report.AppendLine(FormattableString.Invariant($"| {bank.Sources[row].Hero} | {n} | {frame.Dx:+0.000;-0.000} | {frame.Dy:+0.000;-0.000} | {frame.Scale:0.000} |"));
-        File.WriteAllText(Path.Combine(UiHarness.RepoRoot(), "mockups", "template_frames.md"), report.ToString());
+        File.WriteAllText(UiHarness.MockupPath("template_frames.md"), report.ToString());
 
         Assert.True(Math.Abs(width - TopbarDerivation.WidthRatio) < 0.01, $"portraits are {width:0.000} pitches wide, not {TopbarDerivation.WidthRatio}");
         var measured = frames.Where(pair => pair.Value.Samples >= 3).ToList();

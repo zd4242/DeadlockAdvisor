@@ -191,7 +191,7 @@ public static partial class GameSync
     /// <summary>"30" → 30, "0.75m" → 0.75; null for anything that isn't a number.</summary>
     public static double? Number(JsonNode? value)
     {
-        var match = LeadingNumber().Match(value is null ? "" : PyJson.Str(value));
+        var match = LeadingNumber().Match(value is null ? "" : JsonRecord.Str(value));
         return match.Success ? double.Parse(match.Groups[1].Value, CultureInfo.InvariantCulture) : null;
     }
 
@@ -205,20 +205,20 @@ public static partial class GameSync
     /// </summary>
     private static bool IsConditional(JsonNode property, bool passiveHasCondition)
     {
-        var section = PyJson.Get(property, "tooltip_section");
+        var section = JsonRecord.Get(property, "tooltip_section");
         var sectionName = section is JsonValue value && value.TryGetValue<string>(out var text) ? text : null;
-        if (PyJson.Contains(property, "usage_flags", "ConditionallyApplied") || sectionName == "active")
+        if (JsonRecord.Contains(property, "usage_flags", "ConditionallyApplied") || sectionName == "active")
             return true;
         if (sectionName == "passive")
-            return passiveHasCondition || PyJson.Contains(property, "usage_flags", "IntrinsicallyProvidedInAbility");
+            return passiveHasCondition || JsonRecord.Contains(property, "usage_flags", "IntrinsicallyProvidedInAbility");
         return false;
     }
 
     /// <summary>Every property the item's in-game tooltip shows, or null with no tooltip layout to check against.</summary>
     private static HashSet<string>? DisplayedProperties(JsonNode record)
     {
-        var sections = PyJson.Get(record, "tooltip_sections");
-        if (!PyJson.Truthy(sections))
+        var sections = JsonRecord.Get(record, "tooltip_sections");
+        if (!JsonRecord.Truthy(sections))
             return null;
         var shown = new HashSet<string>(StringComparer.Ordinal);
         Walk(sections);
@@ -269,7 +269,7 @@ public static partial class GameSync
         {
             if (!Stats.TryGetValue(key, out var stat) || _selfInflicted.Contains((name, key)))
                 continue;
-            if (Number(PyJson.Get(property, "value")) is not { } value || value == 0)
+            if (Number(JsonRecord.Get(property, "value")) is not { } value || value == 0)
                 continue;
             if (_negated.Contains(key))
                 value = -value;
@@ -282,10 +282,10 @@ public static partial class GameSync
             meta[stat.Stat] = (stat.Label, stat.Unit);
         }
 
-        var shop = PyJson.Text(record, "item_slot_type");
+        var shop = JsonRecord.Text(record, "item_slot_type");
         if (shopBonuses?.GetValueOrDefault(shop) is { } bonus && ShopBonusStats.TryGetValue(shop, out var shopStat))
         {
-            totals[(shopStat.Stat, false)] = bonus.Share(PyJson.Int(record, "cost"));
+            totals[(shopStat.Stat, false)] = bonus.Share(JsonRecord.Int(record, "cost"));
             meta[shopStat.Stat] = (shopStat.Label, shopStat.Unit);
         }
 
@@ -307,12 +307,12 @@ public static partial class GameSync
         foreach (var record in heroRecords)
         {
             var bonuses = new Dictionary<string, ShopBonus>();
-            foreach (var (shop, curve) in PyJson.Get(record, "cost_bonuses") as JsonObject ?? [])
+            foreach (var (shop, curve) in JsonRecord.Get(record, "cost_bonuses") as JsonObject ?? [])
             {
                 var top = (curve as JsonArray ?? [])
                     .Select(step => new ShopBonus(
-                        Number(PyJson.Get(step, "bonus")) ?? 0,
-                        Number(PyJson.Get(step, "gold_threshold")) ?? 0))
+                        Number(JsonRecord.Get(step, "bonus")) ?? 0,
+                        Number(JsonRecord.Get(step, "gold_threshold")) ?? 0))
                     .Where(step => step.Souls > 0)
                     .MaxBy(step => step.Souls);
                 if (top is not null)
@@ -329,21 +329,21 @@ public static partial class GameSync
     /// <summary>How many stacks a per-stack property counts: the item's MaxStacks, else its <see cref="_assumedStacks"/> entry, else null.</summary>
     private static double? StackCount(JsonNode record)
     {
-        var maxStacks = PyJson.Get(PyJson.Get(record, "properties"), "MaxStacks");
-        if (Number(PyJson.Get(maxStacks, "value")) is { } max and > 0)
+        var maxStacks = JsonRecord.Get(JsonRecord.Get(record, "properties"), "MaxStacks");
+        if (Number(JsonRecord.Get(maxStacks, "value")) is { } max and > 0)
             return max;
         return NameOf(record) is { } name && _assumedStacks.TryGetValue(name, out var assumed) ? assumed : null;
     }
 
     private static string? NameOf(JsonNode record) =>
-        PyJson.Get(record, "name") is JsonValue value && value.TryGetValue<string>(out var name) ? name : null;
+        JsonRecord.Get(record, "name") is JsonValue value && value.TryGetValue<string>(out var name) ? name : null;
 
     /// <summary>The item's properties its tooltip shows, plus the ones <see cref="_forceShown"/> adds; every property without a tooltip layout.</summary>
     private static List<(string Key, JsonNode Property)> ShownProperties(JsonNode record)
     {
         var shown = DisplayedProperties(record);
         var name = NameOf(record);
-        return (PyJson.Get(record, "properties") as JsonObject ?? [])
+        return (JsonRecord.Get(record, "properties") as JsonObject ?? [])
             .Where(pair => pair.Value is JsonObject && (shown is null || shown.Contains(pair.Key) || _forceShown.Contains((name, pair.Key))))
             .Select(pair => (pair.Key, pair.Value!))
             .ToList();
@@ -362,24 +362,24 @@ public static partial class GameSync
     {
         if (!HasCastRangeAndNoRadius(record) || NameOf(record) is { } name && _notSingleTarget.Contains(name))
             return null;
-        var selfCast = PyJson.Items(record, "tooltip_sections")
-            .Where(section => PyJson.Text(section, "section_type") == "active")
-            .SelectMany(section => PyJson.Items(section, "section_attributes"))
-            .Any(attribute => PyJson.Text(attribute, "loc_string").Contains("self-cast", StringComparison.OrdinalIgnoreCase));
+        var selfCast = JsonRecord.Items(record, "tooltip_sections")
+            .Where(section => JsonRecord.Text(section, "section_type") == "active")
+            .SelectMany(section => JsonRecord.Items(section, "section_attributes"))
+            .Any(attribute => JsonRecord.Text(attribute, "loc_string").Contains("self-cast", StringComparison.OrdinalIgnoreCase));
         return selfCast ? Relation.With : Relation.Against;
     }
 
     private static bool HasCastRangeAndNoRadius(JsonNode record)
     {
-        if (!PyJson.Truthy(PyJson.Get(record, "is_active_item")))
+        if (!JsonRecord.Truthy(JsonRecord.Get(record, "is_active_item")))
             return false;
-        var active = ShownProperties(record).Where(p => PyJson.Text(p.Property, "tooltip_section") == "active").Select(p => p.Key).ToList();
+        var active = ShownProperties(record).Where(p => JsonRecord.Text(p.Property, "tooltip_section") == "active").Select(p => p.Key).ToList();
         return active.Contains("AbilityCastRange") && !active.Any(key => key.EndsWith("Radius", StringComparison.Ordinal));
     }
 
     private static bool PassiveHasCondition(IEnumerable<(string Key, JsonNode Property)> properties) =>
-        properties.Any(p => PyJson.Text(p.Property, "tooltip_section") == "passive"
-                            && PyJson.Contains(p.Property, "usage_flags", "ConditionallyApplied"));
+        properties.Any(p => JsonRecord.Text(p.Property, "tooltip_section") == "passive"
+                            && JsonRecord.Contains(p.Property, "usage_flags", "ConditionallyApplied"));
 
     // -- drift: what a patch changed that the mapping above doesn't cover ------------------
 
@@ -397,7 +397,7 @@ public static partial class GameSync
         {
             foreach (var (key, property) in properties)
             {
-                if (Stats.ContainsKey(key) && PyJson.Text(property, "label") is { Length: > 0 } label)
+                if (Stats.ContainsKey(key) && JsonRecord.Text(property, "label") is { Length: > 0 } label)
                     scoredLabels.Add(label);
             }
         }
@@ -409,9 +409,9 @@ public static partial class GameSync
             {
                 if (Stats.ContainsKey(key) || Unscored.ContainsKey(key))
                     continue;
-                var label = PyJson.Text(property, "label");
+                var label = JsonRecord.Text(property, "label");
                 var unprefixed = label.StartsWith("Max ", StringComparison.Ordinal) ? label["Max ".Length..] : label;
-                if (!scoredLabels.Contains(label) && !scoredLabels.Contains(unprefixed) || Number(PyJson.Get(property, "value")) is not { } value || value == 0)
+                if (!scoredLabels.Contains(label) && !scoredLabels.Contains(unprefixed) || Number(JsonRecord.Get(property, "value")) is not { } value || value == 0)
                     continue;
                 if (!found.TryGetValue(key, out var entry))
                 {
@@ -441,7 +441,7 @@ public static partial class GameSync
         }
 
         JsonNode? PropertyOf(string? name, string key) =>
-            name is not null && byName.TryGetValue(name, out var record) && PyJson.Get(PyJson.Get(record, "properties"), key) is JsonObject property
+            name is not null && byName.TryGetValue(name, out var record) && JsonRecord.Get(JsonRecord.Get(record, "properties"), key) is JsonObject property
                 ? property
                 : null;
 
@@ -504,20 +504,20 @@ public static partial class GameSync
     /// <summary>A property as the tooltip prints it, or null for one with nothing to show (no label, or a zero: unused cooldowns come as 0).</summary>
     private static TooltipStat? PrintedStat(JsonNode? property)
     {
-        if (property is not JsonObject || !PyJson.Truthy(PyJson.Get(property, "label")))
+        if (property is not JsonObject || !JsonRecord.Truthy(JsonRecord.Get(property, "label")))
             return null;
-        if (Number(PyJson.Get(property, "value")) is not { } number || number == 0)
+        if (Number(JsonRecord.Get(property, "value")) is not { } number || number == 0)
             return null;
-        var prefix = PyJson.Text(property, "prefix");
+        var prefix = JsonRecord.Text(property, "prefix");
         if (prefix == "{s:sign}")
             prefix = number > 0 ? "+" : "-";
         var value = prefix is "+" or "-" ? prefix + Format.Num(Math.Abs(number)) : Format.Num(number);
         var (spiritScale, boonScale) = Scaling(property);
         return new TooltipStat(
-            value + PyJson.Text(property, "postfix"),
-            PyJson.Str(PyJson.Get(property, "label")),
-            PyJson.Contains(property, "usage_flags", "ConditionallyApplied"),
-            PyJson.Truthy(PyJson.Get(property, "negative_attribute")),
+            value + JsonRecord.Text(property, "postfix"),
+            JsonRecord.Str(JsonRecord.Get(property, "label")),
+            JsonRecord.Contains(property, "usage_flags", "ConditionallyApplied"),
+            JsonRecord.Truthy(JsonRecord.Get(property, "negative_attribute")),
             spiritScale,
             boonScale);
     }
@@ -529,9 +529,9 @@ public static partial class GameSync
     /// </summary>
     private static (double Spirit, double Boons) Scaling(JsonNode property)
     {
-        var function = PyJson.Get(property, "scale_function");
-        var scale = Number(PyJson.Get(function, "stat_scale")) ?? 0;
-        return (PyJson.Text(function, "specific_stat_scale_type"), PyJson.Text(function, "class_name")) switch
+        var function = JsonRecord.Get(property, "scale_function");
+        var scale = Number(JsonRecord.Get(function, "stat_scale")) ?? 0;
+        return (JsonRecord.Text(function, "specific_stat_scale_type"), JsonRecord.Text(function, "class_name")) switch
         {
             ("ETechPower", _) or (_, "scale_function_healing_spirit_scale") => (scale, 0),
             ("ELevelUpBoons", _) or (_, "scale_function_healing_boon_scale") => (0, scale),
@@ -545,43 +545,43 @@ public static partial class GameSync
     /// </summary>
     public static ItemTooltip? ExtractTooltip(string itemId, JsonNode record, IReadOnlyDictionary<string, string> classToItem)
     {
-        var properties = PyJson.Get(record, "properties");
+        var properties = JsonRecord.Get(record, "properties");
 
         EquatableList<TooltipStat> StatsOf(IEnumerable<string> keys, IReadOnlyDictionary<string, string>? effects = null) =>
             keys.Select(key => effects is not null && effects.TryGetValue(key, out var effect)
                     ? new TooltipStat("", effect)
-                    : PrintedStat(PyJson.Get(properties, key)))
+                    : PrintedStat(JsonRecord.Get(properties, key)))
                 .OfType<TooltipStat>()
                 .ToEquatableList();
 
         var sections = new List<TooltipSection>();
-        foreach (var raw in PyJson.Items(record, "tooltip_sections"))
+        foreach (var raw in JsonRecord.Items(record, "tooltip_sections"))
         {
             // A handful of passives come without a section_type.
-            var kind = PyJson.Text(raw, "section_type");
+            var kind = JsonRecord.Text(raw, "section_type");
             if (kind.Length == 0)
-                kind = PyJson.Truthy(PyJson.Get(record, "is_active_item")) ? "active" : "passive";
+                kind = JsonRecord.Truthy(JsonRecord.Get(record, "is_active_item")) ? "active" : "passive";
             var cooldown = "";
             var blocks = new List<TooltipBlock>();
-            foreach (var attribute in PyJson.Items(raw, "section_attributes"))
+            foreach (var attribute in JsonRecord.Items(raw, "section_attributes"))
             {
-                var keys = PyJson.Strings(attribute, "properties").ToList();
+                var keys = JsonRecord.Strings(attribute, "properties").ToList();
                 // The cooldown goes in the section's header strip, as in game.
-                if (keys.Remove("AbilityCooldown") && PrintedStat(PyJson.Get(properties, "AbilityCooldown")) is { } cooldownStat)
+                if (keys.Remove("AbilityCooldown") && PrintedStat(JsonRecord.Get(properties, "AbilityCooldown")) is { } cooldownStat)
                     cooldown = cooldownStat.Value;
 
                 // Status effects (Silenced, Stun...) are boxes with a name and no number.
                 var effects = new Dictionary<string, string>();
-                foreach (var effect in PyJson.Items(attribute, "important_properties_with_icon"))
+                foreach (var effect in JsonRecord.Items(attribute, "important_properties_with_icon"))
                 {
-                    if (effect is JsonObject && PyJson.Truthy(PyJson.Get(effect, "localized_name")))
-                        effects[PyJson.Str(PyJson.Get(effect, "name"))] = PyJson.Str(PyJson.Get(effect, "localized_name"));
+                    if (effect is JsonObject && JsonRecord.Truthy(JsonRecord.Get(effect, "localized_name")))
+                        effects[JsonRecord.Str(JsonRecord.Get(effect, "name"))] = JsonRecord.Str(JsonRecord.Get(effect, "localized_name"));
                 }
 
                 var block = new TooltipBlock(
-                    TooltipText.From(PyJson.Text(attribute, "loc_string")),
-                    StatsOf(PyJson.Strings(attribute, "elevated_properties")),
-                    StatsOf(PyJson.Strings(attribute, "important_properties"), effects),
+                    TooltipText.From(JsonRecord.Text(attribute, "loc_string")),
+                    StatsOf(JsonRecord.Strings(attribute, "elevated_properties")),
+                    StatsOf(JsonRecord.Strings(attribute, "important_properties"), effects),
                     StatsOf(keys));
                 if (block != TooltipBlock.Empty)
                     blocks.Add(block);
@@ -590,7 +590,7 @@ public static partial class GameSync
                 sections.Add(new TooltipSection(kind, cooldown, blocks.ToEquatableList()));
         }
 
-        var components = PyJson.Strings(record, "component_items")
+        var components = JsonRecord.Strings(record, "component_items")
             .Where(classToItem.ContainsKey)
             .Select(name => classToItem[name])
             .ToEquatableList();
@@ -635,7 +635,7 @@ public static partial class GameSync
 
         public RowLookup(IEnumerable<T> rows, Func<T, long> gameIdOf, Func<T, IEnumerable<string>> namesOf, IEnumerable<JsonNode> records)
         {
-            var gameIds = records.Select(record => PyJson.Int(record, "id")).ToHashSet();
+            var gameIds = records.Select(record => JsonRecord.Int(record, "id")).ToHashSet();
             foreach (var row in rows)
             {
                 var gameId = gameIdOf(row);
@@ -662,8 +662,8 @@ public static partial class GameSync
 
         foreach (var record in records)
         {
-            var name = PyJson.Text(record, "name");
-            var gameId = PyJson.Int(record, "id");
+            var name = JsonRecord.Text(record, "name");
+            var gameId = JsonRecord.Int(record, "id");
             if (ours.Find(gameId, name) is not { } hero)
             {
                 var heroId = MakeId(name);
@@ -697,11 +697,11 @@ public static partial class GameSync
 
         foreach (var record in records)
         {
-            var name = PyJson.Text(record, "name");
-            var gameId = PyJson.Int(record, "id");
-            var tier = (int)PyJson.Int(record, "item_tier");
-            var category = PyJson.Text(record, "item_slot_type");
-            var cost = (int)PyJson.Int(record, "cost");
+            var name = JsonRecord.Text(record, "name");
+            var gameId = JsonRecord.Int(record, "id");
+            var tier = (int)JsonRecord.Int(record, "item_tier");
+            var category = JsonRecord.Text(record, "item_slot_type");
+            var cost = (int)JsonRecord.Int(record, "cost");
             var castOn = CastOn(record);
 
             if (ours.Find(gameId, name) is not { } current)
@@ -839,7 +839,7 @@ public static partial class GameSync
     {
         var classToItem = new Dictionary<string, string>();
         foreach (var (itemId, record) in recordsByItem)
-            classToItem[PyJson.Str(PyJson.Get(record, "class_name"))] = itemId;
+            classToItem[JsonRecord.Str(JsonRecord.Get(record, "class_name"))] = itemId;
 
         var fresh = new OrderedDictionary<string, ItemTooltip>();
         foreach (var (itemId, record) in recordsByItem)
@@ -880,6 +880,6 @@ public static partial class GameSync
     [GeneratedRegex("[^a-z0-9]+")]
     private static partial Regex NonAlphanumeric();
 
-    [GeneratedRegex(@"^" + PyText.Space + @"*(-?[0-9]+(?:\.[0-9]+)?)")]
+    [GeneratedRegex(@"^" + SyncText.Space + @"*(-?[0-9]+(?:\.[0-9]+)?)")]
     private static partial Regex LeadingNumber();
 }

@@ -5,7 +5,7 @@ using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>Ported from the Python app's tests/test_scoring.py (match-data maths).</summary>
+/// <summary>The match data's maths, on inputs small enough to check by hand.</summary>
 public class MatchStatsMathTests
 {
     private static Dictionary<long, WinTotals> Totals(params (long Item, long Wins, long Matches)[] rows) =>

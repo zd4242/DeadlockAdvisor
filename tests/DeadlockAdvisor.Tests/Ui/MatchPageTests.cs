@@ -24,7 +24,7 @@ namespace DeadlockAdvisor.Tests.Ui;
 
 public class MatchPageTests
 {
-    /// <summary>The line-up the Python app's screenshots use (scratchpad/shoot_pages.py there).</summary>
+    /// <summary>The line-up the screenshots use.</summary>
     private static void SetUpMatch(UiHarness ui)
     {
         var board = ui.ViewModel.Match.Board;

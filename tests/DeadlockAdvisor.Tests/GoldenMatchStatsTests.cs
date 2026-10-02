@@ -7,7 +7,7 @@ using static DeadlockAdvisor.Tests.Support.Golden;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>match_stats.py's pure maths on synthetic inputs, compared with what the Python app computed.</summary>
+/// <summary>The match data's pure maths on synthetic inputs, against pinned results.</summary>
 public class GoldenMatchStatsTests
 {
     private static readonly JsonNode _golden = Json("match_stats_math.json");
@@ -142,8 +142,8 @@ public class GoldenMatchStatsTests
         }
 
         var golden = Json("match_stats_math.json");
-        var expectedMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(golden["fetch_result_meta"], ensureAscii: true));
-        var actualMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(result.Meta(), ensureAscii: true));
+        var expectedMeta = Encoding.UTF8.GetString(DataJson.ToFileBytes(golden["fetch_result_meta"], ensureAscii: true));
+        var actualMeta = Encoding.UTF8.GetString(DataJson.ToFileBytes(result.Meta(), ensureAscii: true));
         Assert.Equal(expectedMeta, actualMeta);
         Assert.Equal(Items(golden["fetch_result_lines"]).Select(Text), result.Lines());
         foreach (var (row, report) in Items(golden["family_reliability"]).Zip(reports))

@@ -676,8 +676,8 @@ public class DataMenuViewModel : ViewModelBase
     }
 
     /// <summary>
-    /// Point the app at another folder holding data/ and assets/, e.g. the Python app's repo so both
-    /// apps share one set of files. Nothing locks them, so don't edit in both apps at once.
+    /// Point the app at another folder holding data/ and assets/, e.g. a synced folder shared between
+    /// machines. Nothing locks the files, so don't edit them from two places at once.
     /// </summary>
     private async Task ChangeDataFolderAsync()
     {

@@ -7,8 +7,8 @@ using static DeadlockAdvisor.Tests.Support.VisionData;
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>
-/// Screen detection against its pinned outputs: first what the Python app read off the same images,
-/// now regenerated from this app after a deliberate change (DEADLOCK_UPDATE_GOLDENS=1).
+/// Screen detection against its pinned outputs, regenerated after a deliberate change
+/// (DEADLOCK_UPDATE_GOLDENS=1).
 /// </summary>
 public class GoldenVisionTests
 {

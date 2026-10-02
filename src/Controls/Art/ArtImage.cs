@@ -19,7 +19,7 @@ public class ArtImage : Control
     public static readonly StyledProperty<Color?> TintProperty =
         AvaloniaProperty.Register<ArtImage, Color?>(nameof(Tint));
 
-    /// <summary>Null uses the Python app's radius for the size.</summary>
+    /// <summary>Null uses the default radius for the size.</summary>
     public static readonly StyledProperty<double?> RadiusProperty =
         AvaloniaProperty.Register<ArtImage, double?>(nameof(Radius));
 

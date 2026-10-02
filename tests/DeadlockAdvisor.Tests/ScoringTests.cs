@@ -6,8 +6,7 @@ using DeadlockAdvisor.Tests.Support;
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>
-/// Ported from the Python app's tests/test_scoring.py (scoring and match-data scores), then moved to
-/// scores measured from the roster average. In <see cref="TestStore"/> the three heroes average 2 on
+/// Scoring and match-data scores, with traits measured from the roster average. In <see cref="TestStore"/> the three heroes average 2 on
 /// spirit damage (5, 0, 1) and -4/3 on max HP (0, -4, 0).
 /// </summary>
 public class ScoringTests
