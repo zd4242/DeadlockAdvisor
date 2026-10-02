@@ -17,9 +17,9 @@ off your screen, and it takes a second opinion from real match results on
 
 **[Download DeadlockAdvisor.exe](https://github.com/zd4242/DeadlockAdvisor/releases/latest/download/DeadlockAdvisor.exe)**
 (Windows, the newest version; [all releases](https://github.com/zd4242/DeadlockAdvisor/releases)),
-put it anywhere and run it; nothing else needs installing. It isn't
-code-signed, so Windows SmartScreen may warn the first time: **More info →
-Run anyway**.
+put it anywhere and run it; nothing else needs installing. Windows
+SmartScreen may warn the first time, as it does for any download it hasn't
+seen often: **More info → Run anyway**.
 Settings → Data shows which version you have. A new version is a new
 download (the status bar says when one is out), but the formulas and match
 data keep themselves up to date without one.
@@ -347,6 +347,36 @@ Headless UI tests render each page into `mockups/`.
 
 Per-(hero, item) overrides, situational multipliers, hooking the game, and
 detecting on a timer.
+
+## Code signing policy
+
+Free code signing provided by [SignPath.io](https://about.signpath.io),
+certificate by [SignPath Foundation](https://signpath.org).
+
+Only `DeadlockAdvisor.exe` on this repo's releases is signed. It's built
+from this repository by the Release workflow on GitHub's own runners, and
+each signing request is approved by hand.
+
+- Committers and reviewers: [Zach Davis (zd4242)](https://github.com/zd4242)
+- Approvers: [Zach Davis (zd4242)](https://github.com/zd4242)
+
+**Privacy.** This program will not transfer any information to other
+networked systems unless specifically requested by the user or the person
+installing or operating it. It downloads the following, and its requests
+carry no personal information beyond what any web request does:
+
+- From [deadlock-api.com](https://deadlock-api.com): hero, item and patch
+  data, art, and match statistics. Importing a match sends the match ID you
+  enter, and then the public account IDs of that match's players, for
+  their names. Their [data privacy page](https://deadlock-api.com/data-privacy)
+  applies.
+- From GitHub: this repository's shared match data and published formulas,
+  and whether a newer version is out.
+  [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)
+  applies.
+
+Settings → Data turns off the startup checks for match data, formulas and
+new versions.
 
 ## License
 

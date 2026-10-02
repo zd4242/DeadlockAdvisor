@@ -108,6 +108,49 @@ about a new version.
 Linux and macOS builds are made each time as preview artifacts on the workflow run, not attached to the
 release: see the README's "Linux and macOS".
 
+## Code signing
+
+The Release workflow signs `DeadlockAdvisor.exe` through [SignPath](https://signpath.org)'s free program
+for open source projects, once it's set up; until then releases go out unsigned and the step is
+skipped. A signed exe names its publisher instead of "Unknown publisher", and SmartScreen's warning
+fades as the signature builds a reputation over the first downloads. It doesn't vanish on day one.
+
+**Setting it up (once):**
+
+1. Turn on two-factor authentication on your GitHub account: SignPath requires it.
+2. Apply at <https://signpath.org/apply> with the repository URL, the MIT license, and
+   `.github/workflows/release.yml`. The README's "Code signing policy" section is the policy page
+   they ask for; keep its roles and privacy notes true. Approval can take a few weeks.
+3. Once accepted, in SignPath:
+   - Link the project to GitHub as its trusted build system, so it only signs builds made by this
+     repository's workflows.
+   - Check the artifact configuration signs the exe at the root of the zip GitHub Actions makes of the
+     artifact, something like:
+     ```xml
+     <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+       <zip-file>
+         <pe-file path="DeadlockAdvisor.exe" product-name="Deadlock Item Advisor">
+           <authenticode-sign/>
+         </pe-file>
+       </zip-file>
+     </artifact-configuration>
+     ```
+   - Make an API token for a CI user that may submit to the release signing policy.
+4. In the repository, add the token as a secret and the organization ID as a variable:
+   ```
+   gh secret set SIGNPATH_API_TOKEN
+   gh variable set SIGNPATH_ORGANIZATION_ID --body <organization id>
+   ```
+   If the project or signing policy slug isn't `DeadlockAdvisor` / `release-signing`, set
+   `SIGNPATH_PROJECT_SLUG` / `SIGNPATH_SIGNING_POLICY_SLUG` the same way.
+
+**Each release** then stops at its Windows build until you approve the signing request in SignPath
+(it emails you), for up to 45 minutes; the release is published with the signed exe. If it times out or
+is rejected, nothing is released: re-run the failed jobs from the workflow run once you're ready. Only
+real releases are signed, not `none` builds.
+
+To turn signing off again, delete the `SIGNPATH_ORGANIZATION_ID` variable.
+
 ## Adding or upgrading a package
 
 `THIRD-PARTY-NOTICES.txt` lists every package the app ships with, its license and copyright, and the
@@ -145,5 +188,5 @@ last version their app understands.
 | `tools/MatchSnapshot/` | What the Match data workflow runs |
 | `.github/workflows/ci.yml` | Builds and tests every push and pull request, then publishes the model from `main` |
 | `.github/workflows/match-data.yml` | The daily match data |
-| `.github/workflows/release.yml` | App releases |
+| `.github/workflows/release.yml` | App releases, signed once SignPath is set up |
 | `Properties/PublishProfiles/release.pubxml` | The single-file build: `dotnet publish -p:PublishProfile=release [-r linux-x64]` |

@@ -91,7 +91,8 @@ jobs:
           # Built on macOS so the SDK signs the executable, without which Apple silicon won't run it.
           - { rid: osx-arm64, os: macos-latest, release: false }
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 30
+    # Signing waits for its approval in SignPath.
+    timeout-minutes: 60
     defaults:
       run:
         shell: bash
@@ -119,10 +120,36 @@ jobs:
           fi
 
       - uses: actions/upload-artifact@v4
+        id: upload
         with:
           name: ${{ matrix.release && 'release' || 'preview' }}-${{ matrix.rid }}
           path: dist/*
           if-no-files-found: error
+
+      # A release's Windows download is signed through SignPath (docs/publishing.md, "Code signing") once the
+      # SIGNPATH_ORGANIZATION_ID repository variable is set; until then it goes out unsigned. The request waits
+      # for an approver to approve it in SignPath.
+      - name: Sign
+        id: sign
+        if: startsWith(matrix.rid, 'win-') && needs.version.outputs.tag != '' && vars.SIGNPATH_ORGANIZATION_ID != ''
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'DeadlockAdvisor' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG || 'release-signing' }}
+          github-artifact-id: ${{ steps.upload.outputs.artifact-id }}
+          wait-for-completion-timeout-in-seconds: 2700
+          output-artifact-directory: signed
+
+      - name: Use the signed download
+        if: steps.sign.outcome == 'success'
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.rid }}
+          path: signed/*
+          if-no-files-found: error
+          overwrite: true
 
   release:
     needs: [version, build]
