@@ -29,7 +29,9 @@ The full suite takes a minute or two, so don't run it after every change. Run te
 - If a full run fails in an area you didn't touch, look for the recent commit that broke it before assuming it's another session's in-progress work.
 
 # Committing
-When you finish a feature or fix and its tests pass (targeted or full, as above), commit it without being asked. Follow-up changes after that get their own commits. Don't push.
+When you finish a feature or fix and its tests pass (targeted or full, as above), commit it without being asked. Follow-up changes after that get their own commits.
+
+Push only when the user says to, and then with a plain `git push`: never force-push, push tags, or push a branch or ref by name. A push publishes to everyone at once: a changed `src/Assets/SeedData` reaches every install at its next startup, and workflow changes run on GitHub straight away. It also pushes every unpushed commit, so check `git log origin/main..` first and mention any commits that aren't yours.
 
 Other agents may be working in this repo at the same time, so the working tree can contain changes that aren't yours:
 - Run `git status` before your first edit and note what's already modified. That work isn't yours.
