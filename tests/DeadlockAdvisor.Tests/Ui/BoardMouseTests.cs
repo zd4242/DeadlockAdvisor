@@ -3,6 +3,7 @@ using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
@@ -15,13 +16,24 @@ public class BoardMouseTests
     private static Point Center(Visual target, Visual root) =>
         target.TranslatePoint(new Point(target.Bounds.Width / 2, target.Bounds.Height / 2), root)!.Value;
 
-    private static void Click(Window window, Point at, int times = 1, MouseButton button = MouseButton.Left)
+    private static void Click(Window window, Point at, MouseButton button = MouseButton.Left)
     {
-        for (var i = 0; i < times; i++)
-        {
-            window.MouseDown(at, button);
-            window.MouseUp(at, button);
-        }
+        window.MouseDown(at, button);
+        window.MouseUp(at, button);
+        UiHarness.Settle();
+    }
+
+    /// <summary>
+    /// A click, then a press counted as its second. Real presses only count as a double-click within 500 ms of
+    /// real time, which the first click's work (recomputing the results) can outlast on a slow machine.
+    /// </summary>
+    private static void DoubleClick(Window window, Interactive target)
+    {
+        var at = Center(target, window);
+        Click(window, at);
+        var pointer = new Pointer(Pointer.GetNextFreeId(), PointerType.Mouse, isPrimary: true);
+        var properties = new PointerPointProperties(RawInputModifiers.LeftMouseButton, PointerUpdateKind.LeftButtonPressed);
+        target.RaiseEvent(new PointerPressedEventArgs(target, pointer, window, at, 0, properties, KeyModifiers.None, clickCount: 2));
         UiHarness.Settle();
     }
 
@@ -50,7 +62,7 @@ public class BoardMouseTests
 
         // Double-clicking a tile sets you, whatever the mode.
         board.SetMode(Role.Enemy);
-        Click(ui.Window, Center(Tile(ui, "wraith"), ui.Window), times: 2);
+        DoubleClick(ui.Window, Tile(ui, "wraith"));
         Assert.Equal(Role.Self, board.RoleOf("wraith"));
 
         // A left click assigns the current mode; a second click (not a double-click) clears it.

@@ -28,7 +28,8 @@ public class DetectReviewTests
 
         DetectReviewViewModel? Review() =>
             ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: DetectReviewViewModel review } ? review : null;
-        Assert.True(await UiHarness.WaitUntilAsync(() => Review() is not null, TimeSpan.FromSeconds(10)));
+        // Detection takes a few seconds here, but several times longer on a slow CI runner.
+        Assert.True(await UiHarness.WaitUntilAsync(() => Review() is not null, TimeSpan.FromSeconds(60)));
         var review = Review()!;
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, review.SelfSlot);
