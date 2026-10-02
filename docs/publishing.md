@@ -98,7 +98,12 @@ download link) is always the newest. It takes about 10 minutes. Pushing a tag yo
 
 Installs don't update themselves: people download the new version from
 [Releases](https://github.com/zd4242/DeadlockAdvisor/releases), and Settings → Data shows which one they
-have. Their data folder carries over, as it lives outside the app.
+have. Their data folder carries over, as it lives outside the app. At startup, an install asks GitHub's
+API for the newest release (`AppUpdateService`; the `match-data` and `model` pre-releases don't count)
+and, if it's newer, shows "Version x.y.z is out" in the status bar, linking to the release page. Closing
+that skips the version; Settings → Data turns the check off. Builds made outside the Release workflow
+(`0.0.0-dev`) never check. Versions 0.1.0 and 0.1.1 came before this check, so people on them won't hear
+about a new version.
 
 Linux and macOS builds are made each time as preview artifacts on the workflow run, not attached to the
 release: see the README's "Linux and macOS".

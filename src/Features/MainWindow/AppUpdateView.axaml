@@ -1,0 +1,70 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+             x:Class="DeadlockAdvisor.Features.MainWindow.AppUpdateView"
+             x:DataType="mainWindow:AppUpdateViewModel">
+
+    <!-- A chip in the status bar, shaped like a download's, while a newer version is out. -->
+    <UserControl.Styles>
+        <Style Selector="Border.update">
+            <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Padding" Value="8,0,2,0"/>
+            <Setter Property="Height" Value="22"/>
+        </Style>
+        <Style Selector="Border.update TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border.update TextBlock.title">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Border.update TextBlock.link">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+
+        <Style Selector="Button.result">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+        </Style>
+        <Style Selector="Button.result:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="Button.result:pointerover TextBlock.link">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
+
+        <Style Selector="Button.close">
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="Padding" Value="5,0"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+    </UserControl.Styles>
+
+    <Border Classes="update" IsVisible="{Binding Available, Converter={x:Static ObjectConverters.IsNotNull}}">
+        <StackPanel Orientation="Horizontal" Spacing="4">
+            <Button x:Name="Open"
+                    Classes="result"
+                    Command="{Binding OpenCommand}"
+                    ToolTip.Tip="Opens the release on GitHub: what's new, and the download. Your data carries over.">
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Classes="title" Text="{Binding Label}"/>
+                    <TextBlock Classes="link" Text="Download"/>
+                </StackPanel>
+            </Button>
+            <Button x:Name="Dismiss"
+                    Classes="icon close"
+                    Content="✕"
+                    Command="{Binding DismissCommand}"
+                    ToolTip.Tip="Don't mention this version again"/>
+        </StackPanel>
+    </Border>
+</UserControl>

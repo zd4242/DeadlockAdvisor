@@ -19,10 +19,6 @@
                 <settings:SettingRow Title="Settings and log" Description="{Binding AppFolder}">
                     <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AppFolder}"/>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Version" Description="{Binding Version}">
-                    <Button Classes="ghost" Content="Releases" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding ReleasesUrl}"
-                            ToolTip.Tip="See the newest version on GitHub"/>
-                </settings:SettingRow>
             </StackPanel>
         </Border>
 
@@ -64,6 +60,20 @@
                 <settings:SettingRow Title="Keep the hero ratings and item formulas up to date"
                                      Description="On startup, take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks.">
                     <ToggleSwitch IsChecked="{Binding AutoUpdateModel}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="APP"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Version" Description="{Binding Version}">
+                    <Button Classes="ghost" Content="Releases" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding ReleasesUrl}"
+                            ToolTip.Tip="See the newest version on GitHub"/>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Say when a new version is out"
+                                     Description="On startup, ask GitHub for the newest release, and if it's newer, say so in the status bar.">
+                    <ToggleSwitch IsChecked="{Binding CheckForAppUpdates}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

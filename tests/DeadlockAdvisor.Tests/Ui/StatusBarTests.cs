@@ -7,6 +7,7 @@ using Avalonia.Headless.XUnit;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
@@ -34,6 +35,30 @@ public class StatusBarTests
         Assert.StartsWith("Patch 10-01 is out since these were fetched.", status.Warning);
         OpenCard(ui);
         ui.Screenshot("status_newer_patch.png");
+    }
+
+    [AvaloniaFact]
+    public async Task ANewerVersionShowsAsAChipThatDismissingRemoves()
+    {
+        var github = new FakeDeadlockApi();
+        github.Bytes[AppUpdateService.LatestUrl] =
+            """{"tag_name": "v0.2.0", "html_url": "https://github.com/zd4242/DeadlockAdvisor/releases/tag/v0.2.0"}"""u8.ToArray();
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
+            services => services.AddSingleton<IAppUpdateService>(new AppUpdateService(github, new Version(0, 1, 1))));
+        ui.Show();
+
+        var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<AppUpdateView>().Single();
+        Assert.True(await UiHarness.WaitUntilAsync(() => chip.GetVisualDescendants().OfType<Border>().First().IsVisible));
+        var barHeight = ui.Window.StatusBar.Bounds.Height;
+        Assert.Contains("Version 0.2.0 is out", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        ui.Screenshot("status_app_update.png");
+
+        chip.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Dismiss").Command!.Execute(null);
+        UiHarness.Settle();
+
+        Assert.False(chip.GetVisualDescendants().OfType<Border>().First().IsVisible);
+        Assert.Equal("0.2.0", ui.Settings.Current.SkippedAppVersion);
+        Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
     }
 
     /// <summary>The chip opens its card when the pointer rests on it, not as it passes over.</summary>

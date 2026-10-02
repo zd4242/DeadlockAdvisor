@@ -7,9 +7,17 @@ public static class AppVersion
 {
     public const string ReleasesUrl = "https://github.com/zd4242/DeadlockAdvisor/releases";
 
+    private static readonly string? _informational =
+        typeof(AppVersion).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion;
+
     /// <summary>"1.2.0 (15b6f95)"; "0.0.0-dev (15b6f95)" for a build made outside the release workflow.</summary>
-    public static string Text { get; } =
-        Describe(typeof(AppVersion).Assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+    public static string Text { get; } = Describe(_informational);
+
+    /// <summary>This release's version, to compare with newer ones; null for a build made outside the release workflow.</summary>
+    public static Version? Release { get; } = ReleaseOf(_informational);
+
+    internal static Version? ReleaseOf(string? informational) =>
+        Version.TryParse(informational?.Split('+')[0], out var version) ? version : null;
 
     /// <param name="informational">"1.2.0+15b6f95dbeb7522dd8e2318fd25fffae19d64634", as the SDK writes it.</param>
     internal static string Describe(string? informational)

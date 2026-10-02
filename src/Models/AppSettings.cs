@@ -27,6 +27,10 @@ public class AppSettings
     // Take a newer published model (hero ratings, item formulas) on startup: files changed here are asked about.
     public bool AutoUpdateModel { get; set; } = true;
 
+    // Say in the status bar when a newer version of the app is out, unless it's the one dismissed there.
+    public bool CheckForAppUpdates { get; set; } = true;
+    public string? SkippedAppVersion { get; set; }
+
     // How the last match data downloads went, for the next one's estimate; null until one has run.
     public double? MatchFetchSecondsPerCall { get; set; }
     public double? MatchFetchBytesPerCall { get; set; }

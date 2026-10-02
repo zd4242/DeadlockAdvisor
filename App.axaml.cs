@@ -41,6 +41,7 @@ public partial class App : Application
         services.AddSingleton<IMatchStatsService, MatchStatsService>();
         services.AddSingleton<IMatchSnapshotService, MatchSnapshotService>();
         services.AddSingleton<IModelUpdateService, ModelUpdateService>();
+        services.AddSingleton<IAppUpdateService, AppUpdateService>();
         services.AddSingleton<IArtDownloadService, ArtDownloadService>();
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();

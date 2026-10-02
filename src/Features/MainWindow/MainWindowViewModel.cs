@@ -98,7 +98,8 @@ public class MainWindowViewModel : ViewModelBase
         INotificationService notifications,
         IModalService modals,
         IArtService art,
-        IGlobalHotkeyService hotkey)
+        IGlobalHotkeyService hotkey,
+        IAppUpdateService appUpdates)
     {
         NotificationOverlay = notificationOverlay;
         Match = match;
@@ -162,6 +163,7 @@ public class MainWindowViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
+        AppUpdate = new AppUpdateViewModel(appUpdates, settings, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
@@ -253,6 +255,9 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>The status bar's match data chip and its card.</summary>
     public DataStatusViewModel DataStatus { get; }
 
+    /// <summary>The status bar's chip while a newer version of the app is out.</summary>
+    public AppUpdateViewModel AppUpdate { get; }
+
     public ReactiveCommand<Unit, Unit> ZoomInCommand { get; }
     public ReactiveCommand<Unit, Unit> ZoomOutCommand { get; }
     public ReactiveCommand<Unit, Unit> ResetZoomCommand { get; }
@@ -280,8 +285,12 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>The rebindable keys (F6–F9 unless Settings → Shortcuts moves them), for the window to bind.</summary>
     [Reactive] public IReadOnlyList<ShortcutBinding> ShortcutBindings { get; private set; } = [];
 
-    /// <summary>The window is up: time for the background patch check and the first-run art offer.</summary>
-    public void OnOpened() => DataMenu.OnStartup();
+    /// <summary>The window is up: time for the background checks and the first-run art offer.</summary>
+    public void OnOpened()
+    {
+        DataMenu.OnStartup();
+        _ = AppUpdate.CheckAsync();
+    }
 
     /// <summary>Write pending edits before the window closes.</summary>
     public void OnClosing() => _data.FlushSaves();
@@ -349,7 +358,6 @@ public class MainWindowViewModel : ViewModelBase
         ItemFormulas.OpenItem(itemId);
     }
 
-    /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     /// <summary>The licenses of everything the app ships with: a long text, so it's written beside the settings and opened in the text editor.</summary>
     private void ShowNotices()
     {
@@ -366,6 +374,7 @@ public class MainWindowViewModel : ViewModelBase
         DataMenu.OpenFolderCommand.Execute(path).Subscribe();
     }
 
+    /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()
     {
         if (Pages[CurrentPage] is not ISearchablePage page)

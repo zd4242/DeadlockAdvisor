@@ -21,8 +21,8 @@ put it anywhere and run it; nothing else needs installing. It isn't
 code-signed, so Windows SmartScreen may warn the first time: **More info →
 Run anyway**.
 Settings → Data shows which version you have. A new version is a new
-download, but the formulas and match data keep themselves up to date
-without one.
+download (the status bar says when one is out), but the formulas and match
+data keep themselves up to date without one.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,

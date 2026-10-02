@@ -39,6 +39,12 @@ public class DataSettingsViewModel : SettingsPageViewModel
 
     public string ReleasesUrl => AppVersion.ReleasesUrl;
 
+    public bool CheckForAppUpdates
+    {
+        get => Current.CheckForAppUpdates;
+        set => Change(s => s.CheckForAppUpdates = value);
+    }
+
     public bool CheckForNewerPatch
     {
         get => Current.CheckForNewerPatch;
