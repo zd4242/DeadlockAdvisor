@@ -1,6 +1,8 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:welcome="using:DeadlockAdvisor.Features.MainWindow.Welcome"
+             xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.MainWindow.Welcome.WelcomeView"
              x:DataType="welcome:WelcomeViewModel">
     <StackPanel Margin="20" Spacing="12" Width="460">
@@ -26,9 +28,10 @@
                     <TextBlock Classes="faint" Text="{Binding RanksDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
                 </StackPanel>
             </CheckBox>
-            <CheckBox Margin="28,0,0,0" IsChecked="{Binding KeepUpToDate}" IsEnabled="{Binding MatchData}">
-                <TextBlock TextWrapping="Wrap" Text="Keep it up to date: refresh it in the background when a patch comes out or it's a few days old"/>
-            </CheckBox>
+            <StackPanel Margin="28,0,0,0" Orientation="Horizontal" Spacing="6">
+                <CheckBox IsChecked="{Binding KeepUpToDate}" IsEnabled="{Binding MatchData}" Content="Keep it up to date automatically"/>
+                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
+            </StackPanel>
             <TextBlock Classes="warning" TextWrapping="Wrap" Text="{Binding Offline}" IsVisible="{Binding !CanDownloadMatchData}"/>
         </StackPanel>
 

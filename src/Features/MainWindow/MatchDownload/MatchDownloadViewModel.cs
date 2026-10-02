@@ -10,6 +10,9 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.MainWindow.MatchDownload;
 
+/// <summary>What the download dialog was left at when Download was pressed.</summary>
+public sealed record MatchDownloadChoice(MatchFetchPlan Plan, bool Ranks, bool KeepUpToDate);
+
 /// <summary>
 /// Before a match data download: what's stored, what this one fetches and keeps, and whether to take
 /// the rank groups too, each with about how long it takes and how much it brings.
@@ -20,18 +23,27 @@ public sealed class MatchDownloadViewModel : ViewModelBase
         "Rank groups split the matches by rank, so the Match tab's filters can lean the numbers toward the ranks you play.\n"
         + "They take about five times as long to download.";
 
+    /// <summary>What "keep it up to date" does, for every place that offers it.</summary>
+    public const string AutoUpdateInfo =
+        "When the app starts, it asks deadlock-api.com for the list of patches: one quick request.\n"
+        + "If a new patch is out, a patch has ended since your last download, or the current patch's data is a few days old,\n"
+        + "it downloads just what changed, in the background. Patches you already have in full are never downloaded again.\n"
+        + "It never starts a first download, and if an update fails it quietly tries again next time.\n"
+        + "You can turn it off any time in Settings → Data.";
+
     private readonly MatchFetchPlan _everyMatch;
     private readonly MatchFetchPlan _withRanks;
     private readonly MatchFetchEstimate _estimate;
 
-    /// <param name="download">Starts the chosen plan; told whether it takes the rank groups.</param>
+    /// <param name="download">Starts the chosen plan, with the choices made.</param>
     public MatchDownloadViewModel(IModalService modals, IReadOnlyList<MatchSegment> stored, MatchFetchPlan everyMatch, MatchFetchPlan withRanks,
-        MatchFetchEstimate estimate, bool includeRanks, Action<MatchFetchPlan, bool> download)
+        MatchFetchEstimate estimate, bool includeRanks, bool keepUpToDate, Action<MatchDownloadChoice> download)
     {
         _everyMatch = everyMatch;
         _withRanks = withRanks;
         _estimate = estimate;
         IncludeRanks = includeRanks;
+        KeepUpToDate = keepUpToDate;
         Stored = stored.Select(segment => new StatusFact($"Patch {segment.Patch.Label}", StoredText(segment))).ToList();
         EveryMatchDetail = Cost(everyMatch);
         WithRanksDetail = Cost(withRanks);
@@ -54,7 +66,7 @@ public sealed class MatchDownloadViewModel : ViewModelBase
         DownloadCommand = ReactiveCommand.Create(() =>
         {
             modals.CloseModal();
-            download(Chosen, IncludeRanks);
+            download(new MatchDownloadChoice(Chosen, IncludeRanks, KeepUpToDate));
         }, this.WhenAnyValue(vm => vm.IncludeRanks).Select(_ => Chosen.Calls > 0));
         CancelCommand = ReactiveCommand.Create(modals.CloseModal);
     }
@@ -78,6 +90,9 @@ public sealed class MatchDownloadViewModel : ViewModelBase
         get => !IncludeRanks;
         set => IncludeRanks = !value;
     }
+
+    /// <summary>Refresh the match data in the background from now on, as <see cref="AutoUpdateInfo"/> says.</summary>
+    [Reactive] public bool KeepUpToDate { get; set; }
 
     /// <summary>"about 40 s · 1.2 MB".</summary>
     public string EveryMatchDetail { get; }

@@ -148,10 +148,13 @@ public sealed class DataMenuTests : IDisposable
         Assert.Equal([false, true], matchStats.Planned);
         Assert.False(dialog.IncludeRanks);
         dialog.IncludeRanks = true;
+        Assert.True(dialog.KeepUpToDate);
+        dialog.KeepUpToDate = false;
         await dialog.DownloadCommand.Execute();
 
         Assert.False(_fixture.Modals.IsModalOpen);
         Assert.True(_fixture.Settings.Current.MatchDataIncludeRanks);
+        Assert.False(_fixture.Settings.Current.AutoUpdateMatchData);
         var details = Assert.IsType<MatchDownloadProgressViewModel>(Assert.Single(menu.Jobs).Details);
         Assert.Equal(["09-29 · every match", "09-29 · rank groups"], details.Phases.Select(phase => phase.Text));
 

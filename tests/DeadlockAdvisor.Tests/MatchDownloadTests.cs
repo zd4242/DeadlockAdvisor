@@ -73,10 +73,10 @@ public sealed class MatchDownloadTests : IDisposable
         var stored = Stored();
         var everyMatch = MatchFetchPlan.For(stored, _patches, _now, includeRanks: false, heroCount: 38);
         var withRanks = MatchFetchPlan.For(stored, _patches, _now, includeRanks: true, heroCount: 38);
-        (MatchFetchPlan Plan, bool Ranks)? started = null;
+        MatchDownloadChoice? started = null;
         _fixture.Modals.ShowModal(new Core.ViewModelBase());
-        using var dialog = new MatchDownloadViewModel(_fixture.Modals, stored, everyMatch, withRanks, MatchFetchEstimate.Measured, false,
-            (plan, ranks) => started = (plan, ranks));
+        using var dialog = new MatchDownloadViewModel(_fixture.Modals, stored, everyMatch, withRanks, MatchFetchEstimate.Measured, false, true,
+            choice => started = choice);
 
         Assert.Equal(["Patch 09-29", "Patch 09-16"], dialog.Stored.Select(fact => fact.Label));
         Assert.Equal(["1 day so far · all matches", "13 days · finished · all matches"], dialog.Stored.Select(fact => fact.Value));
@@ -91,8 +91,10 @@ public sealed class MatchDownloadTests : IDisposable
         Assert.Equal([true, true], dialog.Steps.Select(step => step.Downloads));
         Assert.StartsWith("Downloading 2 patches takes about 6 min.", dialog.Summary);
 
+        Assert.True(dialog.KeepUpToDate);
+        dialog.KeepUpToDate = false;
         await dialog.DownloadCommand.Execute();
-        Assert.Equal((withRanks, true), started);
+        Assert.Equal(new MatchDownloadChoice(withRanks, true, false), started);
         Assert.False(_fixture.Modals.IsModalOpen);
     }
 
@@ -100,7 +102,7 @@ public sealed class MatchDownloadTests : IDisposable
     public async Task NothingToFetchCantBeDownloaded()
     {
         var nothing = new MatchFetchPlan(_now, [_patches[0]], []);
-        using var dialog = new MatchDownloadViewModel(_fixture.Modals, [], nothing, nothing, MatchFetchEstimate.Measured, false, (_, _) => { });
+        using var dialog = new MatchDownloadViewModel(_fixture.Modals, [], nothing, nothing, MatchFetchEstimate.Measured, false, true, _ => { });
 
         Assert.False(await dialog.DownloadCommand.CanExecute.FirstAsync());
         Assert.Equal("Everything is already up to date, so there's nothing to download.", dialog.Summary);

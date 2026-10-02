@@ -94,6 +94,11 @@
             <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Summary}"/>
         </StackPanel>
 
+        <StackPanel Orientation="Horizontal" Spacing="6">
+            <CheckBox IsChecked="{Binding KeepUpToDate}" Content="Keep it up to date automatically"/>
+            <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
+        </StackPanel>
+
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
             <Button Classes="primary"
                     Content="Download"

@@ -335,10 +335,14 @@ public class DataMenuViewModel : ViewModelBase
         var store = _data.Store;
         _modals.ShowModal(new MatchDownloadViewModel(_modals, store.MatchSegments,
             _matchStats.Plan(store, patches, includeRanks: false), _matchStats.Plan(store, patches, includeRanks: true),
-            Estimate, includeRanks, (plan, ranks) =>
+            Estimate, includeRanks, _settings.Current.AutoUpdateMatchData, choice =>
             {
-                _settings.Update(s => s.MatchDataIncludeRanks = ranks);
-                Launch(() => DownloadMatchDataAsync(plan));
+                _settings.Update(s =>
+                {
+                    s.MatchDataIncludeRanks = choice.Ranks;
+                    s.AutoUpdateMatchData = choice.KeepUpToDate;
+                });
+                Launch(() => DownloadMatchDataAsync(choice.Plan));
             }));
     }
 
