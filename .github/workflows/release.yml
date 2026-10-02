@@ -108,15 +108,14 @@ jobs:
 
       - name: Package
         run: |
-          name="DeadlockAdvisor-$VERSION-${{ matrix.rid }}"
           mkdir -p dist
-          cp LICENSE "publish/${{ matrix.rid }}/"
-          cd "publish/${{ matrix.rid }}"
           if [[ "${{ matrix.rid }}" == win-* ]]; then
-            7z a "../../dist/$name.zip" ./* > /dev/null
+            # The bare exe, under a name that stays put, so releases/latest/download/DeadlockAdvisor.exe is always the newest.
+            cp "publish/${{ matrix.rid }}/DeadlockAdvisor.exe" dist/
           else
-            # tar keeps the executable bit, which a zip loses.
-            tar -czf "../../dist/$name.tar.gz" ./*
+            # tar keeps the executable bit, which a download on its own loses.
+            cp LICENSE "publish/${{ matrix.rid }}/"
+            tar -czf "dist/DeadlockAdvisor-$VERSION-${{ matrix.rid }}.tar.gz" -C "publish/${{ matrix.rid }}" .
           fi
 
       - uses: actions/upload-artifact@v4

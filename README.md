@@ -15,10 +15,11 @@ off your screen, and it takes a second opinion from real match results on
 
 ## Install
 
-Download the newest `DeadlockAdvisor-<version>-win-x64.zip` from
-[Releases](https://github.com/zd4242/DeadlockAdvisor/releases/latest), unzip it anywhere and run
-`DeadlockAdvisor.exe`; nothing else needs installing. It isn't code-signed,
-so Windows SmartScreen may warn the first time: **More info → Run anyway**.
+**[Download DeadlockAdvisor.exe](https://github.com/zd4242/DeadlockAdvisor/releases/latest/download/DeadlockAdvisor.exe)**
+(Windows, the newest version; [all releases](https://github.com/zd4242/DeadlockAdvisor/releases)),
+put it anywhere and run it; nothing else needs installing. It isn't
+code-signed, so Windows SmartScreen may warn the first time: **More info →
+Run anyway**.
 Settings → Data shows which version you have. A new version is a new
 download, but the formulas and match data keep themselves up to date
 without one.

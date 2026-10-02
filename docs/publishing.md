@@ -76,7 +76,9 @@ Or from the command line: `gh workflow run release.yml -f release=patch`.
 The **Release** workflow (`.github/workflows/release.yml`) then runs the tests, tags the next version
 up from the last tag (only from `main`, and only once the tests pass), builds every platform with that
 version, and publishes a GitHub Release with notes made from the commits since the last one and
-`DeadlockAdvisor-<version>-win-x64.zip` attached. It takes about 10 minutes. Pushing a tag yourself
+`DeadlockAdvisor.exe` attached. It keeps that name in every release, so
+<https://github.com/zd4242/DeadlockAdvisor/releases/latest/download/DeadlockAdvisor.exe> (the README's
+download link) is always the newest. It takes about 10 minutes. Pushing a tag yourself
 (`git tag v1.2.0 && git push origin v1.2.0`) does the same with the version you chose.
 
 Installs don't update themselves: people download the new version from
