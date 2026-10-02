@@ -45,6 +45,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
 
     [Reactive] public string DetectFromAnywhereDescription { get; private set; } = "";
 
+    public bool ComeUpForReview
+    {
+        get => Current.ComeUpForReview;
+        set => Change(s => s.ComeUpForReview = value);
+    }
+
     public bool MinimizeToDetect
     {
         get => Current.MinimizeToDetect;

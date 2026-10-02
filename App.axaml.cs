@@ -43,6 +43,7 @@ public partial class App : Application
         services.AddSingleton<IExcelExportService, ExcelExportService>();
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
         services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
+        services.AddSingleton<IForegroundService, ForegroundService>();
         services.AddSingleton<IMatchLookupService, MatchLookupService>();
         services.AddTransient<DetectAction>();
         services.AddTransient<ImportMatchAction>();
@@ -85,7 +86,8 @@ public partial class App : Application
                     $"Started: data in {data.DataRoot}, {art.Count(ArtKind.Hero)} hero portrait(s) and {art.Count(ArtKind.Item)} item icon(s), "
                     + $"log in {Path.Combine(JsonSettingsService.AppDataPath, LoggingService.FileName)}");
 
-                desktop.MainWindow = new MainWindow(services.GetRequiredService<IModalService>(), settingsService, art, data)
+                desktop.MainWindow = new MainWindow(services.GetRequiredService<IModalService>(), settingsService, art, data,
+                    services.GetRequiredService<IForegroundService>())
                 {
                     DataContext = services.GetRequiredService<MainWindowViewModel>(),
                 };

@@ -7,6 +7,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
+using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -163,6 +164,7 @@ public class ShortcutTests
             .Subscribe(action => broughtForward += action == MainWindowViewModel.BringForwardAction ? 1 : 0);
         bool MessageShown() =>
             ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: MessageModalViewModel };
+        ui.Foreground.IsAnotherAppInFront = true;
 
         ui.Hotkey.Press();
 
@@ -177,6 +179,59 @@ public class ShortcutTests
         UiHarness.Settle();
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(2, broughtForward);
+    }
+
+    /// <summary>Told not to come up for a review, F9 in the game leaves what it found waiting behind it until pressed again.</summary>
+    [AvaloniaFact]
+    public async Task F9FromTheGameCanLeaveWhatItFoundWaitingUntilPressedAgain()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ComeUpForReview = false);
+        Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
+        ui.Show();
+        var broughtForward = 0;
+        using var _ = ui.ViewModel.ViewInteraction
+            .Subscribe(action => broughtForward += action == MainWindowViewModel.BringForwardAction ? 1 : 0);
+        var modals = ui.Services.GetRequiredService<IModalService>();
+        var detecting = false;
+        using var __ = ui.ViewModel.DetectFromAnywhereCommand.IsExecuting.Subscribe(executing => detecting = executing);
+        bool MessageShown() =>
+            ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: MessageModalViewModel };
+        ui.Foreground.IsAnotherAppInFront = true;
+
+        ui.Hotkey.Press();
+
+        // A press while the last is still finishing would be dropped.
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Capture.Captures == 1 && modals.IsModalOpen && !detecting));
+        Assert.False(MessageShown());
+        Assert.Equal(0, broughtForward);
+
+        ui.Hotkey.Press();
+        Assert.True(await UiHarness.WaitUntilAsync(MessageShown));
+        Assert.Equal(1, ui.Capture.Captures);
+        Assert.Equal(1, broughtForward);
+    }
+
+    /// <summary>A modal closed while it waited for the window, such as Detect's progress, never opens.</summary>
+    [AvaloniaFact]
+    public void AModalClosedWhileWaitingBehindAnotherAppNeverOpens()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var modals = ui.Services.GetRequiredService<IModalService>();
+        ui.Foreground.IsAnotherAppInFront = true;
+
+        modals.ShowMessage("Waiting", "Behind the game");
+        modals.CloseModal();
+        UiHarness.Settle();
+        Assert.Empty(ui.Window.OwnedWindows.OfType<ModalWindow>());
+
+        // With no art, F9 offers to download it, and comes up for that alone.
+        ui.Foreground.IsAnotherAppInFront = false;
+        ui.Hotkey.Press();
+        UiHarness.Settle();
+
+        var modal = Assert.Single(ui.Window.OwnedWindows.OfType<ModalWindow>());
+        Assert.IsType<ConfirmationModalViewModel>(((ModalViewModel)modal.DataContext!).Content);
     }
 
     /// <summary>Tests must never take F9 from the desktop; a window without a native handle doesn't try.</summary>

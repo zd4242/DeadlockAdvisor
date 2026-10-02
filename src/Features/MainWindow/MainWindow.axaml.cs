@@ -25,8 +25,10 @@ public partial class MainWindow : Window
     private static readonly Geometry _restoreGlyph = Geometry.Parse("M0.5,2.5 H7.5 V9.5 H0.5 Z M2.5,2.5 V0.5 H9.5 V7.5 H7.5");
 
     private readonly ISettingsService? _settings;
+    private readonly IForegroundService? _foreground;
     private readonly List<KeyBinding> _shortcutBindings = [];
     private ModalWindow? _modalWindow;
+    private ViewModelBase? _waitingModal;
     private IDisposable? _modalBoundsSync;
     private IDisposable? _viewActions;
     private PixelPoint _normalPosition;
@@ -54,9 +56,11 @@ public partial class MainWindow : Window
     /// <summary>Middle-click scrolling for every scroll viewer in the window.</summary>
     public MiddleClickAutoScroll AutoScroll { get; }
 
-    public MainWindow(IModalService modalService, ISettingsService settings, IArtService art, IDataService data) : this()
+    public MainWindow(IModalService modalService, ISettingsService settings, IArtService art, IDataService data, IForegroundService foreground)
+        : this()
     {
         _settings = settings;
+        _foreground = foreground;
         modalService.ShowModalObservable.Subscribe(ShowModalWindow);
         modalService.CloseModalObservable.Subscribe(_ => CloseModalWindow());
 
@@ -147,6 +151,8 @@ public partial class MainWindow : Window
         else if (change.Property == IsActiveProperty)
         {
             TitleBar.Classes.Set("inactive", !IsActive);
+            if (IsActive)
+                OpenWaitingModal();
         }
     }
 
@@ -275,6 +281,7 @@ public partial class MainWindow : Window
         if (WindowState == WindowState.Minimized)
             WindowState = _stateBeforeMinimize;
         Activate();
+        OpenWaitingModal();
         _modalWindow?.Activate();
     }
 
@@ -289,7 +296,27 @@ public partial class MainWindow : Window
 
     // -- modals -------------------------------------------------------------------
 
+    /// <summary>
+    /// Opening a modal's window takes focus, so while another app such as the game is in front, the
+    /// modal waits for you to come back to this window, or for something to bring it forward.
+    /// </summary>
     private void ShowModalWindow(ViewModelBase content)
+    {
+        if (_foreground?.IsAnotherAppInFront == true)
+            _waitingModal = content;
+        else
+            OpenModalWindow(content);
+    }
+
+    private void OpenWaitingModal()
+    {
+        if (_waitingModal is not { } content)
+            return;
+        _waitingModal = null;
+        OpenModalWindow(content);
+    }
+
+    private void OpenModalWindow(ViewModelBase content)
     {
         var modalVm = new ModalViewModel();
         _modalWindow = new ModalWindow { DataContext = modalVm };
@@ -317,6 +344,7 @@ public partial class MainWindow : Window
 
     private void CloseModalWindow()
     {
+        _waitingModal = null;
         _modalBoundsSync?.Dispose();
         _modalBoundsSync = null;
         _modalWindow?.CloseIntentionally();

@@ -28,12 +28,14 @@ public class ScreenCaptureService : IScreenCaptureService
         if (!OperatingSystem.IsWindows())
             throw new CaptureException("Screen capture is only supported on Windows.");
 
-        var (area, foundGame) = GameArea();
+        var game = FindGameWindow();
+        var foundGame = game != IntPtr.Zero;
+        var area = foundGame ? GameArea(game) : PrimaryMonitor();
         var height = area.Bottom - area.Top;
         var band = area with { Bottom = area.Top + Math.Min(height, Math.Max(MinBandHeight, (int)(height * BandFraction))) };
 
         var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
-        var restoreTo = minimize && window is { IsVisible: true } && window.WindowState != WindowState.Minimized && Overlaps(window, band)
+        var restoreTo = minimize && window is { IsVisible: true } && window.WindowState != WindowState.Minimized && Covers(window, game, band)
             ? window.WindowState
             : (WindowState?)null;
         if (restoreTo is not null)
@@ -59,13 +61,10 @@ public class ScreenCaptureService : IScreenCaptureService
 
     /// <summary>
     /// Where the game draws, on the virtual screen: its window's content area, which is the whole monitor
-    /// when it runs fullscreen or borderless, or the primary monitor when it isn't running.
+    /// when it runs fullscreen or borderless.
     /// </summary>
-    private static (Native.Bounds Area, bool FoundGame) GameArea()
+    private static Native.Bounds GameArea(IntPtr game)
     {
-        var game = FindGameWindow();
-        if (game == IntPtr.Zero)
-            return (PrimaryMonitor(), false);
         if (Native.IsIconic(game))
             throw new CaptureException("Deadlock is minimized, so its top bar isn't on screen to read.\n\n"
                                        + "In exclusive fullscreen the game minimizes when you switch away from it; "
@@ -80,7 +79,7 @@ public class ScreenCaptureService : IScreenCaptureService
         if (!Native.ClientToScreen(game, ref topLeft) || !Native.ClientToScreen(game, ref bottomRight)
             || bottomRight.X <= topLeft.X || bottomRight.Y <= topLeft.Y)
             throw new CaptureException("Couldn't read the size of Deadlock's window.");
-        return (new Native.Bounds(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y), true);
+        return new Native.Bounds(topLeft.X, topLeft.Y, bottomRight.X, bottomRight.Y);
     }
 
     private static Native.Bounds PrimaryMonitor()
@@ -120,12 +119,27 @@ public class ScreenCaptureService : IScreenCaptureService
         }
     }
 
-    /// <summary>Whether the advisor's window covers any of <paramref name="area"/>; assumed so when its bounds can't be read.</summary>
-    private static bool Overlaps(Window window, Native.Bounds area)
+    /// <summary>
+    /// Whether the advisor's window covers any of <paramref name="area"/>: it overlaps it, and isn't behind
+    /// the game, as it is when Detect's key is pressed in the game. Assumed so when its bounds can't be read.
+    /// </summary>
+    private static bool Covers(Window window, IntPtr game, Native.Bounds area)
     {
         if (window.TryGetPlatformHandle()?.Handle is not { } handle || !Native.GetWindowRect(handle, out var bounds))
             return true;
-        return bounds.Left < area.Right && area.Left < bounds.Right && bounds.Top < area.Bottom && area.Top < bounds.Bottom;
+        var overlaps = bounds.Left < area.Right && area.Left < bounds.Right && bounds.Top < area.Bottom && area.Top < bounds.Bottom;
+        return overlaps && (game == IntPtr.Zero || !IsInFrontOf(game, handle));
+    }
+
+    /// <summary>Whether <paramref name="window"/> is anywhere above <paramref name="other"/> in the z-order.</summary>
+    private static bool IsInFrontOf(IntPtr window, IntPtr other)
+    {
+        for (var above = Native.GetWindow(other, Native.GwHwndPrev); above != IntPtr.Zero; above = Native.GetWindow(above, Native.GwHwndPrev))
+        {
+            if (above == window)
+                return true;
+        }
+        return false;
     }
 
     /// <summary>Copy <paramref name="area"/> of the virtual screen, whose origin is the primary monitor's top-left.</summary>
@@ -186,6 +200,7 @@ public class ScreenCaptureService : IScreenCaptureService
     {
         public const uint SrcCopy = 0x00CC0020;
         public const uint MonitorDefaultToPrimary = 1;
+        public const uint GwHwndPrev = 3;
 
         /// <summary>Include layered windows, as mss does.</summary>
         public const uint CaptureBlt = 0x40000000;
@@ -228,6 +243,9 @@ public class ScreenCaptureService : IScreenCaptureService
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]
         public static extern bool IsIconic(IntPtr window);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetWindow(IntPtr window, uint relation);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

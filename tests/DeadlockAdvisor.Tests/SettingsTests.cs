@@ -65,6 +65,7 @@ public class SettingsTests
         Assert.False(settings.ShowModelEditors);
         Assert.True(settings.CheckForNewerPatch);
         Assert.True(settings.DetectFromAnywhere);
+        Assert.True(settings.ComeUpForReview);
         Assert.True(settings.MinimizeToDetect);
         Assert.True(settings.KeepUnreadCaptures);
         Assert.True(settings.RememberCorrections);

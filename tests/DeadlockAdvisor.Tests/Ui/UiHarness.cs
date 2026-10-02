@@ -40,6 +40,7 @@ public sealed class UiHarness : IDisposable
         services.AddSingleton<IDeadlockApi>(Api);
         services.AddSingleton<IScreenCaptureService>(Capture);
         services.AddSingleton<IGlobalHotkeyService>(Hotkey);
+        services.AddSingleton<IForegroundService>(Foreground);
         overrides?.Invoke(services);
         _services = services.BuildServiceProvider();
 
@@ -49,7 +50,8 @@ public sealed class UiHarness : IDisposable
         Art.SetAssetsDir(Directory.Exists(PythonAssets) ? PythonAssets : Data.AssetsDir);
 
         ViewModel = _services.GetRequiredService<MainWindowViewModel>();
-        Window = new MainWindow(_services.GetRequiredService<IModalService>(), Settings, Art, Data)
+        Window = new MainWindow(_services.GetRequiredService<IModalService>(), Settings, Art, Data,
+            _services.GetRequiredService<IForegroundService>())
         {
             DataContext = ViewModel,
             Width = 1600,
@@ -72,6 +74,7 @@ public sealed class UiHarness : IDisposable
 
     public FakeScreenCapture Capture { get; } = new();
     public FakeGlobalHotkey Hotkey { get; } = new();
+    public FakeForeground Foreground { get; } = new();
     public IDataService Data { get; }
     public IArtService Art { get; }
     public MainWindowViewModel ViewModel { get; }

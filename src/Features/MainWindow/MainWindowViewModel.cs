@@ -359,7 +359,7 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>
     /// Detect onto the Match page, bringing the window forward only once there's something to see (the
-    /// progress, the review or what went wrong): before the capture, it would cover the game.
+    /// review or what went wrong): before the capture, it would cover the game.
     /// </summary>
     private async Task DetectFromAnywhereAsync()
     {
@@ -371,12 +371,14 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         ShowPage(0);
-        // Only a review or a problem needs you here; a detection applied without review, or its
-        // progress, shouldn't pull you out of the game.
-        using var surface = _modals.ShowModalObservable
-            .Where(modal => modal is not ProgressModalViewModel)
-            .Take(1)
-            .Subscribe(_ => RequestViewAction(BringForwardAction));
+        // Only a review or a problem needs you here, and Settings can leave even those waiting behind
+        // the game; a detection applied without review, or its progress, never pulls you out of it.
+        using var surface = _settings.Current.ComeUpForReview
+            ? _modals.ShowModalObservable
+                .Where(modal => modal is not ProgressModalViewModel)
+                .Take(1)
+                .Subscribe(_ => RequestViewAction(BringForwardAction))
+            : null;
         await Match.DetectCommand.Execute();
     }
 

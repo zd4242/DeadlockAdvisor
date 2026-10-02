@@ -11,6 +11,10 @@
                 <settings:SettingRow Title="Detect from any app" Description="{Binding DetectFromAnywhereDescription}">
                     <ToggleSwitch IsChecked="{Binding DetectFromAnywhere}"/>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Switch here for a review"
+                                     Description="When a detection from the game needs reviewing, or couldn't read the screen, bring this window up. Off, it waits behind the game until you switch here or press Detect's key again, so the game keeps focus.">
+                    <ToggleSwitch IsChecked="{Binding ComeUpForReview}"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 
@@ -18,7 +22,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Minimize while capturing"
-                                     Description="Get this window out of the way when it covers the game's top bar, so it isn't captured over it. It stays put when it's on another monitor.">
+                                     Description="Get this window out of the way when it covers the game's top bar, so it isn't captured over it. It stays put when it's on another monitor or behind the game.">
                     <ToggleSwitch IsChecked="{Binding MinimizeToDetect}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Keep captures net worth couldn't be read from"
