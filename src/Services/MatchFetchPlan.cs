@@ -57,8 +57,20 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
     /// <summary>The same for each rank group.</summary>
     public static int RankCalls(int heroCount) => MatchStatsMath.RankGroups.Count * EveryMatchCalls(heroCount);
 
+    /// <summary>Data this old is refreshed without being asked, when updates are on.</summary>
+    public static readonly TimeSpan RefreshAfter = TimeSpan.FromDays(3);
+
     /// <summary>The /item-stats calls the whole download takes.</summary>
     public int Calls => Phases.Sum(phase => phase.Calls);
+
+    /// <summary>
+    /// Worth fetching without being asked: a patch that's new or has ended since its counts were fetched,
+    /// rank groups wanted and missing, or the current patch's counts older than <see cref="RefreshAfter"/>.
+    /// </summary>
+    public bool IsDue(IReadOnlyList<MatchSegment> stored) =>
+        Phases.Any(phase => phase.Reason is FetchReason.New or FetchReason.Finish or FetchReason.AddRanks
+                            || stored.FirstOrDefault(segment => segment.Patch.Start == phase.Patch.Start) is { } segment
+                            && Now - segment.FetchedAt >= RefreshAfter.TotalSeconds);
 
     public bool IncludesRanks => Phases.Any(phase => phase.Part == FetchPart.Ranks);
 

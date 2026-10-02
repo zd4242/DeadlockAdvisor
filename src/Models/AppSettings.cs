@@ -10,14 +10,19 @@ public class AppSettings
     // Where data/ and assets/ live. Null means the default folder under %AppData%.
     public string? DataRoot { get; set; }
 
-    // Asked once, on a first run with no art, whether to download it.
-    public bool ArtDownloadOffered { get; set; }
+    // Shown once, on a first run with no art: the offer of art and match data. Saved under its old
+    // name, from when it offered only art, so it isn't shown again after an update.
+    [JsonPropertyName("ArtDownloadOffered")]
+    public bool WelcomeOffered { get; set; }
 
     // When the art was last checked against deadlock-api.com's, which is done about weekly.
     public DateTimeOffset? ArtCheckedAt { get; set; }
 
     // Whether the last match data download took the rank groups too: the next one offers the same.
     public bool MatchDataIncludeRanks { get; set; }
+
+    // Refresh the match data in the background on startup when a newer patch is out or it's gone stale.
+    public bool AutoUpdateMatchData { get; set; } = true;
 
     // How the last match data downloads went, for the next one's estimate; null until one has run.
     public double? MatchFetchSecondsPerCall { get; set; }

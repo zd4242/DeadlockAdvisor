@@ -9,6 +9,7 @@ using System.Reactive.Linq;
 using System.Text.Json;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -130,23 +131,20 @@ public class DataMenuViewModel : ViewModelBase
     private string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
 
     /// <summary>
-    /// Once the window is up: check for a newer patch in the background, offer art on a first run
-    /// without any, and otherwise keep the top-bar art detection matches against current: quietly,
-    /// about weekly, and at once when this version cuts portraits differently from the last.
+    /// Once the window is up: on a first run without art, offer it and the match data in one dialog.
+    /// Otherwise check the match data against the patch list in the background, and keep the top-bar
+    /// art detection matches against current: quietly, about weekly, and at once when this version cuts
+    /// portraits differently from the last.
     /// </summary>
     public void OnStartup()
     {
-        CheckForNewerPatch();
-        if (!_settings.Current.ArtDownloadOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
+        if (!_settings.Current.WelcomeOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
         {
-            _settings.Update(s => s.ArtDownloadOffered = true);
-            _modals.Confirm(
-                $"There's no hero or item art in {_data.AssetsDir} yet, so heroes and items show as initials tiles.\n\n"
-                + "Download the portraits and icons from deadlock-api.com now? It's about 22 MB and downloads in the background, "
-                + "and Data → Download Art… does it any time.",
-                "Download", DownloadArt, cancelText: "Not now");
+            _settings.Update(s => s.WelcomeOffered = true);
+            Launch(OfferWelcomeAsync);
             return;
         }
+        Launch(CheckMatchDataAsync);
         var hasTopbarArt = Directory.Exists(TopbarDir)
                            && Directory.EnumerateFiles(TopbarDir).Any(file => ImageFile.Suffixes.Contains(Path.GetExtension(file).ToLowerInvariant()));
         var due = _settings.Current.ArtCheckedAt is not { } checkedAt || _clock.Now - checkedAt >= ArtCheckInterval;
@@ -156,6 +154,62 @@ public class DataMenuViewModel : ViewModelBase
 
     /// <summary>Download what art is missing or changed, in the background: what Detect asks for when it has nothing to match.</summary>
     public void DownloadArt() => Launch(() => DownloadArtAsync(force: false));
+
+    /// <summary>The first run's dialog: art and match data, each with what it costs. Offline, it offers the art alone.</summary>
+    private async Task OfferWelcomeAsync()
+    {
+        MatchFetchPlan? everyMatch = null;
+        MatchFetchPlan? withRanks = null;
+        try
+        {
+            var patches = await _matchStats.PatchesAsync();
+            everyMatch = _matchStats.Plan(_data.Store, patches, includeRanks: false);
+            withRanks = _matchStats.Plan(_data.Store, patches, includeRanks: true);
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex))
+        {
+        }
+        _modals.ShowModal(new WelcomeViewModel(_modals, everyMatch, withRanks, Estimate, _settings.Current.AutoUpdateMatchData, choice =>
+        {
+            _settings.Update(s =>
+            {
+                s.AutoUpdateMatchData = choice.KeepUpToDate;
+                s.MatchDataIncludeRanks = choice.Ranks;
+            });
+            if (choice.Art)
+                DownloadArt();
+            if (choice.MatchData is { } plan)
+                Launch(() => DownloadMatchDataAsync(plan));
+        }));
+    }
+
+    /// <summary>
+    /// With match data and updates on: one call to /v1/patches, which says whether a newer patch is out,
+    /// and a quiet refresh when one is due (<see cref="MatchFetchPlan.IsDue"/>). A check that fails says
+    /// nothing: it isn't worth interrupting anyone over. Without, just the newer-patch check, if that's on.
+    /// </summary>
+    private async Task CheckMatchDataAsync()
+    {
+        var store = _data.Store;
+        if (!_settings.Current.AutoUpdateMatchData || store.MatchSegments.Count == 0)
+        {
+            CheckForNewerPatch();
+            return;
+        }
+        IReadOnlyList<Patch> patches;
+        try
+        {
+            patches = await _matchStats.PatchesAsync();
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException)
+        {
+            return;
+        }
+        NewerPatch = MatchStatsMath.NewerPatch(store.MatchMeta, patches);
+        var plan = _matchStats.Plan(store, patches, _settings.Current.MatchDataIncludeRanks);
+        if (plan.IsDue(store.MatchSegments))
+            await DownloadMatchDataAsync(plan, quiet: true);
+    }
 
     private void CheckForNewerPatch()
     {
@@ -292,7 +346,8 @@ public class DataMenuViewModel : ViewModelBase
     /// A few minutes of calls, so it runs in the background, with its phases behind the chip. Each phase's
     /// counts are put to use as they arrive, so stopping part-way keeps what's finished.
     /// </summary>
-    internal async Task DownloadMatchDataAsync(MatchFetchPlan plan)
+    /// <param name="quiet">An update nobody asked for: a failure goes without a word.</param>
+    internal async Task DownloadMatchDataAsync(MatchFetchPlan plan, bool quiet = false)
     {
         if (IsDownloadingMatchData)
             return;
@@ -313,9 +368,15 @@ public class DataMenuViewModel : ViewModelBase
                         segment => applied = ApplySegment(segment, plan), job.Token);
                     return plan;
                 },
-                failure => Failed(job, "Match data download failed", failure is IOException or UnauthorizedAccessException
-                    ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
-                    : ["Couldn't download match data from deadlock-api.com:", "", failure.Message, "", Kept()]),
+                failure =>
+                {
+                    if (quiet)
+                        Remove(job);
+                    else
+                        Failed(job, "Match data download failed", failure is IOException or UnauthorizedAccessException
+                            ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
+                            : ["Couldn't download match data from deadlock-api.com:", "", failure.Message, "", Kept()]);
+                },
                 () => $"Stopped downloading match data. {Kept()}");
             if (done is null)
                 return;
@@ -331,7 +392,8 @@ public class DataMenuViewModel : ViewModelBase
             lines.Add(plan.IncludesRanks || MatchStatsMath.RanksOf(_data.Store.MatchSegments).Count > 0
                 ? "The Match page's filters (the funnel) lean it toward a range of ranks, without downloading again."
                 : "Download the rank groups too for the Match page's filters to lean it toward your ranks.");
-            Succeeded(job, "downloaded", "Match data downloaded", lines, "Match data downloaded: the recommendations now show it.");
+            Succeeded(job, quiet ? "updated" : "downloaded", quiet ? "Match data updated" : "Match data downloaded", lines,
+                quiet ? $"Match data updated to patch {plan.Keep[0].Label}." : "Match data downloaded: the recommendations now show it.");
         }
         finally
         {

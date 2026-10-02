@@ -1,12 +1,13 @@
 using System.Windows.Input;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.Settings.Data;
 
-/// <summary>Where the data, the art and the app's own files live, and whether to ask the API about new patches.</summary>
+/// <summary>Where the data, the art and the app's own files live, and how the match data keeps up with patches.</summary>
 public class DataSettingsViewModel : SettingsPageViewModel
 {
     private readonly IDataService _data;
@@ -19,6 +20,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
         _art = art;
         ChangeDataFolderCommand = dataMenu.ChangeDataFolderCommand;
         DownloadArtCommand = dataMenu.DownloadArtCommand;
+        DownloadMatchDataCommand = dataMenu.DownloadMatchDataCommand;
         ReloadArtCommand = reloadArt;
         OpenFolderCommand = dataMenu.OpenFolderCommand;
         Refresh();
@@ -37,6 +39,16 @@ public class DataSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.CheckForNewerPatch = value);
     }
 
+    public bool AutoUpdateMatchData
+    {
+        get => Current.AutoUpdateMatchData;
+        set => Change(s => s.AutoUpdateMatchData = value);
+    }
+
+    [Reactive] public string MatchDataSummary { get; private set; } = "";
+
+    public ICommand DownloadMatchDataCommand { get; }
+
     public ICommand ChangeDataFolderCommand { get; }
     public ICommand DownloadArtCommand { get; }
     public ICommand ReloadArtCommand { get; }
@@ -49,5 +61,9 @@ public class DataSettingsViewModel : SettingsPageViewModel
         DataFolder = _data.DataRoot;
         ArtFolder = _art.AssetsDir;
         ArtSummary = $"{_art.Count(ArtKind.Hero)} hero portrait(s) and {_art.Count(ArtKind.Item)} item icon(s) in {ArtFolder}";
+        var patches = MatchStatsMath.PatchFacts(_data.Store.MatchMeta);
+        MatchDataSummary = MatchStatsMath.FetchedAt(_data.Store.MatchMeta) is null
+            ? "No match data yet."
+            : string.Join(", ", patches.Select(patch => $"{patch.Label.ToLowerInvariant()} ({patch.Value})"));
     }
 }

@@ -35,11 +35,19 @@
             </StackPanel>
         </Border>
 
-        <TextBlock Classes="section" Text="ONLINE"/>
+        <TextBlock Classes="section" Text="MATCH DATA"/>
         <Border Classes="settings">
             <StackPanel>
+                <settings:SettingRow Title="Item win rates from real matches" Description="{Binding MatchDataSummary}">
+                    <Button Content="Download…" Command="{Binding DownloadMatchDataCommand}"
+                            ToolTip.Tip="See what a download would fetch and about how long it takes"/>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Keep match data up to date"
+                                     Description="On startup, refresh it in the background when a newer patch is out or it's three days old. Finished patches are never fetched again.">
+                    <ToggleSwitch IsChecked="{Binding AutoUpdateMatchData}"/>
+                </settings:SettingRow>
                 <settings:SettingRow Title="Check for a newer patch on startup"
-                                     Description="Ask deadlock-api.com whether a patch is out that your match data predates, and say so in the status bar.">
+                                     Description="With updates off, ask deadlock-api.com whether a patch is out that your match data predates, and say so in the status bar.">
                     <ToggleSwitch IsChecked="{Binding CheckForNewerPatch}"/>
                 </settings:SettingRow>
             </StackPanel>

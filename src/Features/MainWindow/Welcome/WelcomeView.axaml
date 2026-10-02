@@ -1,0 +1,51 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:welcome="using:DeadlockAdvisor.Features.MainWindow.Welcome"
+             x:Class="DeadlockAdvisor.Features.MainWindow.Welcome.WelcomeView"
+             x:DataType="welcome:WelcomeViewModel">
+    <StackPanel Margin="20" Spacing="12" Width="460">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Intro}"/>
+
+        <StackPanel Spacing="4">
+            <CheckBox IsChecked="{Binding Art}">
+                <TextBlock TextWrapping="Wrap" Text="{Binding ArtText}"/>
+            </CheckBox>
+        </StackPanel>
+
+        <StackPanel Spacing="4">
+            <CheckBox IsChecked="{Binding MatchData}" IsEnabled="{Binding CanDownloadMatchData}">
+                <StackPanel Spacing="2">
+                    <TextBlock TextWrapping="Wrap" Text="Match data: item win rates from real matches, a second opinion beside each recommendation"/>
+                    <TextBlock Classes="faint" Text="{Binding MatchDataDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox Margin="28,0,0,0" IsChecked="{Binding Ranks}" IsEnabled="{Binding MatchData}">
+                <StackPanel Spacing="2">
+                    <TextBlock TextWrapping="Wrap" Text="With the rank groups, to lean the numbers toward the ranks you play"/>
+                    <TextBlock Classes="faint" Text="{Binding RanksDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
+                </StackPanel>
+            </CheckBox>
+            <CheckBox Margin="28,0,0,0" IsChecked="{Binding KeepUpToDate}" IsEnabled="{Binding MatchData}">
+                <TextBlock TextWrapping="Wrap" Text="Keep it up to date: refresh it in the background when a patch comes out or it's a few days old"/>
+            </CheckBox>
+            <TextBlock Classes="warning" TextWrapping="Wrap" Text="{Binding Offline}" IsVisible="{Binding !CanDownloadMatchData}"/>
+        </StackPanel>
+
+        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Both are in the Data menu any time, and the Settings page can turn the updates off."/>
+
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
+            <Button Classes="primary"
+                    Content="Download"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    Command="{Binding StartCommand}"/>
+            <Button Content="Not now"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsCancel="True"
+                    Command="{Binding NotNowCommand}"/>
+        </StackPanel>
+    </StackPanel>
+</UserControl>

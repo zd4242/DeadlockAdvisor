@@ -17,8 +17,11 @@ Copy `DeadlockAdvisor.exe` anywhere and run it. It's a single
 self-contained file (Windows x64); nothing else needs installing.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
-of the data, and offers to download the hero and item art (about 13 MB,
-from `deadlock-api.com`). Settings live beside it in `settings.json`.
+of the data. One dialog offers the hero and item art and the match data,
+both from `deadlock-api.com` and both downloading in the background. With
+the match data's "keep it up to date" on (the default, and in Settings →
+Data), later startups refresh it quietly when a newer patch is out or it's
+three days old. Settings live beside it in `settings.json`.
 
 To build it yourself (.NET 10 SDK):
 

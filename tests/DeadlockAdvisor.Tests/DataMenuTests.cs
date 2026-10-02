@@ -5,10 +5,12 @@ using ClosedXML.Excel;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Services.GameApi;
@@ -286,18 +288,115 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public void AFirstRunWithoutArtOffersToDownloadItOnce()
+    public async Task AFirstRunWithoutArtOffersArtAndMatchDataOnce()
+    {
+        var art = new HeldArtDownload();
+        using var menu = Menu(matchStats: new HeldMatchStats(), artDownload: art);
+
+        menu.OnStartup();
+
+        var welcome = Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.True(_fixture.Settings.Current.WelcomeOffered);
+        Assert.Equal((true, true, true, false, true),
+            (welcome.CanDownloadMatchData, welcome.Art, welcome.MatchData, welcome.Ranks, welcome.KeepUpToDate));
+        Assert.Equal(("about 30 s · 1.2 MB", "about 3 min more · 6.1 MB"), (welcome.MatchDataDetail, welcome.RanksDetail));
+        welcome.Ranks = true;
+        welcome.KeepUpToDate = false;
+        await welcome.StartCommand.Execute();
+
+        Assert.Equal(1, art.Started);
+        var job = Assert.Single(menu.Jobs, job => job.Title == "Match data");
+        Assert.Equal(2, Assert.IsType<MatchDownloadProgressViewModel>(job.Details).Phases.Count);
+        Assert.Equal((true, false), (_fixture.Settings.Current.MatchDataIncludeRanks, _fixture.Settings.Current.AutoUpdateMatchData));
+
+        using var again = Menu(matchStats: new HeldMatchStats());
+        again.OnStartup();
+        Assert.Single(_shown);
+        menu.CancelJobs();
+    }
+
+    [Fact]
+    public async Task OfflineTheWelcomeOffersTheArtAlone()
     {
         _menu.OnStartup();
 
-        var offer = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(_shown));
-        Assert.Equal("Download", offer.ConfirmText);
-        Assert.Equal("Not now", offer.CancelText);
-        Assert.True(_fixture.Settings.Current.ArtDownloadOffered);
-        offer.CancelCommand!.Execute(null);
+        var welcome = Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.False(welcome.CanDownloadMatchData);
+        Assert.False(welcome.MatchData);
+        welcome.MatchData = false;
+        welcome.Art = false;
+        Assert.False(await welcome.StartCommand.CanExecute.FirstAsync());
+    }
 
-        _menu.OnStartup();
-        Assert.Single(_shown);
+    private static readonly List<Patch> _patches = MatchStatsMath.ParsePatches(["09-29-2026", "09-16-2026 Update"]);
+
+    /// <summary>Match data from both patches, the current one fetched <paramref name="fetched"/>; the service's clock reads <paramref name="now"/>.</summary>
+    private DataMenuViewModel MenuWithData(DateTimeOffset fetched, DateTimeOffset now)
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "09-29-2026"}, {"title": "09-16-2026 Update"}]""");
+        var store = _fixture.Data.Store;
+        store.PutMatchSegment(new MatchSegment(_patches[0], _patches[0].Start, fetched.ToUnixTimeSeconds(), false, fetched.ToUnixTimeSeconds(),
+            SliceCounts.Empty, [], []));
+        store.PutMatchSegment(new MatchSegment(_patches[1], _patches[1].Start, _patches[0].Start - 1, true, fetched.ToUnixTimeSeconds() + 86400 * 7,
+            SliceCounts.Empty, [], []));
+        return Menu(matchStats: new MatchStatsService(_api, () => now, (_, _) => Task.CompletedTask));
+    }
+
+    [Fact]
+    public void FreshMatchDataIsLeftAlone()
+    {
+        var now = new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddHours(-2), now);
+
+        menu.OnStartup();
+
+        Assert.Empty(menu.Jobs);
+        Assert.Equal([MatchStatsService.Patches], _api.Asked);
+    }
+
+    [Fact]
+    public void StaleMatchDataIsRefreshedQuietlyAndAFailureSaysNothing()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+
+        menu.OnStartup();
+
+        Assert.Contains(_api.Asked, url => url.Contains("/item-stats?"));
+        Assert.Empty(menu.Jobs);
+        Assert.Empty(_shown);
+        Assert.False(menu.IsDownloadingMatchData);
+    }
+
+    [Fact]
+    public void ANewPatchIsDownloadedQuietly()
+    {
+        using var menu = Menu(matchStats: new HeldMatchStats());
+        _fixture.Settings.Current.WelcomeOffered = true;
+        _fixture.Data.Store.PutMatchSegment(new MatchSegment(_patches[1], _patches[1].Start, _patches[0].Start - 1, true, _patches[0].Start,
+            SliceCounts.Empty, [], []));
+
+        menu.OnStartup();
+
+        Assert.Equal("09-29", menu.NewerPatch!.Label);
+        Assert.True(Assert.Single(menu.Jobs).IsRunning);
+        Assert.Empty(_shown);
+        // The test waits for the startup check, which waits for the download.
+        menu.CancelJobs();
+    }
+
+    [Fact]
+    public void WithUpdatesOffMatchDataIsOnlyChecked()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+        _fixture.Settings.Current.AutoUpdateMatchData = false;
+
+        menu.OnStartup();
+
+        Assert.Empty(menu.Jobs);
+        Assert.DoesNotContain(_api.Asked, url => url.Contains("/item-stats?"));
     }
 
     private string TopbarDir => Path.Combine(_fixture.Data.AssetsDir, "topbar");
@@ -305,7 +404,7 @@ public sealed class DataMenuTests : IDisposable
     /// <summary>An install with top-bar art, as the art download leaves it.</summary>
     private void HaveTopbarArt(bool derivedByThisVersion)
     {
-        _fixture.Settings.Current.ArtDownloadOffered = true;
+        _fixture.Settings.Current.WelcomeOffered = true;
         Directory.CreateDirectory(TopbarDir);
         File.WriteAllBytes(Path.Combine(TopbarDir, "haze.png"), [1]);
         if (derivedByThisVersion)
@@ -365,7 +464,7 @@ public sealed class DataMenuTests : IDisposable
     [Fact]
     public void ThePatchCheckFlagsANewerPatchQuietly()
     {
-        _fixture.Settings.Current.ArtDownloadOffered = true;
+        _fixture.Settings.Current.WelcomeOffered = true;
         _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "10-01-2026 Gameplay Update"}]""");
 
         _menu.OnStartup();
@@ -377,7 +476,7 @@ public sealed class DataMenuTests : IDisposable
     [Fact]
     public void ThePatchCheckCanBeTurnedOff()
     {
-        _fixture.Settings.Current.ArtDownloadOffered = true;
+        _fixture.Settings.Current.WelcomeOffered = true;
         _fixture.Settings.Current.CheckForNewerPatch = false;
         _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "10-01-2026 Gameplay Update"}]""");
 
@@ -390,7 +489,7 @@ public sealed class DataMenuTests : IDisposable
     [Fact]
     public void AnUnreachablePatchCheckSaysNothing()
     {
-        _fixture.Settings.Current.ArtDownloadOffered = true;
+        _fixture.Settings.Current.WelcomeOffered = true;
 
         _menu.OnStartup();
 

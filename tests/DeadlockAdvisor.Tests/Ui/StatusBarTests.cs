@@ -23,7 +23,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public void MatchDataTurnsRedWhenANewerPatchIsOut()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "10-01-2026 Gameplay Update"}]""");
 
         ui.Show();
@@ -40,7 +40,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public async Task RestingOnTheMatchDataChipOpensItsCard()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
         var chip = Chip(ui);
         var center = chip.TranslatePoint(new Point(chip.Bounds.Width / 2, chip.Bounds.Height / 2), ui.Window)!.Value;
@@ -62,7 +62,7 @@ public class StatusBarTests
     {
         var matchStats = new HeldMatchStats();
         var art = new HeldArtDownload();
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true, services =>
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true, services =>
         {
             services.AddSingleton<IMatchStatsService>(matchStats);
             services.AddSingleton<IArtDownloadService>(art);
@@ -100,7 +100,7 @@ public class StatusBarTests
     public void ClickingTheRunningMatchDataChipShowsEachPhase()
     {
         var matchStats = new HeldMatchStats();
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true,
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
             services => services.AddSingleton<IMatchStatsService>(matchStats));
         ui.Show();
 
@@ -124,7 +124,7 @@ public class StatusBarTests
     public async Task TheDownloadDialogSaysWhatItFetchesAndAboutHowLong()
     {
         var matchStats = new HeldMatchStats();
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true,
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
             services => services.AddSingleton<IMatchStatsService>(matchStats));
         ui.Show();
 
@@ -146,7 +146,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public void AnOfflinePatchCheckLeavesTheStatusAlone()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
 
         ui.Show();
 
@@ -158,7 +158,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public void WithoutMatchDataTheCardOffersToFetchIt()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Data.Store.MatchMeta.Clear();
         ui.Data.NotifyReplaced();
         ui.Show();
@@ -177,7 +177,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public void CoverageShowsOnlyWithTheEditors()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
         Assert.False(ui.ViewModel.DataStatus.ShowsCoverage);
         Assert.Empty(ui.ViewModel.DataStatus.Coverage);
@@ -193,7 +193,7 @@ public class StatusBarTests
     [AvaloniaFact]
     public void TheZoomOnlyShowsWhileItsOffItsDefault()
     {
-        using var ui = new UiHarness(settings => settings.Current.ArtDownloadOffered = true);
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
         Assert.Equal("", ui.ViewModel.ZoomText);
 

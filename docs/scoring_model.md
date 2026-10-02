@@ -481,8 +481,12 @@ afterwards (see "Tests and goldens" below).
    - **Overrides that no longer match the game**: remove or fix the entry in
      `_forceConditional`, `_forceShown`, `_selfInflicted`, `_forcePerStack` or
      `_assumedStacks`, or give an uncapped per-stack item a count.
-2. **Data → Download Match Data…** to refresh the real-match lifts. It fetches the
-   new patch and finishes the one before; older patches are kept as they are.
+2. **Match data.** With updates on (`AppSettings.AutoUpdateMatchData`), the next
+   startup refreshes it in the background (`MatchFetchPlan.IsDue`): it fetches the
+   new patch and finishes the one before, and older patches are kept as they are.
+   It also refreshes the current patch once its counts are three days old.
+   **Data → Download Match Data…** does the same on demand. Updates never start a
+   first download, and a failed one says nothing.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 
 ## Model health report (`Scoring/ModelHealth.cs`)

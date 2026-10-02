@@ -14,7 +14,7 @@ public class AutoScrollTests
         var ui = new UiHarness(settings =>
         {
             UiHarness.Editing(settings, 1);
-            settings.Current.ArtDownloadOffered = true;
+            settings.Current.WelcomeOffered = true;
         });
         ui.Show();
         var scroller = ui.Window.HeroTraitsPage.Scroller;
