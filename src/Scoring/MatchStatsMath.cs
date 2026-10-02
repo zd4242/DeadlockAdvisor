@@ -6,16 +6,16 @@ using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Scoring;
 
-/// <param name="Relation">"against" or "as".</param>
-/// <param name="Patches">How many patches back the window reaches.</param>
-public sealed record Family(string Relation, int Patches);
-
 /// <param name="Start">Unix seconds: 00:00 UTC the day after the title's date.</param>
 public sealed record Patch(string Title, long Start)
 {
     /// <summary>"09-16": the date from the title, for the UI.</summary>
-    public string Label =>
-        DateTimeOffset.FromUnixTimeSeconds(Start).UtcDateTime.AddDays(-1).ToString("MM-dd", CultureInfo.InvariantCulture);
+    public string Label => TitleDate.ToString("MM-dd", CultureInfo.InvariantCulture);
+
+    /// <summary>"2026-09-16": the date from the title, with its year.</summary>
+    public string Date => TitleDate.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    private DateTime TitleDate => DateTimeOffset.FromUnixTimeSeconds(Start).UtcDateTime.AddDays(-1);
 }
 
 /// <param name="Lift">Win-rate points, before shrinking.</param>
@@ -29,7 +29,17 @@ public sealed record RawLift(int Matches, double Lift, double Se);
 public readonly record struct WinTotals(long Wins, long Matches);
 
 /// <summary>A hero's (or the baseline's) totals over the first and second half of a window.</summary>
-public sealed record Halves(Dictionary<long, WinTotals> First, Dictionary<long, WinTotals> Second);
+public sealed record Halves(Dictionary<long, WinTotals> First, Dictionary<long, WinTotals> Second)
+{
+    public static Halves Empty => new([], []);
+
+    public Halves Plus(Halves other) => new(MatchStatsMath.Merge(First, other.First), MatchStatsMath.Merge(Second, other.Second));
+
+    public Halves Minus(Halves part) => new(MatchStatsMath.Subtract(First, part.First), MatchStatsMath.Subtract(Second, part.Second));
+
+    /// <summary>Both halves added back into the whole window.</summary>
+    public Dictionary<long, WinTotals> Whole => MatchStatsMath.Merge(First, Second);
+}
 
 public readonly record struct HeroItem(string HeroId, long GameItemId);
 
@@ -51,47 +61,58 @@ public sealed record FamilyStats(
     public double? Reliability => SplitR is not { } r ? null : r > 0 ? 2 * r / (1 + r) : 0.0;
 }
 
-/// <param name="OwnExcluded">
-/// For an "against" family: whether each enemy's own purchases were taken out of its baseline
-/// (<see cref="MatchStatsMath.Analyse"/>); null for the others.
-/// </param>
-public sealed record FamilyReport(Family Family, Patch Since, FamilyStats Stats, bool? OwnExcluded = null)
+/// <param name="Relation">"against" or "as".</param>
+/// <param name="Since">The oldest patch the lifts come from.</param>
+public sealed record FamilyReport(string Relation, Patch Since, FamilyStats Stats)
 {
     public bool Kept => Stats.Reliability is { } reliability && reliability >= MatchStatsMath.MinReliability && Stats.Tau2 > 0;
 
-    public JsonObject Meta()
+    public JsonObject Meta() => new()
     {
-        var meta = new JsonObject
-        {
-            ["since"] = Since.Start,
-            ["since_patch"] = Since.Label,
-            ["rows"] = Stats.Full.Count,
-            ["noise_scale"] = NumberFormat.Round(Stats.Scale, 3),
-            ["tau"] = NumberFormat.Round(Math.Sqrt(Stats.Tau2), 3),
-            ["reliability"] = Stats.Reliability is { } reliability ? NumberFormat.Round(reliability, 3) : null,
-            ["kept"] = Kept,
-        };
-        if (OwnExcluded is { } excluded)
-            meta["own_excluded"] = excluded;
-        return meta;
-    }
+        ["since"] = Since.Start,
+        ["since_patch"] = Since.Label,
+        ["rows"] = Stats.Full.Count,
+        ["noise_scale"] = NumberFormat.Round(Stats.Scale, 3),
+        ["tau"] = NumberFormat.Round(Math.Sqrt(Stats.Tau2), 3),
+        ["reliability"] = Stats.Reliability is { } reliability ? NumberFormat.Round(reliability, 3) : null,
+        ["kept"] = Kept,
+    };
 }
 
+/// <param name="Segments">What the lifts were worked out from, newest patch first.</param>
 /// <param name="Rank">The rank range the lifts are for; null for every match.</param>
 /// <param name="RankLabel">The range as the UI shows it: "Mystic+".</param>
 public sealed record FetchResult(
     OrderedDictionary<MatchLiftKey, MatchLift> Lifts,
     IReadOnlyList<FamilyReport> Families,
-    Patch Latest,
-    long FetchedAt,
+    IReadOnlyList<MatchSegment> Segments,
     RankRange? Rank,
     string RankLabel)
 {
+    public Patch Latest => Segments[0].Patch;
+
+    /// <summary>When the newest of the counts were fetched.</summary>
+    public long FetchedAt => Segments.Max(segment => segment.FetchedAt);
+
     public JsonObject Meta()
     {
         var families = new JsonObject();
         foreach (var report in Families)
-            families[report.Family.Relation] = report.Meta();
+            families[report.Relation] = report.Meta();
+        var segments = new JsonArray();
+        foreach (var segment in Segments)
+        {
+            segments.Add(new JsonObject
+            {
+                ["title"] = segment.Patch.Title,
+                ["label"] = segment.Patch.Label,
+                ["start"] = segment.Patch.Start,
+                ["until"] = segment.Until,
+                ["fetched_at"] = segment.FetchedAt,
+                ["complete"] = segment.Complete,
+                ["ranks"] = segment.HasRanks,
+            });
+        }
 
         return new JsonObject
         {
@@ -114,6 +135,7 @@ public sealed record FetchResult(
             ["match_mode"] = "ranked,unranked",
             ["min_n"] = MatchStatsMath.MinN,
             ["min_reliability"] = MatchStatsMath.MinReliability,
+            ["segments"] = segments,
             ["families"] = families,
         };
     }
@@ -123,17 +145,16 @@ public sealed record FetchResult(
         var lines = new List<string>();
         if (Rank is not null)
             lines.Add($"Ranked matches only: {RankLabel}.");
+        lines.Add("Patches: " + string.Join(", ", Segments.Select(MatchStatsMath.SegmentText)) + ".");
         foreach (var report in Families)
         {
             var stats = report.Stats;
             var reliability = stats.Reliability is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
-            var head = $"{MatchStatsMath.FamilyName(report.Family.Relation)} (since patch {report.Since.Label}): ";
+            var head = $"{MatchStatsMath.FamilyName(report.Relation)} (since patch {report.Since.Label}): ";
             if (report.Kept)
             {
                 lines.Add(head + $"{stats.Full.Count} measurements, reliability {reliability}, "
                                + $"typical win-rate gain ±{NumberFormat.Fixed(Math.Sqrt(stats.Tau2), 2)} pts");
-                if (report.OwnExcluded == false)
-                    lines.Add("  " + MatchStatsMath.OwnIncludedNote);
             }
             else
             {
@@ -158,8 +179,8 @@ public sealed record FetchResult(
 /// lifts vary, estimated from the whole family at once. The se is calibrated from two halves of the
 /// window (<see cref="NoiseScale"/>), not taken on trust from the binomial formula.</item>
 /// </list>
-/// Everything is in win-rate points (+1.4 = 1.4 percentage points). Windows follow patches, dated
-/// from the patch title rather than when it was posted.
+/// Everything is in win-rate points (+1.4 = 1.4 percentage points). The counts come per patch
+/// (<see cref="MatchSegment"/>), dated from the patch title rather than when it was posted.
 /// </summary>
 public static partial class MatchStatsMath
 {
@@ -169,55 +190,65 @@ public static partial class MatchStatsMath
     /// <summary>A family whose halves agree less than this (stepped up to the whole window) is left out.</summary>
     public const double MinReliability = 0.5;
 
-    /// <summary>A patch younger than this hasn't collected enough matches, so the window reaches one patch further back.</summary>
-    public const int MinWindowDays = 4;
-
-    // Measured September 2026 (scripts/check_match_lift.py in the Python app): "as" needs two patches
-    // to reach MinN. "against" shares that window so the "as" download holds each enemy's own
-    // purchases for it.
-    public static readonly IReadOnlyList<Family> Families =
-    [
-        new("against", 2),
-        new("as", 2),
-    ];
-
-    public const string OwnIncludedNote =
-        "The enemy numbers still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
+    /// <summary>The two kinds of lift: against an enemy hero, and on your own hero.</summary>
+    public static readonly IReadOnlyList<string> Relations = ["against", "as"];
 
     /// <summary>How the reports name a family: "Enemies" for "against", "Your hero" for "as".</summary>
     public static string FamilyName(string relation) => relation == "against" ? "Enemies" : "Your hero";
+
+    public const string OwnIncludedNote =
+        "The enemy numbers still count each enemy's own purchases (downloaded before they could be taken out): fetch again.";
 
     // -- ranks ------------------------------------------------------------------
 
     /// <summary>The highest average badge the API takes: Eternus 6.</summary>
     public const int MaxBadge = 116;
 
-    /// <summary>Initiate: the lowest rank group, which also takes the few matches below it.</summary>
-    public const int FirstRankTier = 1;
+    /// <summary>
+    /// The rank groups, as (first tier, last tier): two ranks each, so each has about as many matches as the
+    /// next. Initiate also takes the few matches below it; the last group takes Ascendant and Eternus,
+    /// too rare to count on their own.
+    /// </summary>
+    public static readonly IReadOnlyList<(int First, int Last)> RankGroups = [(1, 2), (3, 4), (5, 6), (7, 8), (9, 11)];
 
-    /// <summary>Ascendant: the highest rank group, which also takes Eternus, too rare to count on its own.</summary>
-    public const int LastRankTier = 10;
-
-    /// <summary>One group per rank from <see cref="FirstRankTier"/> to <see cref="LastRankTier"/>, named from /v1/assets/ranks.</summary>
-    public static List<RankBucket> RankBuckets(IReadOnlyDictionary<int, string> names)
-    {
-        var buckets = new List<RankBucket>();
-        for (var tier = FirstRankTier; tier <= LastRankTier; tier++)
-        {
-            buckets.Add(new RankBucket(
-                tier,
-                names.GetValueOrDefault(tier, $"Rank {tier}"),
-                tier == FirstRankTier ? 0 : tier * 10,
-                tier == LastRankTier ? MaxBadge : tier * 10 + 9));
-        }
-        return buckets;
-    }
+    /// <summary>One bucket per <see cref="RankGroups"/> entry, named from /v1/assets/ranks.</summary>
+    public static List<RankBucket> RankBuckets(IReadOnlyDictionary<int, string> names) =>
+        RankGroups.Select((group, index) => new RankBucket(
+                group.First,
+                group.Last,
+                names.GetValueOrDefault(group.First, $"Rank {group.First}"),
+                names.GetValueOrDefault(group.Last, $"Rank {group.Last}"),
+                index == 0 ? 0 : group.First * 10,
+                index == RankGroups.Count - 1 ? MaxBadge : group.Last * 10 + 9))
+            .ToList();
 
     /// <summary>The rank range the stored lifts were worked out for; null for every match.</summary>
     public static RankRange? RankOf(JsonObject meta) =>
         meta["rank"] is JsonObject rank && Number(rank["min"]) is { } min && Number(rank["max"]) is { } max
             ? new RankRange((int)min, (int)max)
             : null;
+
+    /// <summary>The rank groups the newest counts with a rank breakdown are split by; empty without one.</summary>
+    public static IReadOnlyList<RankBucket> RanksOf(IReadOnlyList<MatchSegment> segments) =>
+        segments.FirstOrDefault(segment => segment.HasRanks)?.Ranks ?? [];
+
+    /// <summary>"Mystic+", "up to Oracle", "Mystic – Oracle", "every match".</summary>
+    public static string DescribeRange(IReadOnlyList<RankBucket> ranks, RankRange? range)
+    {
+        if (range is null)
+            return "every match";
+        var inRange = ranks.Where(rank => rank.Overlaps(range)).ToList();
+        if (inRange.Count == 0)
+            return "no rank group";
+        var (first, last) = (inRange[0], inRange[^1]);
+        if (first == ranks[0] && last == ranks[^1])
+            return "every ranked match";
+        if (last == ranks[^1])
+            return $"{first.FirstName}+";
+        if (first == ranks[0])
+            return $"up to {last.LastName}";
+        return first == last ? first.Name : $"{first.FirstName} – {last.LastName}";
+    }
 
     // -- patches ----------------------------------------------------------------
 
@@ -250,15 +281,6 @@ public static partial class MatchStatsMath
         return byStart.Values.OrderBy(patch => -patch.Start).ToList();
     }
 
-    /// <summary>The oldest patch in the family's window. A patch too young to have many matches yet doesn't count toward the budget.</summary>
-    public static Patch WindowStart(IReadOnlyList<Patch> patches, Family family, double now)
-    {
-        var index = family.Patches - 1;
-        if (patches.Count > 0 && now - patches[0].Start < MinWindowDays * 86400)
-            index++;
-        return patches[Math.Min(index, patches.Count - 1)];
-    }
-
     /// <summary>The latest patch, if it's newer than the one the data was fetched under.</summary>
     public static Patch? NewerPatch(JsonObject meta, IReadOnlyList<Patch> patches)
     {
@@ -268,16 +290,25 @@ public static partial class MatchStatsMath
         return patches.Count > 0 && patches[0].Start > known ? patches[0] : null;
     }
 
+    /// <summary>"09-29 (2 days so far)", "09-16 (13 days)": a segment for the reports.</summary>
+    public static string SegmentText(MatchSegment segment)
+    {
+        var days = Math.Max(1, (int)Math.Round((segment.Until - segment.From) / 86400.0));
+        var span = $"{days} day{(days == 1 ? "" : "s")}{(segment.Ended ? "" : " so far")}";
+        return $"{segment.Patch.Label} ({span}{(segment.HasRanks ? "" : ", no rank groups")})";
+    }
+
     // -- queries ----------------------------------------------------------------
 
-    /// <summary>The item-stats filters for one query. No hero gives the baseline: every match.</summary>
-    public static OrderedDictionary<string, string> QueryParams(string relation, long? heroGameId = null)
-    {
-        var parameters = new OrderedDictionary<string, string>();
-        if (heroGameId is { } gameId)
-            parameters[relation == "against" ? "enemy_hero_ids" : "hero_id"] = gameId.ToString(CultureInfo.InvariantCulture);
-        return parameters;
-    }
+    /// <summary>The item-stats filters for every match: the baseline.</summary>
+    public static OrderedDictionary<string, string> BaselineParams() => [];
+
+    /// <summary>Every hero's own purchases at once, one row per (hero, item).</summary>
+    public static OrderedDictionary<string, string> AsParams() => new() { ["bucket"] = "hero" };
+
+    /// <summary>What the players facing one enemy hero bought.</summary>
+    public static OrderedDictionary<string, string> AgainstParams(long enemyGameId) =>
+        new() { ["enemy_hero_ids"] = enemyGameId.ToString(CultureInfo.InvariantCulture) };
 
     /// <summary>A query's filters narrowed to one rank group.</summary>
     public static OrderedDictionary<string, string> RankParams(OrderedDictionary<string, string> parameters, RankBucket rank) =>
@@ -299,7 +330,12 @@ public static partial class MatchStatsMath
         return totals;
     }
 
-    /// <summary>Two halves of a window added back into the whole.</summary>
+    /// <summary>A bucketed /item-stats answer as bucket → game item id → (wins, matches).</summary>
+    public static Dictionary<long, Dictionary<long, WinTotals>> BucketTotals(IEnumerable<(long Bucket, long ItemId, long Wins, long Matches)> rows) =>
+        rows.GroupBy(row => row.Bucket)
+            .ToDictionary(group => group.Key, group => Totals(group.Select(row => (row.ItemId, row.Wins, row.Matches))));
+
+    /// <summary>Two sets of totals added together.</summary>
     public static Dictionary<long, WinTotals> Merge(IReadOnlyDictionary<long, WinTotals> a, IReadOnlyDictionary<long, WinTotals> b)
     {
         var merged = new Dictionary<long, WinTotals>();
@@ -458,10 +494,8 @@ public static partial class MatchStatsMath
         var second = new OrderedDictionary<HeroItem, RawLift>();
         foreach (var (heroId, heroHalves) in heroes)
         {
-            var heroBaseline = own?.GetValueOrDefault(heroId) is { } ownHalves
-                ? new Halves(Subtract(baseline.First, ownHalves.First), Subtract(baseline.Second, ownHalves.Second))
-                : baseline;
-            foreach (var (item, lift) in RawLifts(Merge(heroHalves.First, heroHalves.Second), Merge(heroBaseline.First, heroBaseline.Second), tiers))
+            var heroBaseline = own?.GetValueOrDefault(heroId) is { } ownHalves ? baseline.Minus(ownHalves) : baseline;
+            foreach (var (item, lift) in RawLifts(heroHalves.Whole, heroBaseline.Whole, tiers))
                 full[new HeroItem(heroId, item)] = lift;
             // Each half has half the data, so half the floor.
             foreach (var (item, lift) in RawLifts(heroHalves.First, heroBaseline.First, tiers, MinN / 2))
@@ -496,31 +530,28 @@ public static partial class MatchStatsMath
     }
 
     /// <summary>
-    /// Every family's lifts from a download's totals, over one rank range (null: every match). A family
-    /// whose lifts are mostly noise over that range is reported but gives no lifts. An "against" family
-    /// takes each enemy's own purchases out of that enemy's baseline, from the "as" family of the same
-    /// window: otherwise an item an enemy buys a lot and does badly with would look like a
-    /// counter to them.
+    /// Every family's lifts from the stored counts, over one rank range (null: every match). A range
+    /// needs a rank breakdown; without one anywhere, the lifts are over every match. A family whose
+    /// lifts are mostly noise over that range is reported but gives no lifts. An "against" family takes
+    /// each enemy's own purchases out of that enemy's baseline, from the "as" counts of the same
+    /// window: otherwise an item an enemy buys a lot and does badly with would look like a counter to them.
     /// </summary>
-    public static FetchResult Analyse(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
+    /// <param name="segments">At least one, newest first.</param>
+    public static FetchResult Analyse(IReadOnlyList<MatchSegment> segments, RankRange? range, IEnumerable<Item> items)
     {
-        var byGameId = new Dictionary<long, Item>();
-        foreach (var item in items.Where(item => item.GameId != 0))
-            byGameId[item.GameId] = item;
-
+        var byGameId = GameItems(items);
         var tiers = byGameId.Where(pair => ItemScoring.Tiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
+        var ranks = RanksOf(segments);
+        if (ranks.Count == 0)
+            range = null;
+        var total = Sum(segments, range);
+
         var lifts = new OrderedDictionary<MatchLiftKey, MatchLift>();
         var reports = new List<FamilyReport>();
-        foreach (var family in counts.Families)
+        foreach (var relation in Relations)
         {
-            var relation = family.Family.Relation;
-            var heroes = new OrderedDictionary<string, Halves>();
-            foreach (var (heroId, halves) in family.Heroes)
-                heroes[heroId] = halves.For(counts.Ranks, range);
-            var own = relation == "against" ? OwnPurchases(counts, family, range) : null;
-
-            var stats = AnalyseFamily(family.Baseline.For(counts.Ranks, range), heroes, tiers, own);
-            var report = new FamilyReport(family.Family, family.Since, stats, relation == "against" ? own is not null : null);
+            var stats = AnalyseFamily(total.Baseline, total.Heroes(relation), tiers, relation == "against" ? total.As : null);
+            var report = new FamilyReport(relation, segments[^1].Patch, stats);
             reports.Add(report);
             if (!report.Kept)
                 continue;
@@ -531,39 +562,40 @@ public static partial class MatchStatsMath
                     itemId, key.HeroId, relation, lift.Matches, lift.Lift, lift.Se, Shrink(lift, report.Stats.Tau2));
             }
         }
-        return new FetchResult(lifts, reports, counts.Latest, counts.FetchedAt, range, counts.Describe(range));
+        return new FetchResult(lifts, reports, segments, range, DescribeRange(ranks, range));
     }
 
-    /// <summary>
-    /// Each hero's own purchases over an "against" family's window: the "as" family, when it was downloaded over the same window (one download dates every family from one moment,
-    /// so the same start means the same halves). Null for a download from before the windows matched.
-    /// </summary>
-    private static Dictionary<string, Halves>? OwnPurchases(MatchCounts counts, FamilyCounts against, RankRange? range)
-    {
-        var mine = counts.Families.FirstOrDefault(family =>
-            family.Family.Relation == "as" && family.Since.Start == against.Since.Start);
-        return mine?.Heroes.ToDictionary(pair => pair.Key, pair => pair.Value.For(counts.Ranks, range));
-    }
+    /// <summary>Every segment's counts over a rank range added up; a segment without a rank breakdown has nothing to add to a range.</summary>
+    private static SliceCounts Sum(IReadOnlyList<MatchSegment> segments, RankRange? range) =>
+        segments.Select(segment => segment.Slice(range)).OfType<SliceCounts>().Aggregate(SliceCounts.Empty, (sum, slice) => sum.Plus(slice));
 
-    /// <summary>
-    /// How often each hero builds each item next to the average player, from the "as" download over
-    /// one rank range: the item's share of the hero's purchases in its tier ÷ its share of everyone's.
-    /// 1 is typical and 0 never bought. A hero with no purchases in a tier gets no ratio for its items.
-    /// </summary>
-    public static Dictionary<(string ItemId, string HeroId), double> BuildRatios(MatchCounts counts, RankRange? range, IEnumerable<Item> items)
+    private static Dictionary<long, Item> GameItems(IEnumerable<Item> items)
     {
-        var ratios = new Dictionary<(string ItemId, string HeroId), double>();
-        var family = counts.Families.FirstOrDefault(family => family.Family.Relation == "as");
-        if (family is null)
-            return ratios;
-
         var byGameId = new Dictionary<long, Item>();
         foreach (var item in items.Where(item => item.GameId != 0))
             byGameId[item.GameId] = item;
-        var (everyone, _) = TierShares(family.Baseline.For(counts.Ranks, range), byGameId);
-        foreach (var (heroId, halves) in family.Heroes)
+        return byGameId;
+    }
+
+    /// <summary>
+    /// How often each hero builds each item next to the average player, from the "as" counts over one
+    /// rank range: the item's share of the hero's purchases in its tier ÷ its share of everyone's.
+    /// 1 is typical and 0 never bought. A hero with no purchases in a tier gets no ratio for its items.
+    /// </summary>
+    public static Dictionary<(string ItemId, string HeroId), double> BuildRatios(IReadOnlyList<MatchSegment> segments, RankRange? range, IEnumerable<Item> items)
+    {
+        var ratios = new Dictionary<(string ItemId, string HeroId), double>();
+        if (segments.Count == 0)
+            return ratios;
+        if (RanksOf(segments).Count == 0)
+            range = null;
+        var total = Sum(segments, range);
+
+        var byGameId = GameItems(items);
+        var (everyone, _) = TierShares(total.Baseline, byGameId);
+        foreach (var (heroId, halves) in total.As)
         {
-            var (mine, tierTotals) = TierShares(halves.For(counts.Ranks, range), byGameId);
+            var (mine, tierTotals) = TierShares(halves, byGameId);
             foreach (var (itemId, (tier, share)) in everyone)
             {
                 if (share > 0 && tierTotals.GetValueOrDefault(tier) > 0)
@@ -577,7 +609,7 @@ public static partial class MatchStatsMath
     private static (Dictionary<string, (int Tier, double Share)> Shares, Dictionary<int, long> TierTotals) TierShares(
         Halves halves, IReadOnlyDictionary<long, Item> byGameId)
     {
-        var totals = Merge(halves.First, halves.Second);
+        var totals = halves.Whole;
         var tierTotals = new Dictionary<int, long>();
         foreach (var (gameId, (_, matches)) in totals)
         {
@@ -635,12 +667,12 @@ public static partial class MatchStatsMath
     public static List<string> FamilyLines(JsonObject meta)
     {
         var lines = new List<string>();
-        foreach (var family in Families)
+        foreach (var relation in Relations)
         {
-            var data = FamilyMeta(meta, family.Relation);
+            var data = FamilyMeta(meta, relation);
             if (data.Count == 0)
                 continue;
-            var name = FamilyName(family.Relation);
+            var name = FamilyName(relation);
             var reliability = Number(data["reliability"]) is { } value ? NumberFormat.Fixed(value, 2) : "n/a";
             lines.Add(IsTrue(data["kept"])
                 ? $"{name}: {(long)(Number(data["rows"]) ?? 0)} measurements, reliability {reliability}"

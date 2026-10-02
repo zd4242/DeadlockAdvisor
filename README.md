@@ -117,8 +117,8 @@ apps at once. **Data → Open Data Folder** opens it in Explorer.
 | `trait_weights.csv` | category_id, relation, weight | only weights other than 1 |
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
 | `item_stats.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
-| `match_item_lift.csv` + `.meta.json` | | **generated** by Fetch Match Stats, for the chosen ranks |
-| `match_item_counts.json` | | **generated** by Fetch Match Stats: the raw totals per rank, no backups |
+| `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
+| `match_counts/<patch date>.json` | | **generated** by Fetch Match Stats: one patch's raw totals, every match and per rank; no backups |
 
 The CSVs are the source of truth and stay hand-editable. Every write
 keeps a timestamped copy of the previous file under `data/.backups/`
@@ -139,10 +139,11 @@ writes them.
   how to map, and per-item overrides that no longer match the game.
 - **Fetch Match Stats**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
-  of the score. It fetches every match and each rank separately (about
-  20 minutes), so the Match page can narrow the data to a range of ranks
-  without fetching again. The status bar turns red when a newer patch is
-  out than the data covers.
+  of the score. It keeps each patch's counts, every match and each rank
+  group separately, so the Match page can narrow the data to a range of
+  ranks without fetching again. A finished patch is never fetched again,
+  so a refresh only asks for the current patch (a few minutes). The status
+  bar turns red when a newer patch is out than the data covers.
 - **Model Health Report**: simulates 2,000 random matches and lists items
   recommended whatever the heroes, items never recommended (and why),
   traits no hero is scored on, and where real match data disagrees with

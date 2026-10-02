@@ -4,19 +4,32 @@ using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Tests.Fakes;
 
-/// <summary>A match stats fetch that never ends by itself: it can only be cancelled.</summary>
+/// <summary>A match data download that never ends by itself: it can only be cancelled.</summary>
 public sealed class HeldMatchStats : IMatchStatsService
 {
-    public IProgress<FetchProgress>? Progress { get; private set; }
+    public static readonly Patch Patch = new("09-29-2026", 1790726400);
 
-    public Task<MatchCounts> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken)
+    /// <summary>One patch, every match then its rank groups.</summary>
+    public static readonly MatchFetchPlan Plan = new(1790856000, [Patch],
+    [
+        new FetchPhase(FetchPart.EveryMatch, Patch, Patch.Start, 1790856000, false, FetchReason.New, MatchFetchPlan.EveryMatchCalls(38)),
+        new FetchPhase(FetchPart.Ranks, Patch, Patch.Start, 1790856000, false, FetchReason.New, MatchFetchPlan.RankCalls(38)),
+    ]);
+
+    public IProgress<MatchFetchProgress>? Progress { get; private set; }
+
+    public Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default) =>
+        Task.FromResult(Plan);
+
+    public Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+        CancellationToken cancellationToken)
     {
         Progress = progress;
-        return new TaskCompletionSource<MatchCounts>().Task.WaitAsync(cancellationToken);
+        return new TaskCompletionSource().Task.WaitAsync(cancellationToken);
     }
 
-    public FetchResult Apply(DataStore store, MatchCounts counts) => throw new NotSupportedException();
-    public FetchResult Refilter(DataStore store, RankRange? range) => throw new NotSupportedException();
+    public FetchResult Apply(DataStore store, MatchSegment segment, IEnumerable<Patch> keep) => throw new NotSupportedException();
+    public FetchResult Reanalyse(DataStore store, RankRange? range) => throw new NotSupportedException();
     public Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default) => Task.FromResult<Patch?>(null);
 }
 

@@ -106,7 +106,7 @@
                                             <TextBlock Classes="faint"
                                                        TextWrapping="Wrap"
                                                        IsVisible="{Binding !CanFilter}"
-                                                       Text="Needs match stats fetched split by rank (Data → Fetch Match Stats)."/>
+                                                       Text="Needs match stats fetched again, split by rank (Data → Fetch Match Stats)."/>
                                             <StackPanel Spacing="8" IsEnabled="{Binding CanFilter}">
                                                 <RadioButton GroupName="DataRanks" Content="Every match, ranked or not" IsChecked="{Binding EveryMatch}"/>
                                                 <RadioButton GroupName="DataRanks" Content="Ranked matches only, from" IsChecked="{Binding RankedOnly}"/>

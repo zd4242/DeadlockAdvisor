@@ -215,11 +215,10 @@ average, which gave "Refresher vs Lash" a raw lift of +1.7. So `MatchStatsMath.A
 compares each enemy's query with every match minus that enemy's own purchases
 (`MatchStatsMath.Subtract`), taken from the `as` family.
 
-That needs both families over the same window, so `against` uses the same two
-patches as `as`. One download dates every family from one moment, so the same
-start means the same halves and rank groups. Counts downloaded before the windows
-matched can't be corrected: the family meta has `own_excluded: false`, and the
-report and the **Data:** flyout say to fetch again.
+That needs both families over the same window. They come from the same
+per-patch counts (below), so they always do. A lifts file from before own
+purchases were taken out has `own_excluded: false` in its family meta, and the
+status card and the filters say to fetch again.
 
 ### Items your hero rarely builds
 
@@ -243,20 +242,49 @@ and the explain panel say how much the enemy lifts count. The Match tab's "Hide 
 your hero rarely builds" filter drops them from the list; it never changes a score. `DataStrength` and DATA ★
 use the reduced sum.
 
+### The counts behind the lifts
+
+Fetch Match Stats keeps the raw win and match totals per patch, in
+`data/match_counts/<patch date>.json` (`MatchSegment`). It keeps the current
+patch and the one before, plus the one before that when those two have under 14
+days between them (`MatchFetchPlan`). Each file covers its patch's window, split
+at the midpoint into the halves that calibrate the noise. It holds every match
+and, optionally, each rank group. The lifts are worked out from every stored
+patch added together.
+
+A download asks only for what's missing (`MatchFetchPlan.For`):
+
+- a patch with no counts, or the current one, which keeps collecting matches;
+- a patch that's over but was fetched before it ended or within a day of its end
+  (`MatchSegment.SettleSeconds`), once more;
+- the rank groups of a finished patch fetched without them.
+
+A finished, settled patch is never fetched again. The API adds the matches up
+itself, so a call over a day costs the same as one over a month: a download's
+cost is its number of calls, not how many days it covers. Every match comes
+first, for each patch, and goes into use as it arrives; the rank groups follow.
+A download stopped part-way keeps the phases it finished.
+
+Each half of a window takes one call for every match, one for every hero's own
+purchases (`bucket=hero`), and one per enemy hero: 80 calls per patch with 38
+heroes (`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats that. The calls
+start at most one per 0.4 s, two at a time (`RequestPacer`), and a 429 holds every
+start back for 30 s.
+
 ### Which ranks the data comes from
 
-Fetch Match Stats keeps the raw win and match totals in `match_item_counts.json`
-(`MatchCounts`): one query over every match, plus one per rank group, by the
-average badge of both teams. Each rank from Initiate to Ascendant is a group, and
-Ascendant takes Eternus, which is too rare to stand alone. Unranked matches have
-no badge, so they're only in "every match", and the rank groups don't add up to it.
+There are five rank groups of two ranks each, by the average badge of both teams
+(`MatchStatsMath.RankGroups`). The last takes Ascendant and Eternus, which are too
+rare to stand alone. Unranked matches have no badge, so they're only in "every
+match", and the groups don't add up to it.
 
-The Match page's **Data:** button (`DataRanksViewModel`) sums the chosen groups and
-reruns the whole analysis (`MatchStatsMath.Analyse`): noise calibration, τ², shrinking
-and each family's reliability check. The result is written out as the lifts file, and
-the range goes in the meta's `rank`. A narrow range has fewer matches, so its lifts
-shrink harder, and a family that falls under `MinReliability` is left out. The
-button's flyout lists what each family kept. A new fetch keeps the chosen range.
+The Match tab's filters (`DataRanksViewModel`) sum the groups a range touches,
+over every patch with a rank breakdown, and rerun the whole analysis
+(`MatchStatsMath.Analyse`): noise calibration, τ², shrinking and each family's
+reliability check. The result is written out as the lifts file, and the range goes
+in the meta's `rank`. A narrow range has fewer matches, so its lifts shrink
+harder, and a family that falls under `MinReliability` is left out. The flyout
+lists what each family kept. A new download keeps the chosen range.
 
 ## Net worth
 
@@ -384,7 +412,8 @@ afterwards (see "Tests and goldens" below).
    - **Overrides that no longer match the game**: remove or fix the entry in
      `_forceConditional`, `_forceShown`, `_selfInflicted`, `_forcePerStack` or
      `_assumedStacks`, or give an uncapped per-stack item a count.
-2. **Data → Fetch Match Stats** to refresh the real-match lifts.
+2. **Data → Fetch Match Stats** to refresh the real-match lifts. It fetches the
+   new patch and finishes the one before; older patches are kept as they are.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 
 ## Model health report (`Scoring/ModelHealth.cs`)
@@ -427,7 +456,7 @@ rather than what it does.
   behaviour change, regenerate the affected goldens with:
 
   ```
-  dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenScoringTests|FullyQualifiedName~SyncingTheSnapshot|FullyQualifiedName~FetchAsksTheRecordedQueries"
+  dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~GoldenScoringTests|FullyQualifiedName~SyncingTheSnapshot|FullyQualifiedName~ADownloadWritesEachPatch|FullyQualifiedName~GoldenMatchStatsTests"
   ```
 
   The golden tests then rewrite their files in the source tree
@@ -439,7 +468,9 @@ rather than what it does.
   - `store_queries.json` (`item_contributions`)
   - `game_api/sync_cases.json`
   - `game_api/{fresh,stale}/*.csv`
-  - `match_fetch/{result.json,match_item_lift.csv,match_item_lift.meta.json}`
+  - `match_fetch/{result.json,match_item_lift.csv,match_item_lift.meta.json}`,
+    from a download off the synthetic API (`Fakes/SyntheticItemStatsApi`)
+  - `match_stats_math.json` (`fetch_result_meta`, `fetch_result_lines`)
 
   `data/items.csv` (the store the other goldens load) and `csv_roundtrip/items.csv`
   are hand-kept inputs. Give them any new `items.csv` column by hand.

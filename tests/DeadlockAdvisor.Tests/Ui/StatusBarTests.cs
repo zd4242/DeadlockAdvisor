@@ -73,21 +73,21 @@ public class StatusBarTests
 
         var menu = ui.ViewModel.DataMenu;
         menu.FetchMatchStatsCommand.Execute().Subscribe();
-        matchStats.Progress!.Report(new FetchProgress(812, 2600, "as/full: Haze · Emissary"));
+        matchStats.Progress!.Report(new MatchFetchProgress(2, 52, 400, 812, 2600, "09-29 · Emissary – Oracle · Enemies: Haze", 0));
         var artRun = menu.DownloadArtAsync(force: false);
         art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 38, 0, [], [])]));
         await artRun;
         UiHarness.Settle();
 
         var chips = ui.Window.StatusBar.GetVisualDescendants().OfType<BackgroundJobView>().ToList();
-        Assert.Equal(["Match stats", "Art"], chips.Select(chip => ((BackgroundJobViewModel)chip.DataContext!).Title));
+        Assert.Equal(["Match data", "Art"], chips.Select(chip => ((BackgroundJobViewModel)chip.DataContext!).Title));
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
         ui.Screenshot("status_downloads.png");
 
         ui.Window.Close();
         Assert.False(closed);
         var ask = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(shown));
-        Assert.StartsWith("Still downloading:\n  • Match stats: 31%", ask.Prompt);
+        Assert.StartsWith("Still downloading:\n  • Match data: 31%", ask.Prompt);
         ask.ConfirmCommand!.Execute(null);
         UiHarness.Settle();
         Assert.True(closed);

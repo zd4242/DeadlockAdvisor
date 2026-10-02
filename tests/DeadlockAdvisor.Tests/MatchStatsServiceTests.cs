@@ -3,115 +3,18 @@ using System.Net.Http;
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
-using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using static DeadlockAdvisor.Tests.Support.Golden;
 
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>
-/// The fetch replayed against the conversation the Python app had with a synthetic API
-/// (export_golden.py's match_stats_fetch), which predates rank groups: every match gets the recorded
-/// answer, and each rank group a fixed share of it. The enemy queries have since moved to the "as"
-/// window, so the recording asks them over it. The files every match gives are regression snapshots,
-/// rewritten with DEADLOCK_UPDATE_GOLDENS=1.
+/// Downloads from the synthetic API (<see cref="SyntheticItemStatsApi"/>), a day and a half into patch
+/// 09-29. The files every match gives are regression snapshots, rewritten with DEADLOCK_UPDATE_GOLDENS=1.
 /// </summary>
 public class MatchStatsServiceTests
 {
-    /// <summary>
-    /// Answers only the recorded URLs, in order, and remembers what was asked. A rank group's query
-    /// gets a share of the last answer to the same query over every match, as the fetch asks it next.
-    /// </summary>
-    private sealed class ReplayApi : IDeadlockApi
-    {
-        private static readonly string[] _added = ["min_matches", "min_average_badge", "max_average_badge"];
-
-        private readonly Dictionary<string, Queue<JsonNode>> _answers = [];
-        private readonly Dictionary<string, JsonArray> _lastAnswer = [];
-
-        public ReplayApi(JsonNode recording)
-        {
-            foreach (var request in Items(recording["requests"]))
-            {
-                var url = Text(request["url"]);
-                JsonNode answer = request["patches"] is { } patches
-                    ? patches.DeepClone()
-                    : new JsonArray(Items(request["rows"]).Select(row => (JsonNode)new JsonObject
-                    {
-                        ["item_id"] = row[0]!.GetValue<long>(),
-                        ["wins"] = row[1]!.GetValue<long>(),
-                        ["matches"] = row[2]!.GetValue<long>(),
-                    }).ToArray());
-                if (!_answers.TryGetValue(url, out var queue))
-                    _answers[url] = queue = new Queue<JsonNode>();
-                queue.Enqueue(answer);
-            }
-        }
-
-        public List<string> Asked { get; } = [];
-        public Func<string, Exception?>? FailWith { get; set; }
-
-        public Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
-        {
-            Asked.Add(url);
-            if (FailWith?.Invoke(url) is { } failure)
-                throw failure;
-            if (url == MatchStatsService.Ranks)
-                return Task.FromResult<JsonNode?>(RankAssets());
-
-            var recorded = Recorded(url);
-            if (RankTier(url) is { } tier)
-                return Task.FromResult<JsonNode?>(Share(_lastAnswer[recorded], tier));
-            if (!_answers.TryGetValue(recorded, out var queue) || queue.Count == 0)
-                throw new InvalidOperationException($"The recording never asks for {recorded}");
-            var answer = queue.Dequeue();
-            if (answer is JsonArray rows)
-                _lastAnswer[recorded] = rows;
-            return Task.FromResult<JsonNode?>(answer.DeepClone());
-        }
-
-        public Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
-        public Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default) =>
-            throw new NotSupportedException();
-
-        private static JsonArray RankAssets() =>
-            new(new[] { "Obscurus", "Initiate", "Seeker", "Acolyte", "Sentinel", "Mystic", "Ritualist", "Emissary", "Oracle", "Phantom", "Ascendant", "Eternus" }
-                .Select((name, tier) => (JsonNode)new JsonObject { ["tier"] = tier, ["name"] = name })
-                .ToArray());
-
-        /// <summary>The URL as the Python app asked it, without the parameters rank groups added.</summary>
-        public static string Recorded(string url)
-        {
-            var queryStart = url.IndexOf('?', StringComparison.Ordinal);
-            if (queryStart < 0)
-                return url;
-            var kept = url[(queryStart + 1)..].Split('&').Where(pair => !_added.Contains(pair.Split('=')[0]));
-            return url[..queryStart] + "?" + string.Join("&", kept);
-        }
-
-        public static int? RankTier(string url)
-        {
-            var min = url.Split('?', '&').FirstOrDefault(pair => pair.StartsWith("min_average_badge=", StringComparison.Ordinal));
-            return min is null ? null : Math.Max(1, int.Parse(min.Split('=')[1]) / 10);
-        }
-
-        /// <summary>Between 1% and 12% of each item's matches and wins, varying by rank and item, so the groups never add up to every match.</summary>
-        private static JsonArray Share(JsonArray rows, int tier) =>
-            new(rows.Select(row =>
-            {
-                var item = row!["item_id"]!.GetValue<long>();
-                var percent = tier + item % 3;
-                return (JsonNode)new JsonObject
-                {
-                    ["item_id"] = item,
-                    ["wins"] = row["wins"]!.GetValue<long>() * percent / 100,
-                    ["matches"] = row["matches"]!.GetValue<long>() * percent / 100,
-                };
-            }).ToArray());
-    }
-
     private sealed class Collect<T> : IProgress<T>
     {
         public List<T> Seen { get; } = [];
@@ -124,51 +27,101 @@ public class MatchStatsServiceTests
         }
     }
 
-    private static (MatchStatsService Service, ReplayApi Api, List<TimeSpan> Waits) Replay()
-    {
-        var recording = Json("match_fetch/requests.json");
-        var now = DateTimeOffset.FromUnixTimeMilliseconds((long)(recording["now"]!.GetValue<double>() * 1000));
-        var api = new ReplayApi(recording);
-        var waits = new List<TimeSpan>();
-        var service = new MatchStatsService(api, () => now, (wait, _) =>
-        {
-            waits.Add(wait);
-            return Task.CompletedTask;
-        });
-        return (service, api, waits);
-    }
+    private static readonly int _heroes = MatchStatsService.Heroes(LoadStore()).Count;
 
-    /// <summary>A replayed download, as the other tests' data.</summary>
-    internal static Task<MatchCounts> ReplayedCountsAsync() => Replay().Service.FetchAsync(LoadStore(), null, CancellationToken.None);
+    private static IEnumerable<string> ItemStats(IEnumerable<string> asked) => asked.Where(url => url.Contains("/item-stats?"));
 
     [Fact]
-    public async Task FetchAsksTheRecordedQueriesPlusEachRankGroupAndEveryMatchWritesTheSnapshot()
+    public async Task APlanKeepsTheLastTwoPatchesAndFetchesEveryMatchBeforeTheRankGroups()
     {
-        var (service, api, _) = Replay();
-        var progress = new Collect<FetchProgress>();
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
 
-        var counts = await service.FetchAsync(LoadStore(), progress, CancellationToken.None);
+        var plan = await api.Service().PlanAsync(store, includeRanks: true);
 
-        var recorded = Items(Json("match_fetch/requests.json")["requests"]).Select(request => Text(request["url"])).ToList();
-        Assert.Equal([recorded[0], MatchStatsService.Ranks, .. recorded[1..]],
-            api.Asked.Where(url => ReplayApi.RankTier(url) is null).Select(ReplayApi.Recorded));
-        Assert.All(api.Asked.Where(url => url.Contains("item-stats")), url => Assert.Contains("min_matches=1", url));
-        Assert.Equal(10 * (recorded.Count - 1), api.Asked.Count(url => ReplayApi.RankTier(url) is not null));
-        Assert.Equal(["Initiate", "Seeker", "Acolyte", "Sentinel", "Mystic", "Ritualist", "Emissary", "Oracle", "Phantom", "Ascendant"],
-            counts.Ranks.Select(rank => rank.Name));
-        Assert.Equal((0, 116), (counts.Ranks[0].MinBadge, counts.Ranks[^1].MaxBadge));
-
-        const int total = 2 * 39 * 11;
-        Assert.Equal(Enumerable.Range(0, total + 1), progress.Seen.Select(step => step.Done));
-        Assert.All(progress.Seen, step => Assert.Equal(total, step.Total));
+        Assert.Equal([MatchStatsService.Patches], api.Asked);
+        Assert.Equal(["09-29", "09-16"], plan.Keep.Select(patch => patch.Label));
         Assert.Equal(
-            ["against: all matches", "against: all matches · Initiate", "against: all matches · Ascendant", "against: Abrams"],
-            new[] { 0, 1, 10, 11 }.Select(i => progress.Seen[i].Text));
-        Assert.Equal("done", progress.Seen[^1].Text);
+            [
+                (FetchPart.EveryMatch, "09-29", FetchReason.New),
+                (FetchPart.EveryMatch, "09-16", FetchReason.New),
+                (FetchPart.Ranks, "09-29", FetchReason.New),
+                (FetchPart.Ranks, "09-16", FetchReason.New),
+            ],
+            plan.Phases.Select(phase => (phase.Part, phase.Patch.Label, phase.Reason)));
+        // The current patch runs until now; the one before ends the second before it.
+        Assert.Equal(SyntheticItemStatsApi.Now.ToUnixTimeSeconds(), plan.Phases[0].Until);
+        Assert.Equal(plan.Keep[0].Start - 1, plan.Phases[1].Until);
+        Assert.Equal((false, true), (plan.Phases[0].Ended, plan.Phases[1].Ended));
+        Assert.Equal(2 * (2 + _heroes) * 2 * 6, plan.Calls);
+    }
 
+    [Fact]
+    public async Task EveryMatchAndEveryHerosOwnPurchasesTakeOneCallPerHalfAndEachEnemyItsOwn()
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        var progress = new Collect<MatchFetchProgress>();
+        var finished = new List<MatchSegment>();
+        var bytesBefore = api.BytesReceived;
+
+        await service.FetchAsync(store, plan, progress, finished.Add, CancellationToken.None);
+
+        // No rank groups, so no rank names either.
+        Assert.DoesNotContain(MatchStatsService.Ranks, api.Asked);
+        var asked = ItemStats(api.Asked).Select(SyntheticItemStatsApi.Query).ToList();
+        Assert.Equal(plan.Calls, asked.Count);
+        Assert.Equal(2 * 2 * (2 + _heroes), asked.Count);
+        Assert.All(asked, query => Assert.Equal("1", query["min_matches"]));
+        Assert.Equal(4, asked.Count(query => query.Count == 3));
+        Assert.Equal(4, asked.Count(query => query.GetValueOrDefault("bucket") == "hero"));
+        Assert.DoesNotContain(asked, query => query.ContainsKey("hero_id") || query.ContainsKey("min_average_badge"));
+        // Both halves of a window, with no second in both.
+        var current = asked.Take(2).Select(query => (long.Parse(query["min_unix_timestamp"]), long.Parse(query["max_unix_timestamp"]))).ToList();
+        Assert.Equal((plan.Phases[0].From, plan.Phases[0].Until), (current[0].Item1, current[1].Item2));
+        Assert.Equal(current[0].Item2 + 1, current[1].Item1);
+
+        Assert.Equal(["09-29", "09-16"], finished.Select(segment => segment.Patch.Label));
+        Assert.All(finished, segment => Assert.False(segment.HasRanks));
+        Assert.Equal(_heroes, finished[0].EveryMatch.As.Count);
+        Assert.Equal(_heroes, finished[0].EveryMatch.Against.Count);
+        Assert.Equal(SyntheticItemStatsApi.Now.ToUnixTimeSeconds(), finished[0].FetchedAt);
+
+        Assert.Equal(Enumerable.Range(1, plan.Calls), progress.Seen.Select(step => step.Done));
+        Assert.Equal([0, 1], progress.Seen.Select(step => step.Phase).Distinct());
+        Assert.Equal("09-29 · every match · all matches", progress.Seen[0].Text);
+        Assert.Equal("09-29 · every match · Enemies: Abrams", progress.Seen[4].Text);
+        Assert.Equal(plan.Phases[0].Calls, progress.Seen.Last(step => step.Phase == 0).PhaseDone);
+        Assert.Equal(api.BytesReceived - bytesBefore, progress.Seen[^1].Bytes);
+    }
+
+    [Fact]
+    public async Task YourHeroCountsComeFromTheHeroBucketsAndEveryMatchStillHasTheHeroesTheStoreDoesntKnow()
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        var finished = new List<MatchSegment>();
+
+        await service.FetchAsync(store, plan, null, finished.Add, CancellationToken.None);
+
+        var everyMatch = finished[0].EveryMatch;
+        var item = everyMatch.Baseline.First.Keys.First();
+        var heroesTotal = everyMatch.As.Values.Sum(halves => halves.First.GetValueOrDefault(item).Matches);
+        Assert.True(everyMatch.Baseline.First[item].Matches > heroesTotal);
+    }
+
+    [Fact]
+    public async Task ADownloadWritesEachPatchAndTheSnapshotLifts()
+    {
         using var data = CopyData();
-        var target = DataStore.Load(data.Path);
-        var result = service.Apply(target, counts);
+        var store = DataStore.Load(data.Path);
+
+        var result = await SyntheticItemStatsApi.DownloadAsync(store);
+
         if (Updating)
         {
             WriteJson("match_fetch/result.json", new JsonObject
@@ -184,104 +137,224 @@ public class MatchStatsServiceTests
         Assert.Equal(expected["lift_count"]!.GetValue<int>(), result.Lifts.Count);
         AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.csv"), data.File(DataStore.MatchLiftFile));
         AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.meta.json"), data.File(DataStore.MatchMetaFile));
-        Assert.True(File.Exists(data.File(DataStore.MatchCountsFile)));
+
+        var saved = DataStore.Load(data.Path);
+        Assert.Equal(["09-29", "09-16"], saved.MatchSegments.Select(segment => segment.Patch.Label));
+        Assert.All(saved.MatchSegments, segment => Assert.True(segment.HasRanks));
+        Assert.Equal(store.MatchSegments.Select(segment => segment.ToJsonBytes()), saved.MatchSegments.Select(segment => segment.ToJsonBytes()));
+        Assert.True(File.Exists(Path.Combine(data.Path, DataStore.MatchCountsDir, "2026-09-29.json")));
+    }
+
+    [Fact]
+    public async Task ARefreshFetchesOnlyThePatchesStillCollectingMatches()
+    {
+        var store = LoadStore();
+        var oneDayLater = SyntheticItemStatsApi.Now.AddDays(1).ToUnixTimeSeconds();
+        var segment = new MatchSegment(new Patch("09-16-2026 Update", 1789603200), 1789603200, 1790726399, true, oneDayLater, SliceCounts.Empty, [], []);
+        var current = segment with { Patch = new Patch("09-29-2026", 1790726400), From = 1790726400, Until = 1790800000, Ended = false };
+        var patches = MatchStatsMath.ParsePatches(SyntheticItemStatsApi.PatchTitles);
+
+        var plan = MatchFetchPlan.For([current, segment], patches, oneDayLater, includeRanks: true, heroCount: 38);
+
+        // 09-16 is over and settled, but has no rank groups: only those. 09-29 is still going.
+        Assert.True(segment.Complete);
+        Assert.Equal(
+            [
+                (FetchPart.EveryMatch, "09-29", FetchReason.Refresh),
+                (FetchPart.Ranks, "09-29", FetchReason.Refresh),
+                (FetchPart.Ranks, "09-16", FetchReason.AddRanks),
+            ],
+            plan.Phases.Select(phase => (phase.Part, phase.Patch.Label, phase.Reason)));
+        Assert.Equal((segment.From, segment.Until), (plan.Phases[2].From, plan.Phases[2].Until));
+
+        // Fetched within a day of the next patch, it might still be missing matches.
+        var unsettled = segment with { FetchedAt = segment.Until + 3600 };
+        Assert.False(unsettled.Complete);
+        Assert.Equal(FetchReason.Finish, MatchFetchPlan.For([unsettled], patches, oneDayLater, false, 38).Phases[1].Reason);
+    }
+
+    [Fact]
+    public void TwoYoungPatchesKeepTheOneBeforeThemToo()
+    {
+        var patches = MatchStatsMath.ParsePatches(["10-01-2026", "09-29-2026", "09-26-2026 Update", "09-16-2026 Update", "08-22-2026 Update"]);
+
+        var plan = MatchFetchPlan.For([], patches, SyntheticItemStatsApi.Now.ToUnixTimeSeconds(), includeRanks: false, heroCount: 38);
+
+        // 10-01 starts at midnight tonight. 09-29 and the 09-26 hotfix have under two weeks between them.
+        Assert.Equal(["09-29", "09-26", "09-16"], plan.Keep.Select(patch => patch.Label));
+        Assert.Equal([false, true, true], plan.Phases.Select(phase => phase.Ended));
+        Assert.Equal(patches[2].Start - 1, plan.Phases[2].Until);
+    }
+
+    [Fact]
+    public async Task ApplyingKeepsOnlyThePlansPatchesAndDropsTheOldCountsFile()
+    {
+        using var data = CopyData();
+        var store = DataStore.Load(data.Path);
+        var old = new MatchSegment(new Patch("08-12-2026 Update", 1786924800), 1786924800, 1787443199, true, 1790000000, SliceCounts.Empty, [], []);
+        store.PutMatchSegment(old);
+        store.SaveMatchSegment(old);
+        File.WriteAllText(data.File(DataStore.LegacyMatchCountsFile), "{}");
+
+        await SyntheticItemStatsApi.DownloadAsync(store, includeRanks: false);
+
+        Assert.Equal(["09-29", "09-16"], store.MatchSegments.Select(segment => segment.Patch.Label));
+        Assert.False(File.Exists(Path.Combine(data.Path, DataStore.MatchCountsDir, old.FileName)));
+        Assert.False(File.Exists(data.File(DataStore.LegacyMatchCountsFile)));
     }
 
     [Fact]
     public async Task ARankRangeIsWorkedOutFromTheSavedCountsWithoutTheNetwork()
     {
-        var (service, api, _) = Replay();
-        var counts = await service.FetchAsync(LoadStore(), null, CancellationToken.None);
         using var data = CopyData();
-        var every = service.Apply(DataStore.Load(data.Path), counts);
-        var asked = api.Asked.Count;
-
-        // Straight from disk, as after a restart.
+        var every = await SyntheticItemStatsApi.DownloadAsync(DataStore.Load(data.Path));
         var store = DataStore.Load(data.Path);
-        Assert.Equal(counts.ToJsonBytes(), store.MatchCounts!.ToJsonBytes());
-        var mystic = service.Refilter(store, new RankRange(5, 10));
+        var service = new MatchStatsService(new FakeDeadlockApi());
 
-        Assert.Equal(asked, api.Asked.Count);
+        var mystic = service.Reanalyse(store, new RankRange(5, 11));
+
         Assert.Equal("Mystic+", mystic.RankLabel);
         Assert.Equal("Ranked matches only: Mystic+.", mystic.Lines()[0]);
         Assert.NotEqual(every.Lifts.Values.Select(lift => lift.Lift), mystic.Lifts.Values.Select(lift => lift.Lift));
         var saved = DataStore.Load(data.Path);
-        Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(saved.MatchMeta));
+        Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(saved.MatchMeta));
         Assert.Equal("Mystic+", MatchStatsMath.RankLabel(saved.MatchMeta));
         Assert.Equal(mystic.Lifts.Count, saved.MatchLift.Count);
 
-        // A fresh download keeps the range the data was set to.
-        Assert.Equal(new RankRange(5, 10), service.Apply(saved, counts).Rank);
-
-        service.Refilter(saved, null);
+        service.Reanalyse(saved, null);
         AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.csv"), data.File(DataStore.MatchLiftFile));
         AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.meta.json"), data.File(DataStore.MatchMetaFile));
     }
 
     [Fact]
-    public void RefilteringWithoutCountsThrows()
+    public void WorkingTheLiftsOutWithoutCountsThrows()
     {
-        var (service, _, _) = Replay();
         var store = LoadStore();
 
-        Assert.Null(store.MatchCounts);
-        Assert.Throws<InvalidOperationException>(() => service.Refilter(store, new RankRange(5, 10)));
+        Assert.Empty(store.MatchSegments);
+        Assert.Throws<InvalidOperationException>(() => new MatchStatsService(new FakeDeadlockApi()).Reanalyse(store, new RankRange(5, 11)));
     }
 
     [Fact]
-    public async Task ARateLimitIsWaitedOutAndRetried()
+    public async Task ARateLimitPausesTheDownloadAndIsRetried()
     {
-        var (service, api, waits) = Replay();
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var waits = new List<TimeSpan>();
+        var service = api.Service(waits);
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        var progress = new Collect<MatchFetchProgress>();
         var refused = 0;
         api.FailWith = url => url.Contains("item-stats") && refused++ < 2
             ? new HttpRequestException("slow down", null, HttpStatusCode.TooManyRequests)
             : null;
 
-        await service.FetchAsync(LoadStore(), null, CancellationToken.None);
+        await service.FetchAsync(store, plan, progress, _ => { }, CancellationToken.None);
 
         Assert.Equal(2, waits.Count(wait => wait == MatchStatsService.RateLimitWait));
+        Assert.Equal(2, progress.Seen.Count(step => step.Wait?.Length == MatchStatsService.RateLimitWait));
+        Assert.Null(progress.Seen[^1].Wait);
+        Assert.Equal(plan.Calls, progress.Seen[^1].Done);
     }
 
     [Fact]
     public async Task AClientErrorIsNotRetried()
     {
-        var (service, api, _) = Replay();
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: false);
         api.FailWith = url => url.Contains("item-stats") ? new HttpRequestException("nope", null, HttpStatusCode.BadRequest) : null;
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => service.FetchAsync(LoadStore(), null, CancellationToken.None));
-        Assert.Single(api.Asked, url => url.Contains("item-stats"));
+        await Assert.ThrowsAsync<HttpRequestException>(() => service.FetchAsync(store, plan, null, _ => { }, CancellationToken.None));
+        Assert.Single(ItemStats(api.Asked));
     }
 
     [Fact]
-    public async Task CancellingStopsBeforeTheNextStepAndTouchesNothing()
+    public async Task CancellingKeepsTheFinishedPhasesAndStopsBeforeTheNextCall()
     {
-        var (service, api, _) = Replay();
-        using var cancel = new CancellationTokenSource();
-        var progress = new Collect<FetchProgress> { OnReport = step => { if (step.Done == 3) cancel.Cancel(); } };
         var store = LoadStore();
-        var before = store.MatchLift.Count;
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: true);
+        using var cancel = new CancellationTokenSource();
+        var firstPhase = plan.Phases[0].Calls;
+        var progress = new Collect<MatchFetchProgress> { OnReport = step => { if (step.Done == firstPhase + 3) cancel.Cancel(); } };
+        var finished = new List<MatchSegment>();
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.FetchAsync(store, progress, cancel.Token));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.FetchAsync(store, plan, progress, finished.Add, cancel.Token));
 
-        Assert.Equal(before, store.MatchLift.Count);
-        Assert.Null(store.MatchCounts);
-        // /v1/patches, /v1/assets/ranks, then both halves of steps 0 to 3.
-        Assert.Equal(2 + 4 * 2, api.Asked.Count);
+        Assert.Equal(["09-29"], finished.Select(segment => segment.Patch.Label));
+        // The cancel came as the next phase's third call finished, with its fourth already asked.
+        Assert.InRange(ItemStats(api.Asked).Count(), firstPhase + 3, firstPhase + 3 + MatchStatsService.MaxInFlight);
+    }
+
+    [Fact]
+    public async Task ThePacerStartsInOrderNoMoreThanTwoAtOnceAndAFailureStopsTheRest()
+    {
+        var waits = new List<TimeSpan>();
+        var clock = TimeSpan.Zero;
+        var pacer = new RequestPacer(TimeSpan.FromSeconds(1), 2, () => clock, (wait, _) =>
+        {
+            waits.Add(wait);
+            clock += wait;
+            return Task.CompletedTask;
+        });
+        var started = new List<int>();
+        var running = 0;
+        var most = 0;
+        var gates = Enumerable.Range(0, 5).Select(_ => new TaskCompletionSource<int>()).ToList();
+        var requests = Enumerable.Range(0, 5).Select(i => (Func<CancellationToken, Task<int>>)(async token =>
+        {
+            started.Add(i);
+            most = Math.Max(most, ++running);
+            var answer = await gates[i].Task.WaitAsync(token);
+            running--;
+            return answer;
+        })).ToList();
+
+        var run = pacer.RunAsync(requests, CancellationToken.None);
+        Assert.Equal([0, 1], started);
+        gates[1].SetResult(10);
+        gates[0].SetResult(0);
+        gates[2].SetResult(20);
+        gates[3].SetResult(30);
+        gates[4].SetResult(40);
+
+        var answers = await run;
+        Assert.Equal([0, 10, 20, 30, 40], answers);
+        Assert.Equal([0, 1, 2, 3, 4], started);
+        Assert.Equal(2, most);
+        Assert.All(waits, wait => Assert.Equal(TimeSpan.FromSeconds(1), wait));
+
+        // A pause holds the next start back for its length, not the gap.
+        pacer.Pause(TimeSpan.FromSeconds(30));
+        waits.Clear();
+        await pacer.RunAsync([_ => Task.FromResult(1)], CancellationToken.None);
+        Assert.Equal([TimeSpan.FromSeconds(30)], waits);
+
+        var failing = new List<Func<CancellationToken, Task<int>>>
+        {
+            _ => Task.FromException<int>(new HttpRequestException("nope")),
+            token => Task.Delay(Timeout.Infinite, token).ContinueWith(_ => 0, TaskScheduler.Default),
+        };
+        await Assert.ThrowsAsync<HttpRequestException>(() => pacer.RunAsync(failing, CancellationToken.None));
     }
 
     [Fact]
     public async Task ThePatchCheckOnlyCallsWithDataAndReportsANewerPatch()
     {
-        var (service, api, _) = Replay();
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
         Assert.Null(await service.NewerPatchAsync([]));
         Assert.Empty(api.Asked);
 
-        var meta = JsonNode.Parse("""{"fetched_at": 1, "latest_patch": {"start": 1787443200}}""")!.AsObject();
+        var meta = JsonNode.Parse("""{"fetched_at": 1, "latest_patch": {"start": 1789603200}}""")!.AsObject();
         var newer = await service.NewerPatchAsync(meta);
-        Assert.Equal("09-16", newer!.Label);
+        Assert.Equal("09-29", newer!.Label);
 
-        var (upToDate, _, _) = Replay();
         meta["latest_patch"]!["start"] = newer.Start;
-        Assert.Null(await upToDate.NewerPatchAsync(meta));
+        Assert.Null(await service.NewerPatchAsync(meta));
     }
 }

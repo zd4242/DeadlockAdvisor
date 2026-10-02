@@ -1,32 +1,51 @@
 {
- "fetched_at": 1790400000,
+ "fetched_at": 1790856000,
  "latest_patch": {
-  "title": "09-16-2026 Gameplay Update",
-  "label": "09-16",
-  "start": 1789603200
+  "title": "09-29-2026",
+  "label": "09-29",
+  "start": 1790726400
  },
  "rank": "all",
  "match_mode": "ranked,unranked",
  "min_n": 2000,
  "min_reliability": 0.5,
+ "segments": [
+  {
+   "title": "09-29-2026",
+   "label": "09-29",
+   "start": 1790726400,
+   "until": 1790856000,
+   "fetched_at": 1790856000,
+   "complete": false,
+   "ranks": true
+  },
+  {
+   "title": "09-16-2026 Update",
+   "label": "09-16",
+   "start": 1789603200,
+   "until": 1790726399,
+   "fetched_at": 1790856000,
+   "complete": true,
+   "ranks": true
+  }
+ ],
  "families": {
   "against": {
-   "since": 1787443200,
-   "since_patch": "08-22",
+   "since": 1789603200,
+   "since_patch": "09-16",
    "rows": 5928,
-   "noise_scale": 0.994,
-   "tau": 0.597,
-   "reliability": 0.593,
-   "kept": true,
-   "own_excluded": true
+   "noise_scale": 0.004,
+   "tau": 0.76,
+   "reliability": 1.0,
+   "kept": true
   },
   "as": {
-   "since": 1787443200,
-   "since_patch": "08-22",
+   "since": 1789603200,
+   "since_patch": "09-16",
    "rows": 5928,
-   "noise_scale": 1.011,
-   "tau": 2.018,
-   "reliability": 0.942,
+   "noise_scale": 0.002,
+   "tau": 2.075,
+   "reliability": 1.0,
    "kept": true
   }
  }

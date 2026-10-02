@@ -101,31 +101,20 @@ public class GoldenMatchStatsTests
     }
 
     [Fact]
-    public void PatchesWindowsAndDescriptionsMatch()
+    public void PatchesAndDescriptionsMatch()
     {
         var titles = Items(_golden["patch_titles"]!).Select(title => (string?)title).ToList();
         var patches = MatchStatsMath.ParsePatches(titles);
         Assert.Equal(Items(_golden["patches"]).Select(row => (Text(row[0]), (long)row[1]!, Text(row[2]))),
             patches.Select(patch => (patch.Title, patch.Start, patch.Label)));
 
-        foreach (var row in Items(_golden["window_start"]))
-        {
-            var family = new Family(Text(row["relation"]), (int)row["patches"]!);
-            Assert.Equal((long)row["start"]!, MatchStatsMath.WindowStart(patches, family, Number(row["now"])).Start);
-        }
-
         foreach (var row in Items(_golden["midpoint"]))
             Assert.Equal((long)row[2]!, MatchStatsMath.Midpoint((long)row[0]!, Number(row[1])));
         foreach (var row in Items(_golden["age"]))
             Assert.Equal(Text(row[1]), MatchStatsMath.Age(Number(row[0])));
-        foreach (var row in Items(_golden["query_params"]))
-        {
-            long? gameId = row[1] is null ? null : (long)row[1]!;
-            var parameters = MatchStatsMath.QueryParams(Text(row[0]), gameId);
-            Assert.Equal(row[2]!.AsObject().Select(p => (p.Key, Text(p.Value))), parameters.Select(p => (p.Key, p.Value)));
-        }
     }
 
+    /// <summary>A regression snapshot since the counts went per patch, rewritten with DEADLOCK_UPDATE_GOLDENS=1.</summary>
     [Fact]
     public void FetchResultMetaAndReportLinesMatch()
     {
@@ -137,16 +126,29 @@ public class GoldenMatchStatsTests
             new(oneLift, (empty, empty), 40, 0.7912, 0.137, 0.55, 0.5),
             new(empty, (empty, empty), 0, 1.0, 0.0, null, 0.0),
         ];
-        var reports = MatchStatsMath.Families.Zip(stats).Select(pair => new FamilyReport(pair.First, patches[1], pair.Second)).ToList();
-        var result = new FetchResult([], reports, patches[0], 1790296852, null, "every match");
+        var reports = MatchStatsMath.Relations.Zip(stats).Select(pair => new FamilyReport(pair.First, patches[1], pair.Second)).ToList();
+        MatchSegment[] segments =
+        [
+            new(patches[0], patches[0].Start, 1790296852, false, 1790296852, SliceCounts.Empty, [], []),
+            new(patches[1], patches[1].Start, patches[0].Start - 1, true, 1790296852, SliceCounts.Empty, [], []),
+        ];
+        var result = new FetchResult([], reports, segments, null, "every match");
+        if (Updating)
+        {
+            var updated = _golden.DeepClone().AsObject();
+            updated["fetch_result_meta"] = result.Meta();
+            updated["fetch_result_lines"] = new JsonArray(result.Lines().Select(line => (JsonNode)line).ToArray());
+            WriteJson("match_stats_math.json", updated);
+        }
 
-        var expectedMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(_golden["fetch_result_meta"], ensureAscii: true));
+        var golden = Json("match_stats_math.json");
+        var expectedMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(golden["fetch_result_meta"], ensureAscii: true));
         var actualMeta = Encoding.UTF8.GetString(PythonJson.ToFileBytes(result.Meta(), ensureAscii: true));
         Assert.Equal(expectedMeta, actualMeta);
-        Assert.Equal(Items(_golden["fetch_result_lines"]).Select(Text), result.Lines());
-        foreach (var (row, report) in Items(_golden["family_reliability"]).Zip(reports))
+        Assert.Equal(Items(golden["fetch_result_lines"]).Select(Text), result.Lines());
+        foreach (var (row, report) in Items(golden["family_reliability"]).Zip(reports))
         {
-            Assert.Equal(Text(row[0]), report.Family.Relation);
+            Assert.Equal(Text(row[0]), report.Relation);
             AssertEx.Close(NullableNumber(row[1]), report.Stats.Reliability);
             Assert.Equal(row[2]!.GetValue<bool>(), report.Kept);
         }

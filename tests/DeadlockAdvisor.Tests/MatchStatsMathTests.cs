@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Tests;
 
@@ -130,36 +131,6 @@ public class MatchStatsMathTests
     }
 
     [Fact]
-    public void TheEnemyFamilyTakesOwnPurchasesFromTheAsFamilyOfTheSameWindowOnly()
-    {
-        var patches = MatchStatsMath.ParsePatches(["09-16-2026 Update", "08-22-2026 Update"]);
-        Item[] items = [new("one", "One", "weapon", 1, GameId: 1), new("two", "Two", "weapon", 1, GameId: 2)];
-
-        static RankedHalves Ranked(Dictionary<long, WinTotals> half) => new(new RankedTotals(half, []), new RankedTotals(half, []));
-        MatchCounts Counts(Patch asSince) => new(1790296852, patches[0], [],
-        [
-            new(new Family("against", 2), patches[1], Ranked(EveryMatchHalf), new() { ["e"] = Ranked(AgainstHalf) }),
-            new(new Family("as", 2), asSince, Ranked(EveryMatchHalf), new() { ["e"] = Ranked(OwnHalf) }),
-        ]);
-
-        var matched = MatchStatsMath.Analyse(Counts(patches[1]), null, items).Families[0];
-        Assert.True(matched.OwnExcluded);
-        Assert.Equal(0, matched.Stats.Full[new HeroItem("e", 1)].Lift, 9);
-        Assert.True(matched.Meta()["own_excluded"]!.GetValue<bool>());
-
-        // A download from before the windows matched can't be corrected, and says so.
-        var older = MatchStatsMath.Analyse(Counts(patches[0]), null, items);
-        Assert.False(older.Families[0].OwnExcluded);
-        Assert.Equal(50.0 / 9, older.Families[0].Stats.Full[new HeroItem("e", 1)].Lift, 9);
-        Assert.Null(older.Families[1].OwnExcluded);
-        Assert.False(older.Families[1].Meta().ContainsKey("own_excluded"));
-
-        var meta = JsonNode.Parse(
-            """{"families": {"against/full": {"kept": true, "rows": 5, "reliability": 0.7, "own_excluded": false}}}""")!.AsObject();
-        Assert.Equal(["Enemies: 5 measurements, reliability 0.70", MatchStatsMath.OwnIncludedNote], MatchStatsMath.FamilyLines(meta));
-    }
-
-    [Fact]
     public void AnalyseFamilyCalibratesNoiseFromTheHalves()
     {
         // One hero, two tier-1 items. Item 1 beats its baseline by 10 points in both halves, item 2
@@ -181,13 +152,6 @@ public class MatchStatsMathTests
         Assert.Equal(6000, stats.Full[new HeroItem("h", 1)].Matches);
     }
 
-    [Fact]
-    public void QueryParamsPerRelation()
-    {
-        Assert.Equal([new("enemy_hero_ids", "1")], MatchStatsMath.QueryParams("against", 1));
-        Assert.Equal([new("hero_id", "13")], MatchStatsMath.QueryParams("as", 13));
-        Assert.Empty(MatchStatsMath.QueryParams("as")); // the baseline
-    }
 
     [Fact]
     public void FamilyReliabilityStepsSplitHalfUpToTheWholeWindow()
@@ -198,78 +162,143 @@ public class MatchStatsMathTests
         Assert.Equal(0.0, new FamilyStats(empty, (empty, empty), 0, 1.0, 0.1, -0.2, 0.0).Reliability);
     }
 
-    [Fact]
-    public void AYoungPatchReachesOnePatchFurtherBack()
-    {
-        var patches = MatchStatsMath.ParsePatches(["09-16-2026 Update", "08-22-2026 Update", "08-12-2026 Update"]);
-        var against = new Family("against", 1);
-        var weekLater = patches[0].Start + 7 * 86400;
+    private static readonly Patch _patch = new("09-16-2026 Update", 1789603200);
+    private static readonly Item[] _items = [new("one", "One", "weapon", 1, GameId: 1), new("two", "Two", "weapon", 1, GameId: 2)];
 
-        Assert.Equal("09-16", MatchStatsMath.WindowStart(patches, against, weekLater).Label);
-        Assert.Equal("08-22", MatchStatsMath.WindowStart(patches, against, patches[0].Start + 86400).Label);
-        var mine = new Family("as", 2);
-        Assert.Equal("08-12", MatchStatsMath.WindowStart(patches, mine, patches[0].Start + 86400).Label);
+    private static SliceCounts Slice(Halves baseline, params (string Hero, Halves As, Halves Against)[] heroes) =>
+        new(baseline,
+            new OrderedDictionary<string, Halves>(heroes.Select(hero => KeyValuePair.Create(hero.Hero, hero.As))),
+            new OrderedDictionary<string, Halves>(heroes.Select(hero => KeyValuePair.Create(hero.Hero, hero.Against))));
+
+    private static MatchSegment Segment(SliceCounts everyMatch, IReadOnlyList<RankBucket>? ranks = null, IReadOnlyList<SliceCounts>? byRank = null) =>
+        new(_patch, _patch.Start, _patch.Start + 10 * 86400, false, _patch.Start + 10 * 86400, everyMatch, ranks ?? [], byRank ?? []);
+
+    private static Halves Both(Dictionary<long, WinTotals> half) => new(half, half);
+
+    [Fact]
+    public void TheEnemyFamilyTakesEachEnemysOwnPurchasesFromTheSameSegment()
+    {
+        var segment = Segment(Slice(Both(EveryMatchHalf), ("e", Both(OwnHalf), Both(AgainstHalf))));
+
+        var result = MatchStatsMath.Analyse([segment], null, _items);
+
+        var against = result.Families.Single(report => report.Relation == "against");
+        Assert.Equal(0, against.Stats.Full[new HeroItem("e", 1)].Lift, 9);
+        Assert.Equal(0, against.Stats.Full[new HeroItem("e", 2)].Lift, 9);
+        Assert.False(against.Meta().ContainsKey("own_excluded"));
+
+        // Meta from a download before own purchases were taken out still says so.
+        var meta = JsonNode.Parse(
+            """{"families": {"against/full": {"kept": true, "rows": 5, "reliability": 0.7, "own_excluded": false}}}""")!.AsObject();
+        Assert.Equal(["Enemies: 5 measurements, reliability 0.70", MatchStatsMath.OwnIncludedNote], MatchStatsMath.FamilyLines(meta));
     }
 
     [Fact]
-    public void RankGroupsCoverEveryBadgeOnceWithEternusInAscendant()
+    public void QueryParamsPerKind()
     {
-        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string> { [1] = "Initiate", [5] = "Mystic", [10] = "Ascendant" });
+        Assert.Empty(MatchStatsMath.BaselineParams());
+        Assert.Equal([new("bucket", "hero")], MatchStatsMath.AsParams());
+        Assert.Equal([new("enemy_hero_ids", "13")], MatchStatsMath.AgainstParams(13));
+        Assert.Equal(
+            "https://api.deadlock-api.com/v1/analytics/item-stats?enemy_hero_ids=13&min_matches=1&min_unix_timestamp=10&max_unix_timestamp=20",
+            MatchStatsService.ItemStatsUrl(MatchStatsMath.AgainstParams(13), 10, 20));
+    }
 
-        Assert.Equal(Enumerable.Range(1, 10), ranks.Select(rank => rank.Tier));
-        Assert.Equal(("Initiate", 0, 19), (ranks[0].Name, ranks[0].MinBadge, ranks[0].MaxBadge));
-        Assert.Equal(("Mystic", 50, 59), (ranks[4].Name, ranks[4].MinBadge, ranks[4].MaxBadge));
-        Assert.Equal(("Ascendant", 100, 116), (ranks[9].Name, ranks[9].MinBadge, ranks[9].MaxBadge));
-        Assert.Equal("Rank 2", ranks[1].Name);
+    [Fact]
+    public void RankGroupsCoverEveryBadgeOnceTwoRanksEach()
+    {
+        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string>
+        {
+            [1] = "Initiate", [2] = "Seeker", [5] = "Mystic", [6] = "Ritualist", [9] = "Phantom", [11] = "Eternus",
+        });
+
+        Assert.Equal([(1, 2), (3, 4), (5, 6), (7, 8), (9, 11)], ranks.Select(rank => (rank.FirstTier, rank.LastTier)));
+        Assert.Equal(("Initiate – Seeker", 0, 29), (ranks[0].Name, ranks[0].MinBadge, ranks[0].MaxBadge));
+        Assert.Equal(("Mystic – Ritualist", 50, 69), (ranks[2].Name, ranks[2].MinBadge, ranks[2].MaxBadge));
+        Assert.Equal(("Phantom – Eternus", 90, 116), (ranks[4].Name, ranks[4].MinBadge, ranks[4].MaxBadge));
+        Assert.Equal("Rank 3 – Rank 4", ranks[1].Name);
         Assert.All(ranks.Zip(ranks.Skip(1)), pair => Assert.Equal(pair.First.MaxBadge + 1, pair.Second.MinBadge));
-        Assert.Equal([new("hero_id", "13"), new("min_average_badge", "50"), new("max_average_badge", "59")],
-            MatchStatsMath.RankParams(MatchStatsMath.QueryParams("as", 13), ranks[4]));
+        Assert.Equal([new("enemy_hero_ids", "13"), new("min_average_badge", "50"), new("max_average_badge", "69")],
+            MatchStatsMath.RankParams(MatchStatsMath.AgainstParams(13), ranks[2]));
     }
 
     [Fact]
     public void ARankRangeAddsUpItsGroupsAndEveryMatchTakesTheUnfilteredTotals()
     {
         var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string>());
-        var byRank = ranks.Select(rank => Totals((1, rank.Tier, 10 * rank.Tier))).ToList();
-        byRank[2] = Totals((1, 3, 30), (2, 1, 4));
-        var totals = new RankedTotals(Totals((1, 999, 2000)), byRank);
+        var byRank = ranks.Select(rank => Slice(Both(Totals((1, rank.FirstTier, 10 * rank.FirstTier))))).ToList();
+        byRank[1] = Slice(Both(Totals((1, 3, 30), (2, 1, 4))));
+        var segment = Segment(Slice(Both(Totals((1, 999, 2000)))), ranks, byRank);
 
-        Assert.Equal(new WinTotals(999, 2000), totals.For(ranks, null)[1]);
-        var mysticUp = totals.For(ranks, new RankRange(5, 10));
-        Assert.Equal(new WinTotals(5 + 6 + 7 + 8 + 9 + 10, 450), mysticUp[1]);
+        Assert.Equal(new WinTotals(999, 2000), segment.Slice(null)!.Baseline.First[1]);
+        // Any group the range touches counts: tiers 5 to 10 take Mystic – Ritualist and up.
+        var mysticUp = segment.Slice(new RankRange(5, 10))!.Baseline.First;
+        Assert.Equal(new WinTotals(5 + 7 + 9, 210), mysticUp[1]);
         Assert.False(mysticUp.ContainsKey(2));
-        var third = totals.For(ranks, new RankRange(3, 3));
-        Assert.Equal([new WinTotals(3, 30), new WinTotals(1, 4)], [third[1], third[2]]);
+        var second = segment.Slice(new RankRange(3, 4))!.Baseline.First;
+        Assert.Equal([new WinTotals(3, 30), new WinTotals(1, 4)], [second[1], second[2]]);
+        Assert.Null(Segment(SliceCounts.Empty).Slice(new RankRange(3, 4)));
+
+        var everyMatch = segment.Slice(null)!;
+        Assert.Equal(new WinTotals(999 - 3, 2000 - 30), everyMatch.Minus(byRank[1]).Baseline.First[1]);
+        Assert.Equal(new WinTotals(999 + 3, 2000 + 30), everyMatch.Plus(byRank[1]).Baseline.Second[1]);
     }
 
     [Fact]
     public void RankRangesAreDescribedByTheirEnds()
     {
-        var names = new Dictionary<int, string> { [1] = "Initiate", [5] = "Mystic", [8] = "Oracle", [10] = "Ascendant" };
-        var counts = new MatchCounts(0, new Patch("", 0), MatchStatsMath.RankBuckets(names), []);
+        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string>
+        {
+            [1] = "Initiate", [2] = "Seeker", [5] = "Mystic", [6] = "Ritualist", [7] = "Emissary", [8] = "Oracle", [9] = "Phantom", [11] = "Eternus",
+        });
 
-        Assert.Equal("every match", counts.Describe(null));
-        Assert.Equal("every ranked match", counts.Describe(new RankRange(1, 10)));
-        Assert.Equal("Mystic+", counts.Describe(new RankRange(5, 10)));
-        Assert.Equal("Ascendant+", counts.Describe(new RankRange(10, 10)));
-        Assert.Equal("up to Oracle", counts.Describe(new RankRange(1, 8)));
-        Assert.Equal("Mystic – Oracle", counts.Describe(new RankRange(5, 8)));
-        Assert.Equal("Oracle", counts.Describe(new RankRange(8, 8)));
+        Assert.Equal("every match", MatchStatsMath.DescribeRange(ranks, null));
+        Assert.Equal("every ranked match", MatchStatsMath.DescribeRange(ranks, new RankRange(1, 11)));
+        Assert.Equal("Mystic+", MatchStatsMath.DescribeRange(ranks, new RankRange(5, 11)));
+        Assert.Equal("Phantom+", MatchStatsMath.DescribeRange(ranks, new RankRange(9, 11)));
+        Assert.Equal("up to Oracle", MatchStatsMath.DescribeRange(ranks, new RankRange(1, 8)));
+        Assert.Equal("Mystic – Oracle", MatchStatsMath.DescribeRange(ranks, new RankRange(5, 8)));
+        Assert.Equal("Emissary – Oracle", MatchStatsMath.DescribeRange(ranks, new RankRange(7, 8)));
     }
 
     [Fact]
     public void TheRankRangeIsReadBackFromTheMeta()
     {
-        var patch = new Patch("09-16-2026 Update", 1789603200);
-        var ranged = new FetchResult([], [], patch, 1, new RankRange(5, 10), "Mystic+").Meta();
-        var every = new FetchResult([], [], patch, 1, null, "every match").Meta();
+        MatchSegment[] segments = [Segment(SliceCounts.Empty)];
+        var ranged = new FetchResult([], [], segments, new RankRange(5, 11), "Mystic+").Meta();
+        var every = new FetchResult([], [], segments, null, "every match").Meta();
 
-        Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ranged));
+        Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(ranged));
         Assert.Equal("Mystic+", MatchStatsMath.RankLabel(ranged));
         Assert.Contains("· Mystic+ ·", MatchStatsMath.Summary(ranged, 1));
         Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(ranged, 1));
         Assert.Null(MatchStatsMath.RankOf(every));
         Assert.Null(MatchStatsMath.RankLabel(every));
         Assert.Equal("all", every["rank"]!.GetValue<string>());
+        Assert.Equal("09-16", every["segments"]![0]!["label"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void ASegmentRoundTripsThroughItsFileAndIsCompleteOnceItsMatchesSettle()
+    {
+        var ranks = MatchStatsMath.RankBuckets(new Dictionary<int, string> { [1] = "Initiate" });
+        var byRank = ranks.Select(rank => Slice(Both(Totals((1, rank.FirstTier, 10))), ("e", new Halves(Totals((2, 1, 3)), []), Both(Totals((1, 2, 5)))))).ToList();
+        var segment = Segment(Slice(new Halves(Totals((1, 5, 10)), Totals((2, 6, 12))), ("e", Both(OwnHalf), Both(AgainstHalf))), ranks, byRank)
+            with { Ended = true };
+
+        var parsed = MatchSegment.Parse(segment.ToJsonBytes());
+
+        Assert.Equal(segment.ToJsonBytes(), parsed.ToJsonBytes());
+        Assert.Equal(("Initiate – Rank 2", 5), (parsed.Ranks[0].Name, parsed.Ranks.Count));
+        Assert.Equal(new WinTotals(6, 12), parsed.EveryMatch.Baseline.Second[2]);
+        Assert.False(parsed.EveryMatch.Baseline.Second.ContainsKey(1));
+        Assert.Equal(new WinTotals(1, 3), parsed.ByRank[4].As["e"].First[2]);
+        Assert.Empty(parsed.ByRank[4].As["e"].Second);
+        Assert.Equal("2026-09-16.json", parsed.FileName);
+
+        // Fetched at the moment it ended: matches still coming in. A day later: settled.
+        Assert.False(segment.Complete);
+        Assert.True((segment with { FetchedAt = segment.Until + MatchSegment.SettleSeconds }).Complete);
+        Assert.False((segment with { Ended = false, FetchedAt = segment.Until + MatchSegment.SettleSeconds }).Complete);
     }
 }

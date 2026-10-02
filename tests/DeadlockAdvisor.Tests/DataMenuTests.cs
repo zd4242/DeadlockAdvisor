@@ -118,7 +118,7 @@ public sealed class DataMenuTests : IDisposable
 
         await job.OpenCommand.Execute();
         var report = LastMessage();
-        Assert.Equal("Match stats fetch failed", report.Title);
+        Assert.Equal("Match data download failed", report.Title);
         Assert.Contains("offline (test)", report.Body);
         Assert.Empty(_menu.Jobs);
     }

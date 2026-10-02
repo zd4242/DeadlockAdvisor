@@ -20,7 +20,7 @@ public sealed record StatusFact(string Label, string Value);
 public class DataStatusViewModel : ViewModelBase
 {
     public const string NoDataText =
-        "Real-match win rates add a second opinion to the recommendations. Fetching them takes about 20 minutes, in the background.";
+        "Real-match win rates add a second opinion to the recommendations. Fetching them takes a few minutes, in the background.";
 
     private readonly IDataService _data;
     private readonly DataMenuViewModel _dataMenu;

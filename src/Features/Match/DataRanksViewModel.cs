@@ -17,7 +17,7 @@ namespace DeadlockAdvisor.Features.Match;
 public class DataRanksViewModel : ViewModelBase
 {
     public const string Info =
-        "A match's rank is both teams' average; Ascendant includes Eternus.\n"
+        "A match's rank is both teams' average, in groups of two ranks; the last takes Ascendant and Eternus.\n"
         + "Unranked matches have no rank, so only 'every match' has them.\n"
         + "Fewer matches make noisier numbers, and the enemy or your-hero numbers are left out once they're mostly noise.";
 
@@ -40,14 +40,14 @@ public class DataRanksViewModel : ViewModelBase
         this.WhenAnyValue(vm => vm.From)
             .Subscribe(from =>
             {
-                if (from is not null && To is not null && To.Tier < from.Tier)
+                if (from is not null && To is not null && To.FirstTier < from.FirstTier)
                     To = from;
             })
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.To)
             .Subscribe(to =>
             {
-                if (to is not null && From is not null && From.Tier > to.Tier)
+                if (to is not null && From is not null && From.FirstTier > to.FirstTier)
                     From = to;
             })
             .DisposeWith(Disposables);
@@ -86,11 +86,11 @@ public class DataRanksViewModel : ViewModelBase
         {
             var store = _data.Store;
             var range = MatchStatsMath.RankOf(store.MatchMeta);
-            CanFilter = store.MatchCounts is not null;
-            Ranks = store.MatchCounts?.Ranks ?? [];
+            Ranks = MatchStatsMath.RanksOf(store.MatchSegments);
+            CanFilter = Ranks.Count > 0;
             RankedOnly = range is not null;
-            From = Ranks.FirstOrDefault(rank => rank.Tier == range?.Min) ?? Ranks.FirstOrDefault();
-            To = Ranks.FirstOrDefault(rank => rank.Tier == range?.Max) ?? Ranks.LastOrDefault();
+            From = Ranks.FirstOrDefault(rank => range is not null && rank.Overlaps(range)) ?? Ranks.FirstOrDefault();
+            To = Ranks.LastOrDefault(rank => range is not null && rank.Overlaps(range)) ?? Ranks.LastOrDefault();
             Status = string.Join("\n", MatchStatsMath.FamilyLines(store.MatchMeta));
         }
         finally
@@ -103,14 +103,14 @@ public class DataRanksViewModel : ViewModelBase
     {
         if (RankedOnly && (From is null || To is null))
             return;
-        var range = RankedOnly ? new RankRange(From!.Tier, To!.Tier) : null;
+        var range = RankedOnly ? new RankRange(From!.FirstTier, To!.LastTier) : null;
         var store = _data.Store;
-        if (store.MatchCounts is null || range == MatchStatsMath.RankOf(store.MatchMeta))
+        if (!CanFilter || range == MatchStatsMath.RankOf(store.MatchMeta))
             return;
 
         try
         {
-            _matchStats.Refilter(store, range);
+            _matchStats.Reanalyse(store, range);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

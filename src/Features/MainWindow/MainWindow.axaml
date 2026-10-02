@@ -163,7 +163,7 @@
                                               ToolTip.Tip="Pull item stats, costs, ids and new shop items from deadlock-api.com"/>
                                     <MenuItem Header="Fetch Match Stats"
                                               Command="{Binding DataMenu.FetchMatchStatsCommand}"
-                                              ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (about 20 minutes, in the background)"/>
+                                              ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (a few minutes, in the background)"/>
                                     <MenuItem Header="Model Health Report"
                                               Command="{Binding DataMenu.ModelHealthCommand}"
                                               IsVisible="{Binding ShowsEditors}"/>

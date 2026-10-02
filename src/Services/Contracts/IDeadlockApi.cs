@@ -9,6 +9,10 @@ namespace DeadlockAdvisor.Services.Contracts;
 /// </summary>
 public interface IDeadlockApi
 {
+    /// <summary>Every answer's size as it came over the wire, compressed or not, since this was made.</summary>
+    long BytesReceived { get; }
+
+    /// <summary>Asks for the answer compressed, which shrinks JSON several times over.</summary>
     Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default);
 
     Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default);

@@ -53,7 +53,12 @@ public sealed class DataStore
     public const string ItemTooltipsFile = "item_tooltips.json";
     public const string MatchLiftFile = "match_item_lift.csv";
     public const string MatchMetaFile = "match_item_lift.meta.json";
-    public const string MatchCountsFile = "match_item_counts.json";
+
+    /// <summary>The folder of match counts, one file per patch (<see cref="MatchSegment.FileName"/>).</summary>
+    public const string MatchCountsDir = "match_counts";
+
+    /// <summary>Where downloads used to keep their counts, over two patches at once. Read no more; the next download deletes it.</summary>
+    public const string LegacyMatchCountsFile = "match_item_counts.json";
 
     private const int _missingOrder = 9999;
 
@@ -101,26 +106,27 @@ public sealed class DataStore
     private JsonObject _matchMeta = [];
 
     /// <summary>
-    /// What Fetch Match Stats downloaded, split by rank, that <see cref="MatchLift"/> was worked out from.
-    /// Null when the lifts predate rank splits (or there are none), so they can't be refiltered.
+    /// The counts downloads brought back, one per patch, newest first, that <see cref="MatchLift"/> was
+    /// worked out from. Empty when the lifts predate per-patch counts (or there are none), so they can't
+    /// be worked out again.
     /// </summary>
-    public MatchCounts? MatchCounts
+    public IReadOnlyList<MatchSegment> MatchSegments
     {
-        get => _matchCounts;
+        get => _matchSegments;
         set
         {
-            _matchCounts = value;
+            _matchSegments = value.OrderByDescending(segment => segment.Patch.Start).ToList();
             _buildRatios = null;
         }
     }
-    private MatchCounts? _matchCounts;
+    private IReadOnlyList<MatchSegment> _matchSegments = [];
 
     /// <summary>
     /// How often each hero builds each item next to the average player (<see cref="MatchStatsMath.BuildRatios"/>),
-    /// over the lifts' rank range; empty without <see cref="MatchCounts"/>. Worked out when first asked for.
+    /// over the lifts' rank range; empty without <see cref="MatchSegments"/>. Worked out when first asked for.
     /// </summary>
     public IReadOnlyDictionary<(string ItemId, string HeroId), double> BuildRatios =>
-        _buildRatios ??= MatchCounts is null ? [] : MatchStatsMath.BuildRatios(MatchCounts, MatchStatsMath.RankOf(MatchMeta), Items.Values);
+        _buildRatios ??= MatchStatsMath.BuildRatios(MatchSegments, MatchStatsMath.RankOf(MatchMeta), Items.Values);
     private Dictionary<(string ItemId, string HeroId), double>? _buildRatios;
 
     /// <summary>The stat parts making up each stat-derived coefficient. Computed by <see cref="RebuildDerived"/>, never saved.</summary>
@@ -144,7 +150,7 @@ public sealed class DataStore
         store.LoadItemStats();
         store.LoadItemTooltips();
         store.LoadMatchLift();
-        store.LoadMatchCounts();
+        store.LoadMatchSegments();
         store.RebuildDerived();
         return store;
     }
@@ -334,21 +340,42 @@ public sealed class DataStore
             MatchMeta = metaObject;
     }
 
-    /// <summary>A counts file that can't be read is left out like a missing one: the lifts work without it, and the next fetch rewrites it.</summary>
-    internal void LoadMatchCounts()
+    /// <summary>A counts file that can't be read is left out like a missing one: the lifts work without it, and the next download rewrites it.</summary>
+    internal void LoadMatchSegments()
     {
-        MatchCounts = null;
-        var path = PathOf(MatchCountsFile);
-        if (!File.Exists(path))
-            return;
-        try
+        var segments = new List<MatchSegment>();
+        var dir = PathOf(MatchCountsDir);
+        if (Directory.Exists(dir))
         {
-            MatchCounts = MatchCounts.Parse(File.ReadAllBytes(path));
+            foreach (var file in Directory.GetFiles(dir, "*.json"))
+            {
+                try
+                {
+                    segments.Add(MatchSegment.Parse(File.ReadAllBytes(file)));
+                }
+                catch (Exception ex) when (ex is System.Text.Json.JsonException or KeyNotFoundException or InvalidOperationException
+                                               or FormatException or IndexOutOfRangeException)
+                {
+                }
+            }
         }
-        catch (Exception ex) when (ex is System.Text.Json.JsonException or KeyNotFoundException or InvalidOperationException
-                                       or FormatException or IndexOutOfRangeException)
-        {
-        }
+        MatchSegments = segments;
+    }
+
+    /// <summary>A patch's counts, in place of any stored for the same patch.</summary>
+    public void PutMatchSegment(MatchSegment segment) =>
+        MatchSegments = MatchSegments.Where(stored => stored.Patch.Start != segment.Patch.Start).Append(segment).ToList();
+
+    /// <summary>
+    /// Drop the counts of every patch not in <paramref name="keep"/>, from memory and from disk, along
+    /// with the single counts file downloads used to write.
+    /// </summary>
+    public void PruneMatchSegments(IReadOnlySet<long> keep)
+    {
+        foreach (var segment in MatchSegments.Where(segment => !keep.Contains(segment.Patch.Start)))
+            File.Delete(Path.Combine(PathOf(MatchCountsDir), segment.FileName));
+        MatchSegments = MatchSegments.Where(segment => keep.Contains(segment.Patch.Start)).ToList();
+        File.Delete(PathOf(LegacyMatchCountsFile));
     }
 
     /// <summary>
@@ -828,8 +855,8 @@ public sealed class DataStore
     }
 
     /// <summary>
-    /// Generated by Fetch Match Stats, never edited by hand. The CSV goes first: a meta file
-    /// describing rows that aren't there would be worse than the other way round.
+    /// Worked out from the match counts, never edited by hand, so no backup: the counts rebuild it. The
+    /// CSV goes first: a meta file describing rows that aren't there would be worse than the other way round.
     /// </summary>
     public void SaveMatchLift()
     {
@@ -841,15 +868,16 @@ public sealed class DataStore
             .Select(lift => Row(
                 lift.ItemId, lift.HeroId, lift.Relation, Integer(lift.Matches),
                 NumberFormat.Fixed(lift.Lift, 3), NumberFormat.Fixed(lift.Se, 3), NumberFormat.Fixed(lift.LiftShrunk, 3)));
-        WriteCsv(MatchLiftFile, ["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk"], rows);
+        AtomicFile.Write(PathOf(MatchLiftFile), CsvWriter.ToBytes(["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk"], rows));
         AtomicFile.Write(PathOf(MatchMetaFile), PythonJson.ToFileBytes(MatchMeta, ensureAscii: true));
     }
 
-    /// <summary>Generated by Fetch Match Stats, and big: no backup, the next fetch rebuilds it anyway.</summary>
-    public void SaveMatchCounts()
+    /// <summary>Downloaded, and big: no backup, the next download fetches it again.</summary>
+    public void SaveMatchSegment(MatchSegment segment)
     {
-        if (MatchCounts is not null)
-            AtomicFile.Write(PathOf(MatchCountsFile), MatchCounts.ToJsonBytes());
+        var dir = PathOf(MatchCountsDir);
+        Directory.CreateDirectory(dir);
+        AtomicFile.Write(Path.Combine(dir, segment.FileName), segment.ToJsonBytes());
     }
 
     public void SaveAll()

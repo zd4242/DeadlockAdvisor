@@ -250,22 +250,39 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- match stats ----------------------------------------------------------------
 
-    /// <summary>About 20 minutes of calls, so it runs in the background; the data only changes once all of it is in.</summary>
+    /// <summary>
+    /// A few minutes of calls, so it runs in the background. Each phase's counts are put to use as
+    /// they arrive, so stopping part-way keeps what's finished.
+    /// </summary>
     private async Task FetchMatchStatsAsync()
     {
         _data.FlushSaves();
-        var job = new BackgroundJobViewModel("Match stats", _clock, cancel => _modals.Confirm(
-            "Stop fetching match stats? Nothing fetched so far is kept, and the match data stays as it was.",
+        var job = new BackgroundJobViewModel("Match data", _clock, cancel => _modals.Confirm(
+            "Stop downloading match data? What has finished is kept and already in use; the rest stays as it was.",
             "Stop", cancel, cancelText: "Keep going"));
         IsFetchingMatchStats = true;
+        FetchResult? applied = null;
+        string Kept() => applied is null ? "Nothing was changed." : "What finished before that is kept.";
         try
         {
-            var counts = await RunInBackgroundAsync(job, () => _matchStats.FetchAsync(_data.Store, job, job.Token),
-                failure => Failed(job, "Match stats fetch failed",
-                    ["Couldn't fetch match stats from deadlock-api.com:", "", failure.Message, "", "Nothing was changed."]),
-                "Stopped fetching match stats. Nothing was changed.");
-            if (counts is not null)
-                ApplyMatchStats(job, counts);
+            var plan = await RunInBackgroundAsync(job, async () =>
+                {
+                    var plan = await _matchStats.PlanAsync(_data.Store, includeRanks: true, job.Token);
+                    await _matchStats.FetchAsync(_data.Store, plan, new OverallProgress(job),
+                        segment => applied = ApplySegment(segment, plan), job.Token);
+                    return plan;
+                },
+                failure => Failed(job, "Match data download failed", failure is IOException or UnauthorizedAccessException
+                    ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
+                    : ["Couldn't download match data from deadlock-api.com:", "", failure.Message, "", Kept()]),
+                () => $"Stopped downloading match data. {Kept()}");
+            if (plan is null)
+                return;
+
+            var lines = applied?.Lines() ?? ["Every patch's counts were already complete: nothing to download."];
+            lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
+            lines.Add("The Match page's filters (the funnel) narrow it to a range of ranks, without downloading again.");
+            Succeeded(job, "downloaded", "Match data downloaded", lines, "Match data downloaded: the recommendations now show it.");
         }
         finally
         {
@@ -273,24 +290,18 @@ public class DataMenuViewModel : ViewModelBase
         }
     }
 
-    private void ApplyMatchStats(BackgroundJobViewModel job, MatchCounts counts)
+    private FetchResult ApplySegment(MatchSegment segment, MatchFetchPlan plan)
     {
-        FetchResult result;
-        try
-        {
-            result = _matchStats.Apply(_data.Store, counts);
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            Failed(job, "Could not save match stats", [$"Writing to {_data.DataDir} failed:", "", ex.Message]);
-            return;
-        }
+        var result = _matchStats.Apply(_data.Store, segment, plan.Keep);
         NewerPatch = null;
         _data.NotifyReplaced();
-        var lines = result.Lines();
-        lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
-        lines.Add("The Match page's filters (the funnel) narrow it to a range of ranks, without fetching again.");
-        Succeeded(job, "fetched", "Match stats fetched", lines, "Match stats fetched: the recommendations now show them.");
+        return result;
+    }
+
+    /// <summary>The status bar chip shows the whole download; its phases are for the details.</summary>
+    private sealed class OverallProgress(IProgress<FetchProgress> job) : IProgress<MatchFetchProgress>
+    {
+        public void Report(MatchFetchProgress value) => job.Report(value.Overall);
     }
 
     // -- model health ---------------------------------------------------------------
@@ -353,7 +364,7 @@ public class DataMenuViewModel : ViewModelBase
     /// has already been reported through <paramref name="failed"/>.
     /// </summary>
     private async Task<T?> RunInBackgroundAsync<T>(BackgroundJobViewModel job, Func<Task<T>> work, Action<Exception> failed,
-        string cancelledText) where T : class
+        Func<string> cancelledText) where T : class
     {
         Show(job);
         var result = await RunAsync(job.Title, work, failed);
@@ -361,7 +372,7 @@ public class DataMenuViewModel : ViewModelBase
             return result;
         // Even an answer that arrived just as it was stopped is dropped, as asked.
         Remove(job);
-        _notifications.ShowInformation(cancelledText, _toastTime);
+        _notifications.ShowInformation(cancelledText(), _toastTime);
         return null;
     }
 
@@ -469,7 +480,7 @@ public class DataMenuViewModel : ViewModelBase
                         Failed(job, "Art download failed",
                             ["Couldn't download the art from deadlock-api.com:", "", failure.Message, "", "Whatever arrived before that is kept."]);
                 },
-                "Stopped downloading art. What arrived is kept.");
+                () => "Stopped downloading art. What arrived is kept.");
             if (report is not null)
             {
                 _settings.Update(s => s.ArtCheckedAt = _clock.Now);

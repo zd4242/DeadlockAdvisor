@@ -411,18 +411,14 @@ public class ScoringTests
         // Everyone splits tier 1 evenly between the two items. low_hp puts 1 in 20 of its tier-1 buys
         // into the trinket, a tenth of the average share; heavy_spirit never buys it; generic buys
         // nothing in tier 1, so there's no telling.
-        static RankedHalves Bought(params (long Item, long Wins, long Matches)[] rows) =>
-            new(new RankedTotals(MatchStatsMath.Totals(rows), []), new RankedTotals([], []));
-        var patch = new Patch("09-16-2026 Update", 0);
-        store.MatchCounts = new MatchCounts(1, patch, [],
-        [
-            new(new Family("as", 2), patch, Bought((1, 500, 1000), (2, 500, 1000)), new()
-            {
-                ["low_hp"] = Bought((1, 25, 50), (2, 475, 950)),
-                ["heavy_spirit"] = Bought((2, 500, 1000)),
-                ["generic"] = Bought((3, 10, 20)),
-            }),
-        ]);
+        static Halves Bought(params (long Item, long Wins, long Matches)[] rows) => new(MatchStatsMath.Totals(rows), []);
+        var everyMatch = new SliceCounts(Bought((1, 500, 1000), (2, 500, 1000)), new()
+        {
+            ["low_hp"] = Bought((1, 25, 50), (2, 475, 950)),
+            ["heavy_spirit"] = Bought((2, 500, 1000)),
+            ["generic"] = Bought((3, 10, 20)),
+        }, []);
+        store.MatchSegments = [new MatchSegment(new Patch("09-16-2026 Update", 0), 0, 1, false, 1, everyMatch, [], [])];
 
         var match = new MatchState();
         match.SetRole("heavy_spirit", Role.Enemy);

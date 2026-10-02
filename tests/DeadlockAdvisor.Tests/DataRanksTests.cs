@@ -6,7 +6,7 @@ using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
-/// <summary>The Match page's rank filter over a replayed download: each change reworks the match data on the spot.</summary>
+/// <summary>The Match page's rank filter over a synthetic download: each change reworks the match data on the spot.</summary>
 public sealed class DataRanksTests : IDisposable
 {
     private readonly DataFixture _fixture = new();
@@ -24,7 +24,7 @@ public sealed class DataRanksTests : IDisposable
 
     private async Task DownloadAsync()
     {
-        _matchStats.Apply(_fixture.Data.Store, await MatchStatsServiceTests.ReplayedCountsAsync());
+        await SyntheticItemStatsApi.DownloadAsync(_fixture.Data.Store);
         _fixture.Data.NotifyReplaced();
         _replaced = 0;
     }
@@ -50,23 +50,23 @@ public sealed class DataRanksTests : IDisposable
         await DownloadAsync();
         using var filter = Filter();
         Assert.True(filter.CanFilter);
-        Assert.Equal(("Initiate", "Ascendant"), (filter.From!.Name, filter.To!.Name));
+        Assert.Equal(("Initiate – Seeker", "Phantom – Eternus"), (filter.From!.Name, filter.To!.Name));
 
         filter.RankedOnly = true;
-        Assert.Equal(new RankRange(1, 10), SavedRange());
+        Assert.Equal(new RankRange(1, 11), SavedRange());
         Assert.Equal("every ranked match", SavedLabel());
         Assert.False(filter.EveryMatch);
         Assert.Equal(1, _replaced);
 
-        filter.From = filter.Ranks[4];
-        Assert.Equal(new RankRange(5, 10), SavedRange());
+        filter.From = filter.Ranks[2];
+        Assert.Equal(new RankRange(5, 11), SavedRange());
         Assert.Equal("Mystic+", SavedLabel());
         Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(_fixture.Data.Store.MatchMeta, 0));
 
         // Below the start: the start follows it down, in a single rework.
-        filter.To = filter.Ranks[2];
-        Assert.Equal(new RankRange(3, 3), SavedRange());
-        Assert.Equal(("Acolyte", "Acolyte"), (filter.From.Name, filter.To.Name));
+        filter.To = filter.Ranks[1];
+        Assert.Equal(new RankRange(3, 4), SavedRange());
+        Assert.Equal(("Acolyte – Sentinel", "Acolyte – Sentinel"), (filter.From.Name, filter.To.Name));
         Assert.Equal(3, _replaced);
 
         filter.EveryMatch = true;
@@ -79,13 +79,13 @@ public sealed class DataRanksTests : IDisposable
     public async Task TheFilterPicksUpTheRangeTheDataWasLeftAt()
     {
         await DownloadAsync();
-        _matchStats.Refilter(_fixture.Data.Store, new RankRange(5, 8));
+        _matchStats.Reanalyse(_fixture.Data.Store, new RankRange(5, 8));
         _fixture.Data.Reload();
 
         using var filter = Filter();
 
         Assert.True(filter.RankedOnly);
-        Assert.Equal(("Mystic", "Oracle"), (filter.From!.Name, filter.To!.Name));
+        Assert.Equal(("Mystic – Ritualist", "Emissary – Oracle"), (filter.From!.Name, filter.To!.Name));
         Assert.Equal("Mystic – Oracle", SavedLabel());
         // Only the reload: showing the range doesn't rework it.
         Assert.Equal(1, _replaced);

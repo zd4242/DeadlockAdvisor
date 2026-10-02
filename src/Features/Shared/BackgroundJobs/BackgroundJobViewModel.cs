@@ -64,7 +64,7 @@ public sealed class BackgroundJobViewModel : ViewModelBase, IProgress<FetchProgr
             .DisposeWith(Disposables);
     }
 
-    /// <summary>"Match stats", "Art": what the status bar calls it.</summary>
+    /// <summary>"Match data", "Art": what the status bar calls it.</summary>
     public string Title { get; }
 
     [Reactive] public BackgroundJobState State { get; private set; }

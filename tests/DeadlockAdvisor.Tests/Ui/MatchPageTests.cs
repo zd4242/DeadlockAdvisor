@@ -17,6 +17,7 @@ using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Tests.Fakes;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -511,7 +512,7 @@ public class MatchPageTests
         Assert.All(radios, radio => Assert.False(radio.IsEffectivelyEnabled)); // the golden data predates rank splits
         button.Flyout.Hide();
 
-        ui.Services.GetRequiredService<IMatchStatsService>().Apply(ui.Data.Store, await MatchStatsServiceTests.ReplayedCountsAsync());
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
         ui.Data.NotifyReplaced();
         UiHarness.Settle();
 
@@ -520,16 +521,16 @@ public class MatchPageTests
         Assert.All(radios, radio => Assert.True(radio.IsEffectivelyEnabled));
         var from = content.GetLogicalDescendants().OfType<ComboBox>().First(combo => combo.DataContext is DataRanksViewModel);
         Assert.True(radios[0].IsChecked);
-        Assert.Equal("Initiate", from.SelectedItem?.ToString());
+        Assert.Equal("Initiate – Seeker", from.SelectedItem?.ToString());
 
         radios[1].IsChecked = true;
-        from.SelectedIndex = 4;
+        from.SelectedIndex = 2;
         UiHarness.Settle();
 
         Assert.False(radios[0].IsChecked);
         Assert.Contains("active", button.Classes);
         Assert.Contains($"Match data from {from.SelectedItem} to {ui.ViewModel.Match.DataRanks.To} matches only", ui.ViewModel.Match.FiltersButtonTip);
-        Assert.Equal(new RankRange(5, 10), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
+        Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }
 

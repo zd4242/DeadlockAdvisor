@@ -12,27 +12,49 @@ using DeadlockAdvisor.Services.GameApi;
 namespace DeadlockAdvisor.Services;
 
 /// <param name="Done">Steps finished, of <paramref name="Total"/>.</param>
-/// <param name="Text">What's being fetched now: "as/full: Haze".</param>
+/// <param name="Text">What's being fetched now: "Hero portraits: Haze".</param>
 public readonly record struct FetchProgress(int Done, int Total, string Text);
+
+/// <summary>A pause the API asked for, or a retry after its error.</summary>
+/// <param name="Reason">"deadlock-api.com asked to slow down".</param>
+public sealed record FetchWait(string Reason, TimeSpan Length);
+
+/// <summary>Where a match data download is: overall, and within the phase it's on.</summary>
+/// <param name="Phase">Index into the plan's phases.</param>
+/// <param name="Done">Calls finished in the whole download, of <paramref name="Total"/>.</param>
+/// <param name="Text">What was asked last: "09-29 · every match · Enemies: Haze".</param>
+/// <param name="Bytes">Received so far, as it came over the wire.</param>
+/// <param name="Wait">Set while the download waits out a rate limit or an error.</param>
+public sealed record MatchFetchProgress(int Phase, int PhaseDone, int PhaseTotal, int Done, int Total, string Text, long Bytes, FetchWait? Wait = null)
+{
+    public FetchProgress Overall => new(Done, Total, Text);
+}
 
 public interface IMatchStatsService
 {
-    /// <summary>
-    /// Download every family, split by rank: about 2,600 calls, a quarter of an hour. Only reads the
-    /// store; nothing is written until <see cref="Apply"/>, so a cancelled or failed run leaves nothing
-    /// half-done. Throws <see cref="OperationCanceledException"/>, an HTTP / timeout error, or
-    /// <see cref="InvalidOperationException"/> if no patch date can be read.
-    /// </summary>
-    Task<MatchCounts> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken);
-
-    /// <summary>Put a finished download into the store, worked out for the rank range the data was set to, and write it all out.</summary>
-    FetchResult Apply(DataStore store, MatchCounts counts);
+    /// <summary>What a download would fetch now, from the patch list: one cheap call.</summary>
+    Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default);
 
     /// <summary>
-    /// Work the lifts out again from the downloaded counts for another rank range (null: every match),
-    /// and write them out. No network. Throws <see cref="InvalidOperationException"/> without counts.
+    /// Fetch <paramref name="plan"/> phase by phase, handing each finished phase's segment to
+    /// <paramref name="finished"/> before the next starts, so a download stopped part-way keeps what it
+    /// finished. Only reads the store. Throws <see cref="OperationCanceledException"/>, an HTTP / timeout
+    /// error, or whatever <paramref name="finished"/> throws.
     /// </summary>
-    FetchResult Refilter(DataStore store, RankRange? range);
+    Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+        CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Put a fetched segment into the store in place of that patch's, drop the patches not in
+    /// <paramref name="keep"/>, work the lifts out again for the rank range the data was set to, and write it all out.
+    /// </summary>
+    FetchResult Apply(DataStore store, MatchSegment segment, IEnumerable<Patch> keep);
+
+    /// <summary>
+    /// Work the lifts out again from the stored counts for another rank range (null: every match), and
+    /// write them out. No network. Throws <see cref="InvalidOperationException"/> without counts.
+    /// </summary>
+    FetchResult Reanalyse(DataStore store, RankRange? range);
 
     /// <summary>The latest patch if it's newer than the one the data was fetched under: one cheap call, the startup check.</summary>
     Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default);
@@ -40,8 +62,9 @@ public interface IMatchStatsService
 
 /// <summary>
 /// The network side of the match data (the maths is <see cref="MatchStatsMath"/>): /v1/patches for the
-/// windows and /v1/assets/ranks for the rank names, then /v1/analytics/item-stats per family, hero,
-/// half-window and rank group, paced well under the API's 200 requests a minute.
+/// windows and /v1/assets/ranks for the rank names, then /v1/analytics/item-stats per patch, half-window
+/// and rank group: every match once, every hero's own purchases at once, and what everyone facing each
+/// hero bought. Paced well under the API's 200 requests a minute.
 /// </summary>
 public sealed class MatchStatsService : IMatchStatsService
 {
@@ -50,6 +73,7 @@ public sealed class MatchStatsService : IMatchStatsService
     public const string Ranks = "https://api.deadlock-api.com/v1/assets/ranks";
 
     public static readonly TimeSpan RequestGap = TimeSpan.FromSeconds(0.4);
+    public const int MaxInFlight = 2;
     public static readonly TimeSpan RateLimitWait = TimeSpan.FromSeconds(30);
     public const int RateLimitRetries = 3;
     public static readonly TimeSpan ServerErrorWait = TimeSpan.FromSeconds(5);
@@ -59,7 +83,6 @@ public sealed class MatchStatsService : IMatchStatsService
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly Func<TimeSpan, CancellationToken, Task> _delay;
     private readonly Stopwatch _clock = Stopwatch.StartNew();
-    private TimeSpan? _lastRequest;
 
     public MatchStatsService(IDeadlockApi api)
         : this(api, () => DateTimeOffset.UtcNow, Task.Delay)
@@ -73,82 +96,196 @@ public sealed class MatchStatsService : IMatchStatsService
         _delay = delay;
     }
 
-    private double Now => _utcNow().ToUnixTimeMilliseconds() / 1000.0;
+    private long Now => _utcNow().ToUnixTimeSeconds();
 
-    public async Task<MatchCounts> FetchAsync(DataStore store, IProgress<FetchProgress>? progress, CancellationToken cancellationToken)
+    /// <summary>The heroes a download asks about: the ones the game knows by an id.</summary>
+    public static List<Hero> Heroes(DataStore store) => store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
+
+    public async Task<MatchFetchPlan> PlanAsync(DataStore store, bool includeRanks, CancellationToken cancellationToken = default)
     {
         var patches = await FetchPatchesAsync(cancellationToken);
         if (patches.Count == 0)
             throw new InvalidOperationException("Couldn't read any patch dates from /v1/patches.");
-        var ranks = MatchStatsMath.RankBuckets(await FetchRankNamesAsync(cancellationToken));
-        var now = Now;
-        var heroes = store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
-        var total = MatchStatsMath.Families.Count * (heroes.Count + 1) * (ranks.Count + 1);
-        var done = 0;
+        return MatchFetchPlan.For(store.MatchSegments, patches, Now, includeRanks, Heroes(store).Count);
+    }
 
-        void Step(string text)
+    public async Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+        CancellationToken cancellationToken)
+    {
+        var heroes = Heroes(store);
+        var ranks = plan.IncludesRanks ? MatchStatsMath.RankBuckets(await FetchRankNamesAsync(cancellationToken)) : [];
+        var pacer = new RequestPacer(RequestGap, MaxInFlight, () => _clock.Elapsed, _delay);
+        var run = new Run(plan, progress, _api);
+        var fetched = new Dictionary<long, MatchSegment>();
+
+        for (var index = 0; index < plan.Phases.Count; index++)
         {
-            cancellationToken.ThrowIfCancellationRequested();
-            progress?.Report(new FetchProgress(done, total, text));
-            done++;
-        }
-
-        var families = new List<FamilyCounts>();
-        foreach (var family in MatchStatsMath.Families)
-        {
-            var since = MatchStatsMath.WindowStart(patches, family, now);
-            var mid = MatchStatsMath.Midpoint(since.Start, now);
-
-            // Every match, then each rank group on its own: unranked matches have no rank, so the
-            // groups don't add up to every match.
-            async Task<RankedHalves> FetchRankedAsync(string subject, long? heroGameId)
+            var phase = plan.Phases[index];
+            run.Start(index);
+            MatchSegment segment;
+            if (phase.Part == FetchPart.EveryMatch)
             {
-                var parameters = MatchStatsMath.QueryParams(family.Relation, heroGameId);
-                Step($"{family.Relation}: {subject}");
-                var all = await FetchHalvesAsync(parameters, since.Start, mid, cancellationToken);
-                var byRank = new List<Halves>();
-                foreach (var rank in ranks)
-                {
-                    Step($"{family.Relation}: {subject} · {rank.Name}");
-                    byRank.Add(await FetchHalvesAsync(MatchStatsMath.RankParams(parameters, rank), since.Start, mid, cancellationToken));
-                }
-                return new RankedHalves(
-                    new RankedTotals(all.First, byRank.Select(halves => halves.First).ToList()),
-                    new RankedTotals(all.Second, byRank.Select(halves => halves.Second).ToList()));
+                var everyMatch = await FetchSliceAsync(pacer, run, phase, null, heroes, cancellationToken);
+                segment = new MatchSegment(phase.Patch, phase.From, phase.Until, phase.Ended, plan.Now, everyMatch, [], []);
             }
-
-            var baseline = await FetchRankedAsync("all matches", null);
-            var heroCounts = new OrderedDictionary<string, RankedHalves>();
-            foreach (var hero in heroes)
-                heroCounts[hero.HeroId] = await FetchRankedAsync(hero.HeroName, hero.GameId);
-            families.Add(new FamilyCounts(family, since, baseline, heroCounts));
+            else
+            {
+                // The rank groups go with every match over the same window: fetched earlier in this
+                // download, or, for a patch that's over, the one already stored.
+                var basis = fetched.GetValueOrDefault(phase.Patch.Start)
+                            ?? store.MatchSegments.FirstOrDefault(stored => stored.Patch.Start == phase.Patch.Start && stored.Until == phase.Until)
+                            ?? throw new InvalidOperationException($"No every-match counts for patch {phase.Patch.Label} to add rank groups to.");
+                var byRank = new List<SliceCounts>();
+                foreach (var rank in ranks)
+                    byRank.Add(await FetchSliceAsync(pacer, run, phase, rank, heroes, cancellationToken));
+                segment = basis with { Ranks = ranks, ByRank = byRank };
+            }
+            fetched[phase.Patch.Start] = segment;
+            finished(segment);
         }
-        progress?.Report(new FetchProgress(total, total, "done"));
-        return new MatchCounts((long)Math.Truncate(Now), patches[0], ranks, families);
     }
 
-    public FetchResult Apply(DataStore store, MatchCounts counts)
+    /// <summary>A download's count of calls, shared by its requests as they finish.</summary>
+    private sealed class Run(MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, IDeadlockApi api)
     {
-        var result = MatchStatsMath.Analyse(counts, MatchStatsMath.RankOf(store.MatchMeta), store.Items.Values);
-        store.MatchCounts = counts;
-        store.SaveMatchCounts();
-        PutLifts(store, result);
-        return result;
+        private readonly long _bytesAtStart = api.BytesReceived;
+        private int _phase;
+        private int _phaseDone;
+        private int _done;
+
+        public void Start(int phase)
+        {
+            _phase = phase;
+            _phaseDone = 0;
+        }
+
+        public void Report(string text, bool finishedCall, FetchWait? wait = null)
+        {
+            if (finishedCall)
+            {
+                Interlocked.Increment(ref _phaseDone);
+                Interlocked.Increment(ref _done);
+            }
+            progress?.Report(new MatchFetchProgress(_phase, _phaseDone, plan.Phases[_phase].Calls, _done, plan.Calls, text,
+                api.BytesReceived - _bytesAtStart, wait));
+        }
     }
 
-    public FetchResult Refilter(DataStore store, RankRange? range)
+    /// <summary>
+    /// Every match, or one rank group, over a phase's window: both halves of every match, of every hero's
+    /// own purchases, and of what the players facing each hero bought.
+    /// </summary>
+    private async Task<SliceCounts> FetchSliceAsync(RequestPacer pacer, Run run, FetchPhase phase, RankBucket? rank,
+        IReadOnlyList<Hero> heroes, CancellationToken cancellationToken)
     {
-        var counts = store.MatchCounts ?? throw new InvalidOperationException("There are no downloaded match counts to filter by rank.");
-        var result = MatchStatsMath.Analyse(counts, range, store.Items.Values);
-        PutLifts(store, result);
-        return result;
+        var group = rank?.Name ?? "every match";
+        var subjects = new List<(string Text, OrderedDictionary<string, string> Parameters)>
+        {
+            ("all matches", MatchStatsMath.BaselineParams()),
+            ("Your hero", MatchStatsMath.AsParams()),
+        };
+        subjects.AddRange(heroes.Select(hero => ($"Enemies: {hero.HeroName}", MatchStatsMath.AgainstParams(hero.GameId))));
+
+        var mid = MatchStatsMath.Midpoint(phase.From, phase.Until);
+        // Both bounds are inclusive, so the first half stops a second short: no match counts twice.
+        (long From, long Until)[] halves = [(phase.From, mid - 1), (mid, phase.Until)];
+        var requests = new List<Func<CancellationToken, Task<JsonArray>>>();
+        foreach (var (text, parameters) in subjects)
+        {
+            var filtered = rank is null ? parameters : MatchStatsMath.RankParams(parameters, rank);
+            foreach (var (from, until) in halves)
+            {
+                var url = ItemStatsUrl(filtered, from, until);
+                var label = $"{phase.Patch.Label} · {group} · {text}";
+                requests.Add(token => GetItemStatsAsync(pacer, run, url, label, token));
+            }
+        }
+        var answers = await pacer.RunAsync(requests, cancellationToken);
+
+        static Dictionary<long, WinTotals> Totals(JsonArray rows) =>
+            MatchStatsMath.Totals(rows.Select(row => (PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))));
+        Halves HalvesAt(int subject) => new(Totals(answers[2 * subject]), Totals(answers[2 * subject + 1]));
+
+        // Bucketed by the buyer's hero; a hero the store doesn't know is only in every match.
+        var asFirst = BucketTotals(answers[2]);
+        var asSecond = BucketTotals(answers[3]);
+        var mine = new OrderedDictionary<string, Halves>();
+        foreach (var hero in heroes)
+            mine[hero.HeroId] = new Halves(asFirst.GetValueOrDefault(hero.GameId) ?? [], asSecond.GetValueOrDefault(hero.GameId) ?? []);
+        var against = new OrderedDictionary<string, Halves>();
+        for (var i = 0; i < heroes.Count; i++)
+            against[heroes[i].HeroId] = HalvesAt(i + 2);
+        return new SliceCounts(HalvesAt(0), mine, against);
     }
 
-    private static void PutLifts(DataStore store, FetchResult result)
+    private static Dictionary<long, Dictionary<long, WinTotals>> BucketTotals(JsonArray rows) =>
+        MatchStatsMath.BucketTotals(rows.Select(row =>
+            (PyJson.Int(row, "bucket"), PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))));
+
+    /// <summary>
+    /// The API leaves out an item with under 20 matches unless told otherwise, and the rank groups are
+    /// added up and taken away from every match, so every match has to count. Never with a time bucket:
+    /// over a two-patch window its day-bucketed answers came back silently empty or cut short.
+    /// </summary>
+    public static string ItemStatsUrl(OrderedDictionary<string, string> parameters, long from, long until)
     {
+        var query = new OrderedDictionary<string, string>(parameters)
+        {
+            ["min_matches"] = "1",
+            ["min_unix_timestamp"] = from.ToString(CultureInfo.InvariantCulture),
+            ["max_unix_timestamp"] = until.ToString(CultureInfo.InvariantCulture),
+        };
+        return $"{Analytics}/item-stats?" + string.Join("&", query.Select(pair =>
+            $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
+    }
+
+    /// <summary>One /item-stats call in its turn. Waits out a rate limit and retries a server error once; anything else throws.</summary>
+    private async Task<JsonArray> GetItemStatsAsync(RequestPacer pacer, Run run, string url, string text, CancellationToken cancellationToken)
+    {
+        var rateLimited = 0;
+        var serverErrors = 0;
+        while (true)
+        {
+            FetchWait wait;
+            try
+            {
+                var rows = await _api.GetJsonAsync(url, cancellationToken) as JsonArray ?? [];
+                run.Report(text, finishedCall: true);
+                return rows;
+            }
+            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests && rateLimited < RateLimitRetries)
+            {
+                rateLimited++;
+                wait = new FetchWait("deadlock-api.com asked to slow down", RateLimitWait);
+                pacer.Pause(RateLimitWait);
+            }
+            catch (HttpRequestException ex) when ((int?)ex.StatusCode >= 500 && serverErrors < ServerErrorRetries)
+            {
+                serverErrors++;
+                wait = new FetchWait($"deadlock-api.com had an error ({(int)ex.StatusCode!}), trying again", ServerErrorWait);
+            }
+            run.Report(text, finishedCall: false, wait);
+            await _delay(wait.Length, cancellationToken);
+        }
+    }
+
+    public FetchResult Apply(DataStore store, MatchSegment segment, IEnumerable<Patch> keep)
+    {
+        store.PutMatchSegment(segment);
+        store.SaveMatchSegment(segment);
+        store.PruneMatchSegments(keep.Select(patch => patch.Start).ToHashSet());
+        return Reanalyse(store, MatchStatsMath.RankOf(store.MatchMeta));
+    }
+
+    public FetchResult Reanalyse(DataStore store, RankRange? range)
+    {
+        if (store.MatchSegments.Count == 0)
+            throw new InvalidOperationException("There are no downloaded match counts to work the lifts out from.");
+        var result = MatchStatsMath.Analyse(store.MatchSegments, range, store.Items.Values);
         store.MatchLift = new OrderedDictionary<MatchLiftKey, MatchLift>(result.Lifts);
         store.MatchMeta = result.Meta();
         store.SaveMatchLift();
+        return result;
     }
 
     public async Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default)
@@ -176,58 +313,5 @@ public sealed class MatchStatsService : IMatchStatsService
                 names[(int)PyJson.Int(rank, "tier")] = text;
         }
         return names;
-    }
-
-    /// <summary>Both halves of a window. Both bounds are inclusive, so the first half stops a second short: no match counts twice.</summary>
-    private async Task<Halves> FetchHalvesAsync(OrderedDictionary<string, string> parameters, long since, long mid, CancellationToken cancellationToken)
-    {
-        var first = MatchStatsMath.Totals(await FetchItemStatsAsync(parameters, since, mid - 1, cancellationToken));
-        var second = MatchStatsMath.Totals(await FetchItemStatsAsync(parameters, mid, null, cancellationToken));
-        return new Halves(first, second);
-    }
-
-    /// <summary>
-    /// One /item-stats call, spaced <see cref="RequestGap"/> from the last. Waits out a rate limit
-    /// and retries a server error once; anything else throws. Never with the API's bucket option:
-    /// over a two-patch window its day-bucketed answers came back silently empty or cut short.
-    /// </summary>
-    private async Task<List<(long, long, long)>> FetchItemStatsAsync(
-        OrderedDictionary<string, string> parameters, long since, long? until, CancellationToken cancellationToken)
-    {
-        // The API leaves out an item with under 20 matches unless told otherwise, and the rank groups
-        // are added up, so every match has to count.
-        var query = new OrderedDictionary<string, string>(parameters)
-        {
-            ["min_matches"] = "1",
-            ["min_unix_timestamp"] = since.ToString(CultureInfo.InvariantCulture),
-        };
-        if (until is { } end)
-            query["max_unix_timestamp"] = end.ToString(CultureInfo.InvariantCulture);
-        var url = $"{Analytics}/item-stats?" + string.Join("&", query.Select(pair =>
-            $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
-
-        var rateLimited = 0;
-        var serverErrors = 0;
-        while (true)
-        {
-            if (_lastRequest is { } last && last + RequestGap - _clock.Elapsed is var wait && wait > TimeSpan.Zero)
-                await _delay(wait, cancellationToken);
-            _lastRequest = _clock.Elapsed;
-            try
-            {
-                var rows = await _api.GetJsonAsync(url, cancellationToken) as JsonArray ?? [];
-                return rows.Select(row => (PyJson.Int(row, "item_id"), PyJson.Int(row, "wins"), PyJson.Int(row, "matches"))).ToList();
-            }
-            catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.TooManyRequests && rateLimited < RateLimitRetries)
-            {
-                rateLimited++;
-                await _delay(RateLimitWait, cancellationToken);
-            }
-            catch (HttpRequestException ex) when ((int?)ex.StatusCode >= 500 && serverErrors < ServerErrorRetries)
-            {
-                serverErrors++;
-                await _delay(ServerErrorWait, cancellationToken);
-            }
-        }
     }
 }

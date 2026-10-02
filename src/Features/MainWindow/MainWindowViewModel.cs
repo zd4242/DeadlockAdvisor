@@ -293,7 +293,7 @@ public class MainWindowViewModel : ViewModelBase
         var running = DataMenu.Jobs.Where(job => job.IsRunning).Select(job => $"  • {job.Title}: {job.StatusText}");
         _modals.Confirm(
             "Still downloading:\n" + string.Join("\n", running)
-            + "\n\nQuit anyway? Match stats stopped part-way keep nothing; art that has arrived is kept.",
+            + "\n\nQuit anyway? What has arrived is kept, and the next download picks up from there.",
             "Quit",
             () =>
             {

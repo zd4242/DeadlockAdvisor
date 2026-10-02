@@ -29,6 +29,8 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     public Dictionary<string, byte[]> Bytes { get; } = [];
     public List<string> Asked { get; } = [];
 
+    public long BytesReceived => 0;
+
     /// <summary>The URLs a "not modified" came back for.</summary>
     public List<string> NotModified { get; } = [];
 
