@@ -72,6 +72,57 @@ public sealed class ModelUpdateTests : IDisposable
             "The seed's files changed: regenerate model.json with DEADLOCK_UPDATE_GOLDENS=1, which publishes them as a new version once pushed.");
     }
 
+    /// <summary>A copy of the seed to publish into.</summary>
+    private static TempDirectory SeedCopy()
+    {
+        var seed = new TempDirectory();
+        foreach (var file in Directory.GetFiles(SeedDir))
+            File.Copy(file, Path.Combine(seed.Path, Path.GetFileName(file)));
+        return seed;
+    }
+
+    [Fact]
+    public void PublishingCopiesTheChangedFilesIntoTheSeedAndDatesItsModelJson()
+    {
+        using var seed = SeedCopy();
+        var weights = FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3");
+        File.WriteAllBytes(DataFile(DataStore.TraitWeightsFile), weights);
+
+        var result = ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09");
+
+        Assert.Equal([DataStore.TraitWeightsFile], result.Files);
+        Assert.Equal(weights, File.ReadAllBytes(Path.Combine(seed.Path, DataStore.TraitWeightsFile)));
+        var listed = ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+        Assert.Equal(ModelManifest.Of(seed.Path, "2026-10-09").ToJsonBytes(), listed.ToJsonBytes());
+        // An install of the seed before takes just that file, without asking.
+        using var install = new TempDirectory();
+        DataService.SeedIfEmpty(install.Path);
+        var plan = ModelUpdatePlan.For(listed, install.Path, askAgain: false);
+        Assert.Equal([DataStore.TraitWeightsFile], plan.Quiet);
+        Assert.Empty(plan.Edited);
+
+        Assert.False(ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-10").Changed);
+        Assert.Equal("2026-10-09", ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName))).Published);
+    }
+
+    [Fact]
+    public void PublishingLeavesOutMatchDataThatLeansTowardSomeRanksAndRefusesAFolderThatDoesntLoad()
+    {
+        using var seed = SeedCopy();
+        var meta = DataFile(DataStore.MatchMetaFile);
+        File.WriteAllText(meta, File.ReadAllText(meta).Replace("\"rank\": \"all\"", "\"rank\": {\"min\": 7, \"max\": 11}"));
+        File.WriteAllText(DataFile(DataStore.MatchLiftFile), File.ReadAllText(DataFile(DataStore.MatchLiftFile)) + "\r\n");
+
+        var result = ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09");
+
+        Assert.False(result.MatchData);
+        Assert.NotNull(result.MatchDataSkipped);
+        Assert.Equal(Seed(DataStore.MatchLiftFile), File.ReadAllBytes(Path.Combine(seed.Path, DataStore.MatchLiftFile)));
+
+        File.Delete(DataFile(DataStore.HeroesFile));
+        Assert.Throws<InvalidOperationException>(() => ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09"));
+    }
+
     [Fact]
     public async Task AFreshInstallIsUpToDateWithTheModelItCameWith()
     {

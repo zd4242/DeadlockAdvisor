@@ -39,14 +39,12 @@ dotnet publish -p:PublishProfile=release            # the single exe, into publi
 dotnet test                                         # everything, including the golden tests
 ```
 
-### Releasing
+### Publishing updates
 
-Push a version tag: `git tag v1.2.0 && git push origin v1.2.0`. The
-**Release** workflow (`.github/workflows/release.yml`) runs the tests,
-builds each platform with the version from the tag, and publishes a
-GitHub Release with notes made from the commits since the last one.
-`gh workflow run release.yml` builds everything without releasing, as
-downloadable workflow artifacts.
+Formulas, match data and the app each reach installs their own way; see
+[docs/publishing.md](docs/publishing.md). In short: publish formulas with
+`dotnet run --project tools/PublishModel -- --push`, match data looks
+after itself, and Actions → Release → Run workflow releases the app.
 
 ### Linux and macOS
 
@@ -214,13 +212,10 @@ API. Files you haven't changed are replaced quietly, with the old ones
 kept in `data/.backups/`; for files you have changed, a dialog asks which
 to replace, and one you keep isn't asked about again for that version.
 
-To publish a new version of the model: copy the files from your data
-folder into `src/Assets/SeedData`, regenerate `model.json` with
-`dotnet test -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter
-"FullyQualifiedName~TheSeedsModelJsonListsEveryModelFileByItsHash"`, run
-the tests, commit and push. Installs pick it up at their next startup. A
-change older apps can't read, such as a new column, bumps
-`ModelManifest.CurrentFormat`, so only apps that know it take that version.
+To publish a new version of the model, run
+`dotnet run --project tools/PublishModel -- --push` from the repository:
+it copies your data folder's model into `src/Assets/SeedData`, dates
+`model.json`, commits and pushes ([docs/publishing.md](docs/publishing.md)).
 
 ## Shared match data
 

@@ -1,12 +1,21 @@
 name: Release
 
-# Pushing a version tag (git tag v1.2.0 && git push origin v1.2.0) runs the tests, builds the app for every
-# platform, and publishes a GitHub Release with the supported ones attached. Run it by hand
-# (gh workflow run release.yml) to build everything as downloadable artifacts without releasing.
+# Releases the app (docs/publishing.md): runs the tests, builds every platform, and publishes a GitHub Release
+# with the supported ones attached. Start it either way:
+#   - Actions → Release → Run workflow, choosing patch, minor or major (or gh workflow run release.yml -f release=patch):
+#     the next version up from the last tag is tagged here, once the tests pass.
+#   - Push a version tag yourself: git tag v1.2.0 && git push origin v1.2.0.
+# Run with "none" (the default), it builds everything as downloadable artifacts without releasing.
 on:
   push:
     tags: ['v*']
   workflow_dispatch:
+    inputs:
+      release:
+        description: 'Release the next version: patch (fixes), minor (features) or major. "none" only builds.'
+        type: choice
+        options: [none, patch, minor, major]
+        default: none
 
 permissions:
   contents: write
@@ -25,14 +34,58 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet test DeadlockAdvisor.sln -c Release --logger "console;verbosity=minimal"
 
-  build:
+  version:
     needs: test
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      tag: ${{ steps.version.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Version
+        id: version
+        env:
+          BUMP: ${{ inputs.release }}
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            version="${GITHUB_REF_NAME#v}"
+            tag="$GITHUB_REF_NAME"
+          elif [[ -n "$BUMP" && "$BUMP" != none ]]; then
+            if [[ "$GITHUB_REF" != refs/heads/main ]]; then
+              echo "::error::Releases come from main, not $GITHUB_REF_NAME."
+              exit 1
+            fi
+            last=$(git tag --list 'v[0-9]*' --sort=-v:refname | head -n 1)
+            IFS=. read -r major minor patch <<< "${last#v}"
+            major=${major:-0}; minor=${minor:-0}; patch=${patch%%-*}; patch=${patch:-0}
+            case "$BUMP" in
+              major) version="$((major + 1)).0.0" ;;
+              minor) version="$major.$((minor + 1)).0" ;;
+              patch) version="$major.$minor.$((patch + 1))" ;;
+            esac
+            tag="v$version"
+            echo "Releasing $tag (last: ${last:-none})"
+            # Pushed with the workflow's token, which doesn't start this workflow again for the tag.
+            git tag "$tag"
+            git push origin "$tag"
+          else
+            version="0.0.0-dev.${GITHUB_RUN_NUMBER}"
+            tag=""
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: version
     strategy:
       fail-fast: false
       matrix:
         include:
-          # "release: true" attaches the build to the GitHub Release. Linux and macOS build and start, but
-          # Detect (screen capture, the global hotkey) is Windows-only so far: they're artifacts to try out.
+          # "release: true" attaches the build to the GitHub Release. Detect (screen capture, the global hotkey)
+          # is Windows-only so far, so Linux and macOS are artifacts to try out (README: Linux and macOS).
           - { rid: win-x64, os: windows-latest, release: true }
           - { rid: linux-x64, os: ubuntu-latest, release: false }
           # Built on macOS so the SDK signs the executable, without which Apple silicon won't run it.
@@ -42,28 +95,20 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      VERSION: ${{ needs.version.outputs.version }}
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-dotnet@v5
         with:
           dotnet-version: 10.0.x
 
-      - name: Version
-        id: version
-        run: |
-          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
-            version="${GITHUB_REF_NAME#v}"
-          else
-            version="0.0.0-dev.${GITHUB_RUN_NUMBER}"
-          fi
-          echo "version=$version" >> "$GITHUB_OUTPUT"
-
       - name: Publish
-        run: dotnet publish DeadlockAdvisor.csproj -p:PublishProfile=release -r ${{ matrix.rid }} -p:Version=${{ steps.version.outputs.version }}
+        run: dotnet publish DeadlockAdvisor.csproj -p:PublishProfile=release -r ${{ matrix.rid }} -p:Version=$VERSION
 
       - name: Package
         run: |
-          name="DeadlockAdvisor-${{ steps.version.outputs.version }}-${{ matrix.rid }}"
+          name="DeadlockAdvisor-$VERSION-${{ matrix.rid }}"
           mkdir -p dist
           cp LICENSE "publish/${{ matrix.rid }}/"
           cd "publish/${{ matrix.rid }}"
@@ -81,11 +126,12 @@ jobs:
           if-no-files-found: error
 
   release:
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [version, build]
+    if: needs.version.outputs.tag != ''
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
+      TAG: ${{ needs.version.outputs.tag }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -97,5 +143,5 @@ jobs:
       - name: Publish the release
         run: |
           ls -l dist
-          gh release create "$GITHUB_REF_NAME" dist/* --repo "$GITHUB_REPOSITORY" --title "Deadlock Item Advisor ${GITHUB_REF_NAME#v}" \
+          gh release create "$TAG" dist/* --repo "$GITHUB_REPOSITORY" --title "Deadlock Item Advisor ${TAG#v}" \
             --generate-notes --latest --verify-tag
