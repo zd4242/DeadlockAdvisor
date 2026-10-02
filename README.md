@@ -140,8 +140,9 @@ writes them.
 - **Fetch Match Stats**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
   of the score. It keeps each patch's counts, every match and each rank
-  group separately, so the Match page can narrow the data to a range of
-  ranks without fetching again. A finished patch is never fetched again,
+  group separately, so the Match page can lean the data toward a range of
+  ranks without fetching again: the numbers move only where those ranks
+  play detectably differently. A finished patch is never fetched again,
   so a refresh only asks for the current patch (a few minutes). The status
   bar turns red when a newer patch is out than the data covers.
 - **Model Health Report**: simulates 2,000 random matches and lists items

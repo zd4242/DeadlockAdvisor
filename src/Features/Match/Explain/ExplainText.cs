@@ -22,7 +22,7 @@ public static class ExplainText
     public const string DataLinesTip =
         "Each line: \"raw\" is the win-rate gain measured in matches with that hero, ± how uncertain it is, and how "
         + "many matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
-        + "toward 0, and they're what the totals at the top add up.";
+        + "toward 0, plus how far your chosen ranks move it (\"ranks\"), and they're what the totals at the top add up.";
 
     /// <summary>How "Formula + match data" puts its two opinions on one footing, for its tooltips.</summary>
     public const string BlendScaleNote =

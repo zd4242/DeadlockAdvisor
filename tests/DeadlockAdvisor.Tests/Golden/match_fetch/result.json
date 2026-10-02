@@ -1,8 +1,8 @@
 {
  "lines": [
-  "Patches: 09-29 (2 days so far), 09-16 (13 days).",
-  "Enemies (since patch 09-16): 5928 measurements, reliability 1.00, typical win-rate gain ±0.76 pts",
-  "Your hero (since patch 09-16): 5928 measurements, reliability 1.00, typical win-rate gain ±2.07 pts"
+  "Patches: 09-29 (2 days so far, 100%), 09-16 (13 days, 0%).",
+  "Enemies (since patch 09-16): 5928 measurements, reliability 1.00, typical win-rate gain ±0.73 pts, patch to patch ±0.02",
+  "Your hero (since patch 09-16): 5928 measurements, reliability 1.00, typical win-rate gain ±1.86 pts, patch to patch ±0.03"
  ],
  "lift_count": 11856
 }

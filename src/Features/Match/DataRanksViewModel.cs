@@ -11,15 +11,15 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match;
 
 /// <summary>
-/// Which ranks the match data covers. The download keeps each rank's totals apart, so a new range is
-/// worked out on the spot and becomes the match data the whole app uses, until it's changed again.
+/// Which ranks the match data leans toward. The download keeps each rank group's totals apart, so a new
+/// range is worked out on the spot and becomes the match data the whole app uses, until it's changed again.
 /// </summary>
 public class DataRanksViewModel : ViewModelBase
 {
     public const string Info =
-        "A match's rank is both teams' average, in groups of two ranks; the last takes Ascendant and Eternus.\n"
-        + "Unranked matches have no rank, so only 'every match' has them.\n"
-        + "Fewer matches make noisier numbers, and the enemy or your-hero numbers are left out once they're mostly noise.";
+        "The numbers stay every match's, and move toward the ranks you pick only where those ranks play detectably\n"
+        + "differently, so a thin range can't empty them: Phantom+ has under a tenth of the matches.\n"
+        + "A match's rank is both teams' average, in groups of two ranks; the last takes Ascendant and Eternus.";
 
     private readonly IDataService _data;
     private readonly IMatchStatsService _matchStats;
@@ -35,6 +35,9 @@ public class DataRanksViewModel : ViewModelBase
 
         this.WhenAnyValue(vm => vm.RankedOnly)
             .Subscribe(_ => this.RaisePropertyChanged(nameof(EveryMatch)))
+            .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.RankedOnly, vm => vm.From, vm => vm.To)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(RangeLabel)))
             .DisposeWith(Disposables);
         // Moving one end past the other drags the other along, so the range is never empty.
         this.WhenAnyValue(vm => vm.From)
@@ -64,7 +67,7 @@ public class DataRanksViewModel : ViewModelBase
 
     [Reactive] public IReadOnlyList<RankBucket> Ranks { get; private set; } = [];
 
-    /// <summary>Only ranked matches from <see cref="From"/> to <see cref="To"/>; otherwise every match, ranked or not.</summary>
+    /// <summary>Lean toward the ranks from <see cref="From"/> to <see cref="To"/>; otherwise every match's numbers as they are.</summary>
     [Reactive] public bool RankedOnly { get; set; }
 
     public bool EveryMatch
@@ -76,7 +79,12 @@ public class DataRanksViewModel : ViewModelBase
     [Reactive] public RankBucket? From { get; set; }
     [Reactive] public RankBucket? To { get; set; }
 
-    /// <summary>What the current range gave each family, or why a family was left out.</summary>
+    /// <summary>"Mystic+": the range leaned toward; null over every match.</summary>
+    public string? RangeLabel => RankedOnly && From is not null && To is not null
+        ? MatchStatsMath.DescribeRange(Ranks, new RankRange(From.FirstTier, To.LastTier))
+        : null;
+
+    /// <summary>What each family kept, or why it was left out, and how far the range moved it.</summary>
     [Reactive] public string Status { get; private set; } = "";
 
     private void Load()
@@ -91,7 +99,7 @@ public class DataRanksViewModel : ViewModelBase
             RankedOnly = range is not null;
             From = Ranks.FirstOrDefault(rank => range is not null && rank.Overlaps(range)) ?? Ranks.FirstOrDefault();
             To = Ranks.LastOrDefault(rank => range is not null && rank.Overlaps(range)) ?? Ranks.LastOrDefault();
-            Status = string.Join("\n", MatchStatsMath.FamilyLines(store.MatchMeta));
+            Status = string.Join("\n", [.. MatchStatsMath.FamilyLines(store.MatchMeta), .. MatchStatsMath.LeanLines(store.MatchMeta)]);
         }
         finally
         {

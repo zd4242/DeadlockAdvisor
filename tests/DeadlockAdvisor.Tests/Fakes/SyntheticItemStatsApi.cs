@@ -10,8 +10,9 @@ namespace DeadlockAdvisor.Tests.Fakes;
 /// deadlock-api.com's item stats, made up but consistent: every answer adds up the same table of daily
 /// (patch, rank, buyer's hero, item) counts, so date ranges, rank groups and hero buckets all add up the
 /// way the real API's do. Every match also has buyers on a hero the store doesn't know, and unranked
-/// matches that no rank group has. Heroes, enemies, patches and ranks each move win rates by a fixed
-/// pattern, so the lifts aren't flat.
+/// matches that no rank group has. Heroes, enemies and patches each move win rates by a fixed pattern,
+/// so the lifts aren't flat, and from Emissary up the heroes' pattern shifts, as if those ranks built
+/// differently.
 /// </summary>
 public sealed class SyntheticItemStatsApi : IDeadlockApi
 {
@@ -149,8 +150,7 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
             foreach (var item in _items)
             {
                 var matches = _groupWeights[group] * (1 + hero % 5) * (1 + item % 13);
-                var rate = 0.5 + 0.03 * Math.Sin(hero * 0.7 + item * 0.3) + 0.01 * Math.Sin(item * 1.1 + patch)
-                           + (group == 0 ? 0 : 0.002 * group * Math.Cos(item * 0.5));
+                var rate = Rate(patch, group, hero, item);
                 cells[item] = ((long)(matches * rate), matches);
             }
             byHero[hero] = cells;
@@ -166,8 +166,7 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
                 foreach (var item in _items)
                 {
                     var matches = _groupWeights[group] * (1 + hero % 5) * (1 + item % 13) / 6;
-                    var rate = 0.5 + 0.03 * Math.Sin(hero * 0.7 + item * 0.3) + 0.01 * Math.Sin(item * 1.1 + patch)
-                               + 0.01 * Math.Sin(enemy * 0.9 + item * 0.4);
+                    var rate = Rate(patch, group, hero, item) + 0.01 * Math.Sin(enemy * 0.9 + item * 0.4);
                     var (wins, total) = cells.GetValueOrDefault(item);
                     cells[item] = (wins + (long)(matches * rate), total + matches);
                 }
@@ -176,6 +175,10 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
         }
         return _days[(patch, group)] = new Day(byHero, against);
     }
+
+    /// <summary>A buyer's chance to win with an item, before any enemy: Emissary (tier 7) and up build to a shifted pattern.</summary>
+    private static double Rate(int patch, int group, long hero, long item) =>
+        0.5 + 0.03 * Math.Sin(hero * 0.7 + item * 0.3 + (group >= 7 ? 1.5 : 0)) + 0.01 * Math.Sin(item * 1.1 + patch);
 
     /// <summary>A service on this API's clock that waits for nothing, recording the waits it asked for.</summary>
     public MatchStatsService Service(List<TimeSpan>? waits = null) =>

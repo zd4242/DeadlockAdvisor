@@ -234,7 +234,8 @@ relevance   = clamp(build ratio ÷ RareBuildRatio, 0, 1)      RareBuildRatio = 0
 ```
 
 Build ratios come from the `as` download over the lifts' rank range
-(`MatchStatsMath.BuildRatios`). `DataStore.BuildRatios` caches them and clears the
+(`MatchStatsMath.BuildRatios`), each patch counting by its share of the weight in
+the lifts (see "Weighing the patches"). `DataStore.BuildRatios` caches them and clears the
 cache whenever the counts, the meta or the items change. Relevance is 1 when there's
 no self hero, no counts file, or no purchases by your hero in that tier at all. It is
 0 when your hero never buys the item. The row shows a RARELY BUILT badge, and its tip
@@ -249,8 +250,8 @@ Fetch Match Stats keeps the raw win and match totals per patch, in
 patch and the one before, plus the one before that when those two have under 14
 days between them (`MatchFetchPlan`). Each file covers its patch's window, split
 at the midpoint into the halves that calibrate the noise. It holds every match
-and, optionally, each rank group. The lifts are worked out from every stored
-patch added together.
+and, optionally, each rank group. How the patches are weighed against each other
+is the next section.
 
 A download asks only for what's missing (`MatchFetchPlan.For`):
 
@@ -271,20 +272,81 @@ heroes (`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats that. The cal
 start at most one per 0.4 s, two at a time (`RequestPacer`), and a 429 holds every
 start back for 30 s.
 
-### Which ranks the data comes from
+### Weighing the patches
+
+Right after a patch, the new patch has few matches and the old one many, but
+the old one describes a game that has changed. `MatchStatsMath.AnalysePatches`
+works each patch's lifts out against that patch's own baseline, then combines
+them per hero and item:
+
+```
+weight(patch) = 1 / (se² + patches back × δ²)
+lift          = Σ weight × lift ÷ Σ weight          se = 1 / √(Σ weight)
+```
+
+δ² is how far real lifts move from one patch to the next. `EstimateDrift2`
+measures it from the lifts the two newest patches share: the spread of their
+differences minus what their noise alone would give. With fewer than 100 shared
+lifts, which is only the first hours of a patch, τ² stands in. So:
+
+- **A young patch leans on the one before.** Its lifts have a large se, so the
+  older patch's weight dominates. As matches arrive its se shrinks and it takes
+  over.
+- **A patch that changed a lot fades faster.** A bigger δ² penalises every
+  older lift more.
+- **An old lift alone still counts, but says less.** Its se takes the drift on
+  top of its noise, so it shrinks harder.
+
+The noise scale is calibrated from every patch's halves at once. An item needs
+`MinN` matches over all the patches together, and a patch counts toward it from
+a quarter of that. With a single patch this is the old single-window
+analysis (`AnalyseFamily`).
+
+Each patch's average share of the weight goes in the meta's `segments`, and δ in
+each family's `drift`. The status card lists every patch with its share, the
+reports say how far lifts move patch to patch, and the build ratios weigh each
+patch's purchases by the same shares.
+
+### Leaning toward ranks
 
 There are five rank groups of two ranks each, by the average badge of both teams
 (`MatchStatsMath.RankGroups`). The last takes Ascendant and Eternus, which are too
 rare to stand alone. Unranked matches have no badge, so they're only in "every
-match", and the groups don't add up to it.
+match", and the groups don't add up to it. Ranked matches are about a third of all
+purchases, and Ascendant and Eternus under 1%.
 
-The Match tab's filters (`DataRanksViewModel`) sum the groups a range touches,
-over every patch with a rank breakdown, and rerun the whole analysis
-(`MatchStatsMath.Analyse`): noise calibration, τ², shrinking and each family's
-reliability check. The result is written out as the lifts file, and the range goes
-in the meta's `rank`. A narrow range has fewer matches, so its lifts shrink
-harder, and a family that falls under `MinReliability` is left out. The flyout
-lists what each family kept. A new download keeps the chosen range.
+The Match tab's filters (`DataRanksViewModel`) lean the data toward a range of
+ranks rather than narrowing it to them. Narrowing used to empty the data: Phantom+
+alone kept 65 of 3,631 your-hero lifts. Now the numbers stay every match's and move
+only where the range plays detectably differently (`MatchStatsMath.LeanTowards`):
+
+```
+lift(range) = shrunk every-match lift + π_C × shrink(L_R − L_C, σ²)
+```
+
+- **L_R and L_C.** L_R is the range's lift, over the patches with a rank breakdown,
+  with a floor of a quarter of `MinN`. L_C is the same over every other match,
+  unranked ones included. Every match mixes the two, so the range's own lift is
+  every match's plus π_C (the rest's share of the matches) times the difference.
+- **σ².** It says how much real differences vary, estimated across the family as
+  τ² is, and each difference is shrunk toward 0 against it. When the differences
+  disagree between the halves, σ² is 0.
+- **Thin ranges look more different than they are.** The same few players play on
+  both days of a window, so their habits agree between the halves and look real.
+  On patch 09-29's first two days, enemy lifts spread ±1.5 points at Phantom+
+  against ±0.5 over every match. Real lifts are taken to spread as widely at every
+  rank as over every match (τ²), so either side's extra spread counts as noise in
+  each difference. On those matches Phantom+ moved enemy lifts by about ±0.1 points
+  and your-hero lifts by about ±1.3: high-rank players build differently, and that
+  difference agrees between the halves without spreading the lifts any wider.
+- **A range can't empty a family.** Whether a family is kept is up to every match.
+  Build ratios come from every match too: how a hero is built barely changes with
+  rank, and a thin range would mark items rarely built by chance.
+
+The lifts file records each lift's `rank_shift`, which the explain card shows as
+"ranks +0.20". Each family's `lean` in the meta holds σ, the split-half reliability
+and how many lifts moved, and the filters flyout lists it. The range goes in the
+meta's `rank`, and a new download keeps it.
 
 ## Net worth
 
@@ -433,6 +495,8 @@ from the profiled heroes) using the real scoring code, then lists:
   cause is a coefficient much bigger than the rest, such as a stat rule giving
   5.5 per point of healing.
 - **Empty traits:** traits some rule uses that every hero scores 0 on.
+- **Match data:** which patches it comes from with each one's share of the
+  weight, which ranks, and how far lifts move from patch to patch.
 - **Match data disagrees:** per item and relation, the Pearson r across heroes
   between the hand weight and the real lift. Listed at r ≤ −0.2, with at least
   10 heroes.

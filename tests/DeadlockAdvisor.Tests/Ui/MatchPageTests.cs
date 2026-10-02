@@ -529,7 +529,7 @@ public class MatchPageTests
 
         Assert.False(radios[0].IsChecked);
         Assert.Contains("active", button.Classes);
-        Assert.Contains($"Match data from {from.SelectedItem} to {ui.ViewModel.Match.DataRanks.To} matches only", ui.ViewModel.Match.FiltersButtonTip);
+        Assert.Contains("Match data leaning toward Mystic+", ui.ViewModel.Match.FiltersButtonTip);
         Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }

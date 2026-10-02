@@ -123,10 +123,11 @@ public sealed class DataStore
 
     /// <summary>
     /// How often each hero builds each item next to the average player (<see cref="MatchStatsMath.BuildRatios"/>),
-    /// over the lifts' rank range; empty without <see cref="MatchSegments"/>. Worked out when first asked for.
+    /// over every match, each patch counting as much as it does in the lifts; empty without
+    /// <see cref="MatchSegments"/>. Worked out when first asked for.
     /// </summary>
     public IReadOnlyDictionary<(string ItemId, string HeroId), double> BuildRatios =>
-        _buildRatios ??= MatchStatsMath.BuildRatios(MatchSegments, MatchStatsMath.RankOf(MatchMeta), Items.Values);
+        _buildRatios ??= MatchStatsMath.BuildRatios(MatchSegments, Items.Values, MatchStatsMath.SegmentShares(MatchMeta));
     private Dictionary<(string ItemId, string HeroId), double>? _buildRatios;
 
     /// <summary>The stat parts making up each stat-derived coefficient. Computed by <see cref="RebuildDerived"/>, never saved.</summary>
@@ -331,7 +332,8 @@ public sealed class DataStore
                 (int)NumberFormat.Truncate(NumberFormat.ToFloat(row.Get("matches"))),
                 NumberFormat.ToFloat(row.Get("lift")),
                 NumberFormat.ToFloat(row.Get("se")),
-                NumberFormat.ToFloat(row.Get("lift_shrunk")));
+                NumberFormat.ToFloat(row.Get("lift_shrunk")),
+                NumberFormat.ToFloat(row.Get("rank_shift")));
             MatchLift[new MatchLiftKey(lift.ItemId, lift.HeroId, lift.Relation)] = lift;
         }
 
@@ -860,15 +862,21 @@ public sealed class DataStore
     /// </summary>
     public void SaveMatchLift()
     {
+        // Only lifts leaning toward a rank range have a shift, so every match's keep the Python app's columns.
+        var leaning = MatchLift.Values.Any(lift => lift.RankShift != 0);
         var itemOrder = IndexOf(Items.Keys);
         var rows = MatchLift.Values
             .OrderBy(lift => lift.Relation, StringComparer.Ordinal)
             .ThenBy(lift => lift.HeroId, StringComparer.Ordinal)
             .ThenBy(lift => itemOrder.GetValueOrDefault(lift.ItemId, _missingOrder))
-            .Select(lift => Row(
+            .Select(lift => (IReadOnlyList<string>)
+            [
                 lift.ItemId, lift.HeroId, lift.Relation, Integer(lift.Matches),
-                NumberFormat.Fixed(lift.Lift, 3), NumberFormat.Fixed(lift.Se, 3), NumberFormat.Fixed(lift.LiftShrunk, 3)));
-        AtomicFile.Write(PathOf(MatchLiftFile), CsvWriter.ToBytes(["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk"], rows));
+                NumberFormat.Fixed(lift.Lift, 3), NumberFormat.Fixed(lift.Se, 3), NumberFormat.Fixed(lift.LiftShrunk, 3),
+                .. leaning ? [NumberFormat.Fixed(lift.RankShift, 3)] : Array.Empty<string>(),
+            ]);
+        IReadOnlyList<string> header = ["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk", .. leaning ? ["rank_shift"] : Array.Empty<string>()];
+        AtomicFile.Write(PathOf(MatchLiftFile), CsvWriter.ToBytes(header, rows));
         AtomicFile.Write(PathOf(MatchMetaFile), PythonJson.ToFileBytes(MatchMeta, ensureAscii: true));
     }
 

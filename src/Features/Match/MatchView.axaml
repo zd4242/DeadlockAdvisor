@@ -109,7 +109,7 @@
                                                        Text="Needs match stats fetched again, split by rank (Data → Fetch Match Stats)."/>
                                             <StackPanel Spacing="8" IsEnabled="{Binding CanFilter}">
                                                 <RadioButton GroupName="DataRanks" Content="Every match, ranked or not" IsChecked="{Binding EveryMatch}"/>
-                                                <RadioButton GroupName="DataRanks" Content="Ranked matches only, from" IsChecked="{Binding RankedOnly}"/>
+                                                <RadioButton GroupName="DataRanks" Content="Leaning toward ranks" IsChecked="{Binding RankedOnly}"/>
                                                 <Grid ColumnDefinitions="*,Auto,*" Margin="28,0,0,0" IsEnabled="{Binding RankedOnly}">
                                                     <ComboBox HorizontalAlignment="Stretch" ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}"/>
                                                     <TextBlock Grid.Column="1" Margin="8,0" VerticalAlignment="Center" Text="to"/>

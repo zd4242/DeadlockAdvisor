@@ -61,7 +61,7 @@ public sealed class DataRanksTests : IDisposable
         filter.From = filter.Ranks[2];
         Assert.Equal(new RankRange(5, 11), SavedRange());
         Assert.Equal("Mystic+", SavedLabel());
-        Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(_fixture.Data.Store.MatchMeta, 0));
+        Assert.Contains("Leaning toward Mystic+ where it plays differently.", MatchStatsMath.DataNote(_fixture.Data.Store.MatchMeta, 0));
 
         // Below the start: the start follows it down, in a single rework.
         filter.To = filter.Ranks[1];

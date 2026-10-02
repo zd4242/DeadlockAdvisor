@@ -214,8 +214,10 @@ public class MatchStatsServiceTests
         var mystic = service.Reanalyse(store, new RankRange(5, 11));
 
         Assert.Equal("Mystic+", mystic.RankLabel);
-        Assert.Equal("Ranked matches only: Mystic+.", mystic.Lines()[0]);
-        Assert.NotEqual(every.Lifts.Values.Select(lift => lift.Lift), mystic.Lifts.Values.Select(lift => lift.Lift));
+        Assert.Equal("Leaning toward Mystic+.", mystic.Lines()[0]);
+        Assert.Equal(every.Lifts.Values.Select(lift => lift.Lift), mystic.Lifts.Values.Select(lift => lift.Lift));
+        Assert.NotEqual(every.Lifts.Values.Select(lift => lift.LiftShrunk), mystic.Lifts.Values.Select(lift => lift.LiftShrunk));
+        Assert.Contains(mystic.Lifts.Values, lift => lift.RankShift != 0);
         var saved = DataStore.Load(data.Path);
         Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(saved.MatchMeta));
         Assert.Equal("Mystic+", MatchStatsMath.RankLabel(saved.MatchMeta));

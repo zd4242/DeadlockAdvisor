@@ -252,7 +252,8 @@ public class ExplainViewModel : ViewModelBase
                 heroName,
                 ExplainText.RelationWord(relation).ToUpperInvariant(),
                 Palette.RelationColor(relation),
-                $"raw {Format.SignedFixed(part.Lift, 2)} ± {NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches",
+                $"raw {Format.SignedFixed(part.Lift, 2)} ± {NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches"
+                + (Math.Abs(part.RankShift) >= RankLean.Visible ? $" · ranks {Format.SignedFixed(part.RankShift, 2)}" : ""),
                 new DisplayAmount(part.LiftShrunk));
         }).ToList();
 

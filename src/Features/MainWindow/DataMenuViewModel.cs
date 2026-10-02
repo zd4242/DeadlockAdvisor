@@ -281,7 +281,7 @@ public class DataMenuViewModel : ViewModelBase
 
             var lines = applied?.Lines() ?? ["Every patch's counts were already complete: nothing to download."];
             lines.Add("\nShown beside each recommendation as \"data\" — a second opinion, not part of the score.");
-            lines.Add("The Match page's filters (the funnel) narrow it to a range of ranks, without downloading again.");
+            lines.Add("The Match page's filters (the funnel) lean it toward a range of ranks, without downloading again.");
             Succeeded(job, "downloaded", "Match data downloaded", lines, "Match data downloaded: the recommendations now show it.");
         }
         finally

@@ -87,11 +87,14 @@ public class DataStatusViewModel : ViewModelBase
                 : null;
             Facts =
             [
-                new("Patch", patch),
-                new("Matches", MatchStatsMath.RankLabel(meta) is { } rank ? $"Ranked only, {rank}" : "Every match, ranked or not"),
+                .. MatchStatsMath.PatchFacts(meta).Select(fact => new StatusFact(fact.Label, fact.Value)),
+                new("Matches", MatchStatsMath.RankLabel(meta) is { } rank ? $"Leaning toward {rank}" : "Every match, ranked or not"),
                 new("Fetched", age),
             ];
-            Families = MatchStatsMath.FamilyLines(meta);
+            var families = MatchStatsMath.FamilyLines(meta);
+            if (MatchStatsMath.DriftLine(meta) is { } drift)
+                families.Add(drift);
+            Families = families;
             FetchText = "Fetch again";
         }
         else

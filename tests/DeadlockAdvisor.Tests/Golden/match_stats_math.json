@@ -16368,18 +16368,22 @@
     "label": "09-16",
     "start": 1789603200,
     "until": 1790296852,
+    "ended": false,
     "fetched_at": 1790296852,
     "complete": false,
-    "ranks": false
+    "ranks": false,
+    "share": 0.0
    },
    {
     "title": "08-22-2026 Update",
     "label": "08-22",
     "start": 1787443200,
     "until": 1789603199,
+    "ended": true,
     "fetched_at": 1790296852,
     "complete": true,
-    "ranks": false
+    "ranks": false,
+    "share": 0.0
    }
   ],
   "families": {
@@ -16404,7 +16408,7 @@
   }
  },
  "fetch_result_lines": [
-  "Patches: 09-16 (8 days so far, no rank groups), 08-22 (25 days, no rank groups).",
+  "Patches: 09-16 (8 days so far, 0%, no rank groups), 08-22 (25 days, 0%, no rank groups).",
   "Enemies (since patch 08-22): 1 measurements, reliability 0.71, typical win-rate gain ±0.37 pts",
   "Your hero (since patch 08-22): left out -- reliability n/a is under 0.5, so the numbers would be mostly noise"
  ],

@@ -248,8 +248,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             active.Add("Items your hero rarely builds are hidden");
         if (HideDisagreed && RanksByBoth)
             active.Add("Items the formula and data disagree on are hidden");
-        if (DataRanks is { RankedOnly: true, CanFilter: true, From: { } from, To: { } to })
-            active.Add(from == to ? $"Match data from {from} matches only" : $"Match data from {from} to {to} matches only");
+        if (DataRanks is { CanFilter: true, RangeLabel: { } range })
+            active.Add($"Match data leaning toward {range}");
         return active;
     }
 

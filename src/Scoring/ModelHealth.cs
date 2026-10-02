@@ -18,6 +18,7 @@ public sealed record DataOnlyPair(string ItemName, string HeroName, Relation Rel
 
 /// <param name="Matches">How many matches were simulated; 0 when too few heroes are profiled to fill one.</param>
 /// <param name="HasMatchData">False skips the data sections: Fetch Match Stats hasn't run.</param>
+/// <param name="DataSource">Which patches and ranks the match data comes from, and how much it moves from patch to patch.</param>
 public sealed record ModelHealthReport(
     int Matches,
     int ProfiledHeroes,
@@ -28,7 +29,8 @@ public sealed record ModelHealthReport(
     IReadOnlyList<string> EmptyTraits,
     bool HasMatchData,
     IReadOnlyList<Disagreement> Disagreements,
-    IReadOnlyList<DataOnlyPair> DataOnly)
+    IReadOnlyList<DataOnlyPair> DataOnly,
+    IReadOnlyList<string> DataSource)
 {
     public IEnumerable<ItemShare> AlwaysOn =>
         Shares.Where(share => share.TopShare >= ModelHealth.AlwaysOnShare)
@@ -90,6 +92,8 @@ public sealed record ModelHealthReport(
             lines.Add("No match data yet: Data → Fetch Match Stats adds a comparison with real match results.");
             return lines;
         }
+        lines.AddRange(DataSource);
+        lines.Add("");
         lines.Add(Disagreements.Count == 0
             ? "No item's hand weights run clearly against its real lifts."
             : $"Match data disagrees -- hand weights run opposite to real lifts across heroes (r ≤ {NumberFormat.Fixed(ModelHealth.DisagreeR, 1)}):");
@@ -160,7 +164,18 @@ public static class ModelHealth
             emptyTraits.Select(categoryId => store.Categories[categoryId].CategoryName).ToList(),
             store.MatchLift.Count > 0,
             Disagreements(store, matrix),
-            DataOnlyPairs(store, matrix));
+            DataOnlyPairs(store, matrix),
+            DataSource(store.MatchMeta));
+    }
+
+    /// <summary>"Match data: patch 09-29 (2 days so far · 18%), patch 09-16 (13 days · 82%), every match", then the drift between patches.</summary>
+    private static List<string> DataSource(System.Text.Json.Nodes.JsonObject meta)
+    {
+        var patches = string.Join(", ", MatchStatsMath.PatchFacts(meta).Select(fact => $"{fact.Label.ToLowerInvariant()} ({fact.Value})"));
+        var lines = new List<string> { $"Match data: {patches}; {MatchStatsMath.RankLabel(meta) ?? "every match"}." };
+        if (MatchStatsMath.DriftLine(meta) is { } drift)
+            lines.Add(drift + ".");
+        return lines;
     }
 
     /// <summary>

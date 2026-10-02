@@ -271,7 +271,7 @@ public class MatchStatsMathTests
         Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(ranged));
         Assert.Equal("Mystic+", MatchStatsMath.RankLabel(ranged));
         Assert.Contains("· Mystic+ ·", MatchStatsMath.Summary(ranged, 1));
-        Assert.Contains("Ranked matches only: Mystic+.", MatchStatsMath.DataNote(ranged, 1));
+        Assert.Contains("Leaning toward Mystic+ where it plays differently.", MatchStatsMath.DataNote(ranged, 1));
         Assert.Null(MatchStatsMath.RankOf(every));
         Assert.Null(MatchStatsMath.RankLabel(every));
         Assert.Equal("all", every["rank"]!.GetValue<string>());
@@ -300,5 +300,130 @@ public class MatchStatsMathTests
         Assert.False(segment.Complete);
         Assert.True((segment with { FetchedAt = segment.Until + MatchSegment.SettleSeconds }).Complete);
         Assert.False((segment with { Ended = false, FetchedAt = segment.Until + MatchSegment.SettleSeconds }).Complete);
+    }
+
+    private static OrderedDictionary<HeroItem, RawLift> Lifts(params (string Hero, long Item, int Matches, double Lift, double Se)[] lifts) =>
+        new(lifts.Select(lift => KeyValuePair.Create(new HeroItem(lift.Hero, lift.Item), new RawLift(lift.Matches, lift.Lift, lift.Se))));
+
+    [Fact]
+    public void PatchesAreWeighedByTheirNoisePlusHowFarBackTheyAre()
+    {
+        var newer = Lifts(("h", 1, 1500, 2.0, 1.0), ("h", 2, 1500, 1.0, 1.0));
+        var older = Lifts(("h", 1, 1500, 0.0, 0.5), ("h", 3, 1000, 4.0, 1.0));
+
+        // The older patch's se² of 0.25 plus one patch of drift, 0.75, matches the newer one's 1: equal weight.
+        var combined = MatchStatsMath.CombinePatches([newer, older], 0.75, 2000, out var shares);
+        Assert.Equal([new HeroItem("h", 1)], combined.Keys);
+        Assert.Equal(1.0, combined[new HeroItem("h", 1)].Lift, 9);
+        Assert.Equal(1 / Math.Sqrt(2), combined[new HeroItem("h", 1)].Se, 9);
+        Assert.Equal(3000, combined[new HeroItem("h", 1)].Matches);
+        Assert.Equal([0.5, 0.5], shares);
+
+        // Without drift the older, less noisy lift counts four times as much.
+        Assert.Equal(0.4, MatchStatsMath.CombinePatches([newer, older], 0, 2000, out shares)[new HeroItem("h", 1)].Lift, 9);
+        Assert.Equal([0.2, 0.8], shares.Select(share => Math.Round(share, 9)));
+
+        // A patch with nothing over the range adds nothing. A lift from one patch back alone keeps its
+        // number, but says less about the current patch: its se takes the drift too.
+        var alone = MatchStatsMath.CombinePatches([null, older], 0.75, 1000, out shares);
+        var lone = alone[new HeroItem("h", 3)];
+        Assert.Equal((1000, 4.0), (lone.Matches, lone.Lift));
+        Assert.Equal(Math.Sqrt(1.75), lone.Se, 9);
+        Assert.Equal([0.0, 1.0], shares);
+    }
+
+    [Fact]
+    public void ALiftWithNoNoiseOutweighsTheRest()
+    {
+        var exact = MatchStatsMath.CombinePatches([Lifts(("h", 1, 3000, 2.0, 0.0)), Lifts(("h", 1, 3000, 9.0, 1.0))], 0, 2000, out _);
+
+        Assert.Equal(new RawLift(6000, 2.0, 0.0), exact[new HeroItem("h", 1)]);
+    }
+
+    [Fact]
+    public void DriftIsHowFarTheSameLiftsMoveBetweenPatchesBeyondTheirNoise()
+    {
+        // 100 lifts, each 1 point apart between the patches either way, with se 0.5 in both: 1 - 0.5 = 0.5.
+        var pairs = Enumerable.Range(0, 100).ToList();
+        var newer = Lifts([.. pairs.Select(i => ("h", (long)i, 3000, 0.0, 0.5))]);
+        var older = Lifts([.. pairs.Select(i => ("h", (long)i, 3000, i % 2 == 0 ? 1.0 : -1.0, 0.5))]);
+
+        Assert.Equal(0.5, MatchStatsMath.EstimateDrift2(newer, older)!.Value, 9);
+        Assert.Null(MatchStatsMath.EstimateDrift2(newer, Lifts([.. pairs.Skip(1).Select(i => ("h", (long)i, 3000, 0.0, 0.5))])));
+        // No more movement than the noise explains: no drift.
+        Assert.Equal(0.0, MatchStatsMath.EstimateDrift2(newer, newer));
+    }
+
+    [Fact]
+    public void BuildRatiosCountEachPatchByItsShareOfTheLifts()
+    {
+        // Everyone splits tier 1 evenly. In the old patch the hero puts a tenth of its tier-1 buys into
+        // item 1; in the new patch, half.
+        Halves Bought(long one, long two) => new(Totals((1, one / 2, one), (2, two / 2, two)), []);
+        MatchSegment PatchOf(Patch patch, long one, long two) =>
+            Segment(new SliceCounts(Bought(1000, 1000), new() { ["h"] = Bought(one, two) }, [])) with { Patch = patch };
+        var older = PatchOf(_patch, 100, 900);
+        var newer = PatchOf(new Patch("09-29-2026", 1790726400), 500, 500);
+
+        var weighed = MatchStatsMath.BuildRatios([newer, older], _items, new Dictionary<long, double> { [newer.Patch.Start] = 0.8, [older.Patch.Start] = 0.2 });
+        Assert.Equal((0.8 * 0.5 + 0.2 * 0.1) / 0.5, weighed[("one", "h")], 9);
+
+        // Without shares, by purchases: as if the two were one patch, 600 of 2000.
+        Assert.Equal(0.3 / 0.5, MatchStatsMath.BuildRatios([newer, older], _items)[("one", "h")], 9);
+    }
+
+    private static FamilyStats Family(params (string Hero, long Item, int Matches, double Full, double First, double Second)[] lifts)
+    {
+        OrderedDictionary<HeroItem, RawLift> Of(Func<(string Hero, long Item, int Matches, double Full, double First, double Second), double> lift) =>
+            new(lifts.Select(row => KeyValuePair.Create(new HeroItem(row.Hero, row.Item), new RawLift(row.Matches, lift(row), 0.1))));
+        return new FamilyStats(Of(row => row.Full), (Of(row => row.First), Of(row => row.Second)), lifts.Length, 1.0, 0.5, 1.0, 1.0);
+    }
+
+    [Fact]
+    public void LeaningMovesEachLiftByTheRestsShareOfAShrunkDifference()
+    {
+        // The range differs from the rest by ±2 on every lift, in both halves alike: real. The rest has
+        // three quarters of the matches.
+        var inRange = Family(("h", 1, 1000, 2, 2, 2), ("h", 2, 1000, -2, -2, -2), ("h", 3, 1000, 2, 2, 2), ("h", 4, 1000, -2, -2, -2));
+        var rest = Family(("h", 1, 3000, 0, 0, 0), ("h", 2, 3000, 0, 0, 0), ("h", 3, 3000, 0, 0, 0), ("h", 4, 3000, 0, 0, 0));
+
+        var lean = MatchStatsMath.LeanTowards(inRange, rest, 0.5);
+
+        // σ² = 4 - (0.01 + 0.01); each difference shrinks by σ² / (σ² + 0.02), then counts at 0.75.
+        Assert.Equal(3.98, lean.Sigma2, 9);
+        Assert.Equal(0.75 * 2 * 3.98 / 4, lean.Shifts[new HeroItem("h", 1)], 9);
+        Assert.Equal(-0.75 * 2 * 3.98 / 4, lean.Shifts[new HeroItem("h", 2)], 9);
+        Assert.Equal((4, 4), (lean.Pairs, lean.Moved));
+        Assert.Equal(1.0, lean.Reliability);
+    }
+
+    [Fact]
+    public void ARangeWhoseLiftsSpreadWiderThanEveryMatchCountsTheExtraAsNoise()
+    {
+        var inRange = Family(("h", 1, 1000, 2, 2, 2), ("h", 2, 1000, -2, -2, -2), ("h", 3, 1000, 2, 2, 2), ("h", 4, 1000, -2, -2, -2))
+            with { Tau2 = 3.0 };
+        var rest = Family(("h", 1, 3000, 0, 0, 0), ("h", 2, 3000, 0, 0, 0), ("h", 3, 3000, 0, 0, 0), ("h", 4, 3000, 0, 0, 0));
+
+        var lean = MatchStatsMath.LeanTowards(inRange, rest, 0.5);
+
+        // 2.5 points² more spread than every match: each difference's noise is 0.02 + 2.5.
+        Assert.Equal(4 - 2.52, lean.Sigma2, 9);
+        Assert.Equal(0.75 * 2 * 1.48 / 4, lean.Shifts[new HeroItem("h", 1)], 9);
+    }
+
+    [Fact]
+    public void DifferencesTheHalvesDisagreeOnMoveNothing()
+    {
+        var inRange = Family(("h", 1, 1000, 0, 2, -2), ("h", 2, 1000, 0, -2, 2), ("h", 3, 1000, 0, 2, -2), ("h", 4, 1000, 0, -2, 2));
+        var rest = Family(("h", 1, 3000, 2, 0, 0), ("h", 2, 3000, -2, 0, 0), ("h", 3, 3000, 2, 0, 0), ("h", 4, 3000, -2, 0, 0));
+
+        var lean = MatchStatsMath.LeanTowards(inRange, rest, 0.5);
+
+        Assert.Equal(0.0, lean.Reliability);
+        Assert.Equal(0.0, lean.Sigma2);
+        Assert.All(lean.Shifts.Values, shift => Assert.Equal(0.0, shift));
+        Assert.Equal(0, lean.Moved);
+        Assert.Equal("Phantom+ isn't detectably different from every match, so these are every match's numbers",
+            new FamilyReport("against", _patch, rest, lean).LeanText("Phantom+"));
     }
 }
