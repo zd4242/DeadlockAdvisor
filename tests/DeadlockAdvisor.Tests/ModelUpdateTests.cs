@@ -133,6 +133,14 @@ public sealed class ModelUpdateTests : IDisposable
     }
 
     [Fact]
+    public void AFileChangedHereIsLeftAloneUntilANewerVersionIsPublished()
+    {
+        File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), FirstRowEnding(Seed(DataStore.HeroScoresFile), "1"));
+
+        Assert.False(ModelUpdatePlan.For(Publish(), _data.Path, askAgain: true).HasWork);
+    }
+
+    [Fact]
     public async Task ANewerVersionOfAFileKeptAsksAgain()
     {
         File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), FirstRowEnding(Seed(DataStore.HeroScoresFile), "1"));

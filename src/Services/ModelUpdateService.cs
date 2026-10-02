@@ -131,9 +131,11 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
             var now = File.Exists(path) ? ModelManifest.Hash(File.ReadAllBytes(path)) : null;
             current[file] = now;
             var latest = published.Files[file];
-            if (now == latest)
+            var before = installed?.Files.GetValueOrDefault(file);
+            // Changed here, but nothing newer is published than what was installed: nothing to ask about.
+            if (now == latest || latest == before)
                 continue;
-            if (now is null || now == installed?.Files.GetValueOrDefault(file))
+            if (now is null || now == before)
                 quiet.Add(file);
             else if (askAgain || installed?.Kept.GetValueOrDefault(file) != latest)
                 edited.Add(file);
