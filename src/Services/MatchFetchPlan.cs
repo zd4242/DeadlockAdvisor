@@ -26,6 +26,10 @@ public enum FetchReason
     AddRanks,
 }
 
+/// <summary>What a download does to one patch, for the dialog before it.</summary>
+/// <param name="Downloads">Whether anything of the patch is fetched; false when it's already up to date.</param>
+public sealed record PlanStep(string Patch, string Text, bool Downloads);
+
 /// <summary>One step of a download: one part of one patch's matches, over one window.</summary>
 /// <param name="Until">Unix seconds, inclusive.</param>
 /// <param name="Ended">The next patch is out, so <paramref name="Until"/> is this one's end.</param>
@@ -74,23 +78,21 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
 
     public bool IncludesRanks => Phases.Any(phase => phase.Part == FetchPart.Ranks);
 
-    /// <summary>
-    /// What happens to each patch kept, newest first: ("Patch 09-29", "refreshed, it's still collecting
-    /// matches · with rank groups"), or that it's kept as it is.
-    /// </summary>
-    public List<(string Patch, string Text)> Describe(IReadOnlyList<MatchSegment> stored) =>
+    /// <summary>What happens to each patch kept, newest first, in plain words.</summary>
+    public List<PlanStep> Describe() =>
         Keep.Select(patch =>
         {
             var everyMatch = Phases.FirstOrDefault(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.EveryMatch);
             var ranks = Phases.Any(phase => phase.Patch.Start == patch.Start && phase.Part == FetchPart.Ranks);
+            var withRanks = ranks ? ", with rank groups" : "";
             var text = everyMatch?.Reason switch
             {
-                FetchReason.New => "new",
-                FetchReason.Refresh => "refreshed: it's still collecting matches",
-                FetchReason.Finish => "finished: it's over, so this is the last time",
-                _ => ranks ? "kept, adding its rank groups" : "kept as it is: complete",
+                FetchReason.New => $"New: downloading it{withRanks}",
+                FetchReason.Refresh => $"Still going: downloading its latest matches{withRanks}",
+                FetchReason.Finish => $"Ended since your last download: downloading its last matches{withRanks}",
+                _ => ranks ? "Up to date: adding just its rank groups" : "Up to date: skipped",
             };
-            return ($"Patch {patch.Label}", text + (ranks ? " · with rank groups" : ""));
+            return new PlanStep($"Patch {patch.Label}", text, everyMatch is not null || ranks);
         }).ToList();
 
     /// <summary>About how much the kept patches' counts take on disk once this is done.</summary>

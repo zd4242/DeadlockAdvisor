@@ -9,8 +9,11 @@ public sealed class HeldMatchStats : IMatchStatsService
 {
     public static readonly Patch Patch = new("09-29-2026", 1790726400);
 
-    /// <summary>One patch, every match then its rank groups.</summary>
-    public static readonly MatchFetchPlan Plan = new(1790856000, [Patch],
+    /// <summary>The patch before, kept as it is: already up to date.</summary>
+    public static readonly Patch Older = new("09-16-2026 Update", 1789603200);
+
+    /// <summary>One patch, every match then its rank groups, and the patch before kept as it is.</summary>
+    public static readonly MatchFetchPlan Plan = new(1790856000, [Patch, Older],
     [
         new FetchPhase(FetchPart.EveryMatch, Patch, Patch.Start, 1790856000, false, FetchReason.New, MatchFetchPlan.EveryMatchCalls(38)),
         new FetchPhase(FetchPart.Ranks, Patch, Patch.Start, 1790856000, false, FetchReason.New, MatchFetchPlan.RankCalls(38)),

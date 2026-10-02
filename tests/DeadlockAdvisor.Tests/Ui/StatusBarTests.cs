@@ -136,10 +136,11 @@ public class StatusBarTests
         // Faded in, for the screenshot.
         Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
         var texts = dialog.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
-        Assert.Contains("No match data downloaded yet.", texts);
+        Assert.Contains("No match data yet.", texts);
         Assert.Contains("about 30 s · 1.2 MB", texts);
         Assert.Contains("Patch 09-29", texts);
-        Assert.Contains("new", texts);
+        Assert.Contains("New: downloading it", texts);
+        Assert.Contains("Up to date: skipped", texts);
         ui.ScreenshotModal("match_download_dialog.png");
     }
 

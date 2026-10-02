@@ -2,54 +2,94 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
              xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
+             xmlns:services="using:DeadlockAdvisor.Services"
              xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.MainWindow.MatchDownload.MatchDownloadView"
              x:DataType="download:MatchDownloadViewModel">
 
+    <!-- A patch being downloaded leads with an arrow in the accent colour; one already up to date fades back. -->
+    <UserControl.Styles>
+        <Style Selector="Grid.step TextBlock.glyph">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+        </Style>
+        <Style Selector="Grid.step TextBlock.patch">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Grid.step.skipped TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+            <Setter Property="FontStyle" Value="Italic"/>
+        </Style>
+        <Style Selector="Grid.step.skipped TextBlock.glyph, Grid.step.skipped TextBlock.patch">
+            <Setter Property="FontWeight" Value="Normal"/>
+        </Style>
+        <Style Selector="Grid.step.skipped TextBlock.glyph">
+            <Setter Property="FontStyle" Value="Normal"/>
+        </Style>
+    </UserControl.Styles>
+
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="mainWindow:StatusFact">
+            <!-- The empty first column lines the patches up with the steps' glyphs below. -->
             <Grid Margin="0,0,0,3">
                 <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16"/>
                     <ColumnDefinition Width="Auto" SharedSizeGroup="PatchLabel"/>
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Classes="dim" Margin="0,0,16,0" Text="{Binding Label}"/>
-                <TextBlock Grid.Column="1" TextWrapping="Wrap" Text="{Binding Value}"/>
+                <TextBlock Grid.Column="1" Classes="dim" Margin="0,0,16,0" Text="{Binding Label}"/>
+                <TextBlock Grid.Column="2" TextWrapping="Wrap" Text="{Binding Value}"/>
+            </Grid>
+        </DataTemplate>
+        <DataTemplate x:DataType="services:PlanStep">
+            <Grid Classes="step" Classes.skipped="{Binding !Downloads}" Margin="0,0,0,3">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="16"/>
+                    <ColumnDefinition Width="Auto" SharedSizeGroup="PatchLabel"/>
+                    <ColumnDefinition Width="*"/>
+                </Grid.ColumnDefinitions>
+                <TextBlock Classes="glyph" Text="↓" IsVisible="{Binding Downloads}"/>
+                <TextBlock Classes="glyph" Text="✓" IsVisible="{Binding !Downloads}"/>
+                <TextBlock Grid.Column="1" Classes="patch" Margin="0,0,16,0" Text="{Binding Patch}"/>
+                <TextBlock Grid.Column="2" TextWrapping="Wrap" Text="{Binding Text}"/>
             </Grid>
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <StackPanel Margin="20" Spacing="12" Width="460" Grid.IsSharedSizeScope="True">
+    <StackPanel Margin="20" Spacing="12" Width="480" Grid.IsSharedSizeScope="True">
         <TextBlock Classes="h2" Text="{Binding Title}"/>
         <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Intro}"/>
 
         <StackPanel Spacing="6">
             <TextBlock Classes="section" Text="YOU HAVE"/>
             <ItemsControl ItemsSource="{Binding Stored}" IsVisible="{Binding HasStored}"/>
-            <TextBlock Classes="faint" Text="No match data downloaded yet." IsVisible="{Binding !HasStored}"/>
+            <TextBlock Classes="faint" Margin="16,0,0,0" Text="No match data yet." IsVisible="{Binding !HasStored}"/>
         </StackPanel>
 
         <StackPanel Spacing="8">
             <StackPanel Orientation="Horizontal" Spacing="6">
-                <TextBlock Classes="section" VerticalAlignment="Center" Text="DOWNLOAD"/>
+                <TextBlock Classes="section" VerticalAlignment="Center" Text="WHAT TO DOWNLOAD"/>
                 <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.RanksInfo}"/>
             </StackPanel>
             <RadioButton GroupName="MatchDownload" IsChecked="{Binding EveryMatchOnly}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="Every match"/>
+                    <TextBlock Text="All matches"/>
                     <TextBlock Classes="faint" Text="{Binding EveryMatchDetail}"/>
                 </StackPanel>
             </RadioButton>
             <RadioButton GroupName="MatchDownload" IsChecked="{Binding IncludeRanks}">
-                <StackPanel Orientation="Horizontal" Spacing="8">
-                    <TextBlock Text="Every match + rank groups"/>
-                    <TextBlock Classes="faint" Text="{Binding WithRanksDetail}"/>
+                <StackPanel Spacing="2">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="All matches + rank groups"/>
+                        <TextBlock Classes="faint" Text="{Binding WithRanksDetail}"/>
+                    </StackPanel>
+                    <TextBlock Classes="faint" Text="Lets the filters lean the numbers toward the ranks you play."/>
                 </StackPanel>
             </RadioButton>
         </StackPanel>
 
         <StackPanel Spacing="6">
-            <TextBlock Classes="section" Text="THIS DOWNLOAD"/>
+            <TextBlock Classes="section" Text="WHAT HAPPENS"/>
             <ItemsControl ItemsSource="{Binding Steps}"/>
             <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Summary}"/>
         </StackPanel>

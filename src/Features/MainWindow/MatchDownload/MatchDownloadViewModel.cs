@@ -17,8 +17,8 @@ namespace DeadlockAdvisor.Features.MainWindow.MatchDownload;
 public sealed class MatchDownloadViewModel : ViewModelBase
 {
     public const string RanksInfo =
-        "The rank groups let the Match tab's filters lean the numbers toward the ranks you play.\n"
-        + "They're five times the calls: every match once more for each pair of ranks.";
+        "Rank groups split the matches by rank, so the Match tab's filters can lean the numbers toward the ranks you play.\n"
+        + "They take about five times as long to download.";
 
     private readonly MatchFetchPlan _everyMatch;
     private readonly MatchFetchPlan _withRanks;
@@ -41,11 +41,13 @@ public sealed class MatchDownloadViewModel : ViewModelBase
             {
                 this.RaisePropertyChanged(nameof(EveryMatchOnly));
                 var plan = Chosen;
-                Steps = plan.Describe(stored).Select(step => new StatusFact(step.Patch, step.Text)).ToList();
-                Summary = plan.Calls == 0
-                    ? "Every patch's counts are complete: nothing to download."
-                    : $"{plan.Calls} calls, {MatchFetchEstimate.DescribeTime(estimate.Time(plan))}, in the background. "
-                      + $"About {MatchFetchEstimate.DescribeBytes(plan.DiskBytes(stored))} on disk once done.";
+                Steps = plan.Describe();
+                var downloading = Steps.Count(step => step.Downloads);
+                Summary = downloading == 0
+                    ? "Everything is already up to date, so there's nothing to download."
+                    : $"Downloading {downloading} patch{(downloading == 1 ? "" : "es")} takes {MatchFetchEstimate.DescribeTime(estimate.Time(plan))}. "
+                      + "It runs in the background, so you can keep using the app, "
+                      + $"and uses about {MatchFetchEstimate.DescribeBytes(plan.DiskBytes(stored))} of disk space.";
             })
             .DisposeWith(Disposables);
 
@@ -60,8 +62,8 @@ public sealed class MatchDownloadViewModel : ViewModelBase
     public string Title => "Download match data";
 
     public string Intro =>
-        "Item win rates from real matches on deadlock-api.com: a second opinion beside each recommendation. "
-        + "Finished patches are kept, so this only fetches what has changed.";
+        "Item win rates from real matches on deadlock-api.com, shown beside each recommendation as a second opinion. "
+        + "Patches you already have in full are skipped, so only what's new is downloaded.";
 
     /// <summary>One line per patch stored now, newest first; empty before the first download.</summary>
     public IReadOnlyList<StatusFact> Stored { get; }
@@ -83,7 +85,7 @@ public sealed class MatchDownloadViewModel : ViewModelBase
     public string WithRanksDetail { get; }
 
     /// <summary>What happens to each patch kept, with the choice made.</summary>
-    [Reactive] public IReadOnlyList<StatusFact> Steps { get; private set; } = [];
+    [Reactive] public IReadOnlyList<PlanStep> Steps { get; private set; } = [];
 
     [Reactive] public string Summary { get; private set; } = "";
 
@@ -94,12 +96,12 @@ public sealed class MatchDownloadViewModel : ViewModelBase
 
     private string Cost(MatchFetchPlan plan) =>
         plan.Calls == 0
-            ? "nothing to fetch"
+            ? "nothing to download"
             : $"{MatchFetchEstimate.DescribeTime(_estimate.Time(plan))} · {MatchFetchEstimate.DescribeBytes(_estimate.Bytes(plan))}";
 
-    /// <summary>"2 days so far · every match", "13 days · complete · with rank groups".</summary>
+    /// <summary>"2 days so far · all matches", "13 days · finished · all matches + rank groups".</summary>
     private static string StoredText(MatchSegment segment) =>
         MatchStatsMath.PatchSpan(segment.From, segment.Until, segment.Ended)
-        + (segment.Complete ? " · complete" : "")
-        + (segment.HasRanks ? " · with rank groups" : " · every match");
+        + (segment.Complete ? " · finished" : "")
+        + (segment.HasRanks ? " · all matches + rank groups" : " · all matches");
 }

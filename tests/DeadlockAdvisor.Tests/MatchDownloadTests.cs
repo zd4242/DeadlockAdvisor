@@ -51,11 +51,18 @@ public sealed class MatchDownloadTests : IDisposable
         var everyMatch = MatchFetchPlan.For(stored, _patches, _now, includeRanks: false, heroCount: 38);
         var withRanks = MatchFetchPlan.For(stored, _patches, _now, includeRanks: true, heroCount: 38);
 
-        Assert.Equal([("Patch 09-29", "refreshed: it's still collecting matches"), ("Patch 09-16", "kept as it is: complete")],
-            everyMatch.Describe(stored));
         Assert.Equal(
-            [("Patch 09-29", "refreshed: it's still collecting matches · with rank groups"), ("Patch 09-16", "kept, adding its rank groups · with rank groups")],
-            withRanks.Describe(stored));
+            [
+                new PlanStep("Patch 09-29", "Still going: downloading its latest matches", true),
+                new PlanStep("Patch 09-16", "Up to date: skipped", false),
+            ],
+            everyMatch.Describe());
+        Assert.Equal(
+            [
+                new PlanStep("Patch 09-29", "Still going: downloading its latest matches, with rank groups", true),
+                new PlanStep("Patch 09-16", "Up to date: adding just its rank groups", true),
+            ],
+            withRanks.Describe());
         Assert.Equal(2 * MatchFetchEstimate.PatchBytes, everyMatch.DiskBytes(stored));
         Assert.Equal(2 * MatchFetchEstimate.PatchWithRanksBytes, withRanks.DiskBytes(stored));
     }
@@ -72,15 +79,17 @@ public sealed class MatchDownloadTests : IDisposable
             (plan, ranks) => started = (plan, ranks));
 
         Assert.Equal(["Patch 09-29", "Patch 09-16"], dialog.Stored.Select(fact => fact.Label));
-        Assert.Equal(["1 day so far · every match", "13 days · complete · every match"], dialog.Stored.Select(fact => fact.Value));
+        Assert.Equal(["1 day so far · all matches", "13 days · finished · all matches"], dialog.Stored.Select(fact => fact.Value));
         Assert.Equal("about 30 s · 1.2 MB", dialog.EveryMatchDetail);
         Assert.Equal("about 6 min · 13.4 MB", dialog.WithRanksDetail);
-        Assert.StartsWith("80 calls, about 30 s, in the background. About 900 KB on disk", dialog.Summary);
+        Assert.Equal([true, false], dialog.Steps.Select(step => step.Downloads));
+        Assert.Equal("Downloading 1 patch takes about 30 s. It runs in the background, so you can keep using the app, "
+                     + "and uses about 900 KB of disk space.", dialog.Summary);
 
         dialog.IncludeRanks = true;
         Assert.False(dialog.EveryMatchOnly);
-        Assert.Equal("kept, adding its rank groups · with rank groups", dialog.Steps[1].Value);
-        Assert.StartsWith("880 calls", dialog.Summary);
+        Assert.Equal([true, true], dialog.Steps.Select(step => step.Downloads));
+        Assert.StartsWith("Downloading 2 patches takes about 6 min.", dialog.Summary);
 
         await dialog.DownloadCommand.Execute();
         Assert.Equal((withRanks, true), started);
@@ -94,7 +103,7 @@ public sealed class MatchDownloadTests : IDisposable
         using var dialog = new MatchDownloadViewModel(_fixture.Modals, [], nothing, nothing, MatchFetchEstimate.Measured, false, (_, _) => { });
 
         Assert.False(await dialog.DownloadCommand.CanExecute.FirstAsync());
-        Assert.Equal("Every patch's counts are complete: nothing to download.", dialog.Summary);
-        Assert.Equal("nothing to fetch", dialog.EveryMatchDetail);
+        Assert.Equal("Everything is already up to date, so there's nothing to download.", dialog.Summary);
+        Assert.Equal("nothing to download", dialog.EveryMatchDetail);
     }
 }
