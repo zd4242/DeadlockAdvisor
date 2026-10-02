@@ -25,6 +25,8 @@
     <EmbeddedResource Include="src\Services\GameApi\html5_entities.json" LogicalName="GameApi/html5_entities.json" />
     <!-- Reference digits for reading net worth off the top bar, cut from the labelled test captures. -->
     <EmbeddedResource Include="src\Vision\net_worth_glyphs.json" LogicalName="Vision/net_worth_glyphs.json" />
+    <!-- The licenses of everything the app ships with, for Help → Third-Party Notices. -->
+    <EmbeddedResource Include="THIRD-PARTY-NOTICES.txt" LogicalName="THIRD-PARTY-NOTICES.txt" />
   </ItemGroup>
 
   <ItemGroup>

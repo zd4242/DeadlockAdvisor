@@ -88,6 +88,20 @@ have. Their data folder carries over, as it lives outside the app.
 Linux and macOS builds are made each time as preview artifacts on the workflow run, not attached to the
 release: see the README's "Linux and macOS".
 
+## Adding or upgrading a package
+
+`THIRD-PARTY-NOTICES.txt` lists every package the app ships with, its license and copyright, and the
+notices the packages carry; the app shows it under Help → Third-Party Notices. It's generated from the
+app's build, and `ThirdPartyNoticesTests` fails when a package is added, removed or upgraded until it's
+regenerated:
+
+```
+dotnet test tests/DeadlockAdvisor.Tests/DeadlockAdvisor.Tests.csproj -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~ThirdPartyNoticesTests"
+```
+
+A package under a license other than MIT or Apache 2.0 stops the generator: check it allows shipping the
+package inside the app before adding it there.
+
 ## Changing what the files hold
 
 Released apps keep reading the files published after them, so a change to a file's shape needs care:

@@ -3,3 +3,6 @@
 tests/DeadlockAdvisor.Tests/Golden/** -text
 # The seed data is written out verbatim on first run, exactly as the app itself writes it.
 src/Assets/SeedData/** -text
+# Generated, and compared byte for byte by ThirdPartyNoticesTests.
+THIRD-PARTY-NOTICES.txt -text
+tests/DeadlockAdvisor.Tests/Notices/** -text

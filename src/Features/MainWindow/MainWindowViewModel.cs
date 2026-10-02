@@ -1,3 +1,4 @@
+using System.IO;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -17,6 +18,7 @@ using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Features.Shared.Notifications;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -188,6 +190,7 @@ public class MainWindowViewModel : ViewModelBase
         OpenSettingsCommand = ReactiveCommand.Create(OpenSettings);
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
+        NoticesCommand = ReactiveCommand.Create(ShowNotices);
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
@@ -262,6 +265,7 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ReloadArtCommand { get; }
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
+    public ReactiveCommand<Unit, Unit> NoticesCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
@@ -346,6 +350,22 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
+    /// <summary>The licenses of everything the app ships with: a long text, so it's written beside the settings and opened in the text editor.</summary>
+    private void ShowNotices()
+    {
+        var path = Path.Combine(JsonSettingsService.AppDataPath, ThirdPartyNotices.FileName);
+        try
+        {
+            AtomicFile.Write(path, ThirdPartyNotices.Bytes());
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _notifications.ShowError($"Couldn't write {path}: {ex.Message}", ex);
+            return;
+        }
+        DataMenu.OpenFolderCommand.Execute(path).Subscribe();
+    }
+
     private void Find()
     {
         if (Pages[CurrentPage] is not ISearchablePage page)

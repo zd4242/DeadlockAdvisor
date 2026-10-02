@@ -199,6 +199,8 @@
                                 </MenuItem>
                                 <MenuItem Header="_Help">
                                     <MenuItem Header="How Scoring Works" Command="{Binding HelpCommand}"/>
+                                    <MenuItem Header="Third-Party Notices" Command="{Binding NoticesCommand}"
+                                              ToolTip.Tip="The licenses of the software the app is built with"/>
                                 </MenuItem>
                             </Menu>
 

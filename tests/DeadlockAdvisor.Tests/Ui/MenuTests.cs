@@ -32,7 +32,7 @@ public class MenuTests
         Click(ui.Window, help);
         Assert.True(help.IsSubMenuOpen);
         Assert.Equal(0, drags);
-        var howScoringWorks = help.Items.OfType<MenuItem>().Single();
+        var howScoringWorks = help.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "How Scoring Works"));
         Click(TopLevel.GetTopLevel(howScoringWorks)!, howScoringWorks);
 
         Assert.Equal(0, drags);

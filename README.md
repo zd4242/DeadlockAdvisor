@@ -347,4 +347,6 @@ detecting on a timer.
 
 The code is under the [MIT license](LICENSE). Deadlock's art and data, and
 the statistics from deadlock-api.com, belong to their owners and aren't
-covered by it.
+covered by it. The libraries the app is built with are under their own
+licenses: [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt), also in the
+app under Help → Third-Party Notices.

@@ -27,6 +27,7 @@
   <!-- Reference outputs the tests compare against (see Support/Golden.cs to regenerate them). -->
   <ItemGroup>
     <None Include="Golden\**" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Notices\**" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
 </Project>
