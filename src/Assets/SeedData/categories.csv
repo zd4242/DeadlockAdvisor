@@ -18,7 +18,7 @@ has_healing_sustain,Has Healing / Sustain,0,100,How much this hero relies on hea
 has_utility_item_slots,Has Utility Item Slots,0,100,"How much of this hero's build can go to team utility items (heals, saves, auras) instead of its own damage and survival, as a support's does"
 applies_debuffs,Applies Debuffs,0,100,How often/impactfully this hero applies debuffs to enemies
 applies_slows,Applies Slows,0,100,How often/impactfully this hero slows enemies
-applies_cc,Applies Crowd Control,0,100,"How often/impactfully this hero applies crowd control (stuns, roots, silences, knock-ups, pulls) to enemies, for items that counter CC specifically; ordinary debuffs and status resistance are covered by Applies Debuffs"
+applies_cc,Applies Crowd Control,0,100,"How often/impactfully this hero applies crowd control (stuns, roots, silences, knock-ups, pulls) to enemies, specifically for items that counter CC like reactive barrier; general benefits from 'Debuff resistance' is covered by Applies Debuffs"
 picks_out_teammates,Locks Down / Picks Teammates,0,100,How much this hero threatens to isolate and pick off a single ally
 countered_by_slowing_hex,Countered by Slowing Hex,0,100,How much this hero's kit depends on movement and mobility abilities that Slowing Hex would shut down
 countered_by_silence,Countered by Silence,0,100,How much this hero's power depends on casting abilities that Silence Glyph would lock out

@@ -961,7 +961,7 @@
        },
        {
         "value": "-60%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": true
        }
@@ -1004,7 +1004,7 @@
        {
         "value": "+20%",
         "label": "Weapon Damage",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        }
       ],
@@ -1298,7 +1298,7 @@
     "cooldown": "",
     "blocks": [
      {
-      "text": "Landing a <b>Headshot</b> will reduce their <b>Bullet and Spirit Resist</b> and applies <b>Healing Reduction</b>.",
+      "text": "Landing a <b>Headshot</b> will reduce their <b>Bullet, Spirit Resist, and Incoming Healing</b>.",
       "elevated": [],
       "important": [
        {
@@ -1315,7 +1315,7 @@
        },
        {
         "value": "-35%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        }
@@ -1458,13 +1458,13 @@
        {
         "value": "+30%",
         "label": "Weapon Damage vs. NPCs",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        },
        {
         "value": "+30%",
         "label": "Bullet Resist vs. NPCs",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        }
       ]
@@ -1644,7 +1644,7 @@
       "elevated": [],
       "important": [
        {
-        "value": "1.95%/sec",
+        "value": "1.95% DPS",
         "label": "Bleed Damage",
         "conditional": false,
         "negative": false,
@@ -1652,7 +1652,7 @@
        },
        {
         "value": "-50%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        },
@@ -2002,7 +2002,14 @@
       "text": "<b>Reset the cooldown</b> of the imbued non-ultimate ability.<br><br>This item's cooldown is increased by <b>the cooldown of the imbued ability</b>.",
       "elevated": [],
       "important": [],
-      "stats": []
+      "stats": [
+       {
+        "value": "100%",
+        "label": "Imbued Ability Cooldown",
+        "conditional": false,
+        "negative": false
+       }
+      ]
      }
     ]
    }
@@ -2265,7 +2272,7 @@
     "cooldown": "37s",
     "blocks": [
      {
-      "text": "You enter a void state and become <b>untargetable and invincible</b> for a short duration, during which you float slowly and cannot perform actions. Afterwards you gain <b>Spirit Power, Move Speed, and Spirit Resist</b>.<br>Can be canceled early.<br><i>Activation cancels any active ability.</i>",
+      "text": "Instantly enter a void state and become Invulnerable for a short duration.",
       "elevated": [],
       "important": [
        {
@@ -2275,7 +2282,12 @@
         "negative": false
        }
       ],
-      "stats": [
+      "stats": []
+     },
+     {
+      "text": "Afterwards, gain a variety of temporary buffs:",
+      "elevated": [],
+      "important": [
        {
         "value": "+20",
         "label": "Spirit Power",
@@ -2293,17 +2305,13 @@
         "label": "Move Speed",
         "conditional": true,
         "negative": false
-       },
+       }
+      ],
+      "stats": [
        {
         "value": "5s",
         "label": "Buff Duration",
         "conditional": false,
-        "negative": false
-       },
-       {
-        "value": "2.5 m",
-        "label": "Float Speed",
-        "conditional": true,
         "negative": false
        }
       ]
@@ -2668,8 +2676,8 @@
       "elevated": [],
       "important": [
        {
-        "value": "4.5s",
-        "label": "Duration",
+        "value": "",
+        "label": "Silenced",
         "conditional": false,
         "negative": false
        },
@@ -2678,7 +2686,9 @@
         "label": "Damage On Expire",
         "conditional": false,
         "negative": false
-       },
+       }
+      ],
+      "stats": [
        {
         "value": "-9%",
         "label": "Spirit Resist",
@@ -2686,13 +2696,11 @@
         "negative": false
        },
        {
-        "value": "-30",
-        "label": "Spirit Power",
+        "value": "12s",
+        "label": "Resist Reduction Duration",
         "conditional": false,
         "negative": false
-       }
-      ],
-      "stats": [
+       },
        {
         "value": "25m",
         "label": "Cast Range",
@@ -2700,8 +2708,8 @@
         "negative": false
        },
        {
-        "value": "12s",
-        "label": "Resist Reduction Duration",
+        "value": "-30",
+        "label": "Spirit Power",
         "conditional": false,
         "negative": false
        }
@@ -3346,12 +3354,12 @@
     "cooldown": "",
     "blocks": [
      {
-      "text": "Your spirit damage applies <b>Healing Reduction</b>. If an enemy hero dies under this effect, you receive a large heal.",
+      "text": "Your spirit damage reduces the enemy's <b>Incoming Healing</b>. If an enemy hero dies under this effect, you receive a large heal.",
       "elevated": [],
       "important": [
        {
         "value": "-35%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        },
@@ -3413,7 +3421,7 @@
       "important": [
        {
         "value": "+20%",
-        "label": "Healing Effectiveness",
+        "label": "Outgoing Healing",
         "conditional": false,
         "negative": false
        }
@@ -3547,7 +3555,7 @@
       "elevated": [
        {
         "value": "+25%",
-        "label": "Healing Effectiveness",
+        "label": "Outgoing Healing",
         "conditional": false,
         "negative": false
        }
@@ -4074,7 +4082,7 @@
        },
        {
         "value": "-40%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        }
@@ -4323,12 +4331,6 @@
         "label": "Stun",
         "conditional": false,
         "negative": false
-       },
-       {
-        "value": "0.5s",
-        "label": "Stun Duration",
-        "conditional": false,
-        "negative": false
        }
       ],
       "stats": [
@@ -4518,12 +4520,6 @@
         "negative": false
        },
        {
-        "value": "0.75s",
-        "label": "Stun Duration",
-        "conditional": false,
-        "negative": false
-       },
-       {
         "value": "150",
         "label": "Damage",
         "conditional": false,
@@ -4602,7 +4598,7 @@
        {
         "value": "+40%",
         "label": "Weapon Damage",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        }
       ],
@@ -5038,13 +5034,13 @@
        {
         "value": "+25%",
         "label": "Weapon Damage vs. NPCs",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        },
        {
         "value": "+25%",
         "label": "Bullet Resist vs. NPCs",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        }
       ],
@@ -5941,6 +5937,12 @@
         "label": "Bonus Damage",
         "conditional": true,
         "negative": false
+       },
+       {
+        "value": "100%",
+        "label": "Damage Parried as Heal",
+        "conditional": false,
+        "negative": false
        }
       ],
       "stats": [
@@ -6202,25 +6204,6 @@
  },
  "return_fire": {
   "sections": [
-   {
-    "kind": "innate",
-    "cooldown": "",
-    "blocks": [
-     {
-      "text": "",
-      "elevated": [],
-      "important": [],
-      "stats": [
-       {
-        "value": "+10%",
-        "label": "Bullet Resist",
-        "conditional": false,
-        "negative": false
-       }
-      ]
-     }
-    ]
-   },
    {
     "kind": "active",
     "cooldown": "23s",
@@ -6620,7 +6603,7 @@
        {
         "value": "+60%",
         "label": "Weapon Damage",
-        "conditional": true,
+        "conditional": false,
         "negative": false
        }
       ],
@@ -6688,12 +6671,6 @@
        {
         "value": "40m",
         "label": "Cast Range",
-        "conditional": false,
-        "negative": false
-       },
-       {
-        "value": "3s",
-        "label": "Silence Duration",
         "conditional": false,
         "negative": false
        }
@@ -6767,12 +6744,6 @@
        }
       ],
       "stats": [
-       {
-        "value": "2.5s",
-        "label": "Silence Duration",
-        "conditional": false,
-        "negative": false
-       },
        {
         "value": "10s",
         "label": "Immunity Duration",
@@ -7150,7 +7121,7 @@
        },
        {
         "value": "-70%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        }
@@ -8336,11 +8307,11 @@
     "cooldown": "",
     "blocks": [
      {
-      "text": "Your bullets build up a <b>Bleed</b> on enemies, causing them to lose a <b>percentage</b> of their <b>Max Health</b> over time. Also applies <b>Healing Reduction</b> on the bleeding target.",
+      "text": "Your bullets build up a <b>Bleed</b> on enemies, causing them to lose a <b>percentage</b> of their <b>Max Health</b> over time. Also reduces <b>Incoming Healing</b> on the bleeding target.",
       "elevated": [],
       "important": [
        {
-        "value": "1.9%/sec",
+        "value": "1.9% DPS",
         "label": "Bleed Damage",
         "conditional": false,
         "negative": false,
@@ -8348,7 +8319,7 @@
        },
        {
         "value": "-35%",
-        "label": "Healing Reduction",
+        "label": "Incoming Healing",
         "conditional": true,
         "negative": false
        }
@@ -8438,7 +8409,7 @@
        {
         "value": "-15%",
         "label": "Weapon Damage vs. NPCs",
-        "conditional": true,
+        "conditional": false,
         "negative": true
        },
        {
@@ -8738,6 +8709,12 @@
       "elevated": [],
       "important": [
        {
+        "value": "",
+        "label": "Immobilize",
+        "conditional": false,
+        "negative": false
+       },
+       {
         "value": "12m",
         "label": "Capture Radius",
         "conditional": false,
@@ -8754,6 +8731,12 @@
        {
         "value": "4s",
         "label": "Duration",
+        "conditional": false,
+        "negative": false
+       },
+       {
+        "value": "0.5s",
+        "label": "Tether Duration",
         "conditional": false,
         "negative": false
        },

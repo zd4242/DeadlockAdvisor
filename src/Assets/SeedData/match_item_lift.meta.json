@@ -1,32 +1,58 @@
 {
- "fetched_at": 1790296852,
+ "fetched_at": 1790909442,
  "latest_patch": {
-  "title": "09-16-2026 Update",
-  "label": "09-16",
-  "start": 1789603200
+  "title": "09-29-2026",
+  "label": "09-29",
+  "start": 1790726400
  },
  "rank": "all",
  "match_mode": "ranked,unranked",
  "min_n": 2000,
  "min_reliability": 0.5,
+ "segments": [
+  {
+   "title": "09-29-2026",
+   "label": "09-29",
+   "start": 1790726400,
+   "until": 1790909442,
+   "ended": false,
+   "fetched_at": 1790909442,
+   "complete": false,
+   "ranks": true,
+   "share": 0.714
+  },
+  {
+   "title": "09-16-2026 Update",
+   "label": "09-16",
+   "start": 1789603200,
+   "until": 1790726399,
+   "ended": true,
+   "fetched_at": 1790909442,
+   "complete": true,
+   "ranks": true,
+   "share": 0.286
+  }
+ ],
  "families": {
   "against": {
    "since": 1789603200,
    "since_patch": "09-16",
    "rows": 5928,
-   "noise_scale": 0.79,
-   "tau": 0.37,
-   "reliability": 0.712,
-   "kept": true
+   "noise_scale": 0.613,
+   "tau": 0.405,
+   "reliability": 0.888,
+   "kept": true,
+   "drift": 0.485
   },
   "as": {
-   "since": 1787443200,
-   "since_patch": "08-22",
-   "rows": 4421,
-   "noise_scale": 1.169,
-   "tau": 2.264,
-   "reliability": 0.934,
-   "kept": true
+   "since": 1789603200,
+   "since_patch": "09-16",
+   "rows": 3631,
+   "noise_scale": 0.832,
+   "tau": 2.082,
+   "reliability": 0.961,
+   "kept": true,
+   "drift": 1.11
   }
  }
 }
