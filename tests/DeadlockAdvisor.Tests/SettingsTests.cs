@@ -9,6 +9,19 @@ namespace DeadlockAdvisor.Tests;
 
 public class SettingsTests
 {
+    [Theory]
+    [InlineData("1.2.0+15b6f95dbeb7522dd8e2318fd25fffae19d64634", "1.2.0 (15b6f95)")]
+    [InlineData("0.0.0-dev+abc", "0.0.0-dev (abc)")]
+    [InlineData("1.2.0", "1.2.0")]
+    [InlineData(null, "unknown")]
+    public void TheVersionShowsTheReleaseAndTheCommitItWasBuiltFrom(string? informational, string shown) =>
+        Assert.Equal(shown, Core.AppVersion.Describe(informational));
+
+    /// <summary>The commit is missing when it's built from a copy of the source without git.</summary>
+    [Fact]
+    public void ThisBuildIsALocalOne() =>
+        Assert.Matches(@"^0\.0\.0-dev( \([0-9a-f]{7}\))?$", Core.AppVersion.Text);
+
     [Fact]
     public async Task SettingsRoundTripIncludingTheSavedMatchInOrder()
     {

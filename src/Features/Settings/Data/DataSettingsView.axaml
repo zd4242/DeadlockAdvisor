@@ -19,6 +19,10 @@
                 <settings:SettingRow Title="Settings and log" Description="{Binding AppFolder}">
                     <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AppFolder}"/>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Version" Description="{Binding Version}">
+                    <Button Classes="ghost" Content="Releases" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding ReleasesUrl}"
+                            ToolTip.Tip="See the newest version on GitHub"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 

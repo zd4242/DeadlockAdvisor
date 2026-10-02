@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
@@ -32,6 +33,11 @@ public class DataSettingsViewModel : SettingsPageViewModel
 
     /// <summary>Settings and the log.</summary>
     public string AppFolder => JsonSettingsService.AppDataPath;
+
+    /// <summary>"1.2.0 (15b6f95)".</summary>
+    public string Version => AppVersion.Text;
+
+    public string ReleasesUrl => AppVersion.ReleasesUrl;
 
     public bool CheckForNewerPatch
     {

@@ -15,9 +15,13 @@ off your screen, and it takes a second opinion from real match results on
 
 ## Install
 
-`dotnet publish` (below) makes a single self-contained
-`DeadlockAdvisor.exe` (Windows x64). Copy it anywhere and run it; nothing
-else needs installing.
+Download the newest `DeadlockAdvisor-<version>-win-x64.zip` from
+[Releases](https://github.com/zd4242/DeadlockAdvisor/releases/latest), unzip it anywhere and run
+`DeadlockAdvisor.exe`; nothing else needs installing. It isn't code-signed,
+so Windows SmartScreen may warn the first time: **More info → Run anyway**.
+Settings → Data shows which version you have. A new version is a new
+download, but the formulas and match data keep themselves up to date
+without one.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,
@@ -31,9 +35,37 @@ To build it yourself (.NET 10 SDK):
 
 ```
 dotnet run                                          # debug build
-dotnet publish -p:PublishProfile=win-x64            # the single exe, into publish\
+dotnet publish -p:PublishProfile=release            # the single exe, into publish\win-x64\
 dotnet test                                         # everything, including the golden tests
 ```
+
+### Releasing
+
+Push a version tag: `git tag v1.2.0 && git push origin v1.2.0`. The
+**Release** workflow (`.github/workflows/release.yml`) runs the tests,
+builds each platform with the version from the tag, and publishes a
+GitHub Release with notes made from the commits since the last one.
+`gh workflow run release.yml` builds everything without releasing, as
+downloadable workflow artifacts.
+
+### Linux and macOS
+
+Not supported yet, but on the way: the release workflow builds
+`linux-x64` and `osx-arm64` alongside Windows (as preview artifacts, not
+release downloads), so they keep compiling. Nobody has tried them yet;
+everything but Detect should work. What's missing:
+
+- **Detect** reads the game's window through Windows APIs
+  (`ScreenCaptureService`, `ForegroundService`) and listens for F9 through
+  a Windows hotkey (`GlobalHotkeyService`). Each is behind
+  `OperatingSystem.IsWindows()`, so elsewhere Detect just says it isn't
+  supported. Linux would need X11/Wayland capture (Wayland only through
+  its screenshot portal), macOS ScreenCaptureKit and its screen-recording
+  permission.
+- **macOS packaging**: a proper `.app` bundle, and signing and
+  notarization with an Apple Developer ID, or Gatekeeper blocks it.
+- Data lives in .NET's application data folder, `~/.config/DeadlockAdvisor`
+  on both; macOS users would expect `~/Library/Application Support`.
 
 ## The three pages
 
@@ -196,7 +228,7 @@ Every install would otherwise make the same few hundred calls to
 `deadlock-api.com` for the same numbers. Instead, the **Match data**
 workflow (`.github/workflows/match-data.yml`) runs daily and
 publishes them as assets of this repo's rolling
-[`match-data`](../../releases/tag/match-data) pre-release: a
+[`match-data`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/match-data) pre-release: a
 `manifest.json` and one gzipped file per patch, about half a megabyte
 each. It runs `tools/MatchSnapshot`, which is the app's own download code
 (`MatchSnapshotJob`): it restores the last run's files and fetches only

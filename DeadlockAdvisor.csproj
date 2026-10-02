@@ -7,6 +7,8 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <AvaloniaUseCompiledBindingsByDefault>true</AvaloniaUseCompiledBindingsByDefault>
     <ApplicationIcon>src\Assets\app.ico</ApplicationIcon>
+    <!-- A local build; the release workflow sets the version from its tag. -->
+    <Version>0.0.0-dev</Version>
     <!-- The test and tool projects live beneath this one; keep their sources out of the app's default globs. -->
     <DefaultItemExcludes>$(DefaultItemExcludes);tests\**;tools\**</DefaultItemExcludes>
   </PropertyGroup>

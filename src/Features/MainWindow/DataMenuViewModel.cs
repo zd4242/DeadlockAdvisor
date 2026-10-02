@@ -125,7 +125,7 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
 
-    /// <summary>Show a folder in Explorer.</summary>
+    /// <summary>Show a folder in the file manager, or a web page in the browser.</summary>
     public ReactiveCommand<string, Unit> OpenFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> ChangeDataFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> DownloadArtCommand { get; }
