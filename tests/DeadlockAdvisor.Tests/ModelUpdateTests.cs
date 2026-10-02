@@ -36,17 +36,17 @@ public sealed class ModelUpdateTests : IDisposable
     }
 
     /// <summary>The seed published as a newer model with some files changed, and served by the fake API.</summary>
-    private ModelManifest Publish(params (string File, byte[] Bytes)[] changed)
+    private ModelManifest Publish(params (string File, byte[] Bytes)[] changed) => PublishWithNotes([], changed);
+
+    private ModelManifest PublishWithNotes(IReadOnlyList<ModelNote> notes, params (string File, byte[] Bytes)[] changed)
     {
-        var files = new Dictionary<string, string>();
-        foreach (var file in ModelManifest.ModelFiles)
-        {
-            var bytes = changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : Seed(file);
-            _api.Bytes[ModelManifest.UrlOf(file)] = bytes;
-            files[file] = ModelManifest.Hash(bytes);
-        }
-        var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09", files, new Dictionary<string, string>());
-        _api.Bytes[ModelManifest.UrlOf(ModelManifest.FileName)] = published.ToJsonBytes();
+        var contents = ModelManifest.ModelFiles.ToDictionary(file => file,
+            file => changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : Seed(file));
+        var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09",
+            contents.ToDictionary(pair => pair.Key, pair => ModelManifest.Hash(pair.Value)), new Dictionary<string, string>()) { Notes = notes };
+        foreach (var (file, bytes) in contents)
+            _api.Bytes[published.UrlOf(file)] = bytes;
+        _api.Bytes[ModelManifest.ManifestUrl] = published.ToJsonBytes();
         return published;
     }
 
@@ -58,17 +58,18 @@ public sealed class ModelUpdateTests : IDisposable
     {
         var path = Path.Combine(SeedDir, ModelManifest.FileName);
         var listed = File.Exists(path) ? ModelManifest.Parse(File.ReadAllBytes(path)) : null;
-        var actual = ModelManifest.Of(SeedDir, listed?.Published ?? "");
-        if (Golden.Updating && (listed is null || !actual.ToJsonBytes().SequenceEqual(File.ReadAllBytes(path))))
+        var actual = listed is null ? null : ModelPublisher.Listing(SeedDir, listed);
+        if (Golden.Updating && (actual is null || !actual.SequenceEqual(File.ReadAllBytes(path))))
         {
             // Changed files are a new version: published today.
-            File.WriteAllBytes(path, (actual with { Published = DateTime.UtcNow.ToString("yyyy-MM-dd") }).ToJsonBytes());
+            var today = ModelManifest.Of(SeedDir, DateTime.UtcNow.ToString("yyyy-MM-dd")) with { Notes = listed?.Notes ?? [] };
+            File.WriteAllBytes(path, today.ToJsonBytes());
             return;
         }
 
         Assert.True(listed is not null, $"Regenerate {path} with DEADLOCK_UPDATE_GOLDENS=1.");
         Assert.Equal(ModelManifest.ModelFiles, listed.Files.Keys);
-        Assert.True(actual.ToJsonBytes().SequenceEqual(File.ReadAllBytes(path)),
+        Assert.True(actual!.SequenceEqual(File.ReadAllBytes(path)),
             "The seed's files changed: regenerate model.json with DEADLOCK_UPDATE_GOLDENS=1, which publishes them as a new version once pushed.");
     }
 
@@ -206,7 +207,7 @@ public sealed class ModelUpdateTests : IDisposable
     public async Task ADamagedDownloadWritesNothing()
     {
         var published = Publish((DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3")));
-        _api.Bytes[ModelManifest.UrlOf(DataStore.TraitWeightsFile)] = [1, 2, 3];
+        _api.Bytes[published.UrlOf(DataStore.TraitWeightsFile)] = [1, 2, 3];
         var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
 
         await Assert.ThrowsAsync<InvalidDataException>(() => _service.DownloadAsync(published, plan.Quiet));
@@ -243,8 +244,63 @@ public sealed class ModelUpdateTests : IDisposable
         Assert.Null(await _service.PublishedAsync());
 
         var published = Publish();
-        _api.Bytes[ModelManifest.UrlOf(ModelManifest.FileName)] = (published with { Format = ModelManifest.CurrentFormat + 1 }).ToJsonBytes();
+        _api.Bytes[ModelManifest.ManifestUrl] = (published with { Format = ModelManifest.CurrentFormat + 1 }).ToJsonBytes();
 
         Assert.Null(await _service.PublishedAsync());
+    }
+
+    [Fact]
+    public async Task AnUpdateTellsOnlyTheNotesNotShownBefore()
+    {
+        ModelNote first = new("2026-10-09", "Rated the new heroes."), second = new("2026-10-16", "Spirit items rate higher against Haze.");
+        var published = PublishWithNotes([first], (DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3")));
+        Assert.Equal([first], ModelManifest.Parse((await _service.PublishedAsync())!.ToJsonBytes()).Notes);
+
+        var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
+        Assert.Equal([first], plan.News);
+        await InstallAsync(plan);
+
+        Assert.Equal([first], ModelManifest.Installed(_data.Path)!.Notes);
+        var newer = PublishWithNotes([second, first], (DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.4")));
+        Assert.Equal([second], ModelUpdatePlan.For(newer, _data.Path, askAgain: false).News);
+    }
+
+    [Fact]
+    public void PublishingWithANoteAddsItNewestFirstButOnlyWithANewVersion()
+    {
+        using var seed = SeedCopy();
+        File.WriteAllBytes(DataFile(DataStore.TraitWeightsFile), FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3"));
+        var listedNow = () => ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+
+        Assert.Equal(new ModelNote("2026-10-09", "Weights lean on burst."),
+            ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09", "  Weights lean on burst. ").Note);
+        Assert.Null(ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-10", "Nothing changed.").Note);
+        File.WriteAllBytes(DataFile(DataStore.TraitWeightsFile), FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.4"));
+        ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-11", "Weights lean on burst even more.");
+
+        var listed = listedNow();
+        Assert.Equal(["Weights lean on burst even more.", "Weights lean on burst."], listed.Notes.Select(note => note.Text));
+        // The seed check keeps passing: its notes are part of what model.json says.
+        Assert.Equal(ModelPublisher.Listing(seed.Path, listed), File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+    }
+
+    [Fact]
+    public void TheReleaseHoldsEachFileUnderTheNameItsHashGivesIt()
+    {
+        using var seed = SeedCopy();
+        using var release = new TempDirectory();
+        var listed = ModelManifest.Parse(Seed(ModelManifest.FileName));
+
+        var names = ModelPublisher.WriteAssets(seed.Path, release.Path);
+
+        Assert.Equal(listed.Files.Select(pair => ModelManifest.AssetOf(pair.Key, pair.Value)).Append(ModelManifest.FileName), names);
+        Assert.Equal(names.Order(), Directory.GetFiles(release.Path).Select(Path.GetFileName).Order());
+        Assert.Equal($"trait_weights-{listed.Files[DataStore.TraitWeightsFile][..8]}.csv", ModelManifest.AssetOf(DataStore.TraitWeightsFile, listed.Files[DataStore.TraitWeightsFile]));
+        Assert.EndsWith("/" + names[0], listed.UrlOf(listed.Files.Keys.First()));
+        Assert.Equal(Seed(ModelManifest.FileName), File.ReadAllBytes(Path.Combine(release.Path, ModelManifest.FileName)));
+
+        // A file that isn't the one model.json lists stops it.
+        File.WriteAllBytes(Path.Combine(seed.Path, DataStore.TraitWeightsFile), FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3"));
+        Assert.Throws<InvalidOperationException>(() => ModelPublisher.WriteAssets(seed.Path, release.Path));
     }
 }

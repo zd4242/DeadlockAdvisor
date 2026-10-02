@@ -6,12 +6,16 @@ using DeadlockAdvisor.Services.Contracts;
 
 namespace DeadlockAdvisor.Services;
 
+/// <summary>What a published version changed, in its publisher's words: "Spirit items rate higher against Haze."</summary>
+public sealed record ModelNote(string Published, string Text);
+
 /// <summary>
 /// The model: the hero ratings, item formulas and the game data they were tuned against, as the repo
 /// publishes them in src/Assets/SeedData. A new install starts from the copy bundled in the app; existing
-/// ones update from the repo itself. model.json lists each file's SHA-256 (the tests keep it in step with
-/// the files), and the copy written into a data folder records what was installed there, so a file
-/// changed since, by hand or by a game sync, is told apart from one that's simply out of date.
+/// ones update from the repo's rolling "model" release, which CI publishes from main once the tests pass
+/// (.github/workflows/ci.yml). model.json lists each file's SHA-256 (the tests keep it in step with the
+/// files), and the copy written into a data folder records what was installed there, so a file changed
+/// since, by hand or by a game sync, is told apart from one that's simply out of date.
 /// </summary>
 /// <param name="Format">What the files hold; an app only takes a model of its own <see cref="CurrentFormat"/>.</param>
 /// <param name="Published">"2026-10-02": when this version was published.</param>
@@ -23,7 +27,14 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
     public const int CurrentFormat = 1;
 
     public const string FileName = "model.json";
-    public const string BaseUrl = "https://raw.githubusercontent.com/zd4242/DeadlockAdvisor/main/src/Assets/SeedData";
+    public const string ReleaseUrl = "https://github.com/zd4242/DeadlockAdvisor/releases/download/model";
+    public const string ManifestUrl = $"{ReleaseUrl}/{FileName}";
+
+    /// <summary>How many versions' notes model.json keeps, newest first.</summary>
+    public const int MaxNotes = 20;
+
+    /// <summary>What each version published so far changed, newest first; in a data folder's record, the notes already shown.</summary>
+    public IReadOnlyList<ModelNote> Notes { get; init; } = [];
 
     /// <summary>The files a model covers, in the order they're listed. The match data has a download of its own.</summary>
     public static readonly IReadOnlyList<string> ModelFiles =
@@ -32,7 +43,13 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
         DataStore.StatRulesFile, DataStore.HeroesFile, DataStore.ItemsFile, DataStore.ItemStatsFile, DataStore.ItemTooltipsFile,
     ];
 
-    public static string UrlOf(string file) => $"{BaseUrl}/{file}";
+    /// <summary>
+    /// "trait_weights-1a2b3c4d.csv": a file as the release holds it, named by its contents, so a file the
+    /// published model.json names never changes under it.
+    /// </summary>
+    public static string AssetOf(string file, string hash) => $"{Path.GetFileNameWithoutExtension(file)}-{hash[..8]}{Path.GetExtension(file)}";
+
+    public string UrlOf(string file) => $"{ReleaseUrl}/{AssetOf(file, Files[file])}";
 
     public static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
@@ -80,6 +97,18 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
             writer.WriteStartObject();
             writer.WriteNumber("format", Format);
             writer.WriteString("published", Published);
+            if (Notes.Count > 0)
+            {
+                writer.WriteStartArray("notes");
+                foreach (var note in Notes)
+                {
+                    writer.WriteStartObject();
+                    writer.WriteString("published", note.Published);
+                    writer.WriteString("text", note.Text);
+                    writer.WriteEndObject();
+                }
+                writer.WriteEndArray();
+            }
             WriteFiles(writer, "files", Files);
             if (Kept.Count > 0)
                 WriteFiles(writer, "kept", Kept);
@@ -105,7 +134,13 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
             root.TryGetProperty(name, out var files)
                 ? files.EnumerateObject().ToDictionary(file => file.Name, file => file.Value.GetString() ?? "")
                 : [];
-        return new ModelManifest(root.GetProperty("format").GetInt32(), root.GetProperty("published").GetString() ?? "", Read("files"), Read("kept"));
+        var notes = root.TryGetProperty("notes", out var list)
+            ? list.EnumerateArray().Select(note => new ModelNote(note.GetProperty("published").GetString() ?? "", note.GetProperty("text").GetString() ?? "")).ToList()
+            : [];
+        return new ModelManifest(root.GetProperty("format").GetInt32(), root.GetProperty("published").GetString() ?? "", Read("files"), Read("kept"))
+        {
+            Notes = notes,
+        };
     }
 }
 
@@ -116,7 +151,13 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
 public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Installed, IReadOnlyDictionary<string, string?> Current,
     IReadOnlyList<string> Quiet, IReadOnlyList<string> Edited)
 {
+    /// <summary>How many of the notes not yet shown an update shows: a folder from long ago doesn't get the whole history.</summary>
+    public const int MaxNewsShown = 5;
+
     public bool HasWork => Quiet.Count > 0 || Edited.Count > 0;
+
+    /// <summary>What's changed since the version installed here, newest first, as the update says it.</summary>
+    public IReadOnlyList<ModelNote> News => Published.Notes.Except(Installed?.Notes ?? []).Take(MaxNewsShown).ToList();
 
     /// <param name="askAgain">Ask about edited files even where this version was turned down before, as a check on demand does.</param>
     public static ModelUpdatePlan For(ModelManifest published, string dataDir, bool askAgain)
@@ -166,7 +207,7 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
             if (Edited.Contains(file) && !replaced.Contains(file))
                 kept[file] = latest;
         }
-        return new ModelManifest(ModelManifest.CurrentFormat, Published.Published, files, kept);
+        return new ModelManifest(ModelManifest.CurrentFormat, Published.Published, files, kept) { Notes = Published.Notes };
     }
 }
 
@@ -189,7 +230,7 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
     {
         try
         {
-            var published = ModelManifest.Parse(await api.GetBytesAsync(ModelManifest.UrlOf(ModelManifest.FileName), DeadlockApi.UserAgent, cancellationToken));
+            var published = ModelManifest.Parse(await api.GetBytesAsync(ModelManifest.ManifestUrl, DeadlockApi.UserAgent, cancellationToken));
             return published.Format == ModelManifest.CurrentFormat ? published : null;
         }
         catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TimeoutException or JsonException or KeyNotFoundException
@@ -205,7 +246,7 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
         var downloaded = new Dictionary<string, byte[]>();
         foreach (var file in files)
         {
-            var bytes = await api.GetBytesAsync(ModelManifest.UrlOf(file), DeadlockApi.UserAgent, cancellationToken);
+            var bytes = await api.GetBytesAsync(published.UrlOf(file), DeadlockApi.UserAgent, cancellationToken);
             if (ModelManifest.Hash(bytes) != published.Files[file])
                 throw new InvalidDataException($"The published {ModelManifest.Title(file).ToLowerInvariant()} ({file}) didn't arrive intact.");
             downloaded[file] = bytes;

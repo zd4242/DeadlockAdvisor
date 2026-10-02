@@ -44,7 +44,7 @@ dotnet test                                         # everything, including the 
 
 Formulas, match data and the app each reach installs their own way; see
 [docs/publishing.md](docs/publishing.md). In short: publish formulas with
-`dotnet run --project tools/PublishModel -- --push`, match data looks
+`dotnet run --project tools/PublishModel -- --note "What changed" --push`, match data looks
 after itself, and Actions → Release → Run workflow releases the app.
 
 ### Linux and macOS
@@ -204,7 +204,9 @@ change when the data does.
 The hero ratings, item formulas and the game data they're tuned against
 (everything in `src/Assets/SeedData` but the match lift) are the **model**.
 A new install starts from the copy built into the app, and later startups
-take the newest one published on this repo's `main` branch (Settings →
+take the newest one published to this repo's rolling
+[`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model)
+pre-release, which CI publishes from `main` once the tests pass (Settings →
 Data turns that off; **Data → Check for Formula Updates** checks on
 demand). `model.json` lists each file's SHA-256, and a copy in the data
 folder records what was installed there, so the app can tell a file that's
@@ -212,11 +214,14 @@ only out of date from one you've changed, by hand or with Sync from Game
 API. Files you haven't changed are replaced quietly, with the old ones
 kept in `data/.backups/`; for files you have changed, a dialog asks which
 to replace, and one you keep isn't asked about again for that version.
+Either way, the update says what changed, in the words of whoever
+published it.
 
 To publish a new version of the model, run
-`dotnet run --project tools/PublishModel -- --push` from the repository:
-it copies your data folder's model into `src/Assets/SeedData`, dates
-`model.json`, commits and pushes ([docs/publishing.md](docs/publishing.md)).
+`dotnet run --project tools/PublishModel -- --note "What changed" --push`
+from the repository: it copies your data folder's model into
+`src/Assets/SeedData`, dates `model.json` and adds the note, commits and
+pushes ([docs/publishing.md](docs/publishing.md)).
 
 ## Shared match data
 

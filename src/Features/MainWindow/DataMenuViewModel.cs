@@ -37,6 +37,7 @@ public class DataMenuViewModel : ViewModelBase
     // Showing new art re-reads every image on screen, so it's done this often at most while art arrives.
     private static readonly TimeSpan _artShowGap = TimeSpan.FromSeconds(5);
     private static readonly TimeSpan _toastTime = TimeSpan.FromSeconds(5);
+    private static readonly TimeSpan _newsToastTime = TimeSpan.FromSeconds(12);
 
     private readonly IScheduler _clock;
     private readonly IDataService _data;
@@ -530,9 +531,14 @@ public class DataMenuViewModel : ViewModelBase
         if (written.Count == 0)
             return;
         _data.Reload();
+        // What the publisher said changed comes first, with longer to read it.
+        var news = update.News;
         _notifications.ShowSuccess(
-            $"Updated to the formulas published {update.Published.Published}: {string.Join(", ", written.Select(ModelManifest.Title))}. "
-            + "The old files are in data\\.backups.", _toastTime);
+            news.Count > 0
+                ? $"Formulas updated: {string.Join(" ", news.Select(note => note.Text))} The old files are in data\\.backups."
+                : $"Updated to the formulas published {update.Published.Published}: {string.Join(", ", written.Select(ModelManifest.Title))}. "
+                  + "The old files are in data\\.backups.",
+            news.Count > 0 ? _newsToastTime : _toastTime);
     }
 
     private void WriteModelRecord(string dataDir, ModelUpdatePlan update)

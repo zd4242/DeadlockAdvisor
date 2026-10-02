@@ -29,6 +29,7 @@ public sealed class ModelUpdateViewModel : ViewModelBase
     {
         Intro = $"A newer version of the hero ratings and item formulas was published on {update.Published.Published}. "
                 + "You've changed some of the files it replaces since they were installed, by editing them or with Sync from Game API.";
+        News = update.News.Select(note => $"{note.Published}: {note.Text}").ToList();
         Choices = update.Edited.Select(file => new ModelFileChoice(file)).ToList();
         AlsoUpdated = update.Quiet.Count == 0
             ? ""
@@ -45,6 +46,11 @@ public sealed class ModelUpdateViewModel : ViewModelBase
     public string Title => "Formula update";
 
     public string Intro { get; }
+
+    /// <summary>"2026-10-09: Spirit items rate higher against Haze.": what the publisher said changed since your version, newest first.</summary>
+    public IReadOnlyList<string> News { get; }
+
+    public bool HasNews => News.Count > 0;
 
     /// <summary>Tick one to replace your changes with the published version.</summary>
     public IReadOnlyList<ModelFileChoice> Choices { get; }

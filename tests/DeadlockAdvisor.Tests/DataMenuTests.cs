@@ -33,6 +33,8 @@ public sealed class DataMenuTests : IDisposable
     private readonly FakeDeadlockApi _api = new();
     private readonly ArtService _art = new(new FakeLoggingService());
     private readonly List<ViewModelBase> _shown = [];
+    private readonly NotificationService _notifications = new(new FakeLoggingService());
+    private readonly List<Notification> _toasts = [];
     private readonly IDisposable _watchModals;
     private readonly DataMenuViewModel _menu;
     private int _replaced;
@@ -42,6 +44,7 @@ public sealed class DataMenuTests : IDisposable
         _art.SetAssetsDir(_fixture.Data.AssetsDir);
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         _fixture.Data.StoreReplaced.Subscribe(_ => _replaced++);
+        _notifications.Notifications.Subscribe(_toasts.Add);
         _menu = Menu();
     }
 
@@ -51,7 +54,7 @@ public sealed class DataMenuTests : IDisposable
         var gameApi = new GameApiService(_api);
         return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api),
             snapshots ?? new MatchSnapshotService(_api), new ModelUpdateService(_api), new ExcelExportService(),
-            artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, new NotificationService(new FakeLoggingService()),
+            artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, _notifications,
             _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _fixture.Clock);
     }
 
@@ -637,19 +640,19 @@ public sealed class DataMenuTests : IDisposable
     /// The fixture's data recorded as the installed model, and a newer one published with
     /// <paramref name="changed"/>; the fake API serves both.
     /// </summary>
-    private ModelManifest PublishModel(params (string File, byte[] Bytes)[] changed)
+    private ModelManifest PublishModel(params (string File, byte[] Bytes)[] changed) => PublishModelWithNotes([], changed);
+
+    private ModelManifest PublishModelWithNotes(IReadOnlyList<ModelNote> notes, params (string File, byte[] Bytes)[] changed)
     {
         var dataDir = _fixture.Data.DataDir;
         ModelUpdateService.Record(dataDir, ModelManifest.Of(dataDir, "2026-10-02"));
-        var files = new Dictionary<string, string>();
-        foreach (var file in ModelManifest.ModelFiles)
-        {
-            var bytes = changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : File.ReadAllBytes(Path.Combine(dataDir, file));
-            _api.Bytes[ModelManifest.UrlOf(file)] = bytes;
-            files[file] = ModelManifest.Hash(bytes);
-        }
-        var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09", files, new Dictionary<string, string>());
-        _api.Bytes[ModelManifest.UrlOf(ModelManifest.FileName)] = published.ToJsonBytes();
+        var contents = ModelManifest.ModelFiles.ToDictionary(file => file,
+            file => changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : File.ReadAllBytes(Path.Combine(dataDir, file)));
+        var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09",
+            contents.ToDictionary(pair => pair.Key, pair => ModelManifest.Hash(pair.Value)), new Dictionary<string, string>()) { Notes = notes };
+        foreach (var (file, bytes) in contents)
+            _api.Bytes[published.UrlOf(file)] = bytes;
+        _api.Bytes[ModelManifest.ManifestUrl] = published.ToJsonBytes();
         return published;
     }
 
@@ -668,6 +671,19 @@ public sealed class DataMenuTests : IDisposable
         Assert.Equal(weights, DataBytes(DataStore.TraitWeightsFile));
         Assert.Equal(1, _replaced);
         Assert.Equal("2026-10-09", ModelManifest.Installed(_fixture.Data.DataDir)!.Published);
+    }
+
+    [Fact]
+    public async Task AnUpdateSaysWhatItsPublisherSaidChanged()
+    {
+        var weights = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "1.3");
+        PublishModelWithNotes([new("2026-10-09", "Trait weights lean harder on burst.")], (DataStore.TraitWeightsFile, weights));
+
+        await _menu.CheckModelCommand.Execute();
+
+        var toast = Assert.Single(_toasts);
+        Assert.Equal("Formulas updated: Trait weights lean harder on burst. The old files are in data\\.backups.", toast.Message);
+        Assert.Equal([new ModelNote("2026-10-09", "Trait weights lean harder on burst.")], ModelManifest.Installed(_fixture.Data.DataDir)!.Notes);
     }
 
     [Fact]

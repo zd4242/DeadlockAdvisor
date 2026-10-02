@@ -24,3 +24,55 @@ jobs:
       - name: Test
         # The solution, so the match data tool is built too.
         run: dotnet test DeadlockAdvisor.sln -c Release --logger "console;verbosity=minimal"
+
+  # Installs update their hero ratings and item formulas from the rolling "model" release
+  # (src/Services/ModelUpdateService.cs), so the seed on main reaches them only once the tests pass.
+  publish-model:
+    needs: test
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Compare with the published model
+        id: compare
+        run: |
+          mkdir -p published
+          if gh release view model > /dev/null 2>&1; then
+            gh release download model --pattern model.json --dir published || echo "Nothing published yet."
+          else
+            gh release create model --prerelease --latest=false --title "Formulas" \
+              --notes "The hero ratings and item formulas Deadlock Item Advisor updates to, published by CI from main once the tests pass. Not an app release."
+          fi
+          if cmp -s src/Assets/SeedData/model.json published/model.json; then
+            echo "The model on main is already published."
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-dotnet@v5
+        if: steps.compare.outputs.changed == 'true'
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish
+        if: steps.compare.outputs.changed == 'true'
+        run: |
+          dotnet run --project tools/PublishModel -c Release -- --assets out
+          existing=$(gh release view model --json assets --jq '.assets[].name')
+          # The files first, each named by its contents, so model.json only ever names files that are there.
+          for file in out/*; do
+            name=$(basename "$file")
+            [ "$name" = model.json ] || grep -qxF "$name" <<< "$existing" || gh release upload model "$file"
+          done
+          gh release upload model out/model.json --clobber
+          # Then drop the files it no longer names.
+          for name in $existing; do
+            [ -f "out/$name" ] || gh release delete-asset model "$name" --yes
+          done

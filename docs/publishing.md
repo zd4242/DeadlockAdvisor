@@ -4,7 +4,7 @@ Three things reach the people using the app, each its own way:
 
 | What | How installs get it | What you do |
 |---|---|---|
-| **Hero ratings and item formulas** (the model) | At their next startup, without a new download | `dotnet run --project tools/PublishModel -- --push` |
+| **Hero ratings and item formulas** (the model) | At their next startup once CI passes, without a new download | `dotnet run --project tools/PublishModel -- --note "What changed" --push` |
 | **Match data** (item win rates) | At startup, when it's newer than theirs | Nothing: a workflow refreshes it daily |
 | **The app itself** | A new download from Releases | Actions → Release → Run workflow, choose `patch` / `minor` / `major` |
 
@@ -17,7 +17,7 @@ Edit them in the app as usual: they save into your data folder (Settings → Dat
 you're happy with them, from the repository:
 
 ```
-dotnet run --project tools/PublishModel -- --push
+dotnet run --project tools/PublishModel -- --note "Spirit items rate higher against Haze." --push
 ```
 
 That:
@@ -28,26 +28,41 @@ That:
    game data they go with (`heroes.csv`, `items.csv`, `item_stats.csv`, `item_tooltips.json`).
 3. Copies the match data too, as the starting point for new installs, unless yours leans toward some
    ranks (switch the Match page's filter back to every rank first).
-4. Rewrites `model.json`, the list of each file's hash, dated today.
+4. Rewrites `model.json`, the list of each file's hash, dated today, with your note at the top of its
+   `notes` (the last 20 are kept).
 5. Commits just `src/Assets/SeedData`, and pushes.
 
 Leave out `--push` to commit without pushing, or both flags to only copy, and review with `git diff`
-first. `--from <folder>` publishes another data folder than the app's.
+first. `--from <folder>` publishes another data folder than the app's. The note is optional, but it's
+what people see: write it for players, one or two sentences. It's only added with a new version, so a
+run that changes nothing drops it.
+
+**Then CI publishes it.** The push runs the **CI** workflow (`.github/workflows/ci.yml`). Once its tests
+pass, its `publish-model` job puts the seed's files on the rolling
+[`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model) pre-release, each named by its
+hash (`trait_weights-1a2b3c4d.csv`), then `model.json`, then deletes the files it no longer names. A
+push that fails the tests publishes nothing, and installs keep the last version that passed. It takes
+about 10 minutes from the push. To publish again without a push (say, if the job failed for GitHub's
+reasons), run CI by hand: `gh workflow run ci.yml`, or Actions → CI → Run workflow.
 
 **What installs do with it** (`ModelUpdateService`): at their next startup they read `model.json` from
-`main` (GitHub may cache it for a few minutes), and compare each file with what they installed:
+that release, and compare each file with what they installed:
 
 - Files they haven't changed are replaced quietly, the old copy kept in `data\.backups`, with a notice
-  saying what was updated.
-- Files they have changed (by hand, or with Sync from Game API) are listed in a dialog, unticked: they
-  tick the ones to replace and keep the rest, and aren't asked about that version again.
+  giving the notes they haven't seen yet (or the files updated, without any).
+- Files they have changed (by hand, or with Sync from Game API) are listed in a dialog, unticked, under
+  the notes: they tick the ones to replace and keep the rest, and aren't asked about that version again.
 - New installs start from the seed built into their copy of the app, then update the same way.
 
 They can turn this off in Settings → Data, or check on demand with Data → Check for Formula Updates.
 
+Versions 0.1.0 and 0.1.1 of the app read `model.json` straight from `main` instead, so they get a push
+before CI has tested it, and don't show notes. Both go away as people update.
+
 **Safety nets.** A test (`ModelUpdateTests.TheSeedsModelJsonListsEveryModelFileByItsHash`) fails if the
-seed's files and `model.json` disagree, so CI goes red if a file was copied in by hand without the
-tool. Installs check every file against its hash and change nothing if one doesn't match.
+seed's files and `model.json` disagree, so CI goes red, and nothing is published, if a file was copied
+in by hand without the tool. Installs check every file against its hash and change nothing if one
+doesn't match.
 
 ## Match data
 
@@ -120,10 +135,10 @@ last version their app understands.
 | | |
 |---|---|
 | `src/Assets/SeedData/` | The published model, and the starting data built into the app |
-| `src/Assets/SeedData/model.json` | Each model file's hash and the date it was published |
-| `tools/PublishModel/` | Publishes your data folder's model into the seed |
+| `src/Assets/SeedData/model.json` | Each model file's hash, the date it was published, and the notes |
+| `tools/PublishModel/` | Publishes your data folder's model into the seed; CI runs it with `--assets` to lay out the release |
 | `tools/MatchSnapshot/` | What the Match data workflow runs |
-| `.github/workflows/ci.yml` | Builds and tests every push and pull request |
+| `.github/workflows/ci.yml` | Builds and tests every push and pull request, then publishes the model from `main` |
 | `.github/workflows/match-data.yml` | The daily match data |
 | `.github/workflows/release.yml` | App releases |
 | `Properties/PublishProfiles/release.pubxml` | The single-file build: `dotnet publish -p:PublishProfile=release [-r linux-x64]` |

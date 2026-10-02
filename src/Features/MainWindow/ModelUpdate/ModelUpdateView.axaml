@@ -7,6 +7,17 @@
         <TextBlock Classes="h2" Text="{Binding Title}"/>
         <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Intro}"/>
 
+        <StackPanel Spacing="6" IsVisible="{Binding HasNews}">
+            <TextBlock Classes="section" Text="WHAT'S NEW"/>
+            <ItemsControl ItemsSource="{Binding News}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="x:String">
+                        <TextBlock TextWrapping="Wrap" Margin="0,0,0,4" Text="{Binding}"/>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+
         <StackPanel Spacing="6">
             <TextBlock Classes="section" Text="REPLACE YOUR CHANGES?"/>
             <ItemsControl ItemsSource="{Binding Choices}">
