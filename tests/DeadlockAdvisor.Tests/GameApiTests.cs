@@ -387,6 +387,39 @@ public class GameApiTests
         Assert.Empty(again.Changed);
     }
 
+    /// <summary>
+    /// Health at 10,000 souls is the starting health plus one level-up's here (the next is out of reach): 1000,
+    /// 700, 1100 and 1000, a median of 1000. On the -5..5 scale, 30% below is -5 and 10% above rounds to 2.
+    /// </summary>
+    [Fact]
+    public void MaxHpIsMeasuredFromEachHerosHealthOnTheProfiledHeroes()
+    {
+        var store = TestStore.Make();
+        static JsonObject Hero(int id, string name, int health, int perLevel) => new()
+        {
+            ["id"] = id,
+            ["name"] = name,
+            ["starting_stats"] = new JsonObject { ["max_health"] = new JsonObject { ["value"] = health } },
+            ["standard_level_up_upgrades"] = new JsonObject { ["MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL"] = perLevel },
+            ["level_info"] = JsonNode.Parse("""
+                {"1": {"required_gold": 0}, "2": {"use_standard_upgrade": true, "required_gold": 200},
+                 "3": {"use_standard_upgrade": true, "required_gold": 20000}}
+                """),
+        };
+        var heroes = new JsonArray(Hero(13, "Heavy Spirit", 990, 10), Hero(2, "Low HP", 680, 20), Hero(3, "Generic", 1090, 10), Hero(4, "Unrated", 990, 10));
+
+        var report = GameSync.Apply(store, heroes, []);
+
+        Assert.Equal(["Low HP: -4 -> -5", "Generic: 0 -> 2"], report.MeasuredChanges);
+        Assert.Equal(-5, store.HeroScore("low_hp", "max_hp"));
+        // A new hero rated on nothing else stays unprofiled rather than counting as below average at everything.
+        Assert.Equal(0, store.HeroScore("unrated", "max_hp"));
+        Assert.Contains("_kitHealth: Abrams isn't among the game's heroes", report.StaleOverrides);
+        Assert.Contains("Has High Max HP, measured from each hero's health, changed on 2 hero(es):", report.Lines());
+        Assert.Empty(GameSync.Apply(store, heroes, []).MeasuredChanges);
+        Assert.Null(GameSync.MidGameHealth(JsonNode.Parse("""{"id": 5, "name": "Bare"}""")!));
+    }
+
     [Fact]
     public void ARenameKeepsTheRowAndItsRulesAndTheOldNameCanBeTakenByANewItem()
     {

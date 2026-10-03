@@ -625,7 +625,86 @@ public static partial class GameSync
         report.StaleOverrides.AddRange(StaleOverrides(records));
         if (report.AddedHeroes.Count > 0)
             store.SyncCategories();
+        ApplyMeasuredMaxHp(store, heroes, report);
         return report;
+    }
+
+    // -- hero traits measured from the game ---------------------------------------------
+
+    /// <summary>The trait measured from each hero's health rather than rated by hand.</summary>
+    public const string MaxHpTrait = "max_hp";
+
+    /// <summary>
+    /// The souls "mid-game" health is read at: 15 level-ups, where the measured scores sit closest to the
+    /// hand-rated ones they replaced (r = 0.98, 4 points apart on average).
+    /// </summary>
+    public const int MidGameSouls = 10_000;
+
+    /// <summary>How far from the roster's median health the ends of the trait's scale sit, as its description says.</summary>
+    public const double MaxHpSpread = 0.30;
+
+    /// <summary>Max health a hero's own abilities add, which the hero's stats don't show: Abrams' third ability gives 200.</summary>
+    private static readonly Dictionary<string, double> _kitHealth = new() { ["Abrams"] = 200 };
+
+    /// <summary>
+    /// A hero's health at <see cref="MidGameSouls"/>: its starting max health, the health every standard
+    /// level-up it has reached by then adds, and any <see cref="_kitHealth"/>. Null when the record doesn't say.
+    /// </summary>
+    public static double? MidGameHealth(JsonNode record)
+    {
+        if (Number(JsonRecord.Get(JsonRecord.Get(JsonRecord.Get(record, "starting_stats"), "max_health"), "value")) is not { } health)
+            return null;
+        var perLevel = Number(JsonRecord.Get(JsonRecord.Get(record, "standard_level_up_upgrades"), "MODIFIER_VALUE_BASE_HEALTH_FROM_LEVEL")) ?? 0;
+        var levels = (JsonRecord.Get(record, "level_info") as JsonObject ?? [])
+            .Count(level => JsonRecord.Truthy(JsonRecord.Get(level.Value, "use_standard_upgrade"))
+                            && JsonRecord.Int(level.Value, "required_gold") <= MidGameSouls);
+        return health + perLevel * levels + _kitHealth.GetValueOrDefault(NameOf(record) ?? "");
+    }
+
+    /// <summary>
+    /// Hero id → its <see cref="MaxHpTrait"/> score: its <see cref="MidGameHealth"/> against the median of every
+    /// hero the API lists, with ± the trait's top score at ± <see cref="MaxHpSpread"/>.
+    /// </summary>
+    public static Dictionary<string, double> MeasuredMaxHp(DataStore store, IReadOnlyList<JsonNode> records)
+    {
+        if (!store.Categories.TryGetValue(MaxHpTrait, out var category))
+            return [];
+        var byGameId = store.Heroes.Values.Where(hero => hero.GameId != 0).ToDictionary(hero => hero.GameId, hero => hero.HeroId);
+        var health = records
+            .Select(record => (GameId: JsonRecord.Int(record, "id"), Health: MidGameHealth(record)))
+            .Where(entry => entry.Health is > 0)
+            .ToList();
+        if (health.Count == 0)
+            return [];
+        var sorted = health.Select(entry => entry.Health!.Value).Order().ToList();
+        var median = sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2;
+        return health
+            .Where(entry => byGameId.ContainsKey(entry.GameId))
+            .ToDictionary(
+                entry => byGameId[entry.GameId],
+                entry => Math.Round(
+                    Math.Clamp((entry.Health!.Value / median - 1) / MaxHpSpread * category.ScaleMax, category.ScaleMin, category.ScaleMax),
+                    MidpointRounding.AwayFromZero));
+    }
+
+    /// <summary>
+    /// Writes <see cref="MeasuredMaxHp"/> over the hand-rated scores, on profiled heroes only: one rated on
+    /// nothing else would count as below average at everything else (<see cref="DataStore.IsProfiled"/>).
+    /// </summary>
+    private static void ApplyMeasuredMaxHp(DataStore store, IReadOnlyList<JsonNode> records, SyncReport report)
+    {
+        var measured = records.Where(record => MidGameHealth(record) is not null).Select(NameOf).OfType<string>().ToHashSet(StringComparer.Ordinal);
+        if (measured.Count > 0)
+            report.StaleOverrides.AddRange(_kitHealth.Keys.Where(name => !measured.Contains(name)).Select(name => $"_kitHealth: {name} isn't among the game's heroes"));
+        foreach (var (heroId, score) in MeasuredMaxHp(store, records))
+        {
+            var key = new ScoreKey(heroId, MaxHpTrait);
+            var old = store.HeroScores.GetValueOrDefault(key);
+            if (old == score || !store.IsProfiled(heroId))
+                continue;
+            store.HeroScores[key] = score;
+            report.MeasuredChanges.Add($"{store.Heroes[heroId].HeroName}: {Format.Num(old)} -> {Format.Num(score)}");
+        }
     }
 
     /// <summary>
@@ -873,7 +952,7 @@ public static partial class GameSync
     {
         if (report.HeroesChanged)
             store.SaveHeroes();
-        if (report.AddedHeroes.Count > 0)
+        if (report.AddedHeroes.Count > 0 || report.HeroScoresChanged)
             store.SaveHeroScores();
         if (report.ItemsChanged)
             store.SaveItems();

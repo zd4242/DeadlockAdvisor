@@ -33,14 +33,18 @@ public sealed class SyncReport
     /// <summary>Per-item overrides in <see cref="GameSync"/> that no longer match the game.</summary>
     public List<string> StaleOverrides { get; } = [];
 
+    /// <summary>"Abrams: 75 -> 77": hero scores measured from the game's numbers that moved (<see cref="GameSync.MeasuredMaxHp"/>).</summary>
+    public List<string> MeasuredChanges { get; } = [];
+
     public bool HeroesChanged { get; set; }
     public bool ItemsChanged { get; set; }
     public bool StatsChanged { get; set; }
     public int StatRows { get; set; }
     public bool TooltipsChanged { get; set; }
     public int TooltipCount { get; set; }
+    public bool HeroScoresChanged => MeasuredChanges.Count > 0;
 
-    public bool AnythingChanged => HeroesChanged || ItemsChanged || StatsChanged || TooltipsChanged;
+    public bool AnythingChanged => HeroesChanged || ItemsChanged || StatsChanged || TooltipsChanged || HeroScoresChanged;
 
     public List<string> Lines()
     {
@@ -64,6 +68,11 @@ public sealed class SyncReport
         {
             lines.Add($"{StatChanges.Count} item stat(s) changed:");
             lines.AddRange(StatChanges.Select(line => $"  {line}"));
+        }
+        if (MeasuredChanges.Count > 0)
+        {
+            lines.Add($"Has High Max HP, measured from each hero's health, changed on {MeasuredChanges.Count} hero(es):");
+            lines.AddRange(MeasuredChanges.Select(line => $"  {line}"));
         }
         if (ShopBonusChanges.Count > 0)
         {

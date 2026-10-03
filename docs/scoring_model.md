@@ -434,6 +434,16 @@ as strong as the old hand values. Re-measure after a hero rework rather than twe
 single values by hand; `/v1/matches/{id}/metadata` has the damage matrix if the chart
 goes stale.
 
+`max_hp` follows the game itself: every Sync from Game API measures it
+(`GameSync.MeasuredMaxHp`) and lists the heroes whose score moved. A hero's mid-game
+health is its starting max health plus the health of every standard level-up it reaches
+by 10,000 souls (`MidGameSouls`, 15 level-ups), plus what its own abilities add, which the
+API doesn't show (`_kitHealth`: Abrams' third ability gives 200). The score is how far
+that sits from the median over every hero the API lists, with ±`scale_max` at ±30%
+(`MaxHpSpread`), as the trait's description says. Only profiled heroes are written: a new
+hero rated on nothing else would count as below average at everything. A `_kitHealth`
+entry whose hero the API no longer lists shows under the report's stale overrides.
+
 ## How item stats are extracted (`Services/GameApi/GameSync.cs`)
 
 `item_stats.csv` and `item_tooltips.json` are **generated** by Data → Sync from

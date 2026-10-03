@@ -182,7 +182,9 @@ change when the data does.
   rewrites the item stats and tooltips. Only changed files are written.
   Run it after each patch: the report lists each item stat that moved,
   items with hand-typed rules whose tooltip changed, stats it doesn't know
-  how to map, and per-item overrides that no longer match the game.
+  how to map, and per-item overrides that no longer match the game. It
+  also re-measures each hero's *Has High Max HP* from the game's health
+  numbers.
 - **Download Match Data…**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
   of the score. A dialog first shows the patches stored, what the download
