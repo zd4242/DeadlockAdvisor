@@ -20,9 +20,11 @@ off your screen, and it takes a second opinion from real match results on
 put it anywhere and run it; nothing else needs installing. Windows
 SmartScreen may warn the first time, as it does for any download it hasn't
 seen often: **More info → Run anyway**.
-Settings → Data shows which version you have. A new version is a new
-download (the status bar says when one is out), but the formulas and match
-data keep themselves up to date without one.
+Settings → Data shows which version you have. When a new one is out, the
+status bar says so: **Update** downloads it in the background and puts it
+in place of the old exe, and **Restart now** starts it (or it starts next
+time). The formulas and match data keep themselves up to date without a
+new version.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,

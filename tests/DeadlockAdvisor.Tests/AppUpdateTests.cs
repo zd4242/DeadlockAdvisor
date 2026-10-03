@@ -1,10 +1,12 @@
 using System.Reactive;
 using System.Reactive.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Fakes;
+using DeadlockAdvisor.Tests.Support;
 using ReactiveUI;
 
 namespace DeadlockAdvisor.Tests;
@@ -13,6 +15,10 @@ namespace DeadlockAdvisor.Tests;
 public sealed class AppUpdateTests : IDisposable
 {
     private const string ReleasePage = "https://github.com/zd4242/DeadlockAdvisor/releases/tag/v0.2.0";
+    private const string ExeUrl = "https://github.com/zd4242/DeadlockAdvisor/releases/download/v0.2.0/DeadlockAdvisor.exe";
+
+    private static readonly byte[] _newExe = "the new version"u8.ToArray();
+    private static readonly byte[] _oldExe = "the version running"u8.ToArray();
 
     private readonly FakeDeadlockApi _api = new();
     private readonly FakeSettingsService _settings = new();
@@ -29,9 +35,28 @@ public sealed class AppUpdateTests : IDisposable
 
     public void Dispose() => _open.Dispose();
 
-    private void Release(string tag) =>
+    /// <summary>A release as GitHub's API gives it, with the Windows exe and its hash when <paramref name="exe"/> is given.</summary>
+    private void Release(string tag, byte[]? exe = null)
+    {
+        var assets = exe is null
+            ? ""
+            : $$"""
+                [{"name": "DeadlockAdvisor.exe", "size": {{exe.Length}}, "digest": "sha256:{{Convert.ToHexStringLower(SHA256.HashData(exe))}}",
+                  "browser_download_url": "{{ExeUrl}}"}]
+                """;
         _api.Bytes[AppUpdateService.LatestUrl] = Encoding.UTF8.GetBytes(
-            $$"""{"tag_name": "{{tag}}", "html_url": "https://github.com/zd4242/DeadlockAdvisor/releases/tag/{{tag}}", "prerelease": false}""");
+            $$"""{"tag_name": "{{tag}}", "html_url": "https://github.com/zd4242/DeadlockAdvisor/releases/tag/{{tag}}", "prerelease": false, "assets": [{{assets.Trim().Trim('[', ']')}}]}""");
+        if (exe is not null)
+            _api.Bytes[ExeUrl] = exe;
+    }
+
+    /// <summary>A running exe, in a folder of its own, for an update to replace.</summary>
+    private static string RunningExe(TempDirectory folder)
+    {
+        var exe = Path.Combine(folder.Path, "DeadlockAdvisor (1).exe");
+        File.WriteAllBytes(exe, _oldExe);
+        return exe;
+    }
 
     private AppUpdateViewModel Check(string? running, out Task checking)
     {
@@ -154,5 +179,97 @@ public sealed class AppUpdateTests : IDisposable
         await devChecking;
         await dev.CheckNowCommand.Execute();
         Assert.StartsWith("This build wasn't made by the release workflow", _toasts[^1].Message);
+    }
+
+    [Fact]
+    public async Task TheReleasesExeComesWithItsSizeAndHash()
+    {
+        Release("v0.2.0", _newExe);
+
+        var latest = await new AppUpdateService(_api, new Version(0, 1, 1)).LatestAsync();
+
+        Assert.Equal(new AppDownload(ExeUrl, _newExe.Length, Convert.ToHexStringLower(SHA256.HashData(_newExe))), latest!.Exe);
+    }
+
+    [Fact]
+    public async Task UpdatingDownloadsTheExeChecksItAndPutsItInPlaceOfThisOne()
+    {
+        using var folder = new TempDirectory();
+        var exe = RunningExe(folder);
+        var service = new AppUpdateService(_api, new Version(0, 1, 1), exe);
+        Release("v0.2.0", _newExe);
+        using var vm = new AppUpdateViewModel(service, _settings, _notifications, _open);
+        await vm.CheckAsync();
+        Assert.True(vm.CanInstall);
+
+        await vm.UpdateCommand.Execute();
+
+        Assert.Equal(AppUpdateState.Ready, vm.State);
+        Assert.Equal("Version 0.2.0 is ready", vm.Label);
+        Assert.Equal("100%", vm.PercentText);
+        Assert.Equal(_newExe, File.ReadAllBytes(exe));
+        Assert.Equal(_oldExe, File.ReadAllBytes(AppUpdateService.OldPath(exe)));
+        Assert.False(File.Exists(AppUpdateService.NewPath(exe)));
+        Assert.StartsWith("Version 0.2.0 is installed", _toasts[^1].Message);
+        Assert.Empty(_opened);
+
+        var restarts = 0;
+        using var _ = vm.RestartRequested.Subscribe(_ => restarts++);
+        await vm.RestartCommand.Execute();
+        Assert.Equal(1, restarts);
+        service.RestartAfterExit(false);
+
+        // The next start tidies away the exe it replaced.
+        await service.CleanUpAsync();
+        Assert.False(File.Exists(AppUpdateService.OldPath(exe)));
+    }
+
+    [Fact]
+    public async Task ADamagedDownloadLeavesThisVersionAsItWas()
+    {
+        using var folder = new TempDirectory();
+        var exe = RunningExe(folder);
+        Release("v0.2.0", _newExe);
+        _api.Bytes[ExeUrl] = "not the release"u8.ToArray();
+        using var vm = new AppUpdateViewModel(new AppUpdateService(_api, new Version(0, 1, 1), exe), _settings, _notifications, _open);
+        await vm.CheckAsync();
+
+        await vm.UpdateCommand.Execute();
+
+        Assert.Equal(AppUpdateState.Available, vm.State);
+        Assert.Equal(_oldExe, File.ReadAllBytes(exe));
+        Assert.Equal([Path.GetFileName(exe)], Directory.GetFiles(folder.Path).Select(Path.GetFileName));
+        Assert.Contains("didn't arrive intact", _toasts[^1].Message);
+    }
+
+    [Fact]
+    public async Task WithoutAnExeToReplaceUpdateOpensTheReleasePage()
+    {
+        Release("v0.2.0", _newExe);
+        using var vm = Check("0.1.1", out var checking);
+        await checking;
+
+        Assert.False(vm.CanInstall);
+        await vm.UpdateCommand.Execute();
+
+        Assert.Equal([ReleasePage], _opened);
+        Assert.Equal(AppUpdateState.Available, vm.State);
+    }
+
+    [Fact]
+    public async Task TheFirstStartAfterAnUpdateSaysSo()
+    {
+        using (var first = new AppUpdateViewModel(new AppUpdateService(_api, new Version(0, 1, 1)), _settings, _notifications, _open))
+            await first.OnStartupAsync();
+        Assert.Empty(_toasts);
+        Assert.Equal("0.1.1", _settings.Current.LastRunVersion);
+
+        using (var updated = new AppUpdateViewModel(new AppUpdateService(_api, new Version(0, 2, 0)), _settings, _notifications, _open))
+            await updated.OnStartupAsync();
+        Assert.Equal("Updated to version 0.2.0.", Assert.Single(_toasts).Message);
+
+        using (var again = new AppUpdateViewModel(new AppUpdateService(_api, new Version(0, 2, 0)), _settings, _notifications, _open))
+            await again.OnStartupAsync();
+        Assert.Single(_toasts);
     }
 }

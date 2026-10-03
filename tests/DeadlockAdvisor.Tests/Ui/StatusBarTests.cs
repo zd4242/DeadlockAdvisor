@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using System.Reactive.Threading.Tasks;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
@@ -59,6 +60,48 @@ public class StatusBarTests
         Assert.False(chip.GetVisualDescendants().OfType<Border>().First().IsVisible);
         Assert.Equal("0.2.0", ui.Settings.Current.SkippedAppVersion);
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
+    }
+
+    /// <summary>An update that installs when told to, after reporting part of its download.</summary>
+    private sealed class HeldAppUpdate : IAppUpdateService
+    {
+        public readonly TaskCompletionSource Finish = new();
+        public Version? Current => new(0, 1, 1);
+        public bool CanInstall(AppRelease release) => true;
+        public void RestartAfterExit(bool restart = true) { }
+        public Task CleanUpAsync() => Task.CompletedTask;
+
+        public Task<AppRelease?> LatestAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<AppRelease?>(new("0.2.0", "https://github.com/zd4242/DeadlockAdvisor/releases/tag/v0.2.0",
+                new("https://github.com/zd4242/DeadlockAdvisor/releases/download/v0.2.0/DeadlockAdvisor.exe", 100, "")));
+
+        public async Task InstallAsync(AppRelease release, IProgress<DownloadProgress>? progress, CancellationToken cancellationToken = default)
+        {
+            progress?.Report(new DownloadProgress(42, 100));
+            await Finish.Task;
+        }
+    }
+
+    [AvaloniaFact]
+    public async Task AnUpdateShowsItsDownloadThenOffersARestart()
+    {
+        var update = new HeldAppUpdate();
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
+            services => services.AddSingleton<IAppUpdateService>(update));
+        ui.Show();
+        var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<AppUpdateView>().Single();
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.ViewModel.AppUpdate.IsAvailable));
+
+        var installing = ui.ViewModel.AppUpdate.UpdateCommand.Execute().ToTask();
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.ViewModel.AppUpdate.PercentText == "42%"));
+        Assert.Contains("Updating to 0.2.0", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        ui.Screenshot("status_app_update_downloading.png");
+
+        update.Finish.SetResult();
+        await installing;
+        UiHarness.Settle();
+        Assert.Contains("Restart now", chip.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text));
+        ui.Screenshot("status_app_update_ready.png");
     }
 
     /// <summary>The chip opens its card when the pointer rests on it, not as it passes over.</summary>

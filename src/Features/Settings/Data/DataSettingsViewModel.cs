@@ -46,7 +46,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
             .DistinctUntilChanged()
             .Skip(1)
             .Select(_ => Unit.Default)
-            .Merge(appUpdate.WhenAnyValue(vm => vm.Available).Skip(1).Select(_ => Unit.Default))
+            .Merge(appUpdate.WhenAnyValue(vm => vm.State, vm => vm.Installed).Skip(1).Select(_ => Unit.Default))
             .Subscribe(_ => Refresh())
             .DisposeWith(Disposables);
     }
@@ -128,9 +128,11 @@ public class DataSettingsViewModel : SettingsPageViewModel
 
         Version = AppVersion.Text + (_appUpdate.Current is null
             ? " · made outside the release workflow, so it isn't compared with releases"
-            : _appUpdate.Available is { } newer
-                ? $" · {newer.Version} is out"
-                : $" · {CheckedText(Current.AppUpdateCheckedAt)}");
+            : _appUpdate.Installed is { } update
+                ? $" · {update.Version} is installed, and runs from the next start"
+                : _appUpdate.Available is { } newer
+                    ? $" · {newer.Version} is out"
+                    : $" · {CheckedText(Current.AppUpdateCheckedAt)}");
     }
 
     /// <summary>"checked for updates 2h ago".</summary>

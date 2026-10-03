@@ -85,6 +85,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly INotificationService _notifications;
     private readonly IModalService _modals;
     private readonly IArtService _art;
+    private readonly IAppUpdateService _appUpdates;
     private bool _closeConfirmed;
 
     public MainWindowViewModel(
@@ -111,6 +112,7 @@ public class MainWindowViewModel : ViewModelBase
         _notifications = notifications;
         _modals = modals;
         _art = art;
+        _appUpdates = appUpdates;
         Pages = [Match, HeroTraits, ItemFormulas];
 
         ShowsEditors = settings.Current.ShowModelEditors;
@@ -164,6 +166,7 @@ public class MainWindowViewModel : ViewModelBase
             .DisposeWith(Disposables);
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
+        AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
@@ -289,7 +292,7 @@ public class MainWindowViewModel : ViewModelBase
     public void OnOpened()
     {
         DataMenu.OnStartup();
-        _ = AppUpdate.CheckAsync();
+        _ = AppUpdate.OnStartupAsync();
     }
 
     /// <summary>Write pending edits before the window closes.</summary>
@@ -303,6 +306,8 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (_closeConfirmed || _modals.IsModalOpen || !DataMenu.HasRunningJobs)
             return false;
+        // Kept open after all: a restart asked for along with this close isn't wanted at the next one.
+        _appUpdates.RestartAfterExit(false);
 
         var running = DataMenu.Jobs.Where(job => job.IsRunning).Select(job => $"  • {job.Title}: {job.StatusText}");
         _modals.Confirm(

@@ -69,6 +69,39 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         }
     }
 
+    public async Task DownloadAsync(string url, string userAgent, Stream destination, IProgress<DownloadProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, url);
+        request.Headers.TryAddWithoutValidation("User-Agent", userAgent);
+        // The client's timeout covers the answer's headers; after that, each read gets as long again.
+        using var quiet = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        try
+        {
+            using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            response.EnsureSuccessStatusCode();
+            var total = response.Content.Headers.ContentLength ?? 0;
+            await using var body = await response.Content.ReadAsStreamAsync(cancellationToken);
+            var buffer = new byte[81920];
+            long done = 0;
+            while (true)
+            {
+                quiet.CancelAfter(Timeout);
+                var read = await body.ReadAsync(buffer, quiet.Token);
+                if (read == 0)
+                    break;
+                await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken);
+                done += read;
+                Interlocked.Add(ref _bytesReceived, read);
+                progress?.Report(new DownloadProgress(done, total));
+            }
+        }
+        catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
+        {
+            throw new TimeoutException($"{new Uri(url).Host} stopped answering for {Timeout.TotalSeconds:0} seconds.", ex);
+        }
+    }
+
     /// <summary>The answer as sent, undone from whichever of the encodings asked for the server used.</summary>
     private static byte[] Decode(byte[] wire, ICollection<string> encodings)
     {

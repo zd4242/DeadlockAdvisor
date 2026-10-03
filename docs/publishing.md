@@ -101,14 +101,20 @@ version, and publishes a GitHub Release with notes made from the commits since t
 download link) is always the newest. It takes about 10 minutes. Pushing a tag yourself
 (`git tag v1.2.0 && git push origin v1.2.0`) does the same with the version you chose.
 
-Installs don't update themselves: people download the new version from
-[Releases](https://github.com/zd4242/DeadlockAdvisor/releases), and Settings → Data shows which one they
-have. Their data folder carries over, as it lives outside the app. At startup, an install asks GitHub's
-API for the newest release (`AppUpdateService`; the `match-data` and `model` pre-releases don't count)
-and, if it's newer, shows "Version x.y.z is out" in the status bar, linking to the release page. Closing
-that skips the version; Settings → Data turns the check off. Builds made outside the Release workflow
-(`0.0.0-dev`) never check. Versions 0.1.0 and 0.1.1 came before this check, so people on them won't hear
-about a new version.
+**How installs get it** (`AppUpdateService`, `AppUpdateViewModel`): at startup an install asks GitHub's
+API for the newest release (the `match-data` and `model` pre-releases don't count) and, if it's newer,
+shows "Version x.y.z is out · Update · What's new" in the status bar. **Update** downloads the release's
+`DeadlockAdvisor.exe` beside the running one, checks it against the size and SHA-256 GitHub gives for it,
+renames the running exe to `*.exe.old` (Windows allows that) and puts the new one in its place, whatever
+the file was named. **Restart now** closes the app and starts it; otherwise it starts next time, which
+deletes the `.old` file and says "Updated to version x.y.z". If the exe's folder can't be written to,
+such as under Program Files, Update opens the release page instead. Their data folder carries over, as
+it lives outside the app.
+
+Closing the notice skips that version; Settings → Data shows the version with when it was last checked,
+has Check now, and turns the startup check off. Builds made outside the Release workflow (`0.0.0-dev`)
+never check. Versions 0.1.0 and 0.1.1 came before the check, and 0.2.0 before Update: people on those
+download the next version by hand once.
 
 Linux and macOS builds are made each time as preview artifacts on the workflow run, not attached to the
 release: see the README's "Linux and macOS".

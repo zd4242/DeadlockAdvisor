@@ -63,6 +63,17 @@ public sealed class FakeDeadlockApi : IDeadlockApi
             ? Task.FromResult(bytes)
             : throw new HttpRequestException($"offline (test): {url}");
     }
+
+    public async Task DownloadAsync(string url, string userAgent, Stream destination, IProgress<DownloadProgress>? progress = null,
+        CancellationToken cancellationToken = default)
+    {
+        var bytes = await GetBytesAsync(url, userAgent, cancellationToken);
+        var half = bytes.Length / 2;
+        await destination.WriteAsync(bytes.AsMemory(0, half), cancellationToken);
+        progress?.Report(new DownloadProgress(half, bytes.Length));
+        await destination.WriteAsync(bytes.AsMemory(half), cancellationToken);
+        progress?.Report(new DownloadProgress(bytes.Length, bytes.Length));
+    }
 }
 
 public sealed class FakeLoggingService : ILoggingService

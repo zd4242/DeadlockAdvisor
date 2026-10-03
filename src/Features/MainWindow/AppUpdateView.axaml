@@ -49,22 +49,56 @@
         </Style>
     </UserControl.Styles>
 
-    <Border Classes="update" IsVisible="{Binding Available, Converter={x:Static ObjectConverters.IsNotNull}}">
+    <Border Classes="update" IsVisible="{Binding IsShown}">
         <StackPanel Orientation="Horizontal" Spacing="4">
-            <Button x:Name="Open"
+            <TextBlock Classes="title" Text="{Binding Label}" Margin="0,0,2,0"/>
+
+            <!-- Out: install it, or see what's new. -->
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsAvailable}">
+                <Button x:Name="Update"
+                        Classes="result"
+                        Command="{Binding UpdateCommand}"
+                        ToolTip.Tip="{Binding UpdateTip}">
+                    <TextBlock Classes="link" Text="Update"/>
+                </Button>
+                <Button x:Name="Open"
+                        Classes="result"
+                        Command="{Binding OpenCommand}"
+                        ToolTip.Tip="The release on GitHub: what changed, and the download">
+                    <TextBlock Classes="link" Text="What's new"/>
+                </Button>
+            </StackPanel>
+
+            <!-- Downloading. -->
+            <StackPanel Orientation="Horizontal" Spacing="8" IsVisible="{Binding IsDownloading}">
+                <ProgressBar Width="90"
+                             MinWidth="0"
+                             Height="4"
+                             MinHeight="4"
+                             CornerRadius="2"
+                             VerticalAlignment="Center"
+                             Minimum="0"
+                             Maximum="100"
+                             Value="{Binding Percent}"
+                             Foreground="{DynamicResource AccentBrush}"
+                             Background="{DynamicResource Surface4Brush}"/>
+                <TextBlock Text="{Binding PercentText}"/>
+            </StackPanel>
+
+            <!-- Installed. -->
+            <Button x:Name="Restart"
                     Classes="result"
-                    Command="{Binding OpenCommand}"
-                    ToolTip.Tip="Opens the release on GitHub: what's new, and the download. Your data carries over.">
-                <StackPanel Orientation="Horizontal" Spacing="6">
-                    <TextBlock Classes="title" Text="{Binding Label}"/>
-                    <TextBlock Classes="link" Text="Download"/>
-                </StackPanel>
+                    IsVisible="{Binding IsReady}"
+                    Command="{Binding RestartCommand}"
+                    ToolTip.Tip="Close the app and start the new version">
+                <TextBlock Classes="link" Text="Restart now"/>
             </Button>
+
             <Button x:Name="Dismiss"
                     Classes="icon close"
                     Content="✕"
                     Command="{Binding DismissCommand}"
-                    ToolTip.Tip="Don't mention this version again"/>
+                    ToolTip.Tip="{Binding DismissTip}"/>
         </StackPanel>
     </Border>
 </UserControl>

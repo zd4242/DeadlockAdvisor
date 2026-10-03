@@ -31,6 +31,9 @@ public class AppSettings
     public bool CheckForAppUpdates { get; set; } = true;
     public string? SkippedAppVersion { get; set; }
 
+    // The version that ran last, so the first start after an update can say so.
+    public string? LastRunVersion { get; set; }
+
     // When each update check last got an answer, for Settings → Data to show.
     public DateTimeOffset? MatchDataCheckedAt { get; set; }
     public DateTimeOffset? ModelCheckedAt { get; set; }

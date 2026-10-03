@@ -74,6 +74,10 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
     public Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException();
 
+    public Task DownloadAsync(string url, string userAgent, Stream destination, IProgress<DownloadProgress>? progress = null,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException();
+
     /// <summary>The parameters an /item-stats URL was asked with.</summary>
     public static Dictionary<string, string> Query(string url) =>
         url[(url.IndexOf('?', StringComparison.Ordinal) + 1)..].Split('&')
