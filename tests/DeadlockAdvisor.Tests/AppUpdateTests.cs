@@ -192,7 +192,7 @@ public sealed class AppUpdateTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdatingDownloadsTheExeChecksItAndPutsItInPlaceOfThisOne()
+    public async Task UpdatingDownloadsTheExeAndChecksItLeavingTheRunningOneAlone()
     {
         using var folder = new TempDirectory();
         var exe = RunningExe(folder);
@@ -207,10 +207,10 @@ public sealed class AppUpdateTests : IDisposable
         Assert.Equal(AppUpdateState.Ready, vm.State);
         Assert.Equal("Version 0.2.0 is ready", vm.Label);
         Assert.Equal("100%", vm.PercentText);
-        Assert.Equal(_newExe, File.ReadAllBytes(exe));
-        Assert.Equal(_oldExe, File.ReadAllBytes(AppUpdateService.OldPath(exe)));
-        Assert.False(File.Exists(AppUpdateService.NewPath(exe)));
-        Assert.StartsWith("Version 0.2.0 is installed", _toasts[^1].Message);
+        // A single-file app reads its own exe as it runs, so that waits for the app to close.
+        Assert.Equal(_oldExe, File.ReadAllBytes(exe));
+        Assert.Equal(_newExe, File.ReadAllBytes(AppUpdateService.UpdatePath(exe)));
+        Assert.StartsWith("Version 0.2.0 is downloaded", _toasts[^1].Message);
         Assert.Empty(_opened);
 
         var restarts = 0;
@@ -218,10 +218,30 @@ public sealed class AppUpdateTests : IDisposable
         await vm.RestartCommand.Execute();
         Assert.Equal(1, restarts);
         service.RestartAfterExit(false);
+    }
 
-        // The next start tidies away the exe it replaced.
-        await service.CleanUpAsync();
-        Assert.False(File.Exists(AppUpdateService.OldPath(exe)));
+    [Fact]
+    public async Task TheInstallerPutsTheDownloadInPlaceAndTheNextStartTidiesUp()
+    {
+        using var folder = new TempDirectory();
+        var exe = RunningExe(folder);
+        var update = AppUpdateService.UpdatePath(exe);
+        File.WriteAllBytes(update, _newExe);
+        File.WriteAllBytes(AppUpdateService.InstallerPath(exe), _oldExe);
+
+        Assert.True(AppUpdateService.Install(update, exe));
+
+        Assert.Equal(_newExe, File.ReadAllBytes(exe));
+        Assert.False(File.Exists(exe + ".tmp"));
+        await new AppUpdateService(_api, new Version(0, 2, 0), exe).CleanUpAsync();
+        Assert.Equal([Path.GetFileName(exe)], Directory.GetFiles(folder.Path).Select(Path.GetFileName));
+    }
+
+    [Fact]
+    public void AnOrdinaryStartIsntTakenForTheInstaller()
+    {
+        Assert.False(AppUpdateService.InstallIfAsked([]));
+        Assert.False(AppUpdateService.InstallIfAsked(["--install"]));
     }
 
     [Fact]

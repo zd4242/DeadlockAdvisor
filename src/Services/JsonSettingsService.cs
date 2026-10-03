@@ -20,8 +20,14 @@ public class JsonSettingsService : ISettingsService
     public AppSettings Current => _settingsSubject.Value;
     public IObservable<AppSettings> SettingsChanged => _settingsSubject;
 
-    public static string AppDataPath => Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolderName);
+    /// <summary>Names another folder for the settings, the log and the default data, to try the app without touching your own.</summary>
+    public const string HomeVariable = "DEADLOCK_ADVISOR_HOME";
+
+    /// <summary>%AppData%\DeadlockAdvisor, unless <see cref="HomeVariable"/> names another folder.</summary>
+    public static string AppDataPath =>
+        Environment.GetEnvironmentVariable(HomeVariable) is { Length: > 0 } home
+            ? Path.GetFullPath(home)
+            : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolderName);
 
     public JsonSettingsService(ILoggingService loggingService) : this(loggingService, AppDataPath)
     {

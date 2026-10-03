@@ -21,9 +21,9 @@ put it anywhere and run it; nothing else needs installing. Windows
 SmartScreen may warn the first time, as it does for any download it hasn't
 seen often: **More info → Run anyway**.
 Settings → Data shows which version you have. When a new one is out, the
-status bar says so: **Update** downloads it in the background and puts it
-in place of the old exe, and **Restart now** starts it (or it starts next
-time). The formulas and match data keep themselves up to date without a
+status bar says so: **Update** downloads it in the background, and it's
+installed in place of the old exe when you close the app; **Restart now**
+does that straight away. The formulas and match data keep themselves up to date without a
 new version.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
@@ -41,6 +41,10 @@ dotnet run                                          # debug build
 dotnet publish -p:PublishProfile=release            # the single exe, into publish\win-x64\
 dotnet test                                         # everything, including the golden tests
 ```
+
+To try a build without touching your own settings and data, set
+`DEADLOCK_ADVISOR_HOME` to another folder first: the app keeps its settings,
+log and default data folder there instead of `%AppData%\DeadlockAdvisor`.
 
 ### Publishing updates
 

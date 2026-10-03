@@ -12,9 +12,12 @@ sealed class Program
     [STAThread]
     public static void Main(string[] args)
     {
+        // Started as the installer of an update: put this version in place of the old one, and nothing else.
+        if (AppUpdateService.InstallIfAsked(args))
+            return;
         BuildAvaloniaApp().StartWithClassicDesktopLifetime(args);
-        // After an update, "Restart now" starts the new exe once this one has shut down and saved everything.
-        AppUpdateService.RestartIfAsked();
+        // A version downloaded meanwhile goes in now, once this one has shut down and saved everything.
+        AppUpdateService.InstallIfDownloaded();
     }
 
     // Avalonia configuration, don't remove; also used by visual designer.

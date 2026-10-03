@@ -24,15 +24,15 @@ public enum AppUpdateState
     /// <summary>Downloading it, to install in place of this one.</summary>
     Downloading,
 
-    /// <summary>Installed: the next start runs it.</summary>
+    /// <summary>Downloaded and checked: it's installed as the app closes.</summary>
     Ready,
 }
 
 /// <summary>
 /// The status bar's word that a newer version of the app is out: checked once a startup against GitHub's
-/// newest release, unless Settings → Data turns it off. On Windows, Update downloads it in the background
-/// and installs it in place of this exe, so the next start runs it, and Restart now starts it straight
-/// away. Elsewhere, or where the exe's folder can't be written to, it opens the release page instead.
+/// newest release, unless Settings → Data turns it off. On Windows, Update downloads it in the background,
+/// to be installed in place of this exe as the app closes, and Restart now closes it to do that and starts
+/// the new version. Elsewhere, or where the exe's folder can't be written to, it opens the release page instead.
 /// Dismissing it skips that version. A build made outside the release workflow has no version to compare,
 /// so it never asks.
 /// </summary>
@@ -81,7 +81,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
 
     [Reactive] public AppUpdateState State { get; private set; }
 
-    /// <summary>The version installed in place of this one, which the next start runs.</summary>
+    /// <summary>The version downloaded, which is installed in place of this one as the app closes.</summary>
     [Reactive] public AppRelease? Installed { get; private set; }
 
     /// <summary>"Version 0.2.0 is out", "Updating to 0.2.0", "Version 0.2.0 is ready".</summary>
@@ -97,7 +97,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
     public string DismissTip => State switch
     {
         AppUpdateState.Downloading => "Stop downloading",
-        AppUpdateState.Ready => "Hide this: the new version starts next time",
+        AppUpdateState.Ready => "Hide this: the new version is installed when you close the app",
         _ => "Don't mention this version again",
     };
 
@@ -199,10 +199,10 @@ public sealed class AppUpdateViewModel : ViewModelBase
         Show(AppUpdateState.Downloading);
         try
         {
-            await _updates.InstallAsync(release, new Progress<DownloadProgress>(Downloaded), download.Token);
+            await _updates.DownloadAsync(release, new Progress<DownloadProgress>(Downloaded), download.Token);
             Installed = release;
             Show(AppUpdateState.Ready);
-            _notifications.ShowSuccess($"Version {release.Version} is installed: restart to use it, or it starts next time.", _toastTime);
+            _notifications.ShowSuccess($"Version {release.Version} is downloaded: restart now, or it's installed when you close the app.", _toastTime);
         }
         catch (OperationCanceledException)
         {
@@ -218,7 +218,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
             // The exe's folder can't be written to, such as Program Files: the download from the page still works.
             CanInstall = false;
             Show(AppUpdateState.Available);
-            _notifications.ShowError($"Couldn't install version {release.Version} beside this one ({ex.Message}). "
+            _notifications.ShowError($"Couldn't download version {release.Version} beside this one ({ex.Message}). "
                                      + "Update opens the release page instead, to download it from there.", _toastTime);
         }
         finally

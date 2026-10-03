@@ -104,12 +104,18 @@ download link) is always the newest. It takes about 10 minutes. Pushing a tag yo
 **How installs get it** (`AppUpdateService`, `AppUpdateViewModel`): at startup an install asks GitHub's
 API for the newest release (the `match-data` and `model` pre-releases don't count) and, if it's newer,
 shows "Version x.y.z is out · Update · What's new" in the status bar. **Update** downloads the release's
-`DeadlockAdvisor.exe` beside the running one, checks it against the size and SHA-256 GitHub gives for it,
-renames the running exe to `*.exe.old` (Windows allows that) and puts the new one in its place, whatever
-the file was named. **Restart now** closes the app and starts it; otherwise it starts next time, which
-deletes the `.old` file and says "Updated to version x.y.z". If the exe's folder can't be written to,
-such as under Program Files, Update opens the release page instead. Their data folder carries over, as
-it lives outside the app.
+`DeadlockAdvisor.exe` beside the running one as `DeadlockAdvisor.update.exe`, and checks it against the
+size and SHA-256 GitHub gives for it. A single-file app reads its own exe while it runs, so the swap waits
+for the app to close: then a copy of the old exe (`DeadlockAdvisor.installer.exe`, started with
+`--install`) waits for it to exit, copies the download over it, whatever the file was named, and with
+**Restart now** starts it. The installer is the old version, so a new release needn't know how to install
+itself. The next start deletes both copies and says "Updated to version x.y.z". If the exe's folder can't
+be written to, such as under Program Files, Update opens the release page instead. Their data folder
+carries over, as it lives outside the app.
+
+To try a release build without touching your own data, set `DEADLOCK_ADVISOR_HOME` to an empty folder
+before starting it: settings, the log and the default data folder go there. A build published with
+`-p:Version=0.1.9` sees the newest release as newer, so it exercises Update end to end.
 
 Closing the notice skips that version; Settings → Data shows the version with when it was last checked,
 has Check now, and turns the startup check off. Builds made outside the Release workflow (`0.0.0-dev`)

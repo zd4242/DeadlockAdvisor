@@ -27,6 +27,7 @@ The full suite takes a minute or two, so don't run it after every change. Run te
 - For most changes, run only the tests for the area you touched, with `--filter "FullyQualifiedName~ResultsViewModel|FullyQualifiedName~MatchPage"` and so on. The test files are named after the features they cover.
 - Run the full suite when a change can affect areas beyond the one you touched: scoring, the formula CSVs, `GameSync`, `DataStore`, vision or detection, and shared infrastructure (app startup, DI wiring, base view models, styles and themes). Also run it whenever you can't confidently name the affected tests, or when the user asks.
 - If a full run fails in an area you didn't touch, look for the recent commit that broke it before assuming it's another session's in-progress work.
+- Running the app itself needs the user's say-so (it opens windows and holds F9). When they agree, set `DEADLOCK_ADVISOR_HOME` to a scratch folder first, so it keeps its settings, log and data there instead of the user's `%AppData%\DeadlockAdvisor`.
 
 # Committing
 When you finish a feature or fix and its tests pass (targeted or full, as above), commit it without being asked. Follow-up changes after that get their own commits.

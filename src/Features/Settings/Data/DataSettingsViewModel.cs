@@ -129,7 +129,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
         Version = AppVersion.Text + (_appUpdate.Current is null
             ? " · made outside the release workflow, so it isn't compared with releases"
             : _appUpdate.Installed is { } update
-                ? $" · {update.Version} is installed, and runs from the next start"
+                ? $" · {update.Version} is downloaded, and installed when the app closes"
                 : _appUpdate.Available is { } newer
                     ? $" · {newer.Version} is out"
                     : $" · {CheckedText(Current.AppUpdateCheckedAt)}");

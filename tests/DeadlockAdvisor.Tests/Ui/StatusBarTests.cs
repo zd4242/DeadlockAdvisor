@@ -75,7 +75,7 @@ public class StatusBarTests
             Task.FromResult<AppRelease?>(new("0.2.0", "https://github.com/zd4242/DeadlockAdvisor/releases/tag/v0.2.0",
                 new("https://github.com/zd4242/DeadlockAdvisor/releases/download/v0.2.0/DeadlockAdvisor.exe", 100, "")));
 
-        public async Task InstallAsync(AppRelease release, IProgress<DownloadProgress>? progress, CancellationToken cancellationToken = default)
+        public async Task DownloadAsync(AppRelease release, IProgress<DownloadProgress>? progress, CancellationToken cancellationToken = default)
         {
             progress?.Report(new DownloadProgress(42, 100));
             await Finish.Task;
