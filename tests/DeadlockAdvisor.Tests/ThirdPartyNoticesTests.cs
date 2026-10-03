@@ -82,7 +82,8 @@ public class ThirdPartyNoticesTests
         Line("The software above under the MIT license is provided under these terms, with the");
         Line("copyright notice given for it:");
         Line();
-        Line(Mit);
+        // Normalised like the license files: this source file's line endings depend on how it was checked out.
+        Line(Normalised(Mit));
 
         var apache = packages.Where(package => package.License == "Apache-2.0").ToList();
         if (apache.Count > 0)
