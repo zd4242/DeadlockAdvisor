@@ -166,6 +166,8 @@ public class ShortcutTests
         var broughtForward = 0;
         using var _ = ui.ViewModel.ViewInteraction
             .Subscribe(action => broughtForward += action == MainWindowViewModel.BringForwardAction ? 1 : 0);
+        var detecting = false;
+        using var __ = ui.ViewModel.DetectFromAnywhereCommand.IsExecuting.Subscribe(executing => detecting = executing);
         bool MessageShown() =>
             ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: MessageModalViewModel };
         ui.Foreground.IsAnotherAppInFront = true;
@@ -178,11 +180,12 @@ public class ShortcutTests
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, broughtForward);
 
-        // Pressed again with that still up, it brings it back rather than detecting behind it.
+        // Pressed again with that still up, it brings it back rather than detecting behind it. The first
+        // press's detect winds down just after the message shows, and a press before then is dropped.
+        Assert.True(await UiHarness.WaitUntilAsync(() => !detecting));
         ui.Hotkey.Press();
-        UiHarness.Settle();
+        Assert.True(await UiHarness.WaitUntilAsync(() => broughtForward == 2));
         Assert.Equal(1, ui.Capture.Captures);
-        Assert.Equal(2, broughtForward);
     }
 
     /// <summary>By default, F9 in the game leaves what it found waiting behind it until pressed again.</summary>
