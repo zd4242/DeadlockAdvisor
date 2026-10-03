@@ -84,6 +84,36 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void TierSectionsCutEachTierAgainstItsOwnBest()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults(
+        [
+            Scored("a", 10, tier: 4) with { Cost = 6400 },
+            Scored("b", 3, tier: 4) with { Cost = 6400 },
+            Scored("c", 2, tier: 1) with { Cost = 800 },
+            Scored("d", 0.5, tier: 1) with { Cost = 800 },
+        ], "");
+
+        // Flat, everything is cut at 40% of a's 10, which leaves no tier 1 item; each row names its tier.
+        results.SetDisplay(RankBy.Formula, false, 0.4);
+        Assert.Equal(["a"], Rows(results));
+        var a = results.Entries.OfType<ResultRowViewModel>().Single();
+        Assert.True(a.ShowsTier);
+        Assert.Equal("T4 · 6.4k", a.TierText);
+
+        // In tiers, tier 1 is cut at 40% of c's 2, so c stays; the header names the tier and its price instead of the row.
+        results.SetDisplay(RankBy.Formula, true, 0.4);
+        Assert.Equal(["c", "a"], Rows(results));
+        Assert.Equal(["TIER 1 · 800", "TIER 4 · 6,400"], results.Entries.OfType<SectionHeaderViewModel>().Select(header => header.Title));
+        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.False(row.ShowsTier));
+        Assert.Equal("Best 2 of 4 that suit this match", results.Summary);
+
+        results.ShowsEditors = true;
+        Assert.Equal("2 of 4 above 0  ·  cutoff 40% of each tier's best", results.Summary);
+    }
+
+    [Fact]
     public void EveryItemListsNegativesWithNegativeBars()
     {
         var results = Show(RankBy.Formula, null);

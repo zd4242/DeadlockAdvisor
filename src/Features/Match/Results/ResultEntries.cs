@@ -37,12 +37,13 @@ public class ResultRowViewModel : ViewModelBase
             + $"Filters → \"{MatchViewModel.HideDisagreedLabel}\" leaves these items out of the list.";
     }
 
-    public ResultRowViewModel(string itemId, string name, string shopCategory, int tier)
+    public ResultRowViewModel(string itemId, string name, string shopCategory, int tier, int cost = 0)
     {
         ItemId = itemId;
         Name = name;
         ShopCategory = shopCategory;
         Tier = tier;
+        TierText = cost > 0 ? $"T{tier} · {Format.Compact(cost)}" : $"T{tier}";
     }
 
     public string ItemId { get; }
@@ -51,6 +52,11 @@ public class ResultRowViewModel : ViewModelBase
     public int Tier { get; }
 
     public Color ShopColor => Palette.ShopColor(ShopCategory);
+
+    /// <summary>"T2 · 1.6k": the tier and price, on rows that aren't already under their tier's header.</summary>
+    public string TierText { get; }
+    public Color TierColor => Palette.TierColor(Tier);
+    [Reactive] public bool ShowsTier { get; set; }
 
     /// <summary>The number on the right: what the list is ranked by, the formula score, the data strength or the blend.</summary>
     [Reactive] public DisplayAmount Score { get; private set; }

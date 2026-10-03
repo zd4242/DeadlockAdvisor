@@ -12,6 +12,7 @@ public readonly record struct MatrixKey(string ItemId, string HeroId, Relation R
 /// Shown beside the score, never folded into it.
 /// </param>
 /// <param name="BuildRatio">How often your hero builds it next to the average player; see <see cref="ItemScoring.BuildRatio"/>.</param>
+/// <param name="Cost">In souls, as the shop prices it; 0 when unknown.</param>
 public sealed record ScoredItem(
     string ItemId,
     string ItemName,
@@ -19,7 +20,8 @@ public sealed record ScoredItem(
     double Score,
     string ShopCategory,
     OrderedDictionary<string, double> Data,
-    double? BuildRatio = null)
+    double? BuildRatio = null,
+    int Cost = 0)
 {
     /// <summary>See <see cref="ItemScoring.DataStrength"/>.</summary>
     public double DataStrength { get; } = ItemScoring.DataStrength(Data);

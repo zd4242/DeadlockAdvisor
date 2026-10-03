@@ -71,10 +71,17 @@
                                               card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                 <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
                                     <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
-                                        <TextBlock Text="{Binding Name}"
-                                                   FontWeight="Bold"
-                                                   TextTrimming="CharacterEllipsis"
-                                                   VerticalAlignment="Center"/>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock Text="{Binding Name}"
+                                                       FontWeight="Bold"
+                                                       TextTrimming="CharacterEllipsis"
+                                                       VerticalAlignment="Center"/>
+                                            <controls:Badge VerticalAlignment="Center"
+                                                            Text="{Binding TierText}"
+                                                            Color="{Binding TierColor}"
+                                                            IsVisible="{Binding ShowsTier}"
+                                                            ToolTip.Tip="The shop tier, and its price in souls"/>
+                                        </StackPanel>
                                         <controls:Badge Grid.Column="1"
                                                         Margin="8,0,0,0"
                                                         VerticalAlignment="Center"

@@ -77,7 +77,7 @@ public static class ItemScoring
         return store.Items
             .Where(entry => Tiers.Contains(entry.Value.Tier))
             .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
-                entry.Value.Category, DataScores(store, lineUp, entry.Key), BuildRatio(store, entry.Key, lineUp.Self)))
+                entry.Value.Category, DataScores(store, lineUp, entry.Key), BuildRatio(store, entry.Key, lineUp.Self), entry.Value.Cost))
             .OrderByDescending(scored => scored.Score)
             .ThenBy(scored => scored.ItemName, StringComparer.Ordinal)
             .ToList();

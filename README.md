@@ -94,7 +94,8 @@ Recommendations score everyone in the match across all four tiers. The
 dropdown beside them picks what ranks the list: the formula, the match
 data, or both. The rest sits behind **Filters**: the cutoff hides items
 scoring under 20/40/60% of the best, **Group by tier** splits the list
-into collapsible tiers, and **Match data from** leans the match data
+into collapsible tiers, each cut against its own best so the cheap tiers
+keep their picks, and **Match data from** leans the match data
 toward a range of ranks: the numbers move only where those ranks play
 detectably differently. That's worked out on the spot from the downloaded
 rank groups, and stays set until changed. The button fills in while a

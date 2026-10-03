@@ -21,14 +21,6 @@ namespace DeadlockAdvisor.Features.Match.Results;
 /// </summary>
 public class ResultsViewModel : ViewModelBase
 {
-    private static readonly IReadOnlyDictionary<int, string> _tierLabels = new Dictionary<int, string>
-    {
-        [1] = "Tier 1 · 800",
-        [2] = "Tier 2 · 1600",
-        [3] = "Tier 3 · 3200",
-        [4] = "Tier 4 · 6400",
-    };
-
     public const string DataPicksKey = "data";
     public const string DataPicksTitle = "Match data also likes";
     public const string DataPicksNote = "Formula score 0 or less, but a standout in real matches for this line-up.";
@@ -112,10 +104,11 @@ public class ResultsViewModel : ViewModelBase
 
     /// <summary>
     /// What ranks the list, flat or in tier sections, and the share of the best item's measure an item
-    /// needs to be kept: 0 keeps everything above 0, null keeps every item however it scores. The
-    /// cutoff is measured against the best item overall either way, so switching layout only
-    /// rearranges the same items. Hidden rarely built items, and ranking by both, hidden items the two
-    /// disagree on are left out before any of that, so the cutoff and the counts are over what can be listed.
+    /// needs to be kept: 0 keeps everything above 0, null keeps every item however it scores. The flat
+    /// list measures the cutoff against the best item overall; the tier sections against each tier's
+    /// best, since a cheap tier's items rarely score as high as a late one's and would all be cut.
+    /// Hidden rarely built items, and ranking by both, hidden items the two disagree on are left out
+    /// before any of that, so the cutoff and the counts are over what can be listed.
     /// </summary>
     public void SetDisplay(RankBy rankBy, bool byTier, double? minFraction, bool hideRarelyBuilt = false, bool hideDisagreed = false)
     {
@@ -154,9 +147,10 @@ public class ResultsViewModel : ViewModelBase
         var blend = _rankBy == RankBy.Both ? _blendScale() : BlendScale.One;
         var ranked = Ranked(blend);
         var positive = ranked.Count(entry => entry.Measure > 0);
-        var best = ranked.Count > 0 ? ranked[0].Measure : 0.0;
-        var cutoff = best > 0 ? best * (_minFraction ?? 0) : 0.0;
-        var shown = everyItem ? ranked : ranked.Where(entry => entry.Measure > 0 && entry.Measure >= cutoff).ToList();
+        var tierBest = ranked.GroupBy(entry => entry.Item.Tier).ToDictionary(group => group.Key, group => group.Max(entry => entry.Measure));
+        var overallCutoff = Math.Max(0, (ranked.Count > 0 ? ranked[0].Measure : 0.0) * (_minFraction ?? 0));
+        double Cutoff(int tier) => _byTier ? Math.Max(0, tierBest[tier] * (_minFraction ?? 0)) : overallCutoff;
+        var shown = everyItem ? ranked : ranked.Where(entry => entry.Measure > 0 && entry.Measure >= Cutoff(entry.Item.Tier)).ToList();
         var picks = _rankBy == RankBy.Formula && !everyItem ? ItemScoring.DataOnlyPicks(Listable(blend)) : [];
 
         // With no heroes picked, "every item" would be the whole shop at 0.
@@ -164,7 +158,7 @@ public class ResultsViewModel : ViewModelBase
         IsEmpty = nothingScored || (shown.Count == 0 && picks.Count == 0);
         EmptyHint = Hint(nothingScored);
         _topItemId = IsEmpty || shown.Count == 0 ? null : shown[0].Item.ItemId;
-        Summary = IsEmpty ? "" : SummaryText(positive, shown.Count, cutoff, everyItem);
+        Summary = IsEmpty ? "" : SummaryText(positive, shown.Count, overallCutoff, everyItem);
         SummaryTip = RankTip();
 
         // Drop a selection that no longer appears, so the explanation and the highlighted row can't
@@ -183,8 +177,7 @@ public class ResultsViewModel : ViewModelBase
             // In ranked order, so each tier stays sorted.
             foreach (var tierGroup in shown.GroupBy(entry => entry.Item.Tier).OrderBy(group => group.Key))
             {
-                var header = Header($"tier{tierGroup.Key}", _tierLabels.GetValueOrDefault(tierGroup.Key, $"Tier {tierGroup.Key}"),
-                    Palette.TierColor(tierGroup.Key));
+                var header = Header($"tier{tierGroup.Key}", TierLabel(tierGroup.Key), Palette.TierColor(tierGroup.Key));
                 AddSection(placed, header, tierGroup.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)).ToList());
             }
         }
@@ -198,7 +191,7 @@ public class ResultsViewModel : ViewModelBase
             // Their bars are on the same scale as the list's, so a deep negative reads as one.
             var pickScale = Math.Max(scale, picks.Max(item => Math.Abs(item.Score)));
             var header = Header(DataPicksKey, DataPicksTitle, Palette.Data, ShowsEditors ? DataPicksEditorNote : DataPicksNote);
-            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)))).ToList());
+            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)), showsTier: true)).ToList());
         }
 
         Entries.ReplaceAll(placed);
@@ -273,7 +266,8 @@ public class ResultsViewModel : ViewModelBase
 
     /// <summary>
     /// Counts only: the rank picker beside it names what they're rated by. The editors see the cutoff's
-    /// number; players see what it means, an item above 0 being one this match wants more than most.
+    /// number, or its share when each tier has its own; players see what it means, an item above 0
+    /// being one this match wants more than most.
     /// </summary>
     private string SummaryText(int positive, int shown, double cutoff, bool everyItem)
     {
@@ -282,9 +276,17 @@ public class ResultsViewModel : ViewModelBase
             return $"All {shown} item{(shown != 1 ? "s" : "")}  ·  {positive} {above}";
         if (shown >= positive)
             return $"{positive} item{(positive != 1 ? "s" : "")} {above}";
-        return ShowsEditors
-            ? $"{shown} of {positive} above 0  ·  cutoff {MeasureText(cutoff)}"
-            : $"Best {shown} of {positive} that suit this match";
+        if (!ShowsEditors)
+            return $"Best {shown} of {positive} that suit this match";
+        var cutoffText = _byTier ? $"{Math.Round((_minFraction ?? 0) * 100):0}% of each tier's best" : MeasureText(cutoff);
+        return $"{shown} of {positive} above 0  ·  cutoff {cutoffText}";
+    }
+
+    /// <summary>"Tier 2 · 1,600", the price from the items themselves.</summary>
+    private string TierLabel(int tier)
+    {
+        var cost = _scored.Where(item => item.Tier == tier && item.Cost > 0).Select(item => item.Cost).DefaultIfEmpty(0).Min();
+        return cost > 0 ? $"Tier {tier} · {Format.Thousands(cost)}" : $"Tier {tier}";
     }
 
     private string MeasureText(double measure) => _rankBy switch
@@ -332,15 +334,17 @@ public class ResultsViewModel : ViewModelBase
     }
 
     /// <param name="shown">The number on the right, when it isn't the formula score.</param>
-    private ResultRowViewModel Row(ScoredItem scored, Bars bars, double? shown = null, bool disagrees = false)
+    /// <param name="showsTier">Whether the row names its tier: always, unless a tier header above it already does.</param>
+    private ResultRowViewModel Row(ScoredItem scored, Bars bars, double? shown = null, bool disagrees = false, bool? showsTier = null)
     {
         if (!_rows.TryGetValue(scored.ItemId, out var row))
         {
-            row = new ResultRowViewModel(scored.ItemId, scored.ItemName, scored.ShopCategory, scored.Tier);
+            row = new ResultRowViewModel(scored.ItemId, scored.ItemName, scored.ShopCategory, scored.Tier, scored.Cost);
             _rows[scored.ItemId] = row;
         }
         row.SetValues(scored, bars, _dataTip, shown, disagrees);
         row.IsSelected = scored.ItemId == SelectedItemId;
+        row.ShowsTier = showsTier ?? !_byTier;
         return row;
     }
 
