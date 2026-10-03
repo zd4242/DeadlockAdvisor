@@ -53,6 +53,9 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
 
     public static string Hash(byte[] bytes) => Convert.ToHexStringLower(SHA256.HashData(bytes));
 
+    /// <summary>The file's hash; null when it's missing.</summary>
+    public static string? HashOf(string path) => File.Exists(path) ? Hash(File.ReadAllBytes(path)) : null;
+
     /// <summary>What the files in <paramref name="dir"/> are now, as a model published <paramref name="published"/>.</summary>
     public static ModelManifest Of(string dir, string published) =>
         new(CurrentFormat, published,
@@ -168,8 +171,7 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
         var edited = new List<string>();
         foreach (var file in ModelManifest.ModelFiles.Where(published.Files.ContainsKey))
         {
-            var path = Path.Combine(dataDir, file);
-            var now = File.Exists(path) ? ModelManifest.Hash(File.ReadAllBytes(path)) : null;
+            var now = ModelManifest.HashOf(Path.Combine(dataDir, file));
             current[file] = now;
             var latest = published.Files[file];
             var before = installed?.Files.GetValueOrDefault(file);
@@ -182,6 +184,18 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
                 edited.Add(file);
         }
         return new ModelUpdatePlan(published, installed, current, quiet, edited);
+    }
+
+    /// <summary>
+    /// Putting files back to <paramref name="published"/>: every model file here that differs from it, whatever
+    /// made it differ (an edit, Sync from Game API, an update undone), for its owner to tick.
+    /// </summary>
+    public static ModelUpdatePlan Reset(ModelManifest published, string dataDir)
+    {
+        var current = ModelManifest.ModelFiles.Where(published.Files.ContainsKey)
+            .ToDictionary(file => file, file => ModelManifest.HashOf(Path.Combine(dataDir, file)));
+        var differing = current.Where(pair => pair.Value != published.Files[pair.Key]).Select(pair => pair.Key).ToList();
+        return new ModelUpdatePlan(published, ModelManifest.Installed(dataDir), current, [], differing);
     }
 
     /// <summary>
@@ -254,25 +268,76 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
         return downloaded;
     }
 
+    /// <summary>Where an update keeps the files it replaced, until the next one, so it can be undone (<see cref="Undo"/>).</summary>
+    public const string PreviousFolderName = ".model-previous";
+
     /// <summary>
     /// Write the downloaded files into <paramref name="dataDir"/>, each keeping a backup of the one it replaces,
-    /// and the record of what's installed. A file changed since the check (an edit saved meanwhile) is left as
-    /// it is. Returns the files written.
+    /// and the record of what's installed. The files replaced are also kept in <see cref="PreviousFolderName"/>,
+    /// in place of an earlier update's. A file changed since the check (an edit saved meanwhile) is left as it
+    /// is. Returns the files written.
     /// </summary>
     public static IReadOnlySet<string> Install(string dataDir, ModelUpdatePlan update, IReadOnlyDictionary<string, byte[]> downloaded)
     {
-        var written = new HashSet<string>();
-        foreach (var (file, bytes) in downloaded)
+        var replacing = new Dictionary<string, byte[]?>();
+        foreach (var file in downloaded.Keys)
         {
             var path = Path.Combine(dataDir, file);
-            var now = File.Exists(path) ? ModelManifest.Hash(File.ReadAllBytes(path)) : null;
-            if (now != update.Current.GetValueOrDefault(file))
-                continue;
-            BackedUpFile.Write(path, bytes);
-            written.Add(file);
+            var old = File.Exists(path) ? File.ReadAllBytes(path) : null;
+            if ((old is null ? null : ModelManifest.Hash(old)) == update.Current.GetValueOrDefault(file))
+                replacing[file] = old;
         }
+        if (replacing.Count > 0)
+        {
+            var previous = Path.Combine(dataDir, PreviousFolderName);
+            if (Directory.Exists(previous))
+                Directory.Delete(previous, recursive: true);
+            Directory.CreateDirectory(previous);
+            foreach (var (file, old) in replacing)
+            {
+                if (old is not null)
+                    File.WriteAllBytes(Path.Combine(previous, file), old);
+            }
+        }
+        foreach (var file in replacing.Keys)
+            BackedUpFile.Write(Path.Combine(dataDir, file), downloaded[file]);
+        var written = replacing.Keys.ToHashSet();
         Record(dataDir, update.Record(written));
         return written;
+    }
+
+    /// <summary>The files the last update replaced that are still as it left them, so undoing it loses nothing.</summary>
+    public static IReadOnlyList<string> Undoable(string dataDir)
+    {
+        var previous = Path.Combine(dataDir, PreviousFolderName);
+        if (ModelManifest.Installed(dataDir) is not { } installed || !Directory.Exists(previous))
+            return [];
+        return ModelManifest.ModelFiles
+            .Where(file => File.Exists(Path.Combine(previous, file))
+                           && installed.Files.GetValueOrDefault(file) is { } hash
+                           && ModelManifest.HashOf(Path.Combine(dataDir, file)) == hash)
+            .ToList();
+    }
+
+    /// <summary>
+    /// Put back the files the last update replaced (<see cref="Undoable"/>), each keeping a backup of what the
+    /// update wrote. They're recorded as kept over that version, so it isn't offered again; a newer one asks.
+    /// Returns the files put back.
+    /// </summary>
+    public static IReadOnlyList<string> Undo(string dataDir)
+    {
+        var files = Undoable(dataDir);
+        if (files.Count == 0 || ModelManifest.Installed(dataDir) is not { } installed)
+            return [];
+        var previous = Path.Combine(dataDir, PreviousFolderName);
+        foreach (var file in files)
+            BackedUpFile.Write(Path.Combine(dataDir, file), File.ReadAllBytes(Path.Combine(previous, file)));
+        var kept = installed.Kept.ToDictionary();
+        foreach (var file in files)
+            kept[file] = installed.Files[file];
+        Record(dataDir, installed with { Kept = kept });
+        Directory.Delete(previous, recursive: true);
+        return files;
     }
 
     /// <summary>Write a data folder's record, unless it already says the same.</summary>

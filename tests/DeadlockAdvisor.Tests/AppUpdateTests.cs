@@ -17,11 +17,14 @@ public sealed class AppUpdateTests : IDisposable
     private readonly FakeDeadlockApi _api = new();
     private readonly FakeSettingsService _settings = new();
     private readonly List<string> _opened = [];
+    private readonly NotificationService _notifications = new(new FakeLoggingService());
+    private readonly List<Services.Contracts.Notification> _toasts = [];
     private readonly ReactiveCommand<string, Unit> _open;
 
     public AppUpdateTests()
     {
         _open = ReactiveCommand.Create<string>(_opened.Add);
+        _notifications.Notifications.Subscribe(_toasts.Add);
     }
 
     public void Dispose() => _open.Dispose();
@@ -32,7 +35,7 @@ public sealed class AppUpdateTests : IDisposable
 
     private AppUpdateViewModel Check(string? running, out Task checking)
     {
-        var vm = new AppUpdateViewModel(new AppUpdateService(_api, running is null ? null : Version.Parse(running)), _settings, _open);
+        var vm = new AppUpdateViewModel(new AppUpdateService(_api, running is null ? null : Version.Parse(running)), _settings, _notifications, _open);
         checking = vm.CheckAsync();
         return vm;
     }
@@ -111,6 +114,9 @@ public sealed class AppUpdateTests : IDisposable
         Assert.Equal("0.2.0", _settings.Current.SkippedAppVersion);
         await vm.CheckAsync();
         Assert.Null(vm.Available);
+        // Asked for, it's shown again.
+        await vm.CheckNowCommand.Execute();
+        Assert.Equal("0.2.0", vm.Available!.Version);
         Release("v0.2.1");
         await vm.CheckAsync();
         Assert.Equal("0.2.1", vm.Available!.Version);
@@ -126,5 +132,27 @@ public sealed class AppUpdateTests : IDisposable
         _settings.Update(s => s.CheckForAppUpdates = false);
 
         Assert.Null(vm.Available);
+    }
+
+    [Fact]
+    public async Task CheckingByHandSaysHowItWentAndWhen()
+    {
+        using var vm = Check("0.2.0", out var checking);
+        await checking;
+        Assert.Empty(_toasts);
+        Assert.Null(_settings.Current.AppUpdateCheckedAt);
+
+        await vm.CheckNowCommand.Execute();
+        Assert.StartsWith("Couldn't reach GitHub", _toasts[^1].Message);
+
+        Release("v0.2.0");
+        await vm.CheckNowCommand.Execute();
+        Assert.Equal("You have the newest version, 0.2.0.", _toasts[^1].Message);
+        Assert.NotNull(_settings.Current.AppUpdateCheckedAt);
+
+        using var dev = Check(null, out var devChecking);
+        await devChecking;
+        await dev.CheckNowCommand.Execute();
+        Assert.StartsWith("This build wasn't made by the release workflow", _toasts[^1].Message);
     }
 }

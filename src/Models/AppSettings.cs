@@ -31,6 +31,11 @@ public class AppSettings
     public bool CheckForAppUpdates { get; set; } = true;
     public string? SkippedAppVersion { get; set; }
 
+    // When each update check last got an answer, for Settings → Data to show.
+    public DateTimeOffset? MatchDataCheckedAt { get; set; }
+    public DateTimeOffset? ModelCheckedAt { get; set; }
+    public DateTimeOffset? AppUpdateCheckedAt { get; set; }
+
     // How the last match data downloads went, for the next one's estimate; null until one has run.
     public double? MatchFetchSecondsPerCall { get; set; }
     public double? MatchFetchBytesPerCall { get; set; }

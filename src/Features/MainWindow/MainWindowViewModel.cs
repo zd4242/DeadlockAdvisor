@@ -163,7 +163,7 @@ public class MainWindowViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
-        AppUpdate = new AppUpdateViewModel(appUpdates, settings, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
+        AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
 
@@ -182,7 +182,7 @@ public class MainWindowViewModel : ViewModelBase
             new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
             new ShortcutsSettingsViewModel(settings, hotkey),
             new DetectionSettingsViewModel(settings, hotkey),
-            new DataSettingsViewModel(settings, data, art, dataMenu, ReloadArtCommand)).DisposeWith(Disposables);
+            new DataSettingsViewModel(settings, data, art, dataMenu, AppUpdate, ReloadArtCommand)).DisposeWith(Disposables);
         Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
         // A new data folder, or new art, changes what the Data settings show.
         data.StoreReplaced

@@ -15,6 +15,7 @@ using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -88,6 +89,9 @@ public class DataMenuViewModel : ViewModelBase
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         CheckModelCommand = ReactiveCommand.CreateFromTask(() => CheckModelAsync(manual: true), idle);
+        ResetModelCommand = ReactiveCommand.CreateFromTask(ResetModelAsync, idle);
+        UndoModelUpdateCommand = ReactiveCommand.Create(OfferModelUndo, idle);
+        ModelNotesCommand = ReactiveCommand.Create(ShowModelNotes);
         ReloadCommand = ReactiveCommand.Create(Reload);
         ExportCommand = ReactiveCommand.Create(Export);
         OpenDataFolderCommand = ReactiveCommand.Create(() => OpenFolder(_data.DataDir));
@@ -122,6 +126,15 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> DownloadMatchDataCommand { get; }
     public ReactiveCommand<Unit, Unit> ModelHealthCommand { get; }
     public ReactiveCommand<Unit, Unit> CheckModelCommand { get; }
+
+    /// <summary>Put files that differ from the published model back to it, asking which.</summary>
+    public ReactiveCommand<Unit, Unit> ResetModelCommand { get; }
+
+    /// <summary>Put back the files the last formula update or reset replaced.</summary>
+    public ReactiveCommand<Unit, Unit> UndoModelUpdateCommand { get; }
+
+    /// <summary>What the installed model's publisher said changed, version by version.</summary>
+    public ReactiveCommand<Unit, Unit> ModelNotesCommand { get; }
     public ReactiveCommand<Unit, Unit> ReloadCommand { get; }
     public ReactiveCommand<Unit, Unit> ExportCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenDataFolderCommand { get; }
@@ -217,6 +230,7 @@ public class DataMenuViewModel : ViewModelBase
         }
         if (await _snapshots.PlanAsync(store) is { } shared)
         {
+            Checked(s => s.MatchDataCheckedAt = _clock.Now);
             NewerPatch = MatchStatsMath.NewerPatch(store.MatchMeta, shared.Keep);
             if (shared.IsDue(store.MatchSegments))
                 await DownloadMatchDataAsync(shared, quiet: true);
@@ -231,6 +245,7 @@ public class DataMenuViewModel : ViewModelBase
         {
             return;
         }
+        Checked(s => s.MatchDataCheckedAt = _clock.Now);
         NewerPatch = MatchStatsMath.NewerPatch(store.MatchMeta, patches);
         var plan = _matchStats.Plan(store, patches, _settings.Current.MatchDataIncludeRanks);
         if (plan.IsDue(store.MatchSegments))
@@ -249,6 +264,7 @@ public class DataMenuViewModel : ViewModelBase
         try
         {
             NewerPatch = await _matchStats.NewerPatchAsync(_data.Store.MatchMeta);
+            Checked(s => s.MatchDataCheckedAt = _clock.Now);
         }
         catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException)
         {
@@ -480,15 +496,16 @@ public class DataMenuViewModel : ViewModelBase
         if (published is null)
         {
             if (manual)
-                ShowMessage("Formula update", ["Couldn't reach GitHub for the published hero ratings and item formulas. Try again later."]);
+                ShowMessage("Formula update", [Unreachable]);
             return;
         }
+        Checked(s => s.ModelCheckedAt = _clock.Now);
         if (!_data.FlushSaves())
             return;
         var dataDir = _data.DataDir;
         var update = ModelUpdatePlan.For(published, dataDir, askAgain: manual);
         if (update.Edited.Count > 0)
-            _modals.ShowModal(new ModelUpdateViewModel(_modals, update, replace => Launch(() => InstallModelAsync(dataDir, update, replace, manual: true))));
+            _modals.ShowModal(ModelUpdateViewModel.Update(_modals, update, replace => Launch(() => InstallModelAsync(dataDir, update, replace, manual: true))));
         else if (update.Quiet.Count > 0)
             await InstallModelAsync(dataDir, update, new HashSet<string>(), manual);
         else
@@ -499,8 +516,84 @@ public class DataMenuViewModel : ViewModelBase
         }
     }
 
+    private const string Unreachable = "Couldn't reach GitHub for the published hero ratings and item formulas. Try again later.";
+
+    /// <summary>The files that differ from the published model, ticked, to put back to it.</summary>
+    private async Task ResetModelAsync()
+    {
+        var published = await _models.PublishedAsync();
+        if (published is null)
+        {
+            ShowMessage("Reset formulas", [Unreachable]);
+            return;
+        }
+        Checked(s => s.ModelCheckedAt = _clock.Now);
+        if (!_data.FlushSaves())
+            return;
+        var dataDir = _data.DataDir;
+        var reset = ModelUpdatePlan.Reset(published, dataDir);
+        if (!reset.HasWork)
+        {
+            ShowMessage("Reset formulas", [$"Every file already matches the version published {published.Published}: there's nothing to reset."]);
+            return;
+        }
+        _modals.ShowModal(ModelUpdateViewModel.Reset(_modals, reset,
+            replace => Launch(() => InstallModelAsync(dataDir, reset, replace, manual: true, isReset: true))));
+    }
+
+    private void OfferModelUndo()
+    {
+        var undoable = ModelUpdateService.Undoable(_data.DataDir);
+        if (undoable.Count == 0)
+        {
+            ShowMessage("Undo formula update", ["There's no formula update to undo: nothing since the last one has been left as it put it."]);
+            return;
+        }
+        _modals.Confirm(
+            $"Put back the {Listing(undoable)} the last formula update or reset replaced?\n\n"
+            + "Newer formulas that are published later still ask before replacing them. Every file keeps a backup in data\\.backups.",
+            "Undo update", UndoModelUpdate);
+    }
+
+    private void UndoModelUpdate()
+    {
+        if (!_data.FlushSaves())
+            return;
+        IReadOnlyList<string> restored;
+        try
+        {
+            restored = ModelUpdateService.Undo(_data.DataDir);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _notifications.ShowError($"Writing to {_data.DataDir} failed: {ex.Message}", ex);
+            return;
+        }
+        if (restored.Count == 0)
+            return;
+        _data.Reload();
+        _notifications.ShowSuccess($"Put back the {Listing(restored)} from before the last formula update or reset.", _toastTime);
+    }
+
+    private void ShowModelNotes()
+    {
+        var installed = ModelManifest.Installed(_data.DataDir);
+        IEnumerable<string> lines = installed is null ? ["This data folder has no record of a published version."]
+            : installed.Notes.Count == 0 ? [$"Installed: the version published {installed.Published}. It came without notes."]
+            : [$"Installed: the version published {installed.Published}.", "", .. installed.Notes.Select(note => $"{note.Published}: {note.Text}")];
+        ShowMessage("What's new in the formulas", lines);
+    }
+
+    /// <summary>"item formulas and trait weights".</summary>
+    private static string Listing(IReadOnlyList<string> files)
+    {
+        var titles = files.Select(file => ModelManifest.Title(file).ToLowerInvariant()).ToList();
+        return titles.Count == 1 ? titles[0] : $"{string.Join(", ", titles[..^1])} and {titles[^1]}";
+    }
+
     /// <summary>Download the files to replace, then write them in one go, so no edit can land in between.</summary>
-    private async Task InstallModelAsync(string dataDir, ModelUpdatePlan update, IReadOnlySet<string> replace, bool manual)
+    /// <param name="isReset">Putting files back to the published version, rather than taking a newer one.</param>
+    private async Task InstallModelAsync(string dataDir, ModelUpdatePlan update, IReadOnlySet<string> replace, bool manual, bool isReset = false)
     {
         IReadOnlyDictionary<string, byte[]> downloaded;
         try
@@ -531,6 +624,12 @@ public class DataMenuViewModel : ViewModelBase
         if (written.Count == 0)
             return;
         _data.Reload();
+        if (isReset)
+        {
+            _notifications.ShowSuccess($"Reset the {Listing(ModelManifest.ModelFiles.Where(written.Contains).ToList())} to the version published {update.Published.Published}. "
+                                       + "Settings → Data can undo it.", _toastTime);
+            return;
+        }
         // What the publisher said changed comes first, with longer to read it.
         var news = update.News;
         _notifications.ShowSuccess(
@@ -552,6 +651,9 @@ public class DataMenuViewModel : ViewModelBase
             _log.Warning($"Formula update: couldn't write the record\n{ex}");
         }
     }
+
+    /// <summary>Note when a check got its answer, for Settings → Data.</summary>
+    private void Checked(Action<AppSettings> stamp) => _settings.Update(stamp);
 
     // -- model health ---------------------------------------------------------------
 

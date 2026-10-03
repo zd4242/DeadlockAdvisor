@@ -23,7 +23,7 @@ public class ModelUpdateDialogTests
             null, new Dictionary<string, string?>(), [DataStore.ItemsFile, DataStore.ItemStatsFile], [DataStore.HeroScoresFile, DataStore.ItemCoefficientsFile]);
         var modals = ui.Services.GetRequiredService<IModalService>();
 
-        modals.ShowModal(new ModelUpdateViewModel(modals, plan, _ => { }));
+        modals.ShowModal(ModelUpdateViewModel.Update(modals, plan, _ => { }));
         UiHarness.Settle();
 
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();

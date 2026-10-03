@@ -57,6 +57,18 @@
         <TextBlock Classes="section" Text="FORMULAS"/>
         <Border Classes="settings">
             <StackPanel>
+                <settings:SettingRow Title="Hero ratings and item formulas" Description="{Binding ModelSummary}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="What's new" Command="{Binding ModelNotesCommand}"
+                                ToolTip.Tip="What each published version changed"/>
+                        <Button Classes="ghost" Content="Undo update" Command="{Binding UndoModelUpdateCommand}"
+                                IsVisible="{Binding CanUndoModelUpdate}"
+                                ToolTip.Tip="Put back the files the last formula update or reset replaced"/>
+                        <Button Classes="ghost" Content="Reset…" Command="{Binding ResetModelCommand}"
+                                ToolTip.Tip="Put files that differ from the published version back to it, choosing which"/>
+                        <Button Content="Check now" Command="{Binding CheckModelCommand}"/>
+                    </StackPanel>
+                </settings:SettingRow>
                 <settings:SettingRow Title="Keep the hero ratings and item formulas up to date"
                                      Description="On startup, take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks.">
                     <ToggleSwitch IsChecked="{Binding AutoUpdateModel}"/>
@@ -68,8 +80,11 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Version" Description="{Binding Version}">
-                    <Button Classes="ghost" Content="Releases" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding ReleasesUrl}"
-                            ToolTip.Tip="See the newest version on GitHub"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="Releases" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding ReleasesUrl}"
+                                ToolTip.Tip="Every version on GitHub, with what changed"/>
+                        <Button Content="Check now" Command="{Binding CheckAppCommand}"/>
+                    </StackPanel>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Say when a new version is out"
                                      Description="On startup, ask GitHub for the newest release, and if it's newer, say so in the status bar.">

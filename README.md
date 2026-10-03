@@ -217,6 +217,12 @@ to replace, and one you keep isn't asked about again for that version.
 Either way, the update says what changed, in the words of whoever
 published it.
 
+Settings → Data shows which version is installed and when it was last
+checked for, with **What's new** (every version's notes), **Reset…** (puts
+files that differ from the published version back to it, ticking which)
+and **Undo update** (puts back what the last update or reset replaced, as
+long as nothing has been changed since).
+
 To publish a new version of the model, run
 `dotnet run --project tools/PublishModel -- --note "What changed" --push`
 from the repository: it copies your data folder's model into

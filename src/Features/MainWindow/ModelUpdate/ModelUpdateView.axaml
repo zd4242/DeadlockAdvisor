@@ -19,7 +19,7 @@
         </StackPanel>
 
         <StackPanel Spacing="6">
-            <TextBlock Classes="section" Text="REPLACE YOUR CHANGES?"/>
+            <TextBlock Classes="section" Text="{Binding Question}"/>
             <ItemsControl ItemsSource="{Binding Choices}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="update:ModelFileChoice">
@@ -39,7 +39,7 @@
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
             <Button Classes="primary"
-                    Content="Update"
+                    Content="{Binding ConfirmText}"
                     MinWidth="80"
                     HorizontalContentAlignment="Center"
                     IsDefault="True"

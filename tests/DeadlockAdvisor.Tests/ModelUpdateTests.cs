@@ -303,4 +303,57 @@ public sealed class ModelUpdateTests : IDisposable
         File.WriteAllBytes(Path.Combine(seed.Path, DataStore.TraitWeightsFile), FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3"));
         Assert.Throws<InvalidOperationException>(() => ModelPublisher.WriteAssets(seed.Path, release.Path));
     }
+
+    [Fact]
+    public async Task AResetOffersEveryFileThatDiffersEvenWithNothingNewerPublished()
+    {
+        var mine = FirstRowEnding(Seed(DataStore.HeroScoresFile), "1");
+        File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), mine);
+        var published = Publish();
+        Assert.False(ModelUpdatePlan.For(published, _data.Path, askAgain: true).HasWork);
+
+        var reset = ModelUpdatePlan.Reset(published, _data.Path);
+        Assert.Equal([DataStore.HeroScoresFile], reset.Edited);
+        Assert.Empty(reset.Quiet);
+        await InstallAsync(reset, DataStore.HeroScoresFile);
+
+        Assert.Equal(Seed(DataStore.HeroScoresFile), File.ReadAllBytes(DataFile(DataStore.HeroScoresFile)));
+        Assert.False(ModelUpdatePlan.Reset(published, _data.Path).HasWork);
+        // And it can be undone, like an update.
+        Assert.Equal([DataStore.HeroScoresFile], ModelUpdateService.Undo(_data.Path));
+        Assert.Equal(mine, File.ReadAllBytes(DataFile(DataStore.HeroScoresFile)));
+    }
+
+    [Fact]
+    public async Task UndoingAnUpdatePutsBackWhatItReplacedWithoutItBeingOfferedAgain()
+    {
+        var weights = FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3");
+        var published = Publish((DataStore.TraitWeightsFile, weights));
+        Assert.Empty(ModelUpdateService.Undoable(_data.Path));
+        await InstallAsync(ModelUpdatePlan.For(published, _data.Path, askAgain: false));
+        Assert.Equal([DataStore.TraitWeightsFile], ModelUpdateService.Undoable(_data.Path));
+
+        Assert.Equal([DataStore.TraitWeightsFile], ModelUpdateService.Undo(_data.Path));
+
+        Assert.Equal(Seed(DataStore.TraitWeightsFile), File.ReadAllBytes(DataFile(DataStore.TraitWeightsFile)));
+        Assert.Empty(ModelUpdateService.Undoable(_data.Path));
+        Assert.False(ModelUpdatePlan.For(published, _data.Path, askAgain: true).HasWork);
+        Assert.Equal([DataStore.TraitWeightsFile], ModelUpdatePlan.Reset(published, _data.Path).Edited);
+        // A newer version asks rather than replacing it quietly.
+        var newer = Publish((DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.4")));
+        Assert.Equal([DataStore.TraitWeightsFile], ModelUpdatePlan.For(newer, _data.Path, askAgain: false).Edited);
+    }
+
+    [Fact]
+    public async Task AnUpdateIsntUndoneOverAnEditMadeSince()
+    {
+        var published = Publish((DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3")));
+        await InstallAsync(ModelUpdatePlan.For(published, _data.Path, askAgain: false));
+        var edit = FirstRowEnding(Seed(DataStore.TraitWeightsFile), "0.9");
+        File.WriteAllBytes(DataFile(DataStore.TraitWeightsFile), edit);
+
+        Assert.Empty(ModelUpdateService.Undoable(_data.Path));
+        Assert.Empty(ModelUpdateService.Undo(_data.Path));
+        Assert.Equal(edit, File.ReadAllBytes(DataFile(DataStore.TraitWeightsFile)));
+    }
 }

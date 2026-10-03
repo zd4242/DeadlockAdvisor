@@ -56,6 +56,10 @@ that release, and compare each file with what they installed:
 - New installs start from the seed built into their copy of the app, then update the same way.
 
 They can turn this off in Settings → Data, or check on demand with Data → Check for Formula Updates.
+Settings → Data also shows the version installed and when it was last checked, every version's notes,
+**Reset…** to put files back to the published version, and **Undo update**, which puts back what the
+last update or reset replaced (kept in `data\.model-previous` until the next one), and then doesn't
+offer that version again.
 
 Versions 0.1.0 and 0.1.1 of the app read `model.json` straight from `main` instead, so they get a push
 before CI has tested it, and don't show notes. Both go away as people update.

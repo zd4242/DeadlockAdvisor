@@ -18,21 +18,26 @@ public sealed class AppUpdateViewModel : ViewModelBase
 {
     private readonly IAppUpdateService _updates;
     private readonly ISettingsService _settings;
+    private readonly INotificationService _notifications;
 
     /// <param name="open">Opens a web page in the browser.</param>
-    public AppUpdateViewModel(IAppUpdateService updates, ISettingsService settings, ReactiveCommand<string, Unit> open)
+    public AppUpdateViewModel(IAppUpdateService updates, ISettingsService settings, INotificationService notifications, ReactiveCommand<string, Unit> open)
     {
         _updates = updates;
         _settings = settings;
+        _notifications = notifications;
 
         OpenCommand = ReactiveCommand.CreateFromObservable(() => open.Execute(Available!.Url));
+        CheckNowCommand = ReactiveCommand.CreateFromTask(() => CheckAsync(manual: true));
         DismissCommand = ReactiveCommand.Create(() =>
         {
             _settings.Update(s => s.SkippedAppVersion = Available!.Version);
             Available = null;
         });
         settings.SettingsChanged
-            .Where(s => !s.CheckForAppUpdates)
+            .Select(s => s.CheckForAppUpdates)
+            .DistinctUntilChanged()
+            .Where(on => !on)
             .Subscribe(_ => Available = null)
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.Available)
@@ -51,15 +56,39 @@ public sealed class AppUpdateViewModel : ViewModelBase
 
     public ReactiveCommand<Unit, Unit> DismissCommand { get; }
 
-    /// <summary>One request to GitHub. Says nothing when it fails: it isn't worth interrupting anyone over.</summary>
-    public async Task CheckAsync()
+    /// <summary>Settings → Data's "Check now": says how it went, and shows a version that was dismissed.</summary>
+    public ReactiveCommand<Unit, Unit> CheckNowCommand { get; }
+
+    /// <summary>The version running: "0.2.0", or null for a build made outside the release workflow.</summary>
+    public Version? Current => _updates.Current;
+
+    /// <summary>
+    /// One request to GitHub. At startup it says nothing unless a newer version is out: a failed check isn't
+    /// worth interrupting anyone over.
+    /// </summary>
+    /// <param name="manual">Asked for: says how it went, and shows a version that was dismissed.</param>
+    public async Task CheckAsync(bool manual = false)
     {
-        if (_updates.Current is not { } current || !_settings.Current.CheckForAppUpdates)
+        if (_updates.Current is not { } current)
+        {
+            if (manual)
+                _notifications.ShowInformation("This build wasn't made by the release workflow, so it has no version to compare with releases.");
+            return;
+        }
+        if (!manual && !_settings.Current.CheckForAppUpdates)
             return;
         var latest = await _updates.LatestAsync();
-        if (latest is null || !Version.TryParse(latest.Version, out var version) || version <= current
-            || latest.Version == _settings.Current.SkippedAppVersion || !_settings.Current.CheckForAppUpdates)
+        if (latest is null)
+        {
+            if (manual)
+                _notifications.ShowError("Couldn't reach GitHub to check for a newer version. Try again later.", TimeSpan.FromSeconds(5));
             return;
-        Available = latest;
+        }
+        _settings.Update(s => s.AppUpdateCheckedAt = DateTimeOffset.Now);
+        var newer = Version.TryParse(latest.Version, out var version) && version > current;
+        if (newer && (manual || latest.Version != _settings.Current.SkippedAppVersion && _settings.Current.CheckForAppUpdates))
+            Available = latest;
+        else if (manual)
+            _notifications.ShowSuccess($"You have the newest version, {current}.", TimeSpan.FromSeconds(5));
     }
 }

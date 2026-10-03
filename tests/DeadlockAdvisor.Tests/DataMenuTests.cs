@@ -687,6 +687,38 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public async Task ResettingPutsTheTickedFilesBackAndUndoingPutsThemBackAgain()
+    {
+        PublishModel();
+        var mine = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.HeroScoresFile), "1");
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.HeroScoresFile), mine);
+        var published = DataBytes(DataStore.ItemCoefficientsFile);
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.ItemCoefficientsFile), ModelUpdateTests.FirstRowEnding(published, "3"));
+
+        await _menu.ResetModelCommand.Execute();
+
+        var dialog = Assert.IsType<ModelUpdateViewModel>(_shown[^1]);
+        Assert.Equal("Reset formulas", dialog.Title);
+        Assert.Equal(["Hero trait ratings", "Item formulas"], dialog.Choices.Select(choice => choice.Title));
+        Assert.All(dialog.Choices, choice => Assert.True(choice.Replace));
+        dialog.Choices[0].Replace = false;
+        await dialog.UpdateCommand.Execute();
+
+        Assert.Equal(mine, DataBytes(DataStore.HeroScoresFile));
+        Assert.Equal(published, DataBytes(DataStore.ItemCoefficientsFile));
+        Assert.Equal("Reset the item formulas to the version published 2026-10-09. Settings → Data can undo it.", _toasts[^1].Message);
+        Assert.NotNull(_fixture.Settings.Current.ModelCheckedAt);
+
+        await _menu.UndoModelUpdateCommand.Execute();
+        Assert.IsType<ConfirmationModalViewModel>(_shown[^1]).ConfirmCommand!.Execute(null);
+
+        Assert.Equal(ModelUpdateTests.FirstRowEnding(published, "3"), DataBytes(DataStore.ItemCoefficientsFile));
+        Assert.Equal("Put back the item formulas from before the last formula update or reset.", _toasts[^1].Message);
+        await _menu.UndoModelUpdateCommand.Execute();
+        Assert.Contains("There's no formula update to undo", LastMessage().Body);
+    }
+
+    [Fact]
     public async Task ChangedFilesAreAskedAboutAndOnlyTheTickedOnesReplaced()
     {
         _fixture.Settings.Current.WelcomeOffered = true;
