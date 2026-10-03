@@ -139,6 +139,8 @@ express_shot,ShopWeaponDamage,Weapon Damage (shop bonus),12.8,%,0
 extended_magazine,BaseAttackDamagePercent,Weapon Damage,8,%,0
 extended_magazine,BonusClipSizePercent,Max Ammo,30,%,0
 extended_magazine,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
+extra_charge,AbilityCharges,Bonus Ability Charges,1,,0
+extra_charge,ChargedTechPower,Spirit Power for Charged Abilities,7,,0
 extra_charge,ShopSpiritPower,Spirit Power (shop bonus),2.8,,0
 extra_health,BonusHealth,Bonus Health,210,,0
 extra_health,ShopBaseHealth,Base Health (shop bonus),1.8,%,0
@@ -326,6 +328,10 @@ quicksilver_reload,ShopSpiritPower,Spirit Power (shop bonus),5.6,,0
 radiant_regeneration,BonusHealth,Bonus Health,90,,0
 radiant_regeneration,BonusMoveSpeed,Move Speed,1.75,m/s,0
 radiant_regeneration,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
+rapid_recharge,AbilityCharges,Bonus Ability Charges,2,,0
+rapid_recharge,ChargeCooldownPercent,Cooldown Reduction For Charged Abilities,14,%,0
+rapid_recharge,ChargeRechargePercent,Faster Time Between Charges,30,%,0
+rapid_recharge,ChargedTechPower,Spirit Power for Charged Abilities,14,,0
 rapid_recharge,ShopSpiritPower,Spirit Power (shop bonus),11.1,,0
 rapid_rounds,BonusFireRate,Fire Rate,9,%,0
 rapid_rounds,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
@@ -346,8 +352,10 @@ restorative_locket,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
 restorative_locket,TechResist,Spirit Resist,8,%,0
 restorative_shot,BaseAttackDamagePercent,Weapon Damage,6,%,0
 restorative_shot,ShopWeaponDamage,Weapon Damage (shop bonus),3.2,%,0
+return_fire,BulletDamageReturned,Bullet Damage Returned,65,%,1
 return_fire,BulletResist,Bullet Resist,10,%,0
 return_fire,ShopBaseHealth,Base Health (shop bonus),3.7,%,0
+return_fire,SpiritDamageReturned,Spirit Damage Returned,25,%,1
 ricochet,BonusFireRate,Fire Rate,18,%,0
 ricochet,ShopWeaponDamage,Weapon Damage (shop bonus),25.6,%,0
 rusted_barrel,BonusHealth,Bonus Health,60,,0

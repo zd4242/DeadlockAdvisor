@@ -36,8 +36,8 @@
   "fresh": {
    "report": {
     "lines": [
-     "Item stats refreshed: 495 stat row(s).",
-     "43 item stat(s) changed:",
+     "Item stats refreshed: 503 stat row(s).",
+     "51 item stat(s) changed:",
      "  Opening Rounds: Weapon Damage (conditional) none -> 25%",
      "  Close Quarters: Weapon Damage (conditional) none -> 20%",
      "  Long Range: Weapon Damage (conditional) none -> 40%",
@@ -56,6 +56,14 @@
      "  Spirit Shielding: Barrier (conditional) none -> 300",
      "  Spiritual Overflow: Spirit Lifesteal (conditional) none -> 10%",
      "  Spiritual Overflow: Spirit Power (conditional) none -> 30",
+     "  Return Fire: Bullet Damage Returned (conditional) none -> 65%",
+     "  Return Fire: Spirit Damage Returned (conditional) none -> 25%",
+     "  Extra Charge: Bonus Ability Charges none -> 1",
+     "  Extra Charge: Spirit Power for Charged Abilities none -> 7",
+     "  Rapid Recharge: Bonus Ability Charges none -> 2",
+     "  Rapid Recharge: Cooldown Reduction For Charged Abilities none -> 14%",
+     "  Rapid Recharge: Faster Time Between Charges none -> 30%",
+     "  Rapid Recharge: Spirit Power for Charged Abilities none -> 14",
      "  Shadow Weave: Fire Rate (conditional) none -> 25%",
      "  Shadow Weave: Melee Damage (conditional) none -> 25%",
      "  Shadow Weave: Spirit Power (conditional) none -> 25",
@@ -94,7 +102,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": true,
-    "stat_rows": 495,
+    "stat_rows": 503,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": true
@@ -111,7 +119,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 495,
+    "stat_rows": 503,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
@@ -138,7 +146,7 @@
      "  Monster Rounds: cost 1 -> 800",
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
-     "Item stats refreshed: 495 stat row(s).",
+     "Item stats refreshed: 503 stat row(s).",
      "Item tooltips refreshed: 156 item(s).",
      "",
      "Single-target changes -- these items are now scored on their best targets on the side they're cast on, or no longer:",
@@ -162,7 +170,7 @@
     "heroes_changed": true,
     "items_changed": true,
     "stats_changed": true,
-    "stat_rows": 495,
+    "stat_rows": 503,
     "tooltips_changed": true,
     "tooltip_count": 156,
     "anything_changed": true
@@ -179,7 +187,7 @@
     "heroes_changed": false,
     "items_changed": false,
     "stats_changed": false,
-    "stat_rows": 495,
+    "stat_rows": 503,
     "tooltips_changed": false,
     "tooltip_count": 156,
     "anything_changed": false
