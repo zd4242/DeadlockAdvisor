@@ -83,7 +83,7 @@ public sealed class DataMenuTests : IDisposable
         Assert.IsType<ProgressModalViewModel>(_shown[0]);
         var report = LastMessage();
         Assert.Equal("Synced from game API", report.Title);
-        Assert.Contains("Item stats refreshed: 495 stat row(s).", report.Body);
+        Assert.Contains("Item stats refreshed: 503 stat row(s).", report.Body);
         Assert.Contains("Long Range: Weapon Damage (conditional) none -> 40%", report.Body);
         Assert.Contains("coefficient(s) now come from item stats, via 9 line(s) in stat_rules.csv.", report.Body);
         Assert.Equal(1, _replaced);
