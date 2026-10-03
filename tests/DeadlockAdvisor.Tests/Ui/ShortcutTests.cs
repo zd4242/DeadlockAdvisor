@@ -117,9 +117,11 @@ public class ShortcutTests
         ui.Show();
         ui.Window.FocusManager!.ClearFocus();
         var board = ui.ViewModel.Match.Board;
-        var detectKey = ui.Window.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Classes.Contains("shortcut"));
-        Assert.Equal("F9", detectKey.Text);
-        Assert.True(detectKey.IsEffectivelyVisible);
+        // The match bar's Detect button, and the empty match's quick start.
+        var detectKeys = ui.Window.GetVisualDescendants().OfType<TextBlock>().Where(text => text.Classes.Contains("shortcut")).ToList();
+        Assert.Equal(2, detectKeys.Count);
+        Assert.All(detectKeys, detectKey => Assert.Equal("F9", detectKey.Text));
+        Assert.All(detectKeys, detectKey => Assert.True(detectKey.IsEffectivelyVisible));
 
         ui.Settings.Update(s =>
         {
@@ -127,7 +129,7 @@ public class ShortcutTests
             s.SetGesture(ShortcutAction.Detect, null);
         });
         UiHarness.Settle();
-        Assert.False(detectKey.IsEffectivelyVisible);
+        Assert.All(detectKeys, detectKey => Assert.False(detectKey.IsEffectivelyVisible));
         Assert.Equal(new KeyGesture(Key.F2), board.RandomGesture);
 
         ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
