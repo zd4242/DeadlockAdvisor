@@ -533,6 +533,18 @@ from the profiled heroes) using the real scoring code, then lists:
 - **Real standouts the hand model gives nothing:** lifts that clear the
   `ItemScoring.PickMinAgainst` / `PickMinAs` bars where the hand weight is 0 or
   less.
+- **Formula vs match data:** one number per relation to compare before and after
+  tuning. It's the correlation between hand weight and raw lift over every item ×
+  hero pair, each counted by 1/se², with both measured from their item's own
+  weighted average first, so it's how items vary across heroes that counts, not
+  which items are popular (`ModelHealth.CenteredPairs`).
+- **Traits the enemy lifts follow:** for every item and trait, the weighted slope
+  of the enemy lifts on the heroes' distance from the trait's average
+  (`MatchStatsMath.Slope`), listed where |t| ≥ `SuggestT` (3.5, strict because
+  it's thousands of fits) and the hand coefficient is 0 or the other sign. When
+  the pooled hand weights follow the lifts (a positive slope), that slope turns
+  each one into a coefficient in Item Formulas' units; when they don't, there's
+  no such scale and only the slope is given.
 
 When you tune data or change the formula, compare the report before and after.
 Treat the match-data sections as leads, not verdicts: real `against` effects

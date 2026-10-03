@@ -103,6 +103,55 @@ public class ModelHealthTests
     }
 
     [Fact]
+    public void WeightsRunningAgainstTheLiftsGiveNoScaleForCoefficients()
+    {
+        var report = Build(RosterStore());
+
+        // Countered's one item with lifts falls 0.1 a hero as its weight rises; Untagged's single lift has nothing to vary against.
+        var against = report.Agreements.Single(agreement => agreement.Relation == Relation.Against);
+        Assert.Equal(12, against.Pairs);
+        AssertEx.Close(-1.0, against.R);
+        var suggestion = Assert.Single(report.Suggestions);
+        Assert.Equal(("Countered", "Trait", 1.0), (suggestion.ItemName, suggestion.TraitName, suggestion.Hand));
+        AssertEx.Close(-0.01, suggestion.Slope);
+        Assert.Null(suggestion.Coefficient);
+    }
+
+    /// <summary>
+    /// "Agree" responds to the trait and its lifts rise 0.01 a trait point; "Missing" has no rule but rises
+    /// 0.02. With a point of hand weight worth 0.01 lift points, Missing's slope is a coefficient of 2.
+    /// </summary>
+    [Fact]
+    public void ALiftTheHandModelLacksIsSuggestedAsACoefficient()
+    {
+        var store = RosterStore();
+        store.Items["agree"] = new Item("agree", "Agree", "weapon", 1);
+        store.Items["missing"] = new Item("missing", "Missing", "weapon", 1);
+        store.ItemCoefficients[new CoefficientKey("agree", "trait", Relation.Against)] = 1.0;
+        store.MatchLift.Clear();
+        for (var i = 1; i <= 12; i++)
+        {
+            var heroId = $"h{i}";
+            var deviation = 10 * i - 65;
+            var noise = i % 2 == 0 ? 0.05 : -0.05;
+            store.MatchLift[new MatchLiftKey("agree", heroId, "against")] =
+                new MatchLift("agree", heroId, "against", 5000, 0.01 * deviation + noise, 0.1, 0.01 * deviation + noise);
+            store.MatchLift[new MatchLiftKey("missing", heroId, "against")] =
+                new MatchLift("missing", heroId, "against", 5000, 0.02 * deviation + noise, 0.1, 0.02 * deviation + noise);
+        }
+
+        var report = Build(store);
+
+        // Missing's lifts vary four times as much where the hand model sees nothing, which holds r near 1/sqrt(5).
+        Assert.InRange(report.Agreements.Single(agreement => agreement.Relation == Relation.Against).R, 0.4, 0.5);
+        var suggestion = Assert.Single(report.Suggestions);
+        Assert.Equal(("Missing", "Trait", 0.0, 12), (suggestion.ItemName, suggestion.TraitName, suggestion.Hand, suggestion.Heroes));
+        Assert.Equal(2.0, suggestion.Coefficient!.Value, 1);
+        Assert.True(suggestion.T > ModelHealth.SuggestT);
+        Assert.Contains(report.Lines(), line => line.StartsWith("  Missing · Trait: +0.20 pts per 10 points above average", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void TooFewProfiledHeroesSkipTheSimulation()
     {
         var report = Build(TestStore.Make());

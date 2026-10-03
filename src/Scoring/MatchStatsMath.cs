@@ -25,6 +25,9 @@ public sealed record Patch(string Title, long Start)
 /// </param>
 public sealed record RawLift(int Matches, double Lift, double Se);
 
+/// <summary>A fitted slope with its standard error, and how many errors it sits from 0.</summary>
+public readonly record struct WeightedSlope(double Value, double Se, double T);
+
 /// <summary>A game item's totals in one /item-stats answer.</summary>
 public readonly record struct WinTotals(long Wins, long Matches);
 
@@ -564,6 +567,56 @@ public static partial class MatchStatsMath
         foreach (var (_, y) in pairs)
             syy += (y - meanY) * (y - meanY);
         return sxx != 0 && syy != 0 ? sxy / Math.Sqrt(sxx * syy) : null;
+    }
+
+    /// <summary><see cref="Pearson"/> with each point counted by its weight, such as 1/se².</summary>
+    public static double? WeightedPearson(IReadOnlyList<(double X, double Y, double W)> points)
+    {
+        if (points.Count < 3 || Moments(points) is not { } m)
+            return null;
+        return m.Sxx != 0 && m.Syy != 0 ? m.Sxy / Math.Sqrt(m.Sxx * m.Syy) : null;
+    }
+
+    /// <summary>
+    /// The weighted least-squares slope of Y on X, with its standard error from the weighted residuals
+    /// (so lifts that vary more than their se says widen it) and t = slope ÷ se. Null with fewer than
+    /// three points or no spread in X.
+    /// </summary>
+    public static WeightedSlope? Slope(IReadOnlyList<(double X, double Y, double W)> points)
+    {
+        if (points.Count < 3 || Moments(points) is not { Sxx: > 0 } m)
+            return null;
+        var slope = m.Sxy / m.Sxx;
+        var residuals = 0.0;
+        foreach (var (x, y, w) in points)
+        {
+            var r = y - m.MeanY - slope * (x - m.MeanX);
+            residuals += w * r * r;
+        }
+        var se = Math.Sqrt(residuals / (points.Count - 2) / m.Sxx);
+        return new WeightedSlope(slope, se, se > 0 ? slope / se : double.PositiveInfinity * Math.Sign(slope));
+    }
+
+    private static (double MeanX, double MeanY, double Sxx, double Syy, double Sxy)? Moments(IReadOnlyList<(double X, double Y, double W)> points)
+    {
+        double sumW = 0, sumX = 0, sumY = 0;
+        foreach (var (x, y, w) in points)
+        {
+            sumW += w;
+            sumX += w * x;
+            sumY += w * y;
+        }
+        if (sumW <= 0)
+            return null;
+        var (meanX, meanY) = (sumX / sumW, sumY / sumW);
+        double sxx = 0, syy = 0, sxy = 0;
+        foreach (var (x, y, w) in points)
+        {
+            sxx += w * (x - meanX) * (x - meanX);
+            syy += w * (y - meanY) * (y - meanY);
+            sxy += w * (x - meanX) * (y - meanY);
+        }
+        return (meanX, meanY, sxx, syy, sxy);
     }
 
     /// <summary>

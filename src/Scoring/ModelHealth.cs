@@ -1,5 +1,6 @@
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Formats;
 
@@ -16,6 +17,24 @@ public sealed record Disagreement(string ItemName, Relation Relation, double R, 
 /// <summary>A real lift that clears the data-only bar where the hand model gives the item nothing.</summary>
 public sealed record DataOnlyPair(string ItemName, string HeroName, Relation Relation, double Lift, double Weight, double Margin);
 
+/// <summary>
+/// How well the hand weights follow the real lifts on one relation, pooled over every item: each item's
+/// weights and lifts are measured from their own averages, so it's the pattern across heroes that counts.
+/// </summary>
+public sealed record Agreement(Relation Relation, double R, int Pairs);
+
+/// <summary>
+/// A clear slope of an item's enemy lifts across heroes on one trait, where the hand model has no
+/// coefficient or one of the other sign.
+/// </summary>
+/// <param name="Slope">Lift points per trait point the hero sits above the roster average.</param>
+/// <param name="Coefficient">
+/// The slope as a coefficient typed on Item Formulas, by how many lift points a point of hand weight brings
+/// over every item; null when the hand weights don't follow the lifts overall, so there's no such scale.
+/// </param>
+/// <param name="Hand">The item's coefficient on the trait now, typed and from stats, in the same units.</param>
+public sealed record Suggestion(string ItemName, string TraitName, double Slope, double T, double? Coefficient, double Hand, int Heroes);
+
 /// <param name="Matches">How many matches were simulated; 0 when too few heroes are profiled to fill one.</param>
 /// <param name="HasMatchData">False skips the data sections: Download Match Data hasn't run.</param>
 /// <param name="DataSource">Which patches and ranks the match data comes from, and how much it moves from patch to patch.</param>
@@ -30,7 +49,9 @@ public sealed record ModelHealthReport(
     bool HasMatchData,
     IReadOnlyList<Disagreement> Disagreements,
     IReadOnlyList<DataOnlyPair> DataOnly,
-    IReadOnlyList<string> DataSource)
+    IReadOnlyList<string> DataSource,
+    IReadOnlyList<Agreement> Agreements,
+    IReadOnlyList<Suggestion> Suggestions)
 {
     public IEnumerable<ItemShare> AlwaysOn =>
         Shares.Where(share => share.TopShare >= ModelHealth.AlwaysOnShare)
@@ -93,6 +114,13 @@ public sealed record ModelHealthReport(
             return lines;
         }
         lines.AddRange(DataSource);
+        if (Agreements.Count > 0)
+        {
+            lines.Add("");
+            lines.Add("Formula vs match data, across heroes within each item (the number to compare before and after tuning): "
+                      + string.Join(", ", Agreements.Select(a => $"{Word(a.Relation)} r = {NumberFormat.Fixed(a.R, 2)} over {Format.Thousands(a.Pairs)} pairs"))
+                      + ".");
+        }
         lines.Add("");
         lines.Add(Disagreements.Count == 0
             ? "No item's hand weights run clearly against its real lifts."
@@ -107,6 +135,16 @@ public sealed record ModelHealthReport(
             $"  {pair.ItemName} {(pair.Relation == Relation.Against ? "vs" : "on")} {pair.HeroName}: "
             + $"{Format.SignedFixed(pair.Lift, 1)} pts, "
             + (pair.Weight == 0 ? "no hand weight" : $"hand weight {Format.SignedFixed(pair.Weight, 1)}")));
+
+        lines.Add("");
+        lines.Add(Suggestions.Count == 0
+            ? "The enemy lifts follow no trait clearly where the hand model has nothing, or the opposite."
+            : $"Traits the enemy lifts follow where the hand model has nothing, or the opposite (|t| ≥ {Format.Num(ModelHealth.SuggestT)}); "
+              + "leads only, since traits overlap:");
+        lines.AddRange(Suggestions.Select(s =>
+            $"  {s.ItemName} · {s.TraitName}: {Format.SignedFixed(s.Slope * 10, 2)} pts per 10 points above average (t = {NumberFormat.Fixed(s.T, 1)}), "
+            + (s.Coefficient is { } coefficient ? $"about {Format.SignedFixed(coefficient, 1)} as a coefficient, " : "")
+            + $"hand {(s.Hand == 0 ? "0" : Format.SignedFixed(s.Hand, 1))}"));
         return lines;
     }
 
@@ -142,6 +180,13 @@ public static class ModelHealth
     public const int DataOnlyLimit = 15;
     public const int SwingCount = 10;
 
+    /// <summary>
+    /// How many standard errors a fitted coefficient needs to be suggested. Strict, since every item is
+    /// fitted against every trait: a few thousand fits would throw up dozens of flukes at the usual 2.
+    /// </summary>
+    public const double SuggestT = 3.5;
+    public const int SuggestionLimit = 15;
+
     public static ModelHealthReport Build(DataStore store, WeightMatrix matrix, int seed = 1)
     {
         var unprofiled = store.UnprofiledHeroes().ToHashSet();
@@ -153,6 +198,11 @@ public static class ModelHealth
         var noRules = store.UncoveredItems().ToHashSet();
         var neverShown = shares.Where(share => share.ShownShare == 0).Select(share => share.ItemId).ToList();
         var ruleCategories = RuleCategories(store);
+        var pairs = new[] { Relation.Against, Relation.As }.ToDictionary(relation => relation, relation => CenteredPairs(store, matrix, relation));
+        var agreements = pairs
+            .Select(entry => MatchStatsMath.WeightedPearson(entry.Value) is { } r ? new Agreement(entry.Key, r, entry.Value.Count) : null)
+            .OfType<Agreement>()
+            .ToList();
 
         return new ModelHealthReport(
             matches,
@@ -165,7 +215,9 @@ public static class ModelHealth
             store.MatchLift.Count > 0,
             Disagreements(store, matrix),
             DataOnlyPairs(store, matrix),
-            DataSource(store.MatchMeta));
+            DataSource(store.MatchMeta),
+            agreements,
+            Suggestions(store, pairs[Relation.Against], profiled));
     }
 
     /// <summary>"Match data: patch 09-29 (2 days so far · 18%), patch 09-16 (13 days · 82%), every match", then the drift between patches.</summary>
@@ -272,6 +324,69 @@ public static class ModelHealth
             found.Add(new Disagreement(store.Items[itemId].ItemName, relation, r, list.Count));
         }
         return found.OrderBy(d => d.R).ToList();
+    }
+
+    /// <summary>One relation's usable lifts (a known item and hero, a standard error), per item.</summary>
+    private static Dictionary<string, List<MatchLift>> LiftsByItem(DataStore store, Relation relation) =>
+        store.MatchLift.Values
+            .Where(lift => lift.Relation == relation.Key() && lift.Se > 0 && store.Items.ContainsKey(lift.ItemId) && store.Heroes.ContainsKey(lift.HeroId))
+            .GroupBy(lift => lift.ItemId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+    /// <summary>
+    /// Every (hand weight, raw lift) pair on one relation, each counted by 1/se², with both measured from
+    /// their item's own weighted averages: what's left is how each item varies across heroes.
+    /// </summary>
+    private static List<(double X, double Y, double W)> CenteredPairs(DataStore store, IReadOnlyDictionary<MatrixKey, double> matrix, Relation relation)
+    {
+        var pooled = new List<(double X, double Y, double W)>();
+        foreach (var (itemId, lifts) in LiftsByItem(store, relation))
+        {
+            if (lifts.Count < 2)
+                continue;
+            var points = lifts
+                .Select(lift => (X: matrix.GetValueOrDefault(new MatrixKey(itemId, lift.HeroId, relation)), Y: lift.Lift, W: 1 / (lift.Se * lift.Se)))
+                .ToList();
+            var sumW = points.Sum(point => point.W);
+            var meanX = points.Sum(point => point.W * point.X) / sumW;
+            var meanY = points.Sum(point => point.W * point.Y) / sumW;
+            pooled.AddRange(points.Select(point => (point.X - meanX, point.Y - meanY, point.W)));
+        }
+        return pooled;
+    }
+
+    /// <summary>
+    /// For every item and trait, the slope of the enemy lifts on the heroes' distance from the trait's
+    /// average. Kept where it clears <see cref="SuggestT"/> and the hand coefficient is 0 or the other sign,
+    /// strongest first. When the hand weights follow the lifts overall (a positive slope over
+    /// <paramref name="against"/>), that slope turns each one into a coefficient.
+    /// </summary>
+    private static List<Suggestion> Suggestions(DataStore store, List<(double X, double Y, double W)> against, IReadOnlyList<string> profiled)
+    {
+        var calibration = MatchStatsMath.Slope(against) is { Value: > 0 } overall ? overall.Value : (double?)null;
+        var baselines = store.TraitBaselines();
+        var isProfiled = profiled.ToHashSet();
+        var found = new List<Suggestion>();
+        foreach (var (itemId, lifts) in LiftsByItem(store, Relation.Against))
+        {
+            var rated = lifts.Where(lift => isProfiled.Contains(lift.HeroId)).ToList();
+            if (rated.Count < MinHeroesForR)
+                continue;
+            foreach (var (categoryId, category) in store.Categories)
+            {
+                var traitWeight = store.TraitWeight(categoryId, Relation.Against);
+                var baseline = baselines.GetValueOrDefault(categoryId);
+                var points = rated.Select(lift => (store.HeroScore(lift.HeroId, categoryId) - baseline, lift.Lift, 1 / (lift.Se * lift.Se))).ToList();
+                if (traitWeight == 0 || MatchStatsMath.Slope(points) is not { } slope || Math.Abs(slope.T) < SuggestT)
+                    continue;
+                var hand = store.EffectiveCoefficient(itemId, categoryId, Relation.Against) / traitWeight;
+                if (hand != 0 && Math.Sign(hand) == Math.Sign(slope.Value))
+                    continue;
+                found.Add(new Suggestion(store.Items[itemId].ItemName, category.CategoryName, slope.Value, slope.T,
+                    slope.Value / calibration / traitWeight, hand, rated.Count));
+            }
+        }
+        return found.OrderByDescending(suggestion => Math.Abs(suggestion.T)).ThenBy(suggestion => suggestion.ItemName, StringComparer.Ordinal).Take(SuggestionLimit).ToList();
     }
 
     /// <summary>(item, hero) lifts that clear <see cref="ItemScoring.DataOnlyPicks"/>'s bars where the hand weight is 0 or less.</summary>

@@ -2,12 +2,34 @@ using System.Text.Json.Nodes;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Tests.Support;
 
 namespace DeadlockAdvisor.Tests;
 
 /// <summary>The match data's maths, on inputs small enough to check by hand.</summary>
 public class MatchStatsMathTests
 {
+    [Fact]
+    public void TheWeightedSlopeCarriesItsErrorFromTheResiduals()
+    {
+        // Means (1, 5/3): Sxy = 4 and Sxx = 2, so the slope is 2. The residuals 1/3, -2/3 and 1/3 square to 2/3,
+        // over one degree of freedom, so se = sqrt(2/3 / 2) = sqrt(1/3).
+        var slope = MatchStatsMath.Slope([(0, 0, 1), (1, 1, 1), (2, 4, 1)])!.Value;
+
+        AssertEx.Close(2.0, slope.Value);
+        AssertEx.Close(Math.Sqrt(1.0 / 3), slope.Se);
+        AssertEx.Close(2 / Math.Sqrt(1.0 / 3), slope.T);
+        Assert.Null(MatchStatsMath.Slope([(1, 0, 1), (1, 2, 1), (1, 4, 1)]));
+    }
+
+    [Fact]
+    public void AWeightCountsAPointThatManyTimes()
+    {
+        var weighted = MatchStatsMath.WeightedPearson([(0, 0, 1), (1, 1, 1), (2, 4, 2)]);
+
+        AssertEx.Close(MatchStatsMath.Pearson([(0, 0), (1, 1), (2, 4), (2, 4)])!.Value, weighted!.Value);
+    }
+
     private static Dictionary<long, WinTotals> Totals(params (long Item, long Wins, long Matches)[] rows) =>
         rows.ToDictionary(row => row.Item, row => new WinTotals(row.Wins, row.Matches));
 
