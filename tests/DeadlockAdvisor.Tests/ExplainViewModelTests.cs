@@ -8,6 +8,13 @@ namespace DeadlockAdvisor.Tests;
 public class ExplainViewModelTests
 {
     [Fact]
+    public void TheFormulaTotalSaysHowItBecomesTheVerdictsPart()
+    {
+        Assert.Equal("1683.8 pts ÷ 251 typical = +6.7", ExplainText.FormulaConversion(1683.84, 251.2, 6.703));
+        Assert.Equal("-120.0 pts ÷ 240 typical = -0.5", ExplainText.FormulaConversion(-120, 240, -0.5));
+    }
+
+    [Fact]
     public void TheTypicalTeamExplainsItselfInTheMatchsNumbers()
     {
         var store = TestStore.Make();

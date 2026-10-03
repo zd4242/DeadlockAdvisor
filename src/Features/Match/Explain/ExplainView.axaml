@@ -192,6 +192,7 @@
 
                 <!-- Lined up with the cards' own amounts, which add up to it. -->
                 <Grid ColumnDefinitions="*,Auto"
+                      RowDefinitions="Auto,Auto"
                       Margin="10,0,10,2"
                       Background="Transparent"
                       ToolTip.Tip="{Binding FormulaTotalTip}"
@@ -202,6 +203,13 @@
                                            IsBold="True"
                                            Value="{Binding FormulaTotal.Shown}"
                                            Text="{Binding FormulaTotal.Text}"/>
+                    <!-- The cards add up in points; the verdict above counts them in typical scores. -->
+                    <TextBlock Grid.Row="1"
+                               Grid.ColumnSpan="2"
+                               Classes="faint"
+                               HorizontalAlignment="Right"
+                               Text="{Binding FormulaConversion}"
+                               IsVisible="{Binding FormulaConversion, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                 </Grid>
 
                 <ItemsControl ItemsSource="{Binding Contributions}">

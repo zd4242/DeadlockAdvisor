@@ -89,6 +89,12 @@ public class ExplainViewModel : ViewModelBase
     [Reactive] public bool ShowsFormulaTotal { get; private set; }
     [Reactive] public string? FormulaTotalTip { get; private set; }
 
+    /// <summary>
+    /// Ranked by the formula and the data together, how the cards' total in points becomes the verdict's
+    /// formula part, so the two numbers read as one; null otherwise.
+    /// </summary>
+    [Reactive] public string? FormulaConversion { get; private set; }
+
     [Reactive] public bool NoContributions { get; private set; }
     [Reactive] public IReadOnlyList<ContributionCard> Contributions { get; private set; } = [];
     [Reactive] public MatchDataCard? MatchData { get; private set; }
@@ -160,6 +166,9 @@ public class ExplainViewModel : ViewModelBase
         FormulaTotal = new DisplayAmount(total);
         FormulaTotalTip = NoContributions ? null : formulaTip;
         ShowsFormulaTotal = FormulaTotalTip is not null;
+        FormulaConversion = ShowsFormulaTotal && blend is { } units && Verdict is { Formula: { } inUnits }
+            ? ExplainText.FormulaConversion(total, units.Formula, inUnits)
+            : null;
     }
 
     private void ShowIdle()
@@ -171,6 +180,7 @@ public class ExplainViewModel : ViewModelBase
         FormulaTotal = default;
         ShowsFormulaTotal = false;
         FormulaTotalTip = null;
+        FormulaConversion = null;
         NoContributions = false;
         Contributions = [];
         MatchData = null;

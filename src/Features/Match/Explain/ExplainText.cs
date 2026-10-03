@@ -35,6 +35,10 @@ public static class ExplainText
         $"The formula's score, which the heroes below add up to. In the ranking it counts as {Format.SignedFixed(part, 1)}, "
         + "scaled so the formula and the match data count equally.";
 
+    /// <summary>"1683.8 pts ÷ 251 typical = +6.7": how the cards' total becomes the formula's part of the verdict.</summary>
+    public static string FormulaConversion(double total, double typical, double part) =>
+        $"{NumberFormat.Fixed(total, 1)} pts ÷ {Format.Num(Math.Round(typical))} typical = {Format.SignedFixed(part, 1)}";
+
     public const string FormulaTotalByDataTip =
         "The formula's score, which the heroes below add up to. The list is ranked by the match data instead.";
 

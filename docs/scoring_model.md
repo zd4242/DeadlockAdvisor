@@ -196,7 +196,8 @@ so the two are weighted equally.
   directions (`BlendScale.Disagree`). The Match tab's "Hide items the formula and
   data disagree on" filter drops them from this ranking's list; it never changes a score.
 - **The explain panel** heads the item with the verdict, such as "Formula +1.6 · data
-  +0.7 → +2.3", and says when either opinion has nothing to add.
+  +0.7 → +2.3", and says when either opinion has nothing to add. Under the hero cards'
+  total in points it shows the conversion, "402.0 pts ÷ 251 typical = +1.6".
 
 `DataStrength` nets the two relations instead of taking the better one, so a
 strong counter that does badly on your own hero doesn't count as a standout.

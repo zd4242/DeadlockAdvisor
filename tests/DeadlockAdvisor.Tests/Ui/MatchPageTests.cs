@@ -9,6 +9,7 @@ using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.Match.Board;
@@ -212,6 +213,10 @@ public class MatchPageTests
         Assert.Equal(row.Score.Text, explain.Headline.Text);
         Assert.Equal(rankBy != RankBy.Formula, explain.ShowsFormulaTotal);
         Assert.Equal(explain.Contributions.Sum(card => card.Amount.Value), explain.FormulaTotal.Value, 6);
+        // Blending, the total in points is shown turned into the verdict's formula part.
+        Assert.Equal(rankBy == RankBy.Both, explain.FormulaConversion is not null);
+        if (rankBy == RankBy.Both)
+            Assert.EndsWith($"= {Format.SignedFixed(explain.Verdict!.Formula!.Value, 1)}", explain.FormulaConversion);
     }
 
     /// <summary>Without the math, the cards say who counts and how much, and each line's working moves to its tooltip.</summary>
