@@ -101,7 +101,7 @@ public class DetectReviewViewModel : ViewModelBase
         var keptText = kept > 0 ? $" (and kept {kept} from your current match)" : "";
         Summary = (SelfSlot is null
             ? $"Read {confident} of 12 heroes{keptText}, but couldn't tell which one is you, so the teams can't be split."
-            : $"Read {confident} of 12 heroes confidently{keptText}. Check anything marked uncertain before applying — "
+            : $"Read {confident} of 12 heroes confidently{keptText}. Check anything marked Unsure before applying — "
               + "a slot whose player was dead at the moment of capture can't be identified from the portrait.")
             + $" Net worth read for {_netWorth.ReadCount} of 12.";
     }

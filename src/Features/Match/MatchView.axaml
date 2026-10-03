@@ -123,7 +123,37 @@
                             </Button.Flyout>
                         </Button>
                     </Grid>
-                    <results:ResultsView DataContext="{Binding Results}"/>
+                    <Panel>
+                        <Panel IsVisible="{Binding !ShowsQuickStart}">
+                            <results:ResultsView DataContext="{Binding Results}"/>
+                        </Panel>
+
+                        <!-- Nothing picked yet: the three ways to fill the match, in place of an empty list. -->
+                        <StackPanel x:Name="QuickStart"
+                                    IsVisible="{Binding ShowsQuickStart}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="460"
+                                    Spacing="12">
+                            <TextBlock Classes="h2" HorizontalAlignment="Center" Text="Who's in your match?"/>
+                            <TextBlock Classes="dim"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       Text="Detect reads every hero off Deadlock's top bar while a match is on screen. Or import a finished match by its ID, or pick the heroes yourself."/>
+                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Spacing="8" Margin="0,4,0,0">
+                                <Button Classes="primary" Command="{Binding DetectCommand}">
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <TextBlock Text="Detect from screen" VerticalAlignment="Center"/>
+                                        <TextBlock Classes="shortcut"
+                                                   Text="{Binding Board.DetectKey}"
+                                                   IsVisible="{Binding Board.DetectKey, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                                    </StackPanel>
+                                </Button>
+                                <Button Content="Import a match…" Command="{Binding ImportCommand}"/>
+                                <Button Content="Pick heroes" Command="{Binding PickHeroesCommand}"/>
+                            </StackPanel>
+                        </StackPanel>
+                    </Panel>
                 </DockPanel>
             </Border>
 

@@ -47,6 +47,7 @@ public class SlotReviewViewModel : ViewModelBase
                 Detail = !WasCorrected ? DetailFor(reading, NameOf(reading.RunnerUp))
                     : detected is null ? "set by hand"
                     : $"corrected from {detected.Name}";
+                DetailTip = !WasCorrected && reading is { Kept: false, HeroId: not null } ? ScoreTip(reading) : null;
                 this.RaisePropertyChanged(nameof(WasCorrected));
                 this.RaisePropertyChanged(nameof(IsUncertain));
             })
@@ -66,6 +67,9 @@ public class SlotReviewViewModel : ViewModelBase
     public string NetWorth { get; }
     [Reactive] public HeroChoice SelectedHero { get; set; }
     [Reactive] public string Detail { get; private set; } = "";
+
+    /// <summary>The read's numbers behind <see cref="Detail"/>'s plain verdict; null when there are none to show.</summary>
+    [Reactive] public string? DetailTip { get; private set; }
 
     /// <summary>Worth a second look: nothing read, or a read without a clear lead, and not yet corrected.</summary>
     public bool IsUncertain => !Reading.IsSettled && !WasCorrected;
@@ -103,9 +107,12 @@ public class SlotReviewViewModel : ViewModelBase
         if (reading.HeroId is null)
             return "No confident match — likely dead at capture, or wearing a skin.";
         if (reading.IsConfident)
-            return FormattableString.Invariant($"match {reading.Score:0.00}  ·  clear by {reading.Margin:0.00}");
-        return FormattableString.Invariant($"uncertain: {reading.Score:0.00}, only {reading.Margin:0.00} ahead of {runnerUp ?? "—"}");
+            return "Sure";
+        return runnerUp is null ? "Unsure" : $"Unsure: could be {runnerUp}";
     }
+
+    private static string ScoreTip(SlotReading reading) =>
+        FormattableString.Invariant($"Matches the portrait {reading.Score:0.00} (1 is a perfect match), {reading.Margin:0.00} ahead of the next best hero.");
 
     protected override void Dispose(bool disposing)
     {

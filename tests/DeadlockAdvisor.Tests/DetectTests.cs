@@ -430,6 +430,26 @@ public sealed class DetectTests : IDisposable
     }
 
     [AvaloniaFact]
+    public void AReadSaysSureOrUnsureWithItsNumbersInTheTip()
+    {
+        HeroChoice[] choices = [HeroChoice.Unknown, new("haze", "Haze"), new("lash", "Lash")];
+        SlotReviewViewModel Slot(double score, double margin) =>
+            new(new SlotReading(0, "haze", score, margin, "lash", default, []), null, choices, _ => { });
+
+        var sure = Slot(0.9, 0.5);
+        Assert.Equal("Sure", sure.Detail);
+        Assert.Equal("Matches the portrait 0.90 (1 is a perfect match), 0.50 ahead of the next best hero.", sure.DetailTip);
+
+        var unsure = Slot(0.5, 0.01);
+        Assert.Equal("Unsure: could be Lash", unsure.Detail);
+        Assert.True(unsure.IsUncertain);
+
+        unsure.SelectedHero = choices[2];
+        Assert.Equal("corrected from Haze", unsure.Detail);
+        Assert.Null(unsure.DetailTip);
+    }
+
+    [AvaloniaFact]
     public async Task FindingNothingWithoutTheGameWindowSaysThePrimaryMonitorWasRead()
     {
         CopyTopbarInto(_fixture.Data.AssetsDir);

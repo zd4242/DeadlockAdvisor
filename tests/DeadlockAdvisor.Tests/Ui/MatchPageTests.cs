@@ -120,10 +120,27 @@ public class MatchPageTests
         ui.Show();
         ui.Screenshot("match_empty.png");
         Assert.True(ui.ViewModel.Match.Results.IsEmpty);
+        Assert.True(ui.ViewModel.Match.ShowsQuickStart);
 
         SetUpMatch(ui);
         ui.Screenshot("match_tiered.png");
         Assert.Contains(ui.ViewModel.Match.Results.Entries, entry => entry is SectionHeaderViewModel);
+        Assert.False(ui.ViewModel.Match.ShowsQuickStart);
+    }
+
+    /// <summary>An empty match offers the ways to fill it, until the picker opens to do just that.</summary>
+    [AvaloniaFact]
+    public async Task TheQuickStartGivesWayToThePicker()
+    {
+        using var ui = new UiHarness();
+        var match = ui.ViewModel.Match;
+        Assert.True(match.ShowsQuickStart);
+
+        await match.PickHeroesCommand.Execute();
+
+        Assert.True(match.Board.IsPickerOpen);
+        Assert.False(match.ShowsQuickStart);
+        Assert.Equal("Pick the heroes in your match above and recommendations appear here.", match.Results.EmptyHint);
     }
 
     [AvaloniaFact]

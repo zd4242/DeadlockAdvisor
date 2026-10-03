@@ -273,7 +273,7 @@ public class StatusBarTests
         ui.Screenshot("status_card_no_data.png");
     }
 
-    /// <summary>How much of the model is filled in, which only someone filling it in needs.</summary>
+    /// <summary>How much of the model is filled in, and how reliable each kind of lift is, which only someone filling it in needs.</summary>
     [AvaloniaFact]
     public void CoverageShowsOnlyWithTheEditors()
     {
@@ -281,10 +281,12 @@ public class StatusBarTests
         ui.Show();
         Assert.False(ui.ViewModel.DataStatus.ShowsCoverage);
         Assert.Empty(ui.ViewModel.DataStatus.Coverage);
+        Assert.Empty(ui.ViewModel.DataStatus.Families);
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
 
         Assert.True(ui.ViewModel.DataStatus.ShowsCoverage);
+        Assert.NotEmpty(ui.ViewModel.DataStatus.Families);
         Assert.Equal(["Hero traits rated", "Items tagged", "Formula rules"], ui.ViewModel.DataStatus.Coverage.Select(fact => fact.Label));
         OpenCard(ui);
         ui.Screenshot("status_card_editors.png");

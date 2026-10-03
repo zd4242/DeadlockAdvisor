@@ -95,7 +95,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         if (settings.Current.ReopenLastMatch)
             Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
         Board = new MatchBoardViewModel(Match, () => _data.Store, settings);
-        Results = new ResultsViewModel("Pick the heroes in your match on the left and recommendations appear here.");
+        Results = new ResultsViewModel("Pick the heroes in your match above and recommendations appear here.");
 
         var savedPercent = settings.Current.ResultsMinPercent;
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
@@ -118,6 +118,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ArtWanted = detect.ArtWanted;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
+        PickHeroesCommand = ReactiveCommand.Create(Board.OpenPicker);
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
         // Runs after the board's own rescore, so the list is already ranked for the new heroes.
@@ -175,6 +176,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             })
             .DisposeWith(Disposables);
 
+        this.WhenAnyValue(vm => vm.IsMatchEmpty, vm => vm.Board.IsPickerOpen)
+            .Subscribe(_ => ShowsQuickStart = IsMatchEmpty && !Board.IsPickerOpen)
+            .DisposeWith(Disposables);
+
         _data.ScoresChanged.Subscribe(_ => Refresh()).DisposeWith(Disposables);
         _data.StoreReplaced.Subscribe(_ => Rebind()).DisposeWith(Disposables);
 
@@ -225,6 +230,18 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public IObservable<Unit> ArtWanted { get; }
     public ReactiveCommand<Unit, Unit> ImportCommand { get; }
 
+    /// <summary>Open the hero picker, from the empty match's quick start.</summary>
+    public ReactiveCommand<Unit, Unit> PickHeroesCommand { get; }
+
+    /// <summary>No hero is in the match yet.</summary>
+    [Reactive] public bool IsMatchEmpty { get; private set; }
+
+    /// <summary>
+    /// The results panel offers the ways to fill the match in place of an empty list: nothing is picked,
+    /// and the picker isn't already open for it.
+    /// </summary>
+    [Reactive] public bool ShowsQuickStart { get; private set; }
+
     /// <summary>Look back at a detection that was applied without review.</summary>
     public ReactiveCommand<Unit, Unit> ReviewDetectionCommand { get; }
 
@@ -237,6 +254,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
         var netWorth = NetWorth();
         HasMatchData = store.MatchLift.Count > 0;
+        IsMatchEmpty = Match.IsEmpty;
         Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale);
         RefreshExplain();
     }

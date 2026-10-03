@@ -57,7 +57,7 @@ public class DataStatusViewModel : ViewModelBase
 
     [Reactive] public IReadOnlyList<StatusFact> Facts { get; private set; } = [];
 
-    /// <summary>What each kind of lift kept from the matches, or why it was left out.</summary>
+    /// <summary>What each kind of lift kept from the matches, or why it was left out: for the editors only, like <see cref="Coverage"/>.</summary>
     [Reactive] public IReadOnlyList<string> Families { get; private set; } = [];
 
     [Reactive] public string FetchText { get; private set; } = "";
@@ -94,7 +94,7 @@ public class DataStatusViewModel : ViewModelBase
             var families = MatchStatsMath.FamilyLines(meta);
             if (MatchStatsMath.DriftLine(meta) is { } drift)
                 families.Add(drift);
-            Families = families;
+            Families = ShowsCoverage ? families : [];
             FetchText = "Download again…";
         }
         else

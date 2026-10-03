@@ -271,14 +271,20 @@ public class ResultsViewModel : ViewModelBase
             placed.AddRange(rows);
     }
 
-    /// <summary>Counts only: the rank picker beside it names what they're rated by.</summary>
+    /// <summary>
+    /// Counts only: the rank picker beside it names what they're rated by. The editors see the cutoff's
+    /// number; players see what it means, an item above 0 being one this match wants more than most.
+    /// </summary>
     private string SummaryText(int positive, int shown, double cutoff, bool everyItem)
     {
+        var above = ShowsEditors ? "above 0" : "suit this match";
         if (everyItem)
-            return $"All {shown} item{(shown != 1 ? "s" : "")}  ·  {positive} above 0";
-        return shown < positive
+            return $"All {shown} item{(shown != 1 ? "s" : "")}  ·  {positive} {above}";
+        if (shown >= positive)
+            return $"{positive} item{(positive != 1 ? "s" : "")} {above}";
+        return ShowsEditors
             ? $"{shown} of {positive} above 0  ·  cutoff {MeasureText(cutoff)}"
-            : $"{positive} item{(positive != 1 ? "s" : "")} above 0";
+            : $"Best {shown} of {positive} that suit this match";
     }
 
     private string MeasureText(double measure) => _rankBy switch
@@ -309,7 +315,7 @@ public class ResultsViewModel : ViewModelBase
         if (_rankBy == RankBy.Formula || nothingScored)
             return _nothingPickedHint;
         if (_scored.All(item => item.Data.Count == 0))
-            return "The match data has nothing on these heroes.\n\nIt covers your enemies (Full Match only) and your own hero, "
+            return "The match data has nothing on these heroes.\n\nIt covers your enemies and your own hero, "
                    + "never allies. Data → Download Match Data fetches it.";
         return _rankBy == RankBy.Both
             ? "The formula and the match data together rate no item above 0 for these heroes."

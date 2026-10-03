@@ -267,6 +267,10 @@
     <Style Selector="Button:pointerover TextBlock.shortcut">
         <Setter Property="Foreground" Value="{DynamicResource MenuFlyoutItemKeyboardAcceleratorTextForegroundPointerOver}"/>
     </Style>
+    <Style Selector="Button.primary TextBlock.shortcut, Button.primary:pointerover TextBlock.shortcut">
+        <Setter Property="Foreground" Value="{DynamicResource BgBrush}"/>
+        <Setter Property="Opacity" Value="0.6"/>
+    </Style>
 
     <Style Selector="Button.ghost, ToggleButton.ghost">
         <Setter Property="Background" Value="Transparent"/>

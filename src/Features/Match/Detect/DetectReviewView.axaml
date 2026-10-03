@@ -82,7 +82,8 @@
                                    Classes.uncertain="{Binding IsUncertain}"
                                    Classes.corrected="{Binding WasCorrected}"
                                    TextWrapping="Wrap"
-                                   Text="{Binding Detail}"/>
+                                   Text="{Binding Detail}"
+                                   ToolTip.Tip="{Binding DetailTip}"/>
                     </StackPanel>
                 </Grid>
             </Border>

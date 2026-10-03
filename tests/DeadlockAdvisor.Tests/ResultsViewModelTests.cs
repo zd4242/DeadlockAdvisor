@@ -50,7 +50,7 @@ public class ResultsViewModelTests
         var header = Assert.IsType<SectionHeaderViewModel>(results.Entries[2]);
         Assert.Equal(ResultsViewModel.DataPicksKey, header.Key);
         Assert.Equal("1", header.CountText);
-        Assert.Equal("2 items above 0", results.Summary);
+        Assert.Equal("2 items suit this match", results.Summary);
 
         results.ToggleSection(ResultsViewModel.DataPicksKey);
         Assert.Equal(["a", "b"], Rows(results));
@@ -72,6 +72,18 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void OnlyTheEditorsSeeTheCutoffsNumber()
+    {
+        // Cut at 60% of a's 10, so b's 5 is left out.
+        var results = Show(RankBy.Formula, 0.6);
+        Assert.Equal("Best 1 of 2 that suit this match", results.Summary);
+
+        results.ShowsEditors = true;
+
+        Assert.Equal("1 of 2 above 0  ·  cutoff 6", results.Summary);
+    }
+
+    [Fact]
     public void EveryItemListsNegativesWithNegativeBars()
     {
         var results = Show(RankBy.Formula, null);
@@ -83,7 +95,7 @@ public class ResultsViewModelTests
         Assert.True(c.IsNegative);
         Assert.Equal("3.0", c.Score.Text);
         Assert.True(c.IsStandout);
-        Assert.Equal("All 5 items  ·  2 above 0", results.Summary);
+        Assert.Equal("All 5 items  ·  2 suit this match", results.Summary);
     }
 
     [Fact]
@@ -118,7 +130,7 @@ public class ResultsViewModelTests
         Assert.Equal(-0.3, rows[2].Fraction, 9);
         Assert.Equal(0.75, rows[2].DataFraction, 9);
         Assert.Equal("3.0", rows[0].Score.Text);
-        Assert.Equal("3 items above 0", results.Summary);
+        Assert.Equal("3 items suit this match", results.Summary);
     }
 
     [Fact]
@@ -199,7 +211,7 @@ public class ResultsViewModelTests
 
         // "b" is the best listed item, so the cutoff is half of its score rather than of the hidden "a"'s.
         Assert.Equal(["b", "c"], results.Entries.OfType<ResultRowViewModel>().Select(row => row.ItemId));
-        Assert.Equal("2 items above 0", results.Summary);
+        Assert.Equal("2 items suit this match", results.Summary);
     }
 
     [Fact]
@@ -212,7 +224,7 @@ public class ResultsViewModelTests
 
         // The formula rates "a" 10 and the data -2. "b" is then the best listed item at 4.5, so the cutoff is half of that rather than of a's 8.
         Assert.Equal(["b", "c"], Rows(results));
-        Assert.Equal("2 items above 0", results.Summary);
+        Assert.Equal("2 items suit this match", results.Summary);
 
         // Ranked by the formula alone, there's no second opinion on the same scale to disagree with.
         results.SetDisplay(RankBy.Formula, false, 0.5, hideDisagreed: true);
