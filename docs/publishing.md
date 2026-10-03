@@ -42,7 +42,8 @@ pass, its `publish-model` job puts the seed's files on the rolling
 [`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model) pre-release, each named by its
 hash (`trait_weights-1a2b3c4d.csv`), then `model.json`, then deletes the files it no longer names. A
 push that fails the tests publishes nothing, and installs keep the last version that passed. It takes
-about 10 minutes from the push. To publish again without a push (say, if the job failed for GitHub's
+about 10 minutes from the push, and `--push` waits for it with the GitHub CLI (`gh`), then says
+whether it was published or why not, with a link to the run. Ctrl+C stops the waiting, not CI. To publish again without a push (say, if the job failed for GitHub's
 reasons), run CI by hand: `gh workflow run ci.yml`, or Actions → CI → Run workflow.
 
 **What installs do with it** (`ModelUpdateService`): at their next startup they read `model.json` from

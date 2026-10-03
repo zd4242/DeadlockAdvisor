@@ -88,12 +88,54 @@ var what = string.Join(", ", result.Files.Select(ModelManifest.Title).Concat(res
 var message = $"Publish the formulas: {what}" + (result.Note is { } said ? $"\n\n{said.Text}" : "");
 if (!Git(repo.FullName, "add", "--", "src/Assets/SeedData") || !Git(repo.FullName, "commit", "-m", message, "--", "src/Assets/SeedData"))
     return 1;
-if (push && !Git(repo.FullName, "push"))
+if (!push)
+{
+    Console.WriteLine("Committed. Push to publish it.");
+    return 0;
+}
+if (!Git(repo.FullName, "push"))
     return 1;
-Console.WriteLine(push
-    ? "Pushed. Once CI's tests pass (about 10 minutes; Actions → CI), installs take it at their next startup."
-    : "Committed. Push to publish it.");
-return 0;
+return WaitForCi(repo.FullName);
+
+// CI publishes the model once its tests pass (.github/workflows/ci.yml): wait for it and say how it went.
+static int WaitForCi(string repo)
+{
+    const string actions = "https://github.com/zd4242/DeadlockAdvisor/actions";
+    var sha = Output(repo, "git", "rev-parse", "HEAD");
+    if (Output(repo, "gh", "--version") is null)
+    {
+        Console.WriteLine($"Pushed. Once CI's tests pass (about 10 minutes), installs take it at their next startup: {actions}");
+        Console.WriteLine("(Install the GitHub CLI, gh, to have this wait for CI and say how it went.)");
+        return 0;
+    }
+
+    Console.WriteLine("Pushed. Waiting for CI to test it and publish it, about 10 minutes. Ctrl+C stops waiting; CI carries on.");
+    string? run = null;
+    for (var tries = 0; tries < 24 && string.IsNullOrEmpty(run); tries++)
+    {
+        Thread.Sleep(TimeSpan.FromSeconds(5));
+        run = Output(repo, "gh", "run", "list", "--workflow", "ci.yml", "--commit", sha!, "--json", "databaseId", "--jq", ".[0].databaseId");
+    }
+    if (string.IsNullOrEmpty(run))
+    {
+        Console.Error.WriteLine($"CI didn't start for {sha![..7]} within two minutes: check {actions}");
+        return 1;
+    }
+
+    var url = $"{actions}/runs/{run}";
+    Console.WriteLine(url);
+    Run(repo, "gh", "run", "watch", run, "--interval", "30");
+    var published = Output(repo, "gh", "run", "view", run, "--json", "jobs", "--jq", ".jobs[] | select(.name == \"publish-model\") | .conclusion");
+    if (published == "success")
+    {
+        Console.WriteLine("Published: installs take it at their next startup.");
+        return 0;
+    }
+    Console.Error.WriteLine(published == "skipped"
+        ? $"CI's tests failed, so nothing was published. Fix them and push again: {url}"
+        : $"CI didn't publish it ({published ?? "unknown"}): {url}. A newer push cancels an older run; gh workflow run ci.yml runs it again.");
+    return 1;
+}
 
 // The app's data folder: the one Settings → Data names, else the default.
 static string AppDataDir()
@@ -108,12 +150,35 @@ static string AppDataDir()
     return Path.Combine(JsonSettingsService.AppDataPath, "data");
 }
 
-static bool Git(string repo, params string[] arguments)
+static bool Git(string repo, params string[] arguments) => Run(repo, "git", arguments);
+
+static bool Run(string repo, string program, params string[] arguments)
 {
-    var start = new ProcessStartInfo("git") { WorkingDirectory = repo };
+    using var process = Process.Start(Start(repo, program, arguments, capture: false))!;
+    process.WaitForExit();
+    return process.ExitCode == 0;
+}
+
+/// <summary>What a command printed, trimmed; null when it failed or isn't installed.</summary>
+static string? Output(string repo, string program, params string[] arguments)
+{
+    try
+    {
+        using var process = Process.Start(Start(repo, program, arguments, capture: true))!;
+        var output = process.StandardOutput.ReadToEnd();
+        process.WaitForExit();
+        return process.ExitCode == 0 ? output.Trim() : null;
+    }
+    catch (System.ComponentModel.Win32Exception)
+    {
+        return null;
+    }
+}
+
+static ProcessStartInfo Start(string repo, string program, string[] arguments, bool capture)
+{
+    var start = new ProcessStartInfo(program) { WorkingDirectory = repo, RedirectStandardOutput = capture, RedirectStandardError = capture };
     foreach (var argument in arguments)
         start.ArgumentList.Add(argument);
-    using var git = Process.Start(start)!;
-    git.WaitForExit();
-    return git.ExitCode == 0;
+    return start;
 }
