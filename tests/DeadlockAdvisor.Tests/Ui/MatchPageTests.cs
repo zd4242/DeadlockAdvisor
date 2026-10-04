@@ -567,9 +567,12 @@ public class MatchPageTests
         match.ByTier = true;
         match.SelectedCutoff = MatchViewModel.CutoffPresets.Single(preset => preset.MinFraction is null);
         match.ByNetWorth = true;
+        match.ShowTiers = true;
         SetUpMatch(ui);
         Assert.False(match.HasActiveFilters);
         Assert.Equal(MatchViewModel.FiltersTip, match.FiltersButtonTip);
+        Assert.True(match.Results.ShowsTiers);
+        Assert.True(ui.Settings.Current.ResultsShowTiers);
 
         match.HideRarelyBuilt = true;
         Assert.True(match.HasActiveFilters);

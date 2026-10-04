@@ -104,6 +104,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         HasMatchData = data.Store.MatchLift.Count > 0;
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
+        ShowTiers = Results.ShowsTiers = settings.Current.ResultsShowTiers;
         HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
         HideDisagreed = settings.Current.ResultsHideDisagreed;
         ApplyDisplay();
@@ -166,6 +167,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ShowTiers)
+            .Skip(1)
+            .Subscribe(show =>
+            {
+                _settings.Update(s => s.ResultsShowTiers = show);
+                Results.ShowsTiers = show;
+            })
+            .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.HideDisagreed, vm => vm.RanksByBoth, vm => vm.DataRanks.RankedOnly,
                 vm => vm.DataRanks.CanFilter, vm => vm.DataRanks.From, vm => vm.DataRanks.To)
             .Select(_ => ActiveFilters())
@@ -201,6 +210,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>The store has match data, so the results can rank by it.</summary>
     [Reactive] public bool HasMatchData { get; private set; }
     [Reactive] public bool ByTier { get; set; }
+
+    /// <summary>Each recommendation names its shop tier and price (<see cref="ResultsViewModel.ShowsTiers"/>).</summary>
+    [Reactive] public bool ShowTiers { get; set; }
 
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }

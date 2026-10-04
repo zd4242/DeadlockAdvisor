@@ -77,6 +77,7 @@ public class AppSettings
     public RankBy ResultsRankBy { get; set; }
 
     public bool ResultsByTier { get; set; }
+    public bool ResultsShowTiers { get; set; }
     public bool ResultsByNetWorth { get; set; } = true;
     public bool ResultsHideRarelyBuilt { get; set; }
     public bool ResultsHideDisagreed { get; set; }

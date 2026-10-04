@@ -77,6 +77,9 @@
                                         <CheckBox Content="Group by tier"
                                                   IsChecked="{Binding ByTier}"
                                                   ToolTip.Tip="Group into collapsible tier sections instead of one ranked list"/>
+                                        <CheckBox Content="Show each item's tier and price"
+                                                  IsChecked="{Binding ShowTiers}"
+                                                  ToolTip.Tip="Name each item's shop tier and its price in souls beside it.&#10;Grouped by tier, the section headers name them instead."/>
                                         <CheckBox Content="Lean toward heroes ahead on net worth"
                                                   IsChecked="{Binding ByNetWorth}"
                                                   IsEnabled="{Binding Board.HasNetWorth}"

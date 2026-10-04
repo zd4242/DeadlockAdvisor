@@ -95,10 +95,12 @@ public class ResultsViewModelTests
             Scored("d", 0.5, tier: 1) with { Cost = 800 },
         ], "");
 
-        // Flat, everything is cut at 40% of a's 10, which leaves no tier 1 item; each row names its tier.
+        // Flat, everything is cut at 40% of a's 10, which leaves no tier 1 item; each row names its tier once asked to.
         results.SetDisplay(RankBy.Formula, false, 0.4);
         Assert.Equal(["a"], Rows(results));
         var a = results.Entries.OfType<ResultRowViewModel>().Single();
+        Assert.False(a.ShowsTier);
+        results.ShowsTiers = true;
         Assert.True(a.ShowsTier);
         Assert.Equal("T4 · 6.4k", a.TierText);
 

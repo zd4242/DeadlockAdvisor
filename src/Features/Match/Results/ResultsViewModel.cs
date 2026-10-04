@@ -56,6 +56,10 @@ public class ResultsViewModel : ViewModelBase
                 Render();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ShowsTiers)
+            .Skip(1)
+            .Subscribe(_ => Render())
+            .DisposeWith(Disposables);
     }
 
     /// <summary>Section headers and rows, in display order.</summary>
@@ -88,6 +92,9 @@ public class ResultsViewModel : ViewModelBase
     /// suggest a rule might be missing.
     /// </summary>
     [Reactive] public bool ShowsEditors { get; set; }
+
+    /// <summary>Rows name their tier and price, unless a tier header above them already does.</summary>
+    [Reactive] public bool ShowsTiers { get; set; }
 
     /// <summary>Every item the tab could list, scored for the line-up (<see cref="ItemScoring.ScoreAll"/>).</summary>
     /// <param name="blendScale">
@@ -334,7 +341,9 @@ public class ResultsViewModel : ViewModelBase
     }
 
     /// <param name="shown">The number on the right, when it isn't the formula score.</param>
-    /// <param name="showsTier">Whether the row names its tier: always, unless a tier header above it already does.</param>
+    /// <param name="showsTier">
+    /// Whether the row names its tier, when <see cref="ShowsTiers"/> asks for it: always, unless a tier header above it already does.
+    /// </param>
     private ResultRowViewModel Row(ScoredItem scored, Bars bars, double? shown = null, bool disagrees = false, bool? showsTier = null)
     {
         if (!_rows.TryGetValue(scored.ItemId, out var row))
@@ -344,7 +353,7 @@ public class ResultsViewModel : ViewModelBase
         }
         row.SetValues(scored, bars, _dataTip, shown, disagrees);
         row.IsSelected = scored.ItemId == SelectedItemId;
-        row.ShowsTier = showsTier ?? !_byTier;
+        row.ShowsTier = ShowsTiers && (showsTier ?? !_byTier);
         return row;
     }
 
