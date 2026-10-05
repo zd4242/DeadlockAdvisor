@@ -28,7 +28,7 @@ public sealed record RawLift(int Matches, double Lift, double Se);
 /// <summary>A fitted slope with its standard error, and how many errors it sits from 0.</summary>
 public readonly record struct WeightedSlope(double Value, double Se, double T);
 
-/// <summary>A game item's totals in one /item-stats answer.</summary>
+/// <summary>A game item's (or hero's) totals in one analytics answer.</summary>
 public readonly record struct WinTotals(long Wins, long Matches);
 
 /// <summary>A hero's (or the baseline's) totals over the first and second half of a window.</summary>
@@ -401,6 +401,10 @@ public static partial class MatchStatsMath
     /// <summary>What the players facing one enemy hero bought.</summary>
     public static OrderedDictionary<string, string> AgainstParams(long enemyGameId) =>
         new() { ["enemy_hero_ids"] = enemyGameId.ToString(CultureInfo.InvariantCulture) };
+
+    /// <summary>A query's filters narrowed to ranked matches: the API counts unranked ones too unless told.</summary>
+    public static OrderedDictionary<string, string> RankedParams(OrderedDictionary<string, string> parameters) =>
+        new(parameters) { ["match_mode"] = "ranked" };
 
     /// <summary>A query's filters narrowed to one rank group.</summary>
     public static OrderedDictionary<string, string> RankParams(OrderedDictionary<string, string> parameters, RankBucket rank) =>

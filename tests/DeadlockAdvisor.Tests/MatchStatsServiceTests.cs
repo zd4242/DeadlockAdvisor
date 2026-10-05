@@ -31,6 +31,10 @@ public class MatchStatsServiceTests
 
     private static IEnumerable<string> ItemStats(IEnumerable<string> asked) => asked.Where(url => url.Contains("/item-stats?"));
 
+    private static IEnumerable<string> HeroStats(IEnumerable<string> asked) => asked.Where(url => url.Contains("/hero-stats?"));
+
+    private static IEnumerable<string> Analytics(IEnumerable<string> asked) => asked.Where(url => url.StartsWith(MatchStatsService.Analytics));
+
     [Fact]
     public async Task APlanKeepsTheLastTwoPatchesAndFetchesEveryMatchBeforeTheRankGroups()
     {
@@ -53,7 +57,8 @@ public class MatchStatsServiceTests
         Assert.Equal(SyntheticItemStatsApi.Now.ToUnixTimeSeconds(), plan.Phases[0].Until);
         Assert.Equal(plan.Keep[0].Start - 1, plan.Phases[1].Until);
         Assert.Equal((false, true), (plan.Phases[0].Ended, plan.Phases[1].Ended));
-        Assert.Equal(2 * (2 + _heroes) * 2 * 6, plan.Calls);
+        // A rank group needs no ranked calls: it holds only ranked matches.
+        Assert.Equal(2 * (2 * (2 + _heroes) + 3 + 5 * (2 * (2 + _heroes) + 1)), plan.Calls);
     }
 
     [Fact]
@@ -71,13 +76,20 @@ public class MatchStatsServiceTests
 
         // No rank groups, so no rank names either.
         Assert.DoesNotContain(MatchStatsService.Ranks, api.Asked);
+        Assert.Equal(plan.Calls, Analytics(api.Asked).Count());
         var asked = ItemStats(api.Asked).Select(SyntheticItemStatsApi.Query).ToList();
-        Assert.Equal(plan.Calls, asked.Count);
-        Assert.Equal(2 * 2 * (2 + _heroes), asked.Count);
+        Assert.Equal(2 * (2 * (2 + _heroes) + 1), asked.Count);
         Assert.All(asked, query => Assert.Equal("1", query["min_matches"]));
         Assert.Equal(4, asked.Count(query => query.Count == 3));
-        Assert.Equal(4, asked.Count(query => query.GetValueOrDefault("bucket") == "hero"));
+        Assert.Equal(6, asked.Count(query => query.GetValueOrDefault("bucket") == "hero"));
+        Assert.Equal(2, asked.Count(query => query.GetValueOrDefault("match_mode") == "ranked"));
         Assert.DoesNotContain(asked, query => query.ContainsKey("hero_id") || query.ContainsKey("min_average_badge"));
+        // Each hero's matches, and its ranked ones, once per patch over its whole window.
+        var heroStats = HeroStats(api.Asked).Select(SyntheticItemStatsApi.Query).ToList();
+        Assert.Equal(4, heroStats.Count);
+        Assert.Equal(2, heroStats.Count(query => query.GetValueOrDefault("match_mode") == "ranked"));
+        Assert.All(heroStats.Take(2), query => Assert.Equal(
+            (plan.Phases[0].From, plan.Phases[0].Until), (long.Parse(query["min_unix_timestamp"]), long.Parse(query["max_unix_timestamp"]))));
         // Both halves of a window, with no second in both.
         var current = asked.Take(2).Select(query => (long.Parse(query["min_unix_timestamp"]), long.Parse(query["max_unix_timestamp"]))).ToList();
         Assert.Equal((plan.Phases[0].From, plan.Phases[0].Until), (current[0].Item1, current[1].Item2));
@@ -87,6 +99,8 @@ public class MatchStatsServiceTests
         Assert.All(finished, segment => Assert.False(segment.HasRanks));
         Assert.Equal(_heroes, finished[0].EveryMatch.As.Count);
         Assert.Equal(_heroes, finished[0].EveryMatch.Against.Count);
+        Assert.Equal(_heroes, finished[0].EveryMatch.HeroMatches.Count);
+        Assert.Equal(_heroes, finished[0].EveryMatch.Ranked.Count);
         Assert.Equal(SyntheticItemStatsApi.Now.ToUnixTimeSeconds(), finished[0].FetchedAt);
 
         Assert.Equal(Enumerable.Range(1, plan.Calls), progress.Seen.Select(step => step.Done));
@@ -288,7 +302,44 @@ public class MatchStatsServiceTests
 
         Assert.Equal(["09-29"], finished.Select(segment => segment.Patch.Label));
         // The cancel came as the next phase's third call finished, with its fourth already asked.
-        Assert.InRange(ItemStats(api.Asked).Count(), firstPhase + 3, firstPhase + 3 + MatchStatsService.MaxInFlight);
+        Assert.InRange(Analytics(api.Asked).Count(), firstPhase + 3, firstPhase + 3 + MatchStatsService.MaxInFlight);
+    }
+
+    [Fact]
+    public async Task EachHerosMatchesAndRankedCountsAddUpByModeAndRank()
+    {
+        var store = LoadStore();
+        var service = new SyntheticItemStatsApi(store).Service();
+        var plan = await service.PlanAsync(store, includeRanks: true);
+        var finished = new List<MatchSegment>();
+
+        await service.FetchAsync(store, plan, null, finished.Add, CancellationToken.None);
+
+        var segment = finished.Last(segment => segment.Patch.Label == "09-29" && segment.HasRanks);
+        var heroId = segment.EveryMatch.HeroMatches.Keys.First();
+        var all = segment.HeroItems(MatchMode.All, null)![heroId];
+        var ranked = segment.HeroItems(MatchMode.Ranked, null)![heroId];
+        var unranked = segment.HeroItems(MatchMode.Unranked, null)![heroId];
+        // Every item's buyers are among the hero's matches, and the ranked ones among them.
+        Assert.All(all.Items.Values, item => Assert.InRange(item.Matches, 1, all.Matches.Matches));
+        Assert.InRange(ranked.Matches.Matches, 1, all.Matches.Matches - 1);
+        Assert.Equal(all.Matches.Matches - ranked.Matches.Matches, unranked.Matches.Matches);
+        var item = ranked.Items.Keys.First();
+        Assert.Equal(all.Items[item].Matches - ranked.Items[item].Matches, unranked.Items[item].Matches);
+        // The rank groups hold every ranked match and nothing else, so a range is the same in any mode but unranked.
+        var everyRank = new RankRange(1, 11);
+        Assert.Equal(ranked.Matches, segment.HeroItems(MatchMode.Ranked, everyRank)![heroId].Matches);
+        Assert.Equal(ranked.Items[item], segment.HeroItems(MatchMode.All, everyRank)![heroId].Items[item]);
+        Assert.Empty(segment.HeroItems(MatchMode.Unranked, everyRank)!);
+        Assert.Null(finished.First(segment => !segment.HasRanks).HeroItems(MatchMode.All, everyRank));
+
+        // And come back the same from the file.
+        var parsed = MatchSegment.Parse(segment.ToJsonBytes());
+        Assert.Equal(segment.ToJsonBytes(), parsed.ToJsonBytes());
+        Assert.Equal(ranked.Matches, parsed.HeroItems(MatchMode.Ranked, null)![heroId].Matches);
+        Assert.Equal(ranked.Items.OrderBy(pair => pair.Key), parsed.HeroItems(MatchMode.Ranked, null)![heroId].Items.OrderBy(pair => pair.Key));
+        Assert.Equal(segment.HeroItems(MatchMode.All, new RankRange(5, 6))![heroId].Matches,
+            parsed.HeroItems(MatchMode.All, new RankRange(5, 6))![heroId].Matches);
     }
 
     [Fact]

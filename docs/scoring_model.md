@@ -271,8 +271,12 @@ call, and moves toward each finished run's pace. While it runs, the status-bar
 chip opens each phase's progress (`MatchDownloadProgressViewModel`).
 
 Each half of a window takes one call for every match, one for every hero's own
-purchases (`bucket=hero`), and one per enemy hero: 80 calls per patch with 38
-heroes (`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats that. The calls
+purchases (`bucket=hero`), and one per enemy hero. The whole window then takes three
+more, for the Hero Items page rather than the lifts: each hero's matches
+(`/hero-stats`), the same in ranked matches alone (`match_mode=ranked`), and every
+hero's own purchases in ranked matches. That's 83 calls per patch with 38 heroes
+(`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats them but the two ranked
+ones: unranked matches have no badge, so a rank group holds only ranked matches. The calls
 start at most one per 0.4 s, two at a time (`RequestPacer`), and a 429 holds every
 start back for 30 s.
 

@@ -21,32 +21,78 @@ public sealed record RankBucket(int FirstTier, int LastTier, string FirstName, s
 /// <summary>Ranked matches whose rank is from the <paramref name="Min"/> to the <paramref name="Max"/> tier.</summary>
 public sealed record RankRange(int Min, int Max);
 
+/// <summary>Which matches a hero's item table counts: deadlock-api.com counts ranked and unranked together by default.</summary>
+public enum MatchMode
+{
+    All,
+    Ranked,
+    Unranked,
+}
+
+/// <summary>One hero's matches over a whole window, and what its players bought in them.</summary>
+public sealed record HeroCounts(WinTotals Matches, Dictionary<long, WinTotals> Items)
+{
+    public static HeroCounts Empty => new(default, []);
+
+    public HeroCounts Plus(HeroCounts other) =>
+        new(new WinTotals(Matches.Wins + other.Matches.Wins, Matches.Matches + other.Matches.Matches), MatchStatsMath.Merge(Items, other.Items));
+
+    public HeroCounts Minus(HeroCounts part) =>
+        new(new WinTotals(Math.Max(0, Matches.Wins - part.Matches.Wins), Math.Max(0, Matches.Matches - part.Matches.Matches)),
+            MatchStatsMath.Subtract(Items, part.Items));
+}
+
 /// <summary>
 /// What one segment's queries over one slice of its matches (every match, or one rank group) brought
 /// back: every match's totals, each hero's own purchases ("as"), and what the players facing each hero
-/// bought ("against").
+/// bought ("against"). For the hero item tables, each hero's matches (<see cref="HeroMatches"/>), and
+/// for every match, its matches and purchases in ranked ones alone (<see cref="Ranked"/>).
 /// </summary>
 public sealed record SliceCounts(Halves Baseline, OrderedDictionary<string, Halves> As, OrderedDictionary<string, Halves> Against)
 {
+    public OrderedDictionary<string, WinTotals> HeroMatches { get; init; } = [];
+
+    /// <summary>Only for every match: a rank group holds only ranked matches already.</summary>
+    public OrderedDictionary<string, HeroCounts> Ranked { get; init; } = [];
+
     public static SliceCounts Empty => new(Halves.Empty, [], []);
 
     public OrderedDictionary<string, Halves> Heroes(string relation) => relation == "as" ? As : Against;
 
+    /// <summary>Each hero's matches and purchases over the whole window, whatever the match mode.</summary>
+    public OrderedDictionary<string, HeroCounts> HeroItems() =>
+        new(HeroMatches.Keys.Concat(As.Keys).Distinct().Select(heroId =>
+            KeyValuePair.Create(heroId, new HeroCounts(HeroMatches.GetValueOrDefault(heroId), As.GetValueOrDefault(heroId)?.Whole ?? []))));
+
+    /// <summary>Each hero's matches and purchases in the unranked matches: all of them without the ranked.</summary>
+    public OrderedDictionary<string, HeroCounts> UnrankedHeroItems() => Combine(HeroItems(), Ranked, HeroCounts.Empty, (a, b) => a.Minus(b));
+
     public SliceCounts Plus(SliceCounts other) =>
-        new(Baseline.Plus(other.Baseline), Combine(As, other.As, (a, b) => a.Plus(b)), Combine(Against, other.Against, (a, b) => a.Plus(b)));
+        new(Baseline.Plus(other.Baseline), Combine(As, other.As, Halves.Empty, (a, b) => a.Plus(b)),
+            Combine(Against, other.Against, Halves.Empty, (a, b) => a.Plus(b)))
+        {
+            HeroMatches = Combine(HeroMatches, other.HeroMatches, default, (a, b) => new WinTotals(a.Wins + b.Wins, a.Matches + b.Matches)),
+            Ranked = Combine(Ranked, other.Ranked, HeroCounts.Empty, (a, b) => a.Plus(b)),
+        };
 
     /// <summary>These totals without <paramref name="part"/> of them, e.g. every match without one rank range.</summary>
     public SliceCounts Minus(SliceCounts part) =>
-        new(Baseline.Minus(part.Baseline), Combine(As, part.As, (a, b) => a.Minus(b)), Combine(Against, part.Against, (a, b) => a.Minus(b)));
+        new(Baseline.Minus(part.Baseline), Combine(As, part.As, Halves.Empty, (a, b) => a.Minus(b)),
+            Combine(Against, part.Against, Halves.Empty, (a, b) => a.Minus(b)))
+        {
+            HeroMatches = Combine(HeroMatches, part.HeroMatches, default,
+                (a, b) => new WinTotals(Math.Max(0, a.Wins - b.Wins), Math.Max(0, a.Matches - b.Matches))),
+            Ranked = Combine(Ranked, part.Ranked, HeroCounts.Empty, (a, b) => a.Minus(b)),
+        };
 
-    private static OrderedDictionary<string, Halves> Combine(
-        OrderedDictionary<string, Halves> a, OrderedDictionary<string, Halves> b, Func<Halves, Halves, Halves> combine)
+    private static OrderedDictionary<string, T> Combine<T>(
+        OrderedDictionary<string, T> a, OrderedDictionary<string, T> b, T empty, Func<T, T, T> combine)
     {
-        var result = new OrderedDictionary<string, Halves>();
+        var result = new OrderedDictionary<string, T>();
         foreach (var heroId in a.Keys.Concat(b.Keys))
         {
             if (!result.ContainsKey(heroId))
-                result[heroId] = combine(a.GetValueOrDefault(heroId) ?? Halves.Empty, b.GetValueOrDefault(heroId) ?? Halves.Empty);
+                result[heroId] = combine(a.TryGetValue(heroId, out var first) ? first : empty, b.TryGetValue(heroId, out var second) ? second : empty);
         }
         return result;
     }
@@ -72,7 +118,7 @@ public sealed record MatchSegment(
     IReadOnlyList<RankBucket> Ranks,
     IReadOnlyList<SliceCounts> ByRank)
 {
-    public const int Version = 2;
+    public const int Version = 3;
 
     /// <summary>How long deadlock-api.com takes to take in a match, after which a finished patch's counts stop changing.</summary>
     public const long SettleSeconds = 86400;
@@ -87,6 +133,23 @@ public sealed record MatchSegment(
 
     /// <summary>"2026-09-16.json": the patch's date, so the files sort by patch.</summary>
     public string FileName => Patch.Date + ".json";
+
+    /// <summary>
+    /// Each hero's matches and purchases in <paramref name="mode"/>, over a rank range or every match; null
+    /// without the rank breakdown a range needs. Unranked matches have no badge, so a range holds only ranked
+    /// ones, and none unranked.
+    /// </summary>
+    public OrderedDictionary<string, HeroCounts>? HeroItems(MatchMode mode, RankRange? range)
+    {
+        if (range is not null)
+            return mode == MatchMode.Unranked ? [] : Slice(range)?.HeroItems();
+        return mode switch
+        {
+            MatchMode.Ranked => EveryMatch.Ranked,
+            MatchMode.Unranked => EveryMatch.UnrankedHeroItems(),
+            _ => EveryMatch.HeroItems(),
+        };
+    }
 
     /// <summary>The totals over a rank range, or over every match when <paramref name="range"/> is null; null without a rank breakdown.</summary>
     public SliceCounts? Slice(RankRange? range)
@@ -146,10 +209,48 @@ public sealed record MatchSegment(
                 }
                 writer.WriteEndObject();
             }
+            writer.WriteStartObject("hero_matches");
+            foreach (var heroId in EveryMatch.HeroMatches.Keys)
+            {
+                writer.WritePropertyName(heroId);
+                WriteTotals(writer, groups.Select(group => group.HeroMatches.GetValueOrDefault(heroId)).ToList());
+            }
+            writer.WriteEndObject();
+            // Every match's alone: a rank group holds only ranked matches already.
+            writer.WriteStartObject("ranked");
+            foreach (var (heroId, counts) in EveryMatch.Ranked)
+            {
+                writer.WriteStartObject(heroId);
+                writer.WritePropertyName("matches");
+                WriteTotals(writer, [counts.Matches]);
+                writer.WriteStartObject("items");
+                foreach (var (item, totals) in counts.Items)
+                {
+                    writer.WritePropertyName(item.ToString(CultureInfo.InvariantCulture));
+                    WriteTotals(writer, [totals]);
+                }
+                writer.WriteEndObject();
+                writer.WriteEndObject();
+            }
+            writer.WriteEndObject();
             writer.WriteEndObject();
         }
         return stream.ToArray();
     }
+
+    /// <summary>One array of every group's wins and matches over the whole window.</summary>
+    private static void WriteTotals(Utf8JsonWriter writer, IReadOnlyList<WinTotals> groups)
+    {
+        writer.WriteStartArray();
+        foreach (var (wins, matches) in groups)
+        {
+            writer.WriteNumberValue(wins);
+            writer.WriteNumberValue(matches);
+        }
+        writer.WriteEndArray();
+    }
+
+    private static WinTotals ReadTotals(JsonElement totals, int group) => new(totals[2 * group].GetInt64(), totals[2 * group + 1].GetInt64());
 
     /// <summary>Each item as one array: every group's first-half wins and matches, then its second half's.</summary>
     private static void WriteSubject(Utf8JsonWriter writer, IReadOnlyList<Halves> groups)
@@ -191,12 +292,23 @@ public sealed record MatchSegment(
         var baseline = ReadSubject(root.GetProperty("baseline"), groupCount);
         var heroes = MatchStatsMath.Relations.ToDictionary(relation => relation, relation =>
             root.GetProperty(relation).EnumerateObject().Select(hero => (hero.Name, Groups: ReadSubject(hero.Value, groupCount))).ToList());
+        var heroMatches = root.GetProperty("hero_matches").EnumerateObject().ToList();
         var slices = Enumerable.Range(0, groupCount).Select(group =>
         {
             OrderedDictionary<string, Halves> Of(string relation) =>
                 new(heroes[relation].Select(hero => KeyValuePair.Create(hero.Name, hero.Groups[group])));
-            return new SliceCounts(baseline[group], Of("as"), Of("against"));
+            return new SliceCounts(baseline[group], Of("as"), Of("against"))
+            {
+                HeroMatches = new(heroMatches.Select(hero => KeyValuePair.Create(hero.Name, ReadTotals(hero.Value, group)))),
+            };
         }).ToList();
+        slices[0] = slices[0] with
+        {
+            Ranked = new(root.GetProperty("ranked").EnumerateObject().Select(hero => KeyValuePair.Create(hero.Name, new HeroCounts(
+                ReadTotals(hero.Value.GetProperty("matches"), 0),
+                hero.Value.GetProperty("items").EnumerateObject()
+                    .ToDictionary(item => long.Parse(item.Name, CultureInfo.InvariantCulture), item => ReadTotals(item.Value, 0)))))),
+        };
 
         var patch = root.GetProperty("patch");
         return new MatchSegment(

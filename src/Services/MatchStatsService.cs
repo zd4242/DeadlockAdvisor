@@ -75,7 +75,9 @@ public static class MatchStatsServiceExtensions
 /// The network side of the match data (the maths is <see cref="MatchStatsMath"/>): /v1/patches for the
 /// windows and /v1/assets/ranks for the rank names, then /v1/analytics/item-stats per patch, half-window
 /// and rank group: every match once, every hero's own purchases at once, and what everyone facing each
-/// hero bought. Paced well under the API's 200 requests a minute.
+/// hero bought. Over each whole window, /v1/analytics/hero-stats for each hero's matches, and for every
+/// match, the same in ranked matches alone with every hero's purchases in them (a rank group holds only
+/// ranked matches already). Paced well under the API's 200 requests a minute.
 /// </summary>
 public sealed class MatchStatsService : IMatchStatsService
 {
@@ -185,7 +187,8 @@ public sealed class MatchStatsService : IMatchStatsService
 
     /// <summary>
     /// Every match, or one rank group, over a phase's window: both halves of every match, of every hero's
-    /// own purchases, and of what the players facing each hero bought.
+    /// own purchases, and of what the players facing each hero bought; then, over the whole window, each
+    /// hero's matches, and for every match, its matches and purchases in ranked ones alone.
     /// </summary>
     private async Task<SliceCounts> FetchSliceAsync(RequestPacer pacer, Run run, FetchPhase phase, RankBucket? rank,
         IReadOnlyList<Hero> heroes, CancellationToken cancellationToken)
@@ -202,15 +205,24 @@ public sealed class MatchStatsService : IMatchStatsService
         // Both bounds are inclusive, so the first half stops a second short: no match counts twice.
         (long From, long Until)[] halves = [(phase.From, mid - 1), (mid, phase.Until)];
         var requests = new List<Func<CancellationToken, Task<JsonArray>>>();
+        OrderedDictionary<string, string> Filtered(OrderedDictionary<string, string> parameters) =>
+            rank is null ? parameters : MatchStatsMath.RankParams(parameters, rank);
+        void Add(string url, string text)
+        {
+            var label = $"{phase.Patch.Label} · {group} · {text}";
+            requests.Add(token => GetAnalyticsAsync(pacer, run, url, label, token));
+        }
         foreach (var (text, parameters) in subjects)
         {
-            var filtered = rank is null ? parameters : MatchStatsMath.RankParams(parameters, rank);
             foreach (var (from, until) in halves)
-            {
-                var url = ItemStatsUrl(filtered, from, until);
-                var label = $"{phase.Patch.Label} · {group} · {text}";
-                requests.Add(token => GetItemStatsAsync(pacer, run, url, label, token));
-            }
+                Add(ItemStatsUrl(Filtered(parameters), from, until), text);
+        }
+        Add(HeroStatsUrl(Filtered(MatchStatsMath.BaselineParams()), phase.From, phase.Until), "Hero matches");
+        // A rank group is ranked matches alone already: unranked ones have no badge.
+        if (rank is null)
+        {
+            Add(HeroStatsUrl(MatchStatsMath.RankedParams(MatchStatsMath.BaselineParams()), phase.From, phase.Until), "Ranked: hero matches");
+            Add(ItemStatsUrl(MatchStatsMath.RankedParams(MatchStatsMath.AsParams()), phase.From, phase.Until), "Ranked: your hero");
         }
         var answers = await pacer.RunAsync(requests, cancellationToken);
 
@@ -227,32 +239,57 @@ public sealed class MatchStatsService : IMatchStatsService
         var against = new OrderedDictionary<string, Halves>();
         for (var i = 0; i < heroes.Count; i++)
             against[heroes[i].HeroId] = HalvesAt(i + 2);
-        return new SliceCounts(HalvesAt(0), mine, against);
+
+        var at = 2 * subjects.Count;
+        var heroMatches = HeroTotals(answers[at]);
+        var slice = new SliceCounts(HalvesAt(0), mine, against)
+        {
+            HeroMatches = new(heroes.Select(hero => KeyValuePair.Create(hero.HeroId, heroMatches.GetValueOrDefault(hero.GameId)))),
+        };
+        if (rank is not null)
+            return slice;
+        var rankedMatches = HeroTotals(answers[at + 1]);
+        var rankedItems = BucketTotals(answers[at + 2]);
+        return slice with
+        {
+            Ranked = new(heroes.Select(hero => KeyValuePair.Create(hero.HeroId,
+                new HeroCounts(rankedMatches.GetValueOrDefault(hero.GameId), rankedItems.GetValueOrDefault(hero.GameId) ?? [])))),
+        };
     }
 
     private static Dictionary<long, Dictionary<long, WinTotals>> BucketTotals(JsonArray rows) =>
         MatchStatsMath.BucketTotals(rows.Select(row =>
             (JsonRecord.Int(row, "bucket"), JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
 
+    /// <summary>A /hero-stats answer as game hero id → (wins, matches).</summary>
+    private static Dictionary<long, WinTotals> HeroTotals(JsonArray rows) =>
+        MatchStatsMath.Totals(rows.Select(row => (JsonRecord.Int(row, "hero_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
+
     /// <summary>
     /// The API leaves out an item with under 20 matches unless told otherwise, and the rank groups are
     /// added up and taken away from every match, so every match has to count. Never with a time bucket:
     /// over a two-patch window its day-bucketed answers came back silently empty or cut short.
     /// </summary>
-    public static string ItemStatsUrl(OrderedDictionary<string, string> parameters, long from, long until)
+    public static string ItemStatsUrl(OrderedDictionary<string, string> parameters, long from, long until) =>
+        AnalyticsUrl("item-stats", new(parameters) { ["min_matches"] = "1" }, from, until);
+
+    /// <summary>Each hero's wins and matches over a window, every hero in one answer.</summary>
+    public static string HeroStatsUrl(OrderedDictionary<string, string> parameters, long from, long until) =>
+        AnalyticsUrl("hero-stats", parameters, from, until);
+
+    private static string AnalyticsUrl(string endpoint, OrderedDictionary<string, string> parameters, long from, long until)
     {
         var query = new OrderedDictionary<string, string>(parameters)
         {
-            ["min_matches"] = "1",
             ["min_unix_timestamp"] = from.ToString(CultureInfo.InvariantCulture),
             ["max_unix_timestamp"] = until.ToString(CultureInfo.InvariantCulture),
         };
-        return $"{Analytics}/item-stats?" + string.Join("&", query.Select(pair =>
+        return $"{Analytics}/{endpoint}?" + string.Join("&", query.Select(pair =>
             $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
     }
 
-    /// <summary>One /item-stats call in its turn. Waits out a rate limit and retries a server error once; anything else throws.</summary>
-    private async Task<JsonArray> GetItemStatsAsync(RequestPacer pacer, Run run, string url, string text, CancellationToken cancellationToken)
+    /// <summary>One analytics call in its turn. Waits out a rate limit and retries a server error once; anything else throws.</summary>
+    private async Task<JsonArray> GetAnalyticsAsync(RequestPacer pacer, Run run, string url, string text, CancellationToken cancellationToken)
     {
         var rateLimited = 0;
         var serverErrors = 0;

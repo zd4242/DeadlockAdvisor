@@ -29,9 +29,9 @@ public sealed class MatchDownloadTests : IDisposable
         var plan = MatchFetchPlan.For([], _patches, _now, includeRanks: false, heroCount: 38);
         var estimate = new MatchFetchEstimate(0.5, 10_000);
 
-        Assert.Equal(160, plan.Calls);
-        Assert.Equal(TimeSpan.FromSeconds(80), estimate.Time(plan));
-        Assert.Equal(1_600_000, estimate.Bytes(plan));
+        Assert.Equal(166, plan.Calls);
+        Assert.Equal(TimeSpan.FromSeconds(83), estimate.Time(plan));
+        Assert.Equal(1_660_000, estimate.Bytes(plan));
         Assert.Equal(("about 2 min", "about 30 s", "about 5 s"),
             (MatchFetchEstimate.DescribeTime(TimeSpan.FromSeconds(80)), MatchFetchEstimate.DescribeTime(TimeSpan.FromSeconds(32)),
                 MatchFetchEstimate.DescribeTime(TimeSpan.FromSeconds(1))));
@@ -80,16 +80,16 @@ public sealed class MatchDownloadTests : IDisposable
 
         Assert.Equal(["Patch 09-29", "Patch 09-16"], dialog.Stored.Select(fact => fact.Label));
         Assert.Equal(["1 day so far · all matches", "13 days · finished · all matches"], dialog.Stored.Select(fact => fact.Value));
-        Assert.Equal("about 30 s · 1.2 MB", dialog.EveryMatchDetail);
-        Assert.Equal("about 6 min · 13.4 MB", dialog.WithRanksDetail);
+        Assert.Equal("about 35 s · 1.3 MB", dialog.EveryMatchDetail);
+        Assert.Equal("about 7 min · 13.6 MB", dialog.WithRanksDetail);
         Assert.Equal([true, false], dialog.Steps.Select(step => step.Downloads));
-        Assert.Equal("Downloading 1 patch takes about 30 s. It runs in the background, so you can keep using the app, "
+        Assert.Equal("Downloading 1 patch takes about 35 s. It runs in the background, so you can keep using the app, "
                      + "and uses about 900 KB of disk space.", dialog.Summary);
 
         dialog.IncludeRanks = true;
         Assert.False(dialog.EveryMatchOnly);
         Assert.Equal([true, true], dialog.Steps.Select(step => step.Downloads));
-        Assert.StartsWith("Downloading 2 patches takes about 6 min.", dialog.Summary);
+        Assert.StartsWith("Downloading 2 patches takes about 7 min.", dialog.Summary);
 
         Assert.True(dialog.KeepUpToDate);
         dialog.KeepUpToDate = false;

@@ -173,7 +173,7 @@ public class StatusBarTests
         ui.Show();
 
         _ = ui.ViewModel.DataMenu.DownloadMatchDataAsync(HeldMatchStats.Plan);
-        matchStats.Progress!.Report(new MatchFetchProgress(1, 120, 400, 200, 480, "09-29 · Emissary – Oracle · Enemies: Haze", 3_100_000));
+        matchStats.Progress!.Report(new MatchFetchProgress(1, 120, 405, 203, 488,"09-29 · Emissary – Oracle · Enemies: Haze", 3_100_000));
         UiHarness.Settle();
         var running = ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Running");
         running.Flyout!.ShowAt(running);
@@ -184,7 +184,7 @@ public class StatusBarTests
         Assert.Contains("09-29 · every match", texts);
         Assert.Contains("in use", texts);
         Assert.Contains("Enemies: Haze", texts);
-        Assert.Contains("200 of 480 calls", texts);
+        Assert.Contains("203 of 488 calls", texts);
         ui.Screenshot("status_download_details.png");
     }
 
@@ -205,7 +205,7 @@ public class StatusBarTests
         Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
         var texts = dialog.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
         Assert.Contains("No match data yet.", texts);
-        Assert.Contains("about 30 s · 1.2 MB", texts);
+        Assert.Contains("about 35 s · 1.3 MB", texts);
         Assert.Contains("Patch 09-29", texts);
         Assert.Contains("New: downloading it", texts);
         Assert.Contains("Up to date: skipped", texts);

@@ -73,7 +73,7 @@ public abstract record MatchDownloadPlan(long Now, IReadOnlyList<Patch> Keep)
 /// <summary>One step of a download: one part of one patch's matches, over one window.</summary>
 /// <param name="Until">Unix seconds, inclusive.</param>
 /// <param name="Ended">The next patch is out, so <paramref name="Until"/> is this one's end.</param>
-/// <param name="Calls">How many /item-stats calls it takes.</param>
+/// <param name="Calls">How many analytics calls it takes.</param>
 public sealed record FetchPhase(FetchPart Part, Patch Patch, long From, long Until, bool Ended, FetchReason Reason, int Calls)
 {
     /// <summary>"09-29 · every match", "09-16 · rank groups".</summary>
@@ -94,16 +94,21 @@ public sealed record MatchFetchPlan(long Now, IReadOnlyList<Patch> Keep, IReadOn
     /// <summary>Under this many days in the current and the previous patch together, the patch before them is kept too.</summary>
     public const int MinHistoryDays = 14;
 
-    /// <summary>Every match over one window: every match and your hero, both one call per half, then each enemy hero's.</summary>
-    public static int EveryMatchCalls(int heroCount) => 2 * (heroCount + 2);
+    /// <summary>
+    /// Every match over one window: every match and your hero, both one call per half, then each enemy
+    /// hero's; and over the whole window, the heroes' matches, and their ranked matches and purchases.
+    /// </summary>
+    public static int EveryMatchCalls(int heroCount) => SliceCalls(heroCount) + 2;
 
-    /// <summary>The same for each rank group.</summary>
-    public static int RankCalls(int heroCount) => MatchStatsMath.RankGroups.Count * EveryMatchCalls(heroCount);
+    /// <summary>The same for each rank group, which needs no ranked calls: it holds only ranked matches.</summary>
+    public static int RankCalls(int heroCount) => MatchStatsMath.RankGroups.Count * SliceCalls(heroCount);
+
+    private static int SliceCalls(int heroCount) => 2 * (heroCount + 2) + 1;
 
     /// <summary>Data this old is refreshed without being asked, when updates are on.</summary>
     public static readonly TimeSpan RefreshAfter = TimeSpan.FromDays(3);
 
-    /// <summary>The /item-stats calls the whole download takes.</summary>
+    /// <summary>The analytics calls the whole download takes.</summary>
     public int Calls => Phases.Sum(phase => phase.Calls);
 
     public override bool HasWork => Calls > 0;

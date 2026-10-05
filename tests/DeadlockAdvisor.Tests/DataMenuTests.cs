@@ -183,16 +183,16 @@ public sealed class DataMenuTests : IDisposable
         Assert.True(menu.IsDownloadingMatchData);
         Assert.False(await menu.DownloadMatchDataCommand.CanExecute.FirstAsync());
         Assert.False(await menu.ChangeDataFolderCommand.CanExecute.FirstAsync());
-        Assert.Equal(("0 of 480 calls", "80 calls"), (details.CallsText, details.Phases[0].Detail));
+        Assert.Equal(("0 of 488 calls", "83 calls"), (details.CallsText, details.Phases[0].Detail));
 
         // The chip and the card follow the same reports.
-        matchStats.Progress!.Report(new MatchFetchProgress(1, 100, 400, 180, 480, "09-29 · Phantom – Eternus · Enemies: Haze", 2_500_000,
+        matchStats.Progress!.Report(new MatchFetchProgress(1, 100, 405, 183, 488, "09-29 · Phantom – Eternus · Enemies: Haze", 2_500_000,
             new FetchWait("deadlock-api.com asked to slow down", TimeSpan.FromSeconds(30))));
         Assert.Equal((PhaseState.Done, PhaseState.Running), (details.Phases[0].State, details.Phases[1].State));
         Assert.Equal(("in use", "Enemies: Haze", 100), (details.Phases[0].Detail, details.Phases[1].Detail, details.Phases[1].Done));
-        Assert.Equal(("180 of 480 calls", "2.5 MB received"), (details.CallsText, details.BytesText));
+        Assert.Equal(("183 of 488 calls", "2.5 MB received"), (details.CallsText, details.BytesText));
         Assert.Equal("deadlock-api.com asked to slow down: waiting 30 s", details.WaitText);
-        Assert.Equal((180, 480), (job.Done, job.Total));
+        Assert.Equal((183, 488), (job.Done, job.Total));
 
         await job.CancelCommand.Execute();
         var ask = Assert.IsType<ConfirmationModalViewModel>(_shown[^1]);
@@ -308,7 +308,7 @@ public sealed class DataMenuTests : IDisposable
         Assert.True(_fixture.Settings.Current.WelcomeOffered);
         Assert.Equal((true, true, true, false, true),
             (welcome.CanDownloadMatchData, welcome.Art, welcome.MatchData, welcome.Ranks, welcome.KeepUpToDate));
-        Assert.Equal(("about 30 s · 1.2 MB", "about 3 min more · 6.1 MB"), (welcome.MatchDataDetail, welcome.RanksDetail));
+        Assert.Equal(("about 35 s · 1.3 MB", "about 3 min more · 6.2 MB"), (welcome.MatchDataDetail, welcome.RanksDetail));
         welcome.Ranks = true;
         welcome.KeepUpToDate = false;
         await welcome.StartCommand.Execute();
