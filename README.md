@@ -72,7 +72,7 @@ everything but Detect should work. What's missing:
 - Data lives in .NET's application data folder, `~/.config/DeadlockAdvisor`
   on both; macOS users would expect `~/Library/Application Support`.
 
-## The three pages
+## The pages
 
 **Match** — who you're playing against, and what to buy.
 
@@ -106,6 +106,17 @@ Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
 the arithmetic, which then shows when you hover a line. With nothing selected, the panel
 lists what the match data likes that the hand model doesn't.
+
+**Hero Items** — what one hero's players buy, and how they do with it.
+
+Every item bought on a hero in a patch's matches, with its win rate, how
+often it's bought (its usage), its wins and losses, and how the win rate and
+usage moved since the patch before. Pick the hero (it opens on yours from
+the Match page), the patch, ranked or unranked matches or both, a range of
+ranks and the tiers; click a column's header to sort by it. **Usage at
+least** hides the items bought in only a few of the hero's matches, whose
+win rates rest on too few matches, and on who buys them, to mean much. It
+reads the downloaded match data, so it needs **Data → Download Match Data**.
 
 **Hero Traits** — the hero × trait grid, edited in place.
 

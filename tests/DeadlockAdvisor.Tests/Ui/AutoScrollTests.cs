@@ -13,7 +13,7 @@ public class AutoScrollTests
     {
         var ui = new UiHarness(settings =>
         {
-            UiHarness.Editing(settings, 1);
+            UiHarness.Editing(settings, 2);
             settings.Current.WelcomeOffered = true;
         });
         ui.Show();

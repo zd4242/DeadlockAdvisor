@@ -61,10 +61,8 @@
         <TextBlock Classes="section" Text="STARTUP"/>
         <Border Classes="settings">
             <StackPanel>
-                <!-- Match is the only page without the editors. -->
                 <settings:SettingRow Title="Reopen on the last page"
-                                     Description="Start on the page you were on when you closed the app, rather than on Match."
-                                     IsVisible="{Binding ShowModelEditors}">
+                                     Description="Start on the page you were on when you closed the app, rather than on Match.">
                     <ToggleSwitch IsChecked="{Binding ReopenLastPage}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Reopen the last match"

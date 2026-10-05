@@ -5,6 +5,7 @@ using System.Reactive.Linq;
 using Avalonia.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.HeroItems;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
@@ -26,9 +27,9 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.MainWindow;
 
 /// <summary>
-/// The window: three pages switched from tabs in the title bar, the Settings page over them, the
-/// Data / View / Help menus, and the status bar. Edits anywhere write through to the data service,
-/// which flushes them to CSV on a short debounce, so there's no save step.
+/// The window: its pages switched from tabs in the title bar (the model editors' only with them shown),
+/// the Settings page over them, the Data / View / Help menus, and the status bar. Edits anywhere write
+/// through to the data service, which flushes them to CSV on a short debounce, so there's no save step.
 /// </summary>
 public class MainWindowViewModel : ViewModelBase
 {
@@ -91,6 +92,7 @@ public class MainWindowViewModel : ViewModelBase
     public MainWindowViewModel(
         NotificationOverlayViewModel notificationOverlay,
         MatchViewModel match,
+        HeroItemsViewModel heroItems,
         HeroTraitsViewModel heroTraits,
         ItemFormulasViewModel itemFormulas,
         DataMenuViewModel dataMenu,
@@ -104,6 +106,7 @@ public class MainWindowViewModel : ViewModelBase
     {
         NotificationOverlay = notificationOverlay;
         Match = match;
+        HeroItems = heroItems;
         HeroTraits = heroTraits;
         ItemFormulas = itemFormulas;
         DataMenu = dataMenu;
@@ -113,10 +116,13 @@ public class MainWindowViewModel : ViewModelBase
         _modals = modals;
         _art = art;
         _appUpdates = appUpdates;
-        Pages = [Match, HeroTraits, ItemFormulas];
+        Pages = [Match, HeroItems, HeroTraits, ItemFormulas];
 
         ShowsEditors = settings.Current.ShowModelEditors;
-        CurrentPage = settings.Current.ReopenLastPage && ShowsEditors ? Math.Clamp(settings.Current.LastPage, 0, Pages.Count - 1) : 0;
+        PageNames = _allPageNames.Take(PageCount).ToList();
+        // A model editor's page, hidden since, opens on Match like a page that's gone.
+        var lastPage = settings.Current.LastPage;
+        CurrentPage = settings.Current.ReopenLastPage && lastPage >= 0 && lastPage < PageCount ? lastPage : 0;
         this.WhenAnyValue(vm => vm.CurrentPage)
             .Skip(1)
             .Subscribe(page => _settings.Update(s => s.LastPage = page))
@@ -127,20 +133,28 @@ public class MainWindowViewModel : ViewModelBase
             {
                 this.RaisePropertyChanged(nameof(SelectedTab));
                 this.RaisePropertyChanged(nameof(IsMatchPage));
+                this.RaisePropertyChanged(nameof(IsHeroItemsPage));
                 this.RaisePropertyChanged(nameof(IsHeroTraitsPage));
                 this.RaisePropertyChanged(nameof(IsItemFormulasPage));
             })
             .DisposeWith(Disposables);
+        // Opened on your hero from the Match page, once it has one.
+        this.WhenAnyValue(vm => vm.IsHeroItemsPage)
+            .Where(shown => shown)
+            .Subscribe(_ => HeroItems.ShowSelf(Match.Match.SelfHero))
+            .DisposeWith(Disposables);
 
-        // Hidden from Settings, so the page underneath goes back to Match for when it closes.
+        // Hidden from Settings, so a model editor's page underneath goes back to Match for when it closes.
         settings.SettingsChanged
             .Select(s => s.ShowModelEditors)
             .DistinctUntilChanged()
             .Subscribe(show =>
             {
                 ShowsEditors = show;
-                if (!show)
+                if (CurrentPage >= PageCount)
                     CurrentPage = 0;
+                PageNames = _allPageNames.Take(PageCount).ToList();
+                this.RaisePropertyChanged(nameof(SelectedTab));
             })
             .DisposeWith(Disposables);
 
@@ -221,19 +235,30 @@ public class MainWindowViewModel : ViewModelBase
     public NotificationOverlayViewModel NotificationOverlay { get; }
 
     public MatchViewModel Match { get; }
+    public HeroItemsViewModel HeroItems { get; }
     public HeroTraitsViewModel HeroTraits { get; }
     public ItemFormulasViewModel ItemFormulas { get; }
     public DataMenuViewModel DataMenu { get; }
     public SettingsViewModel Settings { get; }
     public IReadOnlyList<ViewModelBase> Pages { get; }
-    public IReadOnlyList<string> PageNames { get; } = ["Match", "Hero Traits", "Item Formulas"];
+
+    /// <summary>The model editors' pages come last, so hiding them leaves the other tabs where they were.</summary>
+    private static readonly IReadOnlyList<string> _allPageNames = ["Match", "Hero Items", "Hero Traits", "Item Formulas"];
+
+    private const int _heroItemsPage = 1;
+    private const int _heroTraitsPage = 2;
+    private const int _itemFormulasPage = 3;
+    private const int _editorPages = 2;
+
+    /// <summary>The tabs: every page's, but the model editors' only while they're shown.</summary>
+    [Reactive] public IReadOnlyList<string> PageNames { get; private set; }
 
     /// <summary>The page the tabs show, which the Settings page covers while it's open.</summary>
     [Reactive] public int CurrentPage { get; set; }
 
     [Reactive] public bool IsSettingsOpen { get; private set; }
 
-    /// <summary>The Hero Traits and Item Formulas pages, which a setting hides for anyone not tuning the model: Match is then the only page.</summary>
+    /// <summary>The Hero Traits and Item Formulas pages, which a setting hides for anyone not tuning the model.</summary>
     [Reactive] public bool ShowsEditors { get; private set; }
 
     /// <summary>The highlighted tab: none while Settings is open, and picking one, even the current page's, closes it.</summary>
@@ -248,8 +273,9 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     public bool IsMatchPage => CurrentPage == 0 && !IsSettingsOpen;
-    public bool IsHeroTraitsPage => CurrentPage == 1 && !IsSettingsOpen;
-    public bool IsItemFormulasPage => CurrentPage == 2 && !IsSettingsOpen;
+    public bool IsHeroItemsPage => CurrentPage == _heroItemsPage && !IsSettingsOpen;
+    public bool IsHeroTraitsPage => CurrentPage == _heroTraitsPage && !IsSettingsOpen;
+    public bool IsItemFormulasPage => CurrentPage == _itemFormulasPage && !IsSettingsOpen;
     [Reactive] public double UiScale { get; private set; } = 1.0;
 
     [Reactive] public string ZoomText { get; private set; } = "";
@@ -335,7 +361,7 @@ public class MainWindowViewModel : ViewModelBase
 
     private void SetZoom(int index) => _settings.Update(s => s.ZoomIndex = ZoomLevels.Clamp(index));
 
-    private int PageCount => ShowsEditors ? Pages.Count : 1;
+    private int PageCount => ShowsEditors ? Pages.Count : Pages.Count - _editorPages;
 
     private void CyclePage(int step) => ShowPage(((CurrentPage + step) % PageCount + PageCount) % PageCount);
 
@@ -359,7 +385,7 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (!ShowsEditors)
             return;
-        ShowPage(2);
+        ShowPage(_itemFormulasPage);
         ItemFormulas.OpenItem(itemId);
     }
 

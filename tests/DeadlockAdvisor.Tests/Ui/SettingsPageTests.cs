@@ -23,7 +23,7 @@ public class SettingsPageTests
     [AvaloniaFact]
     public void TheGearOpensSettingsOverThePagesAndATabClosesIt()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         ui.Show();
 
         Click(ui.Window, ui.Window.FindControl<Button>("SettingsButton")!);
@@ -40,7 +40,7 @@ public class SettingsPageTests
 
         Assert.False(ui.ViewModel.IsSettingsOpen);
         Assert.True(ui.ViewModel.IsHeroTraitsPage);
-        Assert.Equal(1, ui.Window.PageTabs.SelectedIndex);
+        Assert.Equal(2, ui.Window.PageTabs.SelectedIndex);
     }
 
     [AvaloniaFact]
@@ -138,24 +138,27 @@ public class SettingsPageTests
     [AvaloniaFact]
     public void TheModelEditorsStayHiddenUntilTurnedOn()
     {
+        // Last on Hero Traits, before the editors were hidden.
         using var ui = new UiHarness(settings => settings.Current.LastPage = 2);
         ui.Show();
 
         Assert.True(ui.ViewModel.IsMatchPage);
-        Assert.False(ui.Window.PageTabs.IsEffectivelyVisible);
+        Assert.Equal(["Match", "Hero Items"], TabNames(ui));
+        ui.Window.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.Control);
+        UiHarness.Settle();
+        Assert.True(ui.ViewModel.IsHeroItemsPage);
         ui.Window.KeyPressQwerty(PhysicalKey.Tab, RawInputModifiers.Control);
         UiHarness.Settle();
         Assert.True(ui.ViewModel.IsMatchPage);
 
         ui.ViewModel.OpenSettingsCommand.Execute().Subscribe();
         UiHarness.Settle();
-        Assert.False(RowTitled(ui, "Reopen on the last page").IsEffectivelyVisible);
         Click(ui.Window, RowTitled(ui, "Edit the scoring model").GetVisualDescendants().OfType<ToggleSwitch>().Single());
         Assert.True(ui.Settings.Current.ShowModelEditors);
-        Assert.True(ui.Window.PageTabs.IsEffectivelyVisible);
-        Assert.True(RowTitled(ui, "Reopen on the last page").IsEffectivelyVisible);
+        Assert.Equal(["Match", "Hero Items", "Hero Traits", "Item Formulas"], TabNames(ui));
         Click(ui.Window, TabItem(ui, "Hero Traits"));
         Assert.True(ui.ViewModel.IsHeroTraitsPage);
+        Assert.Equal(2, ui.Window.PageTabs.SelectedIndex);
 
         // Turned off from Settings, which then closes onto Match rather than the page that's gone.
         ui.ViewModel.OpenSettingsCommand.Execute().Subscribe();
@@ -163,7 +166,8 @@ public class SettingsPageTests
         ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
         UiHarness.Settle();
         Assert.True(ui.ViewModel.IsMatchPage);
-        Assert.False(ui.Window.PageTabs.IsEffectivelyVisible);
+        Assert.Equal(["Match", "Hero Items"], TabNames(ui));
+        Assert.Equal(0, ui.Window.PageTabs.SelectedIndex);
     }
 
     [AvaloniaFact]
@@ -221,6 +225,9 @@ public class SettingsPageTests
 
     private static SettingRow RowTitled(UiHarness ui, string title) =>
         ui.Window.SettingsPage.GetVisualDescendants().OfType<SettingRow>().Single(row => row.Title == title);
+
+    private static List<object?> TabNames(UiHarness ui) =>
+        ui.Window.PageTabs.GetVisualDescendants().OfType<ListBoxItem>().Select(item => item.Content).ToList();
 
     private static ListBoxItem TabItem(UiHarness ui, string name) =>
         ui.Window.PageTabs.GetVisualDescendants().OfType<ListBoxItem>().Single(item => Equals(item.Content, name));

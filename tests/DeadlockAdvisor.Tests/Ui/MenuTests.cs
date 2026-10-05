@@ -197,7 +197,7 @@ public class MenuTests
     [AvaloniaFact]
     public void AHeroNameOffersCopyClearAndItsWikiPageAndBecomesCurrent()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.HeroTraits;
         ui.Show();
         var grid = ui.Window.HeroTraitsPage.Grid;
@@ -213,7 +213,7 @@ public class MenuTests
     [AvaloniaFact]
     public void TheItemFormulaListsLinkTheirItemsWikiPages()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 3));
         var formulas = ui.ViewModel.ItemFormulas;
         ui.Show();
 

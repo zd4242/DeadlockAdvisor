@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Scoring;
 
 namespace DeadlockAdvisor.Models;
 
@@ -81,6 +82,14 @@ public class AppSettings
     public bool ResultsByNetWorth { get; set; } = true;
     public bool ResultsHideRarelyBuilt { get; set; }
     public bool ResultsHideDisagreed { get; set; }
+
+    // Hero Items tab
+    public string? HeroItemsHero { get; set; }
+
+    [JsonConverter(typeof(JsonStringEnumConverter<MatchMode>))]
+    public MatchMode HeroItemsMode { get; set; } = MatchMode.Ranked;
+
+    public int HeroItemsMinUsagePercent { get; set; } = 5;
 
     // Item Formulas tab
     public double? ByItemSplitterPosition { get; set; }

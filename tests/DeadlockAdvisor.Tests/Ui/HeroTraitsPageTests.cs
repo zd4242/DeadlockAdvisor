@@ -20,7 +20,7 @@ public class HeroTraitsPageTests
     {
         using var ui = new UiHarness(settings =>
         {
-            UiHarness.Editing(settings, 1);
+            UiHarness.Editing(settings, 2);
             settings.Current.ZoomIndex = zoomIndex;
         });
         var page = ui.ViewModel.HeroTraits;
@@ -35,7 +35,7 @@ public class HeroTraitsPageTests
     [AvaloniaFact]
     public async Task CopyFromClonesTheProfilePickedInTheModal()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.HeroTraits;
         var store = ui.Data.Store;
         var target = page.Heroes.Single(hero => hero.HeroName == "Abrams");
@@ -72,7 +72,7 @@ public class HeroTraitsPageTests
     [AvaloniaFact]
     public void TypingIntoTheGridCommitsAndMovesDown()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.HeroTraits;
         ui.Show();
         ui.Window.HeroTraitsPage.FocusGrid();
@@ -117,7 +117,7 @@ public class HeroTraitsPageTests
     [AvaloniaFact]
     public void ClickingATraitHeaderSortsByIt()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.HeroTraits;
         ui.Show();
         var grid = ui.Window.HeroTraitsPage.Grid;
@@ -142,7 +142,7 @@ public class HeroTraitsPageTests
     [AvaloniaFact]
     public void F2OpensASpinBoxOverTheCellAndEnterCommitsIt()
     {
-        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 1));
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
         var page = ui.ViewModel.HeroTraits;
         ui.Show();
         ui.Window.HeroTraitsPage.FocusGrid();
