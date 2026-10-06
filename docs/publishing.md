@@ -189,7 +189,7 @@ Released apps keep reading the files published after them, so a change to a file
 | You change | Bump | So that |
 |---|---|---|
 | A model file's columns or meaning | `ModelManifest.CurrentFormat` | older apps ignore the new model instead of misreading it |
-| `MatchSegment`'s JSON | `MatchSegment.Version` | older apps fall back to asking deadlock-api.com |
+| `MatchSegment`'s JSON | `MatchSegment.Version`, and `MatchSnapshot.Version` with it | apps check the manifest's version before downloading anything, so older apps fall back to asking deadlock-api.com instead of failing on each file |
 | The match data manifest | `MatchSnapshot.Version` | the same |
 
 Release the app before (or with) publishing data in a new format: until people update, they keep the

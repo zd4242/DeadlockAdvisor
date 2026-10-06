@@ -28,7 +28,11 @@ public sealed record SnapshotPatch(string File, string Title, long Start, long U
 /// <param name="Patches">Newest first.</param>
 public sealed record MatchSnapshot(long CheckedAt, IReadOnlyList<SnapshotPatch> Patches)
 {
-    public const int Version = 1;
+    /// <summary>
+    /// Goes up with <see cref="MatchSegment.Version"/>: an app checks it before downloading anything, so one that
+    /// can't read the patch files asks deadlock-api.com instead of failing on each.
+    /// </summary>
+    public const int Version = 2;
     public const string ManifestFile = "manifest.json";
     public const string Source = "https://api.deadlock-api.com";
     public const string ReleaseUrl = "https://github.com/zd4242/DeadlockAdvisor/releases/download/match-data";

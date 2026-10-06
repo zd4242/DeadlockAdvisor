@@ -73,7 +73,10 @@ public sealed class MatchSnapshotJob
         return Write(store.MatchSegments, _utcNow().ToUnixTimeSeconds(), outDir);
     }
 
-    /// <summary>The last run's patches into the data folder. One that's missing or damaged is left out, so it's fetched again.</summary>
+    /// <summary>
+    /// The last run's patches into the data folder. One that's missing or damaged is left out, so it's
+    /// fetched again, and so is everything from a manifest of another version.
+    /// </summary>
     private void Restore(string? restoreDir, string dataDir)
     {
         var manifestPath = restoreDir is null ? null : Path.Combine(restoreDir, MatchSnapshot.ManifestFile);
@@ -82,9 +85,19 @@ public sealed class MatchSnapshotJob
             _log.WriteLine("No previous snapshot: starting afresh.");
             return;
         }
+        MatchSnapshot last;
+        try
+        {
+            last = MatchSnapshot.Parse(File.ReadAllBytes(manifestPath));
+        }
+        catch (Exception ex) when (MatchSnapshot.IsUnusable(ex))
+        {
+            _log.WriteLine($"The previous snapshot is unusable ({ex.Message}): starting afresh.");
+            return;
+        }
         var countsDir = Path.Combine(dataDir, DataStore.MatchCountsDir);
         Directory.CreateDirectory(countsDir);
-        foreach (var entry in MatchSnapshot.Parse(File.ReadAllBytes(manifestPath)).Patches)
+        foreach (var entry in last.Patches)
         {
             try
             {

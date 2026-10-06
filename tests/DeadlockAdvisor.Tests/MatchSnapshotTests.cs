@@ -58,7 +58,8 @@ public sealed class MatchSnapshotTests : IDisposable
         var bytes = new MatchSnapshot(1, [new SnapshotPatch("a.json.gz", "09-29-2026", 1, 2, false, 2, true, 3, "")]).ToJsonBytes();
         var text = System.Text.Encoding.UTF8.GetString(bytes);
 
-        Assert.Throws<FormatException>(() => MatchSnapshot.Parse(System.Text.Encoding.UTF8.GetBytes(text.Replace("\"version\": 1", "\"version\": 2"))));
+        Assert.Throws<FormatException>(() => MatchSnapshot.Parse(System.Text.Encoding.UTF8.GetBytes(
+            text.Replace($"\"version\": {MatchSnapshot.Version}", $"\"version\": {MatchSnapshot.Version - 1}"))));
         Assert.Throws<FormatException>(() => MatchSnapshot.Parse(System.Text.Encoding.UTF8.GetBytes(text.Replace("a.json.gz", "../a.json.gz"))));
     }
 
@@ -171,6 +172,24 @@ public sealed class MatchSnapshotTests : IDisposable
         var again = await RunAsync(api, "again", Out("first"), _now + 3600);
 
         Assert.Contains(ItemStats(api.Asked), url => long.Parse(SyntheticItemStatsApi.Query(url)["min_unix_timestamp"]) == first.Patches[1].Start);
+        Assert.Equal(2, again.Patches.Count);
+    }
+
+    [Fact]
+    public async Task AManifestOfAnotherVersionFromTheLastRunStartsAfresh()
+    {
+        await RunAsync(Api(), "first", restore: null, _now);
+        var manifest = Path.Combine(Out("first"), MatchSnapshot.ManifestFile);
+        File.WriteAllText(manifest, File.ReadAllText(manifest)
+            .Replace($"\"version\": {MatchSnapshot.Version}", $"\"version\": {MatchSnapshot.Version - 1}"));
+
+        var api = Api();
+        var again = await RunAsync(api, "again", Out("first"), _now + 3600);
+
+        // Both patches fetched again, the finished one included.
+        Assert.Equal(again.Patches.Select(patch => patch.Start).Order(),
+            ItemStats(api.Asked).Select(url => long.Parse(SyntheticItemStatsApi.Query(url)["min_unix_timestamp"]))
+                .Where(again.Patches.Select(patch => patch.Start).Contains).Distinct().Order());
         Assert.Equal(2, again.Patches.Count);
     }
 }
