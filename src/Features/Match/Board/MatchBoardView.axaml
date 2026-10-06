@@ -6,70 +6,75 @@
              x:Class="DeadlockAdvisor.Features.Match.Board.MatchBoardView"
              x:DataType="board:MatchBoardViewModel">
 
-    <!-- Opens inside the match card, under the roster it edits. -->
-    <StackPanel Spacing="10">
-        <Border Classes="hline"/>
-
-        <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
-            <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,10,0">
-                <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center"/>
-                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static board:MatchBoardViewModel.PickerHint}"/>
-            </StackPanel>
-            <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
-                <StackPanel>
-                    <ToggleButton Classes="self"
-                                  Content="You"
-                                  IsChecked="{Binding IsSelfMode, Mode=OneWay}"
-                                  Command="{Binding SetModeCommand}"
-                                  CommandParameter="{x:Static enums:Role.Self}"
-                                  ToolTip.Tip="Click heroes to mark them as You (Alt+1)"/>
-                    <ToggleButton Classes="enemy"
-                                  Content="Enemy"
-                                  IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
-                                  Command="{Binding SetModeCommand}"
-                                  CommandParameter="{x:Static enums:Role.Enemy}"
-                                  ToolTip.Tip="Click heroes to mark them as Enemy (Alt+2)"/>
-                    <ToggleButton Classes="ally"
-                                  Content="Ally"
-                                  IsChecked="{Binding IsAllyMode, Mode=OneWay}"
-                                  Command="{Binding SetModeCommand}"
-                                  CommandParameter="{x:Static enums:Role.Ally}"
-                                  ToolTip.Tip="Click heroes to mark them as Ally (Alt+3)"/>
+    <!-- Opens inside the match card, under the roster it edits, as a panel of its own. The tiles are drawn
+         on the Surface2 fill, so the outline is what sets the panel apart. -->
+    <Border BorderBrush="{DynamicResource BorderStrongBrush}"
+            BorderThickness="1"
+            CornerRadius="8"
+            Padding="12,10,12,4">
+        <StackPanel Spacing="10">
+            <Grid ColumnDefinitions="Auto,Auto,Auto,*,Auto">
+                <StackPanel Orientation="Horizontal" Spacing="6" Margin="0,0,10,0">
+                    <TextBlock Classes="section" Text="ASSIGN AS" VerticalAlignment="Center"/>
+                    <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static board:MatchBoardViewModel.PickerHint}"/>
                 </StackPanel>
-            </Border>
-            <controls:SearchBox Grid.Column="2"
-                                x:Name="SearchBox"
-                                Width="320"
-                                Text="{Binding SearchText}"
-                                Watermark="{Binding SearchPlaceholder}"/>
-            <Button Grid.Column="4"
-                    Classes="ghost"
-                    Content="Done"
-                    VerticalAlignment="Center"
-                    Command="{Binding ClosePickerCommand}"
-                    ToolTip.Tip="Hide the hero list (Esc)"/>
-        </Grid>
+                <Border Grid.Column="1" Classes="segmented" Margin="0,0,10,0" VerticalAlignment="Center">
+                    <StackPanel>
+                        <ToggleButton Classes="self"
+                                      Content="You"
+                                      IsChecked="{Binding IsSelfMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Self}"
+                                      ToolTip.Tip="Click heroes to mark them as You (Alt+1)"/>
+                        <ToggleButton Classes="enemy"
+                                      Content="Enemy"
+                                      IsChecked="{Binding IsEnemyMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Enemy}"
+                                      ToolTip.Tip="Click heroes to mark them as Enemy (Alt+2)"/>
+                        <ToggleButton Classes="ally"
+                                      Content="Ally"
+                                      IsChecked="{Binding IsAllyMode, Mode=OneWay}"
+                                      Command="{Binding SetModeCommand}"
+                                      CommandParameter="{x:Static enums:Role.Ally}"
+                                      ToolTip.Tip="Click heroes to mark them as Ally (Alt+3)"/>
+                    </StackPanel>
+                </Border>
+                <controls:SearchBox Grid.Column="2"
+                                    x:Name="SearchBox"
+                                    Width="320"
+                                    Text="{Binding SearchText}"
+                                    Watermark="{Binding SearchPlaceholder}"/>
+                <Button Grid.Column="4"
+                        Classes="primary"
+                        Content="Done"
+                        MinWidth="80"
+                        VerticalAlignment="Center"
+                        Command="{Binding ClosePickerCommand}"
+                        ToolTip.Tip="Hide the hero list (Esc)"/>
+            </Grid>
 
-        <!-- Full width fits every hero in two or three rows; past three, it scrolls rather than crowding out the results. -->
-        <ScrollViewer MaxHeight="264" HorizontalScrollBarVisibility="Disabled">
-            <ItemsControl ItemsSource="{Binding Tiles}">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <WrapPanel Orientation="Horizontal"/>
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="board:HeroTileViewModel">
-                        <controls:HeroTile HeroId="{Binding HeroId}"
-                                           HeroName="{Binding HeroName}"
-                                           Role="{Binding Role}"
-                                           IsHighlighted="{Binding IsHighlighted}"
-                                           IsVisible="{Binding IsShown}"
-                                           ToolTip.Tip="{Binding HeroName}"
-                                           Margin="0,0,6,6"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
-    </StackPanel>
+            <!-- Full width fits every hero in two or three rows; past three, it scrolls rather than crowding out the results. -->
+            <ScrollViewer MaxHeight="264" HorizontalScrollBarVisibility="Disabled">
+                <ItemsControl ItemsSource="{Binding Tiles}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <WrapPanel Orientation="Horizontal"/>
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="board:HeroTileViewModel">
+                            <controls:HeroTile HeroId="{Binding HeroId}"
+                                               HeroName="{Binding HeroName}"
+                                               Role="{Binding Role}"
+                                               IsHighlighted="{Binding IsHighlighted}"
+                                               IsVisible="{Binding IsShown}"
+                                               ToolTip.Tip="{Binding HeroName}"
+                                               Margin="0,0,6,6"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </StackPanel>
+    </Border>
 </UserControl>
