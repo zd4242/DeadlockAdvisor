@@ -43,6 +43,9 @@ public class DataRanksViewModel : ViewModelBase
         this.WhenAnyValue(vm => vm.RankedOnly, vm => vm.From, vm => vm.To)
             .Subscribe(_ => this.RaisePropertyChanged(nameof(RangeLabel)))
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.Status)
+            .Subscribe(_ => this.RaisePropertyChanged(nameof(InfoTip)))
+            .DisposeWith(Disposables);
         // Moving one end past the other drags the other along, so the range is never empty.
         this.WhenAnyValue(vm => vm.From)
             .Subscribe(from =>
@@ -95,6 +98,9 @@ public class DataRanksViewModel : ViewModelBase
 
     /// <summary>What each family kept, or why it was left out, and how far the range moved it.</summary>
     [Reactive] public string Status { get; private set; } = "";
+
+    /// <summary>The badge's tip: <see cref="Info"/>, then <see cref="Status"/> once there is one.</summary>
+    public string InfoTip => Status.Length == 0 ? Info : $"{Info}\n\n{Status}";
 
     private void Load()
     {
