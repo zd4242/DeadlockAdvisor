@@ -39,6 +39,7 @@ public sealed record RankPreset(string Label, RankBy RankBy)
 public class MatchViewModel : ViewModelBase, ISearchablePage
 {
     public const int DefaultCutoffPercent = 40;
+    public const string FocusItemSearchAction = "FocusItemSearch";
 
     public const string HideRarelyBuiltLabel = "Hide items your hero rarely builds";
 
@@ -95,7 +96,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         if (settings.Current.ReopenLastMatch)
             Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
         Board = new MatchBoardViewModel(Match, () => _data.Store, settings);
-        Results = new ResultsViewModel("Pick the heroes in your match above and recommendations appear here.");
+        Results = new ResultsViewModel("Pick the heroes in your match above and recommendations appear here.",
+            (item, needle) => _data.Store.ItemMatches(item.ItemId, needle));
 
         var savedPercent = settings.Current.ResultsMinPercent;
         SelectedCutoff = CutoffPresets.FirstOrDefault(p => p.Percent == savedPercent)
@@ -115,15 +117,20 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         Board.ReviewDetectionCommand = ReviewDetectionCommand;
         detect.CanReview.Subscribe(can => Board.CanReviewDetection = can).DisposeWith(Disposables);
         // The match it applied is gone, so there's nothing left to review.
-        Board.ClearCommand.Subscribe(_ => detect.ForgetLast()).DisposeWith(Disposables);
+        Board.ClearCommand.Subscribe(_ =>
+        {
+            detect.ForgetLast();
+            Results.ResetSearch();
+        }).DisposeWith(Disposables);
         ArtWanted = detect.ArtWanted;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
         PickHeroesCommand = ReactiveCommand.Create(Board.OpenPicker);
+        SearchItemsCommand = ReactiveCommand.Create(OpenItemSearch);
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
         // Runs after the board's own rescore, so the list is already ranked for the new heroes.
-        Board.RandomizeCommand.Subscribe(_ => ShowTopPick()).DisposeWith(Disposables);
+        Board.RandomizeCommand.Subscribe(_ => StartOver()).DisposeWith(Disposables);
 
         Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
         settings.SettingsChanged
@@ -257,7 +264,26 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Look back at a detection that was applied without review.</summary>
     public ReactiveCommand<Unit, Unit> ReviewDetectionCommand { get; }
 
-    public void FocusSearch() => Board.OpenPicker();
+    /// <summary>Show the item search, from its button.</summary>
+    public ReactiveCommand<Unit, Unit> SearchItemsCommand { get; }
+
+    /// <summary>
+    /// Ctrl+F searches the items once there's a match to rank them for; before that, or while the hero
+    /// picker is already open, it goes to the heroes.
+    /// </summary>
+    public void FocusSearch()
+    {
+        if (IsMatchEmpty || Board.IsPickerOpen)
+            Board.OpenPicker();
+        else
+            OpenItemSearch();
+    }
+
+    private void OpenItemSearch()
+    {
+        Results.IsSearchOpen = true;
+        RequestViewAction(FocusItemSearchAction);
+    }
 
     /// <summary>Rescore the recommendations and the explanation from the current data and match.</summary>
     public void Refresh()
@@ -300,15 +326,25 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var before = LineUp();
         return () =>
         {
+            var newLineUp = !before.SetEquals(LineUp());
+            if (newLineUp)
+                Results.ResetSearch();
             Board.Refresh();
             OnMatchChanged();
-            if (!before.SetEquals(LineUp()))
+            if (newLineUp)
                 ShowTopPick();
         };
     }
 
     private HashSet<(string HeroId, Role Role)> LineUp() =>
         Match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => (entry.Key, entry.Value)).ToHashSet();
+
+    /// <summary>A whole new match: the list comes back unsearched, on its best item.</summary>
+    private void StartOver()
+    {
+        Results.ResetSearch();
+        ShowTopPick();
+    }
 
     private void ShowTopPick()
     {

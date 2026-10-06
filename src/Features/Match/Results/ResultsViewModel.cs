@@ -40,12 +40,20 @@ public class ResultsViewModel : ViewModelBase
     private bool _hideRarelyBuilt;
     private bool _hideDisagreed;
     private string? _topItemId;
+    private string? _searchHitId;
+    private readonly Func<ScoredItem, string, bool> _itemMatches;
 
-    public ResultsViewModel(string emptyHint)
+    /// <param name="itemMatches">Whether an item answers a search (a trimmed, lower-cased needle); by default, its name does.</param>
+    public ResultsViewModel(string emptyHint, Func<ScoredItem, string, bool>? itemMatches = null)
     {
         _nothingPickedHint = emptyHint;
+        _itemMatches = itemMatches ?? ((item, needle) => FuzzyMatch.Score(needle, item.ItemName) is not null);
         EmptyHint = emptyHint;
         OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
+        this.WhenAnyValue(vm => vm.SearchText)
+            .Skip(1)
+            .Subscribe(_ => OnSearchChanged())
+            .DisposeWith(Disposables);
 
         // A header keeps its note, so the data picks' one is rebuilt for its new wording.
         this.WhenAnyValue(vm => vm.ShowsEditors)
@@ -75,7 +83,16 @@ public class ResultsViewModel : ViewModelBase
     [Reactive] public string? SelectedItemId { get; private set; }
 
     /// <summary>
-    /// A click picked a row, or cleared the pick (null) by clicking it again: the explanation follows.
+    /// Narrows the list to the items that match, from anywhere in the shop: the cutoff and the collapsed
+    /// sections don't hide a match. One match is picked.
+    /// </summary>
+    [Reactive] public string SearchText { get; set; } = "";
+
+    /// <summary>The search box is showing, rather than just its button.</summary>
+    [Reactive] public bool IsSearchOpen { get; set; }
+
+    /// <summary>
+    /// A click or a search picked a row, or cleared the pick (null) by clicking it again: the explanation follows.
     /// Not raised when a refresh drops the selection.
     /// </summary>
     public IObservable<string?> RowClicked => _rowClicked;
@@ -148,6 +165,29 @@ public class ResultsViewModel : ViewModelBase
         Render();
     }
 
+    /// <summary>Back to the whole list, with the box put away.</summary>
+    public void ResetSearch()
+    {
+        SearchText = "";
+        IsSearchOpen = false;
+    }
+
+    private string Needle => SearchText.Trim().ToLowerInvariant();
+
+    /// <summary>
+    /// The search narrowed the list: the selection follows, since a pick the list no longer shows
+    /// can't stay explained, and a single match is picked, as on the Item Formulas page.
+    /// </summary>
+    private void OnSearchChanged()
+    {
+        var before = SelectedItemId;
+        Render();
+        if (_searchHitId is { } hit)
+            SetSelection(hit);
+        if (SelectedItemId != before)
+            _rowClicked.OnNext(SelectedItemId);
+    }
+
     private void Render()
     {
         var everyItem = _minFraction is null;
@@ -162,27 +202,41 @@ public class ResultsViewModel : ViewModelBase
 
         // With no heroes picked, "every item" would be the whole shop at 0.
         var nothingScored = _scored.All(item => item.Score == 0 && item.Data.Count == 0);
-        IsEmpty = nothingScored || (shown.Count == 0 && picks.Count == 0);
-        EmptyHint = Hint(nothingScored);
-        _topItemId = IsEmpty || shown.Count == 0 ? null : shown[0].Item.ItemId;
-        Summary = IsEmpty ? "" : SummaryText(positive, shown.Count, overallCutoff, everyItem);
+        var listsNothing = nothingScored || (shown.Count == 0 && picks.Count == 0);
+
+        // A search looks through every item the filters leave in, in ranked order, so it can find one the cutoff hides.
+        var needle = Needle;
+        var searching = needle.Length > 0;
+        var found = searching ? ranked.Where(entry => _itemMatches(entry.Item, needle)).ToList() : shown;
+        var listedPicks = searching ? [] : picks;
+        _searchHitId = searching && found.Count == 1 ? found[0].Item.ItemId : null;
+
+        IsEmpty = searching ? nothingScored || found.Count == 0 : listsNothing;
+        EmptyHint = searching && !nothingScored ? $"No item matches \"{SearchText.Trim()}\"." : Hint(nothingScored);
+        _topItemId = listsNothing || shown.Count == 0 ? null : shown[0].Item.ItemId;
+        Summary = IsEmpty ? "" : searching ? SearchSummary(found.Count) : SummaryText(positive, shown.Count, overallCutoff, everyItem);
         SummaryTip = RankTip();
 
         // Drop a selection that no longer appears, so the explanation and the highlighted row can't
         // disagree; the empty hint lists nothing, even when every item is kept. A collapsed section
-        // still counts as showing its items: folding one shouldn't lose the pick.
-        if (IsEmpty || (!shown.Any(entry => entry.Item.ItemId == SelectedItemId) && !picks.Any(item => item.ItemId == SelectedItemId)))
+        // still counts as showing its items: folding one shouldn't lose the pick. Nor does a search
+        // that narrows the list away from it, but one that finds an item the cutoff hides can keep that pick.
+        var stillListed = shown.Any(entry => entry.Item.ItemId == SelectedItemId)
+                          || picks.Any(item => item.ItemId == SelectedItemId)
+                          || found.Any(entry => entry.Item.ItemId == SelectedItemId);
+        if (nothingScored || !stillListed)
             SetSelection(null);
 
         // Blending, both bars share one scale, the largest part on screen, so they compare directly.
+        var scaled = searching ? shown.Concat(found).Distinct().ToList() : shown;
         var scale = _rankBy == RankBy.Both
-            ? shown.Select(entry => Math.Max(Math.Abs(blend.FormulaUnits(entry.Item)), Math.Abs(blend.DataUnits(entry.Item)))).DefaultIfEmpty(0).Max()
-            : shown.Select(entry => Math.Abs(entry.Measure)).DefaultIfEmpty(0).Max();
+            ? scaled.Select(entry => Math.Max(Math.Abs(blend.FormulaUnits(entry.Item)), Math.Abs(blend.DataUnits(entry.Item)))).DefaultIfEmpty(0).Max()
+            : scaled.Select(entry => Math.Abs(entry.Measure)).DefaultIfEmpty(0).Max();
         var placed = new List<ViewModelBase>();
         if (_byTier)
         {
             // In ranked order, so each tier stays sorted.
-            foreach (var tierGroup in shown.GroupBy(entry => entry.Item.Tier).OrderBy(group => group.Key))
+            foreach (var tierGroup in found.GroupBy(entry => entry.Item.Tier).OrderBy(group => group.Key))
             {
                 var header = Header($"tier{tierGroup.Key}", TierLabel(tierGroup.Key), Palette.TierColor(tierGroup.Key));
                 AddSection(placed, header, tierGroup.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)).ToList());
@@ -190,15 +244,15 @@ public class ResultsViewModel : ViewModelBase
         }
         else
         {
-            placed.AddRange(shown.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)));
+            placed.AddRange(found.Select(entry => RankedRow(entry.Item, entry.Measure, scale, blend)));
         }
 
-        if (picks.Count > 0)
+        if (listedPicks.Count > 0)
         {
             // Their bars are on the same scale as the list's, so a deep negative reads as one.
-            var pickScale = Math.Max(scale, picks.Max(item => Math.Abs(item.Score)));
+            var pickScale = Math.Max(scale, listedPicks.Max(item => Math.Abs(item.Score)));
             var header = Header(DataPicksKey, DataPicksTitle, Palette.Data, ShowsEditors ? DataPicksEditorNote : DataPicksNote);
-            AddSection(placed, header, picks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)), showsTier: true)).ToList());
+            AddSection(placed, header, listedPicks.Select(item => Row(item, new Bars(Share(item.Score, pickScale)), showsTier: true)).ToList());
         }
 
         Entries.ReplaceAll(placed);
@@ -264,7 +318,7 @@ public class ResultsViewModel : ViewModelBase
 
     private void AddSection(List<ViewModelBase> placed, SectionHeaderViewModel header, IReadOnlyList<ResultRowViewModel> rows)
     {
-        var collapsed = _collapsed.Contains(header.Key);
+        var collapsed = Needle.Length == 0 && _collapsed.Contains(header.Key);
         header.SetValues(rows.Count, collapsed);
         placed.Add(header);
         if (!collapsed)
@@ -288,6 +342,8 @@ public class ResultsViewModel : ViewModelBase
         var cutoffText = _byTier ? $"{Math.Round((_minFraction ?? 0) * 100):0}% of each tier's best" : MeasureText(cutoff);
         return $"{shown} of {positive} above 0  ·  cutoff {cutoffText}";
     }
+
+    private static string SearchSummary(int count) => $"{count} item{(count != 1 ? "s" : "")} match";
 
     /// <summary>"Tier 2 · 1,600", the price from the items themselves.</summary>
     private string TierLabel(int tier)

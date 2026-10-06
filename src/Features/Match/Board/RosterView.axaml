@@ -69,7 +69,7 @@
                             ToolTip.Tip="See what the last detection read, applied without asking because every hero was certain"/>
                     <ToggleButton Content="Edit heroes"
                                   IsChecked="{Binding IsPickerOpen}"
-                                  ToolTip.Tip="Show every hero, to set or correct the match by hand (Ctrl+F)"/>
+                                  ToolTip.Tip="Show every hero, to set or correct the match by hand"/>
                     <!-- The rarer ways to fill or empty the match, out of the way of detecting and fixing it. -->
                     <Button x:Name="MoreButton" Classes="glyph" ToolTip.Tip="Import a match, random heroes, or clear the match">
                         <Path Classes="solid"

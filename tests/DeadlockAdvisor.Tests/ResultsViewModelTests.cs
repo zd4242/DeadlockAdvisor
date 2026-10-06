@@ -287,6 +287,77 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void ASearchFindsAnItemTheCutoffHidesAndPicksASingleMatch()
+    {
+        // Cut at 60% of a's 10, so b's 5 is left out of the plain list.
+        var results = Show(RankBy.Formula, 0.6);
+        var clicked = new List<string?>();
+        using var subscription = results.RowClicked.Subscribe(clicked.Add);
+
+        results.SearchText = "b";
+
+        Assert.Equal(["b"], Rows(results));
+        Assert.Equal("1 item match", results.Summary);
+        Assert.Equal("b", results.SelectedItemId);
+        Assert.Equal(["b"], clicked);
+
+        // Clearing it brings the plain list back, which has no b to keep picked.
+        results.SearchText = "";
+
+        Assert.Equal(["a", "c"], Rows(results));
+        Assert.Null(results.SelectedItemId);
+        Assert.Equal(["b", null], clicked);
+    }
+
+    [Fact]
+    public void ASearchPicksItsOnlyMatchAndKeepsThePickWhenNothingMatches()
+    {
+        var results = Show(RankBy.Formula, null);
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+
+        results.SearchText = "d";
+
+        // d is the only match, so it takes the pick.
+        Assert.Equal(["d"], Rows(results));
+        Assert.Equal("d", results.SelectedItemId);
+
+        // Nothing matches: the list says so, and the pick stays where it was.
+        results.SearchText = "zzz";
+
+        Assert.True(results.IsEmpty);
+        Assert.Equal("No item matches \"zzz\".", results.EmptyHint);
+        Assert.Equal("d", results.SelectedItemId);
+    }
+
+    [Fact]
+    public void ASearchListsMatchesInCollapsedSections()
+    {
+        var results = Show(RankBy.Formula, null, byTier: true);
+        results.ToggleSection("tier1");
+        Assert.Empty(Rows(results));
+
+        results.SearchText = "a";
+        Assert.Equal(["a"], Rows(results));
+
+        results.SearchText = "";
+        Assert.Empty(Rows(results));
+    }
+
+    [Fact]
+    public void ResettingTheSearchEmptiesAndClosesIt()
+    {
+        var results = Show(RankBy.Formula, 0);
+        results.IsSearchOpen = true;
+        results.SearchText = "b";
+
+        results.ResetSearch();
+
+        Assert.Equal("", results.SearchText);
+        Assert.False(results.IsSearchOpen);
+        Assert.Equal(["a", "b", "c"], Rows(results));
+    }
+
+    [Fact]
     public void ClickingTheSelectedRowAgainClearsIt()
     {
         var results = Show(RankBy.Formula, 0);

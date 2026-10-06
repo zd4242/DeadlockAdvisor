@@ -28,7 +28,7 @@
             <Border Classes="card">
                 <DockPanel>
                     <!-- What ranks the list stays in view; the rest sits behind Filters. -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto" Margin="0,0,0,8">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
                         <StackPanel VerticalAlignment="Center" Spacing="3">
                             <TextBlock Classes="section" TextTrimming="CharacterEllipsis" Text="RECOMMENDED ITEMS"/>
                             <TextBlock Classes="faint"
@@ -57,9 +57,21 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
+                        <!-- A magnifier that gives way to the search box below once it's wanted. -->
+                        <Button Grid.Column="2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center"
+                                Classes="glyph"
+                                Command="{Binding SearchItemsCommand}"
+                                IsEnabled="{Binding !IsMatchEmpty}"
+                                IsVisible="{Binding !Results.IsSearchOpen}"
+                                ToolTip.Tip="Search the recommended items (Ctrl+F)">
+                            <Path Data="M6.5,1.5 A5,5 0 1 1 6.5,11.5 A5,5 0 1 1 6.5,1.5 Z M10,10 L14.5,14.5" Stretch="Uniform"/>
+                        </Button>
+
                         <!-- A funnel, filled while a filter changes the list out of sight. -->
                         <Button x:Name="FiltersButton"
-                                Grid.Column="2"
+                                Grid.Column="3"
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 Classes="glyph"
@@ -126,6 +138,12 @@
                             </Button.Flyout>
                         </Button>
                     </Grid>
+                    <controls:SearchBox x:Name="ItemSearchBox"
+                                        DockPanel.Dock="Top"
+                                        Margin="0,0,0,8"
+                                        Watermark="Search items..."
+                                        Text="{Binding Results.SearchText}"
+                                        IsVisible="{Binding Results.IsSearchOpen}"/>
                     <Panel>
                         <Panel IsVisible="{Binding !ShowsQuickStart}">
                             <results:ResultsView DataContext="{Binding Results}"/>

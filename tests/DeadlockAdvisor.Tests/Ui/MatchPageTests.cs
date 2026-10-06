@@ -78,6 +78,57 @@ public class MatchPageTests
         Assert.True(match.Explain.HasItem);
     }
 
+    [AvaloniaFact]
+    public void CtrlFOpensTheItemSearchOnceThereIsAMatchAndEscapePutsItAway()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        var results = ui.ViewModel.Match.Results;
+        var box = ui.Window.MatchPage.GetVisualDescendants().OfType<SearchBox>().Single(search => search.Name == "ItemSearchBox");
+        Assert.False(box.IsEffectivelyVisible);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F, RawInputModifiers.Control);
+        UiHarness.Settle();
+        Assert.True(results.IsSearchOpen);
+        Assert.True(box.IsEffectivelyVisible);
+        Assert.True(box.IsFocused);
+        Assert.False(ui.ViewModel.Match.Board.IsPickerOpen);
+
+        ui.Window.KeyTextInput("knock");
+        UiHarness.Settle();
+        Assert.Equal("knock", results.SearchText);
+        Assert.NotEmpty(results.Entries.OfType<ResultRowViewModel>());
+        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.Contains("knock", row.Name, StringComparison.OrdinalIgnoreCase));
+
+        // With text in the box, Escape clears it first.
+        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.Equal("", results.SearchText);
+        Assert.True(results.IsSearchOpen);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.False(results.IsSearchOpen);
+        Assert.False(box.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public async Task ARandomMatchPutsTheItemSearchAway()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.SearchItemsCommand.Execute().Subscribe();
+        match.Results.SearchText = "knock";
+
+        await match.Board.RandomizeCommand.Execute(RandomizeKeep.Nothing);
+
+        Assert.Equal("", match.Results.SearchText);
+        Assert.False(match.Results.IsSearchOpen);
+        Assert.True(match.Results.Entries.OfType<ResultRowViewModel>().First().IsSelected);
+    }
+
     [AvaloniaTheory]
     [InlineData(CutoffPreset.EveryItem)]
     [InlineData(MatchViewModel.DefaultCutoffPercent)]
@@ -396,7 +447,7 @@ public class MatchPageTests
         using var ui = new UiHarness();
         SetUpMatch(ui);
         ui.Show();
-        ui.ViewModel.Match.FocusSearch();
+        ui.ViewModel.Match.Board.OpenPicker();
         ui.Screenshot("match_picker.png");
         Assert.True(Picker(ui).IsEffectivelyVisible);
     }
