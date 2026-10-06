@@ -40,7 +40,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Apply without asking when every hero is certain"
-                                     Description="When every slot, and which one is you, is read confidently or kept from your current match, apply it straight away; Review beside Detect shows what was read. Anything less certain always opens the review.">
+                                     Description="When every slot, and which one is you, is read confidently or kept from your current match, apply it straight away. A Street Brawl's four empty slots count as read. Review beside Detect shows what was read. Anything less certain always opens the review.">
                     <ToggleSwitch IsChecked="{Binding AutoApplyDetect}"/>
                 </settings:SettingRow>
                 <settings:SettingRow Title="Remember my corrections as reference art"

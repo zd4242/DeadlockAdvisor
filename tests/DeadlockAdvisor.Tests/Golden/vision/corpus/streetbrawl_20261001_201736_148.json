@@ -1,0 +1,101 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "self_slot": 5,
+  "allow_wrong": 0,
+  "heroes": {
+    "2": "graves",
+    "3": "abrams",
+    "4": "venator",
+    "5": "holliday",
+    "6": "sinclair",
+    "7": "silver",
+    "8": "vyper",
+    "9": "victor"
+  },
+  "grid": {
+    "version": 3,
+    "center_x": 1280.0749554028923,
+    "pitch": 116.94821332944262,
+    "top": 16.8,
+    "gap_ratio": 1.6623111002409188,
+    "width_ratio": 0.5623223080919016
+  },
+  "read": {
+    "self_slot": 5,
+    "slots": [
+      {
+        "hero": null,
+        "score": 0.144,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": null,
+        "score": 0.2667,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": "graves",
+        "score": 0.8862,
+        "margin": 0.536,
+        "confident": true
+      },
+      {
+        "hero": "abrams",
+        "score": 0.9278,
+        "margin": 0.7233,
+        "confident": true
+      },
+      {
+        "hero": "venator",
+        "score": 0.9188,
+        "margin": 0.6326,
+        "confident": true
+      },
+      {
+        "hero": "holliday",
+        "score": 0.9728,
+        "margin": 0.7509,
+        "confident": true
+      },
+      {
+        "hero": "sinclair",
+        "score": 0.92,
+        "margin": 0.6717,
+        "confident": true
+      },
+      {
+        "hero": "silver",
+        "score": 0.9227,
+        "margin": 0.6751,
+        "confident": true
+      },
+      {
+        "hero": "vyper",
+        "score": 0.8329,
+        "margin": 0.64,
+        "confident": true
+      },
+      {
+        "hero": "victor",
+        "score": 0.8726,
+        "margin": 0.5678,
+        "confident": true
+      },
+      {
+        "hero": null,
+        "score": 0.1998,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": null,
+        "score": 0.2785,
+        "margin": 0,
+        "confident": false
+      }
+    ]
+  }
+}

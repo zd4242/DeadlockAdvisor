@@ -34,8 +34,12 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
 
-    /// <summary>Every slot's hero and which one is you, known well enough to apply without anyone checking.</summary>
-    public bool IsSettled => SelfSlot is not null && Slots.Count == Layout.SlotCount && Slots.All(slot => slot.IsSettled);
+    /// <summary>Every slot's hero and which one is you, known well enough to apply without anyone checking. A blank Street Brawl slot needs no hero.</summary>
+    public bool IsSettled => SelfSlot is not null && Slots.Count == Layout.SlotCount
+                             && Slots.All(slot => slot.IsSettled || BlankSlots.Contains(slot.Index));
+
+    /// <summary>The slots a Street Brawl strip leaves blank, or none when it isn't one (see <see cref="StreetBrawl"/>).</summary>
+    public IReadOnlyList<int> BlankSlots { get; init; } = [];
 
     /// <summary>
     /// How well the grid fits: the mean of its best slots' top scores, ignoring the worst third (the
@@ -119,7 +123,8 @@ public static class Detector
 
         var values = SelfSlotScores(image, geometry);
         var (selfSlot, selfScore) = FindSelfSlot(values);
-        return new Detection(readings, geometry, selfSlot, selfScore, image, values) { Heroes = bank.Heroes, Scores = scores };
+        var detection = new Detection(readings, geometry, selfSlot, selfScore, image, values) { Heroes = bank.Heroes, Scores = scores };
+        return detection with { BlankSlots = StreetBrawl.BlankSlots(readings, detection.CropOf) };
     }
 
     /// <summary>

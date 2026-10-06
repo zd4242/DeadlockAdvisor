@@ -1,0 +1,101 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "self_slot": 5,
+  "allow_wrong": 0,
+  "heroes": {
+    "2": "rem",
+    "3": "haze",
+    "4": "celeste",
+    "5": "victor",
+    "6": "bebop",
+    "7": "lash",
+    "8": "yamato",
+    "9": "infernus"
+  },
+  "grid": {
+    "version": 3,
+    "center_x": 1280.0749554028923,
+    "pitch": 116.94821332944254,
+    "top": 16.8,
+    "gap_ratio": 1.6623111002409205,
+    "width_ratio": 0.562322308091902
+  },
+  "read": {
+    "self_slot": 5,
+    "slots": [
+      {
+        "hero": null,
+        "score": 0.2029,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": null,
+        "score": 0.2415,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": "rem",
+        "score": 0.9304,
+        "margin": 0.5427,
+        "confident": true
+      },
+      {
+        "hero": "haze",
+        "score": 0.835,
+        "margin": 0.6319,
+        "confident": true
+      },
+      {
+        "hero": "celeste",
+        "score": 0.9419,
+        "margin": 0.7162,
+        "confident": true
+      },
+      {
+        "hero": "victor",
+        "score": 0.9573,
+        "margin": 0.6217,
+        "confident": true
+      },
+      {
+        "hero": "bebop",
+        "score": 0.8634,
+        "margin": 0.6337,
+        "confident": true
+      },
+      {
+        "hero": "lash",
+        "score": 0.9134,
+        "margin": 0.5917,
+        "confident": true
+      },
+      {
+        "hero": "yamato",
+        "score": 0.8648,
+        "margin": 0.6988,
+        "confident": true
+      },
+      {
+        "hero": "infernus",
+        "score": 0.8771,
+        "margin": 0.6322,
+        "confident": true
+      },
+      {
+        "hero": null,
+        "score": 0.223,
+        "margin": 0,
+        "confident": false
+      },
+      {
+        "hero": null,
+        "score": 0.2476,
+        "margin": 0,
+        "confident": false
+      }
+    ]
+  }
+}

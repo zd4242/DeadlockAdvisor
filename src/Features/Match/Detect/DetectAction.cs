@@ -119,7 +119,8 @@ public class DetectAction
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
                          + (detection is null
                              ? "no strip found"
-                             : $"{detection.ConfidentCount}/12 confident, {detection.Slots.Count(slot => slot.Kept)} kept from the match, "
+                             : (detection.BlankSlots.Count > 0 ? "Street Brawl, " : "")
+                               + $"{detection.ConfidentCount}/12 confident, {detection.Slots.Count(slot => slot.Kept)} kept from the match, "
                                + $"you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, fit {detection.Fit:0.00}, "
                                + NetWorthLog(netWorth))
                          + $", {clock.ElapsedMilliseconds} ms");

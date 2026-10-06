@@ -31,8 +31,8 @@ is how each step works, why it works that way, and how to change it without maki
    at least six confident slots agree with the match already applied and none disagrees. Then any
    slot the read couldn't settle keeps the applied hero ("kept"), and you carry over.
 7. **Apply or review** (`DetectAction`): if every slot is confident or kept and you're known, the
-   match is applied without the review, and **Review** beside Detect reopens it. Otherwise the review
-   opens.
+   match is applied without the review, and **Review** beside Detect reopens it. A Street Brawl's
+   blank slots count as read (below). Otherwise the review opens.
 
 ## The reference art
 
@@ -66,6 +66,18 @@ it for a hero with no cut portraits.
 - Download Art only asks whether a file changed (If-None-Match, answered with 304).
 - The app checks quietly at startup about weekly, and at once when `_derived.json` is out of date.
 - Nothing hero-specific ships with the app.
+
+## Street Brawl
+
+Street Brawl is 4v4 on the same strip. Each team's two outer slots (0 and 1, 10 and 11) stay blank
+(`StreetBrawl`). The strip is a Street Brawl when those four are blank panels, with contrast under
+0.03 (`StreetBrawl.MaxBlankContrast`) and no hero, and the eight inside them all read confidently.
+Then the blanks are settled with no hero, and the match applies without review like any other.
+
+Contrast is what tells a blank from a dead or faded portrait. On the labelled captures
+(`streetbrawl_*` in the corpus) the blanks read at 0.02 or less, the faintest faded portrait at 0.04
+and the faintest dead one at 0.05. Score doesn't separate them: dead portraits score 0.15 to 0.27,
+the same as a blank. `StreetBrawlTests` checks that no six-a-side capture is taken for one.
 
 ## What the numbers are
 
