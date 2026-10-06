@@ -7,8 +7,11 @@ using Avalonia.LogicalTree;
 using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
+using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroItems;
+using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -34,6 +37,13 @@ public class HeroItemsPageTests
             .GetVisualDescendants().OfType<Border>().Count(border => border.Classes.Contains("row"));
         Assert.True(rows > 5);
         ui.Screenshot("hero_items.png");
+
+        var from = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<ComboBox>().Single(combo => combo.ItemsSource == page.Ranks && Equals(combo.SelectedItem, page.From));
+        from.IsDropDownOpen = true;
+        UiHarness.Settle();
+        ui.Screenshot("hero_items_rank_menu.png");
+        from.IsDropDownOpen = false;
+        UiHarness.Settle();
 
         var winRate = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Win rate"));
         Click(ui.Window, winRate);
@@ -108,6 +118,34 @@ public class HeroItemsPageTests
         Assert.Equal("Patches 09-16 – 09-29", box.Content);
         Assert.Contains(" over 2 patches · ", page.Summary);
         box.Flyout.Hide();
+    }
+
+    /// <summary>Each rank box shows the badge of the rank it sets, and nothing, not even a gap, while that art is missing.</summary>
+    [AvaloniaFact]
+    public async Task TheRankBoxesShowTheirBadgesOnceTheArtIsThere()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Art.SetAssetsDir(ui.Data.AssetsDir);
+        ui.Show();
+        List<ArtImage> Badges() => ui.Window.HeroItemsPage.GetVisualDescendants().OfType<ArtImage>().Where(image => image.Kind == ArtKind.Rank).ToList();
+
+        Assert.Equal(2, Badges().Count);
+        Assert.All(Badges(), badge => Assert.False(badge.IsVisible));
+
+        var ranks = ui.ViewModel.HeroItems.Ranks;
+        RankArtTests.SaveBadge(Path.Combine(ui.Art.FolderOf(ArtKind.Rank), RankBucket.ArtId(ranks[0].FirstTier) + ".png"), 40, 32);
+        RankArtTests.SaveBadge(Path.Combine(ui.Art.FolderOf(ArtKind.Rank), RankBucket.ArtId(ranks[^1].LastTier) + ".png"), 40, 32);
+        ui.Art.Refresh();
+        ArtHost.SetRevision(ui.Window, ArtHost.GetRevision(ui.Window) + 1);
+        UiHarness.Settle();
+
+        // From shows the badge of the first rank in its group, and To the last in its own.
+        Assert.Equal(["01", "11"], Badges().Select(badge => badge.ArtId));
+        Assert.All(Badges(), badge => Assert.True(badge.IsVisible));
+        Assert.All(Badges(), badge => Assert.Equal(24, badge.Bounds.Width));
+        ui.Screenshot("hero_items_ranks.png");
     }
 
     [AvaloniaFact]

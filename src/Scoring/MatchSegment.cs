@@ -13,6 +13,12 @@ public sealed record RankBucket(int FirstTier, int LastTier, string FirstName, s
     /// <summary>"Mystic – Ritualist".</summary>
     public string Name => $"{FirstName} – {LastName}";
 
+    /// <summary>The name of a rank's badge art: its tier to two digits, "01" for Initiate.</summary>
+    public static string ArtId(int tier) => tier.ToString("00", CultureInfo.InvariantCulture);
+
+    public string FirstArtId => ArtId(FirstTier);
+    public string LastArtId => ArtId(LastTier);
+
     public bool Overlaps(RankRange range) => FirstTier <= range.Max && LastTier >= range.Min;
 
     public override string ToString() => Name;

@@ -28,15 +28,15 @@ public sealed class ArtHost
     public static void SetRevision(Visual visual, int value) => visual.SetValue(RevisionProperty, value);
 }
 
-/// <summary>Draws a hero portrait or item icon, or its placeholder tile, rounded off.</summary>
+/// <summary>Draws a hero portrait, item icon or rank badge, or its placeholder tile, rounded off.</summary>
 public static class ArtPainter
 {
     private static readonly Typeface _bold = new("Segoe UI", FontStyle.Normal, FontWeight.Bold);
     private static readonly IBrush _placeholderText = new SolidColorBrush(Palette.Bg);
 
-    /// <summary>The corner radius art of this size gets.</summary>
+    /// <summary>The corner radius art of this size gets: none for a rank badge, which has no tile to round.</summary>
     public static double DefaultRadius(ArtKind kind, double size) =>
-        Math.Max(3, Math.Round(size * (kind == ArtKind.Hero ? 0.18 : 0.22), MidpointRounding.ToEven));
+        kind == ArtKind.Rank ? 0 : Math.Max(3, Math.Round(size * (kind == ArtKind.Hero ? 0.18 : 0.22), MidpointRounding.ToEven));
 
     /// <summary>Physical pixels per logical pixel at <paramref name="visual"/>: the screen's scaling times the app's zoom.</summary>
     public static double RenderScale(Visual visual)

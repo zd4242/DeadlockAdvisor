@@ -307,15 +307,17 @@ shows both side by side, with the arithmetic in the tooltip.
 
 ## Art
 
-**Data → Download Art…** fetches hero portraits, item icons, and the art
-detection matches against, into `assets/heroes`, `assets/items` and
-`assets/topbar`. It matches by name, lists anything it couldn't match, and
-keeps what's already there, except art it downloaded that the API has
-changed since. Only a "not modified" is asked for each file, so checking is
-cheap, and the app does it quietly about once a week. Anything without art
-shows as a coloured initials tile. To add art by hand, name the file after
-the id (`grey_talon.png`) and use **View → Reload Art**; art put there by
-hand is never replaced.
+**Data → Download Art…** fetches hero portraits, item icons, the rank badges
+that dress the rank pickers, and the art detection matches against, into
+`assets/heroes`, `assets/items`, `assets/ranks` and `assets/topbar`. It matches
+by name, lists anything it couldn't match, and keeps what's already there,
+except art it downloaded that the API has changed since. Only a "not
+modified" is asked for each file, so checking is cheap, and the app does it
+quietly about once a week. Anything without art shows as a coloured initials
+tile (a rank without a badge just shows none). To add art by hand, name the
+file after the id (`grey_talon.png`; a rank's is its tier to two digits,
+`01.png`) and use **View → Reload Art**; art put there by hand is never
+replaced.
 
 ## Detecting the match from the screen
 

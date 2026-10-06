@@ -47,6 +47,27 @@ public static class ArtReadmes
 
         """;
 
+    public const string Ranks = """
+        Rank badges go here.
+
+        Data -> Download Art... pulls them from the community asset API, named
+        after the rank's tier to two digits:
+
+            01.png    Initiate
+            02.png    Seeker
+            ...
+            11.png    Eternus
+
+        They dress the rank pickers on the Hero Items page. A badge is fitted
+        whole, not cropped, so it can be any shape. Accepted extensions:
+        .png .jpg .jpeg .webp .bmp
+
+        A rank without a file here shows no icon, so the app works fine with this
+        folder empty. After adding files, use View -> Reload Art (or just
+        restart) to pick them up.
+
+        """;
+
     public const string Topbar = """
         Reference art for screen detection.
 
@@ -71,6 +92,7 @@ public static class ArtReadmes
     [
         ("heroes", Heroes),
         ("items", Items),
+        ("ranks", Ranks),
         ("topbar", Topbar),
     ];
 }

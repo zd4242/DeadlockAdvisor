@@ -1,7 +1,9 @@
 using System.IO;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Threading;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Services.GameApi;
 using DeadlockAdvisor.Vision;
@@ -52,8 +54,8 @@ public sealed record ArtDownloadReport(IReadOnlyList<ArtGroupReport> Groups, Top
 public interface IArtDownloadService
 {
     /// <summary>
-    /// Fetch hero portraits, item icons, and the top-bar art and hero cards detection matches
-    /// against into <paramref name="assetsDir"/>, named after our ids. What's there already is kept
+    /// Fetch hero portraits, item icons, rank badges, and the top-bar art and hero cards detection
+    /// matches against into <paramref name="assetsDir"/>, named after our ids. What's there already is kept
     /// unless the API's copy has changed since it was downloaded, or <paramref name="force"/> asks
     /// for everything again. Throws if the API's lists can't be fetched; a single failed image is
     /// reported instead.
@@ -80,6 +82,7 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
     private static readonly string[] _heroImageKeys = ["icon_hero_card", "icon_image_small", "minimap_image"];
     private static readonly string[] _itemImageKeys = ["shop_image", "image"];
     private static readonly string[] _topBarImageKeys = ["top_bar_vertical_image"];
+    private static readonly string[] _rankImageKeys = ["large"];
     private static readonly string[] _imageSuffixes = [".png", ".jpg", ".jpeg", ".webp", ".bmp"];
 
     /// <param name="Owned">
@@ -96,6 +99,15 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
         var itemRecords = await gameApi.FetchUpgradesAsync(cancellationToken);
         var heroes = store.Heroes.Values.ToDictionary(hero => hero.HeroId, hero => hero.HeroName);
         var items = store.Items.Values.ToDictionary(item => item.ItemId, item => item.ItemName);
+        var rankRecords = await FetchRanksAsync(cancellationToken);
+        // Tier 0 is Obscurus, the unranked, which no rank group names.
+        var ranks = new Dictionary<string, string>();
+        foreach (var record in rankRecords.OfType<JsonNode>())
+        {
+            var (tier, name) = ((int)JsonRecord.Int(record, "tier"), JsonRecord.Text(record, "name"));
+            if (tier > 0 && name.Length > 0)
+                ranks.TryAdd(RankBucket.ArtId(tier), name);
+        }
         var topbarDir = Path.Combine(assetsDir, "topbar");
         Group[] groups =
         [
@@ -105,6 +117,7 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
             new("Hero cards", heroes, heroRecords, ["icon_hero_card"], TopbarDerivation.CardFolder(topbarDir, PortraitState.Normal), Owned: true),
             new("Critical cards", heroes, heroRecords, ["hero_card_critical"], TopbarDerivation.CardFolder(topbarDir, PortraitState.Critical), Owned: true),
             new("On-fire cards", heroes, heroRecords, ["hero_card_gloat"], TopbarDerivation.CardFolder(topbarDir, PortraitState.Gloat), Owned: true),
+            new("Rank badges", ranks, rankRecords, _rankImageKeys, Path.Combine(assetsDir, "ranks"), Owned: false),
         ];
 
         var manifest = ArtManifest.Load(assetsDir);
@@ -131,6 +144,22 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
         var derivation = TopbarDerivation.Run(topbarDir, heroes.Keys, force);
         progress?.Report(new FetchProgress(total, total, "done"));
         return new ArtDownloadReport(reports, derivation);
+    }
+
+    /// <summary>
+    /// The ranks and their badges. They only dress the rank pickers, so a site that won't answer for them
+    /// costs those their icons rather than the whole download.
+    /// </summary>
+    private async Task<JsonArray> FetchRanksAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await api.GetJsonAsync(MatchStatsService.Ranks, cancellationToken) as JsonArray ?? [];
+        }
+        catch (Exception ex) when (ex is HttpRequestException or TimeoutException or JsonException)
+        {
+            return [];
+        }
     }
 
     private async Task<ArtGroupReport> RunGroupAsync(Group group, ArtManifest manifest, bool force, Action<string> step,

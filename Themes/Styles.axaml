@@ -96,9 +96,9 @@
             <StaticResource x:Key="CheckBoxCheckBackgroundStrokeChecked" ResourceKey="AccentBrush"/>
             <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="BgBrush"/>
 
-            <!-- Fluent pads a combo box's text 5 above and 7 below, which sits it a hair high -->
+            <!-- Fluent pads a combo box's text, and its options', 5 above and 7 below, which sits it a hair high -->
             <Thickness x:Key="ComboBoxPadding">12,0,0,0</Thickness>
-            <Thickness x:Key="ComboBoxItemThemePadding">11,0</Thickness>
+            <Thickness x:Key="ComboBoxItemThemePadding">11,6</Thickness>
 
             <!-- Fluent's slider leaves 15 above and below its track, which makes it taller than the controls beside it -->
             <GridLength x:Key="SliderPreContentMargin">0</GridLength>

@@ -28,7 +28,12 @@ public class ArtService(ILoggingService loggingService) : IArtService
         _scaled.Clear();
     }
 
-    public string FolderOf(ArtKind kind) => Path.Combine(AssetsDir, kind == ArtKind.Hero ? "heroes" : "items");
+    public string FolderOf(ArtKind kind) => Path.Combine(AssetsDir, kind switch
+    {
+        ArtKind.Hero => "heroes",
+        ArtKind.Rank => "ranks",
+        _ => "items",
+    });
 
     public int Count(ArtKind kind) => Index(kind).Count;
 
@@ -45,19 +50,33 @@ public class ArtService(ILoggingService loggingService) : IArtService
         if (source is null)
             return null;
 
-        // Cover-crop to a square so art of any aspect ratio lines up. Hero art is a tall character
-        // card, so its square comes from a quarter of the way down rather than the middle.
         var width = source.PixelSize.Width;
         var height = source.PixelSize.Height;
-        var side = Math.Min(width, height);
-        var x = (width - side) / 2;
-        var y = Math.Round((height - side) * (kind == ArtKind.Hero ? 0.25 : 0.5));
+        Rect from;
+        Rect to;
+        if (kind == ArtKind.Rank)
+        {
+            // A badge is an emblem wider than tall on a clear background: fitted whole, not cropped to a square.
+            var scale = Math.Min((double)pixelSize / width, (double)pixelSize / height);
+            from = new Rect(0, 0, width, height);
+            to = new Rect((pixelSize - width * scale) / 2, (pixelSize - height * scale) / 2, width * scale, height * scale);
+        }
+        else
+        {
+            // Cover-crop to a square so art of any aspect ratio lines up. Hero art is a tall character
+            // card, so its square comes from a quarter of the way down rather than the middle.
+            var side = Math.Min(width, height);
+            var x = (width - side) / 2;
+            var y = Math.Round((height - side) * (kind == ArtKind.Hero ? 0.25 : 0.5));
+            from = new Rect(x, y, side, side);
+            to = new Rect(0, 0, pixelSize, pixelSize);
+        }
 
         var target = new RenderTargetBitmap(new PixelSize(pixelSize, pixelSize), new Vector(96, 96));
         using (var context = target.CreateDrawingContext())
         using (context.PushRenderOptions(new RenderOptions { BitmapInterpolationMode = BitmapInterpolationMode.HighQuality }))
         {
-            context.DrawImage(source, new Rect(x, y, side, side), new Rect(0, 0, pixelSize, pixelSize));
+            context.DrawImage(source, from, to);
         }
         _scaled[(kind, id, pixelSize)] = target;
         return target;

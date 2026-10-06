@@ -61,6 +61,41 @@ public sealed class ArtDownloadServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task RankBadgesAreNamedAfterTheirTierAndLeaveOutTheUnranked()
+    {
+        _api.Json[MatchStatsService.Ranks] = () => JsonNode.Parse("""
+            [
+              {"tier": 0, "name": "Obscurus", "images": {"large": "https://cdn/r0.png"}},
+              {"tier": 1, "name": "Initiate", "images": {"large": "https://cdn/r1.png", "large_webp": "https://cdn/r1.webp"}},
+              {"tier": 11, "name": "Eternus", "images": {"large": "https://cdn/r11.png"}},
+              {"tier": 5, "name": "Mystic", "images": {}}
+            ]
+            """);
+        _api.Bytes["https://cdn/r1.png"] = [11];
+        _api.Bytes["https://cdn/r11.png"] = [12];
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal([11], File.ReadAllBytes(Asset("ranks", "01.png")));
+        Assert.Equal([12], File.ReadAllBytes(Asset("ranks", "11.png")));
+        Assert.False(File.Exists(Asset("ranks", "00.png")));
+        var badges = report.Groups.Single(group => group.Label == "Rank badges");
+        Assert.Equal((3, 2), (badges.Wanted, badges.Downloaded));
+        Assert.Equal(["05 (Mystic) -- matched, but has no image"], badges.Unmatched);
+    }
+
+    /// <summary>The badges only dress the rank pickers: without the list, the portraits and icons still come.</summary>
+    [Fact]
+    public async Task ARanksListThatWontLoadLeavesOnlyTheBadgesOut()
+    {
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(4, report.Downloaded);
+        Assert.Equal((0, 0), (report.Groups.Single(group => group.Label == "Rank badges").Wanted,
+            report.Groups.Single(group => group.Label == "Rank badges").Downloaded));
+    }
+
+    [Fact]
     public async Task PresentArtIsKeptUnlessForcedAndAReplacementDropsTheOldExtension()
     {
         Directory.CreateDirectory(Path.Combine(_assets.Path, "heroes"));

@@ -6,11 +6,14 @@ public enum ArtKind
 {
     Hero,
     Item,
+
+    /// <summary>A rank's badge, named after its tier ("01" for Initiate): an emblem on a clear background, not a tile.</summary>
+    Rank,
 }
 
 /// <summary>
-/// Hero portraits and item icons from assets/heroes and assets/items, named after their ids.
-/// Missing art isn't an error: callers draw a placeholder tile instead (see ArtPainter).
+/// Hero portraits, item icons and rank badges from assets/heroes, assets/items and assets/ranks, named after their ids.
+/// Missing art isn't an error: callers draw a placeholder tile instead (see ArtPainter), or hide a rank's badge.
 /// </summary>
 public interface IArtService
 {

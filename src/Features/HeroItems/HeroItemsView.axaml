@@ -148,9 +148,36 @@
                             IsEnabled="{Binding CanPickRanks}"
                             ToolTip.ShowOnDisabled="True"
                             ToolTip.Tip="The ranks whose matches count, by both teams' average rank. Every rank counts unranked matches too, in 'Ranked and unranked'.">
-                    <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}"/>
+                    <!-- Each end shows the badge of the rank it sets: where the range starts, and where it stops. -->
+                    <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="scoring:RankBucket">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <art:ArtImage Width="24"
+                                                  Height="24"
+                                                  Kind="Rank"
+                                                  ArtId="{Binding FirstArtId}"
+                                                  VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     <TextBlock Classes="dim" VerticalAlignment="Center" Text="to"/>
-                    <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding To}"/>
+                    <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding To}">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="scoring:RankBucket">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <art:ArtImage Width="24"
+                                                  Height="24"
+                                                  Kind="Rank"
+                                                  ArtId="{Binding LastArtId}"
+                                                  VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                 </StackPanel>
 
                 <Border Classes="segmented" VerticalAlignment="Center" ToolTip.Tip="Which tiers of item show">

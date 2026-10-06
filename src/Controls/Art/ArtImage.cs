@@ -3,7 +3,7 @@ using DeadlockAdvisor.Services.Contracts;
 
 namespace DeadlockAdvisor.Controls.Art;
 
-/// <summary>A hero portrait or item icon at the control's size, or its placeholder tile when there's no art.</summary>
+/// <summary>A hero portrait, item icon or rank badge at the control's size, or its placeholder tile when there's no art (a badge is hidden instead).</summary>
 public class ArtImage : Control
 {
     public static readonly StyledProperty<ArtKind> KindProperty =
@@ -57,6 +57,21 @@ public class ArtImage : Control
     {
         get => GetValue(RadiusProperty);
         set => SetValue(RadiusProperty, value);
+    }
+
+    protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
+    {
+        base.OnPropertyChanged(change);
+        if (change.Property == KindProperty || change.Property == ArtIdProperty || change.Property == ArtHost.ServiceProperty
+            || change.Property == ArtHost.RevisionProperty)
+            HideRankWithoutArt();
+    }
+
+    /// <summary>A rank badge with no art takes no room, rather than leaving a gap where it would sit.</summary>
+    private void HideRankWithoutArt()
+    {
+        if (Kind == ArtKind.Rank)
+            IsVisible = ArtId is { } id && ArtHost.GetService(this)?.Has(Kind, id) == true;
     }
 
     public override void Render(DrawingContext context)
