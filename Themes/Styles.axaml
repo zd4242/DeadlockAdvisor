@@ -96,6 +96,14 @@
             <StaticResource x:Key="CheckBoxCheckBackgroundStrokeChecked" ResourceKey="AccentBrush"/>
             <StaticResource x:Key="CheckBoxCheckGlyphForegroundChecked" ResourceKey="BgBrush"/>
 
+            <!-- Fluent pads a combo box's text 5 above and 7 below, which sits it a hair high -->
+            <Thickness x:Key="ComboBoxPadding">12,0,0,0</Thickness>
+            <Thickness x:Key="ComboBoxItemThemePadding">11,0</Thickness>
+
+            <!-- Fluent's slider leaves 15 above and below its track, which makes it taller than the controls beside it -->
+            <GridLength x:Key="SliderPreContentMargin">0</GridLength>
+            <GridLength x:Key="SliderPostContentMargin">0</GridLength>
+
             <!-- Fluent sizes its scroll bars (a minimum, not just the width) from this -->
             <x:Double x:Key="ScrollBarSize">12</x:Double>
         </ResourceDictionary>
@@ -460,6 +468,48 @@
     <Style Selector="TextBox, ComboBox">
         <Setter Property="CornerRadius" Value="6"/>
         <Setter Property="MinHeight" Value="36"/>
+    </Style>
+    <!-- Fluent's combo box hugs the top of whatever row it's in -->
+    <Style Selector="ComboBox">
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+    <!-- A button drawn as a combo box, for a choice that opens a flyout of its own, such as ticking several patches -->
+    <Style Selector="Button.picker">
+        <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
+        <Setter Property="BorderThickness" Value="1"/>
+        <Setter Property="Padding" Value="12,0,12,0"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="HorizontalContentAlignment" Value="Left"/>
+        <Setter Property="Template">
+            <ControlTemplate>
+                <Border Name="PART_Frame"
+                        Background="{TemplateBinding Background}"
+                        BorderBrush="{TemplateBinding BorderBrush}"
+                        BorderThickness="{TemplateBinding BorderThickness}"
+                        CornerRadius="{TemplateBinding CornerRadius}"
+                        MinHeight="{TemplateBinding MinHeight}"
+                        Padding="{TemplateBinding Padding}">
+                    <DockPanel>
+                        <PathIcon DockPanel.Dock="Right"
+                                  Width="12"
+                                  Height="12"
+                                  Margin="10,0,0,0"
+                                  Foreground="{DynamicResource TextBrush}"
+                                  Data="M1939 486L2029 576L1024 1581L19 576L109 486L1024 1401L1939 486Z"/>
+                        <ContentPresenter Content="{TemplateBinding Content}"
+                                          ContentTemplate="{TemplateBinding ContentTemplate}"
+                                          HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
+            </ControlTemplate>
+        </Setter>
+    </Style>
+    <Style Selector="Button.picker:pointerover /template/ Border#PART_Frame">
+        <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        <Setter Property="BorderBrush" Value="{DynamicResource BorderStrongBrush}"/>
     </Style>
     <Style Selector="TextBox">
         <Setter Property="Padding" Value="8,6"/>

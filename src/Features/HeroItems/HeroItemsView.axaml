@@ -19,6 +19,9 @@
             <Setter Property="HorizontalAlignment" Value="Stretch"/>
             <Setter Property="HorizontalContentAlignment" Value="Right"/>
         </Style>
+        <Style Selector="Button.header.sorted">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
         <Style Selector="Button.header:pointerover /template/ ContentPresenter#PART_ContentPresenter">
             <Setter Property="Background" Value="Transparent"/>
             <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
@@ -26,27 +29,43 @@
         <Style Selector="Button.header.name">
             <Setter Property="HorizontalContentAlignment" Value="Left"/>
         </Style>
+        <!-- A template, so every row gets a menu of its own. The formula only while the editors are shown. -->
         <Style Selector="Border.row">
             <Setter Property="Background" Value="{DynamicResource Surface2Brush}"/>
             <Setter Property="CornerRadius" Value="6"/>
             <Setter Property="Padding" Value="8,6"/>
             <Setter Property="Margin" Value="0,0,0,4"/>
+            <Setter Property="ContextMenu">
+                <Template>
+                    <ContextMenu x:DataType="heroItems:HeroItemRowViewModel">
+                        <MenuItem Header="Go to Item Formula"
+                                  Command="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).OpenFormulaCommand}"
+                                  CommandParameter="{Binding ItemId}"
+                                  IsVisible="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).ShowsEditors}"/>
+                        <controls:WikiMenuItem Page="{Binding Name}"/>
+                    </ContextMenu>
+                </Template>
+            </Setter>
+        </Style>
+        <Style Selector="Border.row:pointerover">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
         </Style>
         <Style Selector="Border.row TextBlock.number">
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
-        <!-- The win rate against the hero's own average: bold in green or red, plain within half a point of it. -->
+        <!-- The win rate against the hero's own average: tinted green or red behind it, plain within half a point of it. -->
+        <Style Selector="TextBlock.winRate">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
         <Style Selector="TextBlock.winRate.above">
             <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style Selector="TextBlock.winRate.below">
             <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
-            <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
         <Style Selector="TextBlock.change">
-            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
         </Style>
         <Style Selector="TextBlock.change.rose">
             <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
@@ -56,65 +75,102 @@
         </Style>
     </UserControl.Styles>
 
-    <DockPanel Margin="12">
-        <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,10">
-            <StackPanel Spacing="3">
+    <Border Classes="card" Margin="12">
+        <DockPanel>
+            <StackPanel DockPanel.Dock="Top" Spacing="3" Margin="0,0,0,12">
                 <TextBlock Classes="section" Text="HERO ITEMS"/>
                 <TextBlock Classes="faint"
                            Text="{Binding Summary}"
                            IsVisible="{Binding !IsEmpty}"
-                           ToolTip.Tip="A win rate in green or red is half a point or more above or below this hero's average with these filters."/>
+                           ToolTip.Tip="A win rate tinted green or red is half a point or more above or below this hero's average with these filters."/>
             </StackPanel>
 
-            <WrapPanel Orientation="Horizontal" ItemSpacing="12" LineSpacing="8" IsVisible="{Binding HasMatchData}">
-                <ComboBox x:Name="HeroPicker"
-                          MinWidth="170"
-                          ItemsSource="{Binding Heroes}"
-                          SelectedItem="{Binding SelectedHero}"
-                          ToolTip.Tip="The hero whose players' items the table shows">
-                    <ComboBox.ItemTemplate>
-                        <DataTemplate x:DataType="models:Hero">
-                            <StackPanel Orientation="Horizontal" Spacing="6">
-                                <art:ArtImage Width="20"
-                                              Height="20"
-                                              Kind="Hero"
-                                              ArtId="{Binding HeroId}"
-                                              ArtName="{Binding HeroName}"
-                                              VerticalAlignment="Center"/>
-                                <TextBlock Text="{Binding HeroName}" VerticalAlignment="Center"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </ComboBox.ItemTemplate>
-                </ComboBox>
-                <ComboBox ItemsSource="{Binding Patches}"
-                          SelectedItem="{Binding SelectedPatch}"
-                          ToolTip.Tip="The patch whose matches the table counts. The changes are since the patch before it."/>
-                <ComboBox ItemsSource="{x:Static heroItems:HeroItemsViewModel.Modes}"
-                          SelectedItem="{Binding SelectedMode}"
-                          ToolTip.Tip="Which matches count: ranked, unranked (no rank, so no rank range), or both"/>
+            <WrapPanel DockPanel.Dock="Top"
+                       Orientation="Horizontal"
+                       ItemSpacing="16"
+                       LineSpacing="8"
+                       Margin="0,0,0,12"
+                       IsVisible="{Binding HasMatchData}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <controls:SearchComboBox x:Name="HeroPicker"
+                                             MinWidth="170"
+                                             ItemsSource="{Binding Heroes}"
+                                             SelectedItem="{Binding SelectedHero}"
+                                             ToolTip.Tip="The hero whose players' items the table shows. Type to search.">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate x:DataType="models:Hero">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <art:ArtImage Width="20"
+                                                  Height="20"
+                                                  Kind="Hero"
+                                                  ArtId="{Binding HeroId}"
+                                                  ArtName="{Binding HeroName}"
+                                                  VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding HeroName}" VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </controls:SearchComboBox>
+                    <Button x:Name="PatchPicker"
+                            Classes="picker"
+                            MinWidth="140"
+                            Content="{Binding PatchSummary}"
+                            ToolTip.Tip="The patches whose matches the table counts: pick several to add them up. The changes are since the patch before the oldest one.">
+                        <Button.Flyout>
+                            <Flyout Placement="BottomEdgeAlignedLeft">
+                                <StackPanel Width="240" Spacing="8">
+                                    <TextBlock Classes="section" Text="PATCHES"/>
+                                    <ScrollViewer MaxHeight="320" HorizontalScrollBarVisibility="Disabled">
+                                        <ItemsControl ItemsSource="{Binding Patches}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="heroItems:PatchOption">
+                                                    <CheckBox Content="{Binding Label}" IsChecked="{Binding IsChecked}"/>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </ScrollViewer>
+                                    <Border Classes="hline"/>
+                                    <StackPanel Orientation="Horizontal" Spacing="8">
+                                        <Button Content="Latest only" Command="{Binding PickLatestPatchCommand}"/>
+                                        <Button Content="All patches" Command="{Binding PickAllPatchesCommand}"/>
+                                    </StackPanel>
+                                </StackPanel>
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                    <ComboBox ItemsSource="{x:Static heroItems:HeroItemsViewModel.Modes}"
+                              SelectedItem="{Binding SelectedMode}"
+                              ToolTip.Tip="Which matches count: ranked, unranked (no rank, so no rank range), or both"/>
+                </StackPanel>
+
                 <StackPanel Orientation="Horizontal"
                             Spacing="8"
                             IsEnabled="{Binding CanPickRanks}"
                             ToolTip.ShowOnDisabled="True"
                             ToolTip.Tip="The ranks whose matches count, by both teams' average rank. Every rank counts unranked matches too, in 'Ranked and unranked'.">
                     <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding From}"/>
-                    <TextBlock VerticalAlignment="Center" Text="to"/>
+                    <TextBlock Classes="dim" VerticalAlignment="Center" Text="to"/>
                     <ComboBox ItemsSource="{Binding Ranks}" SelectedItem="{Binding To}"/>
                 </StackPanel>
-                <ItemsControl ItemsSource="{Binding Tiers}" VerticalAlignment="Center">
-                    <ItemsControl.ItemsPanel>
-                        <ItemsPanelTemplate>
-                            <StackPanel Orientation="Horizontal" Spacing="4"/>
-                        </ItemsPanelTemplate>
-                    </ItemsControl.ItemsPanel>
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate x:DataType="heroItems:TierToggle">
-                            <ToggleButton Classes="pill" Content="{Binding Label}" IsChecked="{Binding IsChecked}"/>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
+
+                <Border Classes="segmented" VerticalAlignment="Center" ToolTip.Tip="Which tiers of item show">
+                    <ItemsControl ItemsSource="{Binding Tiers}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" Spacing="2"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="heroItems:TierToggle">
+                                <ToggleButton Content="{Binding Label}" IsChecked="{Binding IsChecked}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Border>
+
                 <StackPanel Orientation="Horizontal"
                             Spacing="8"
+                            VerticalAlignment="Center"
                             Background="Transparent"
                             ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.MinUsageTip}">
                     <TextBlock Classes="dim" VerticalAlignment="Center" Text="Usage at least"/>
@@ -131,9 +187,7 @@
                     <TextBlock VerticalAlignment="Center" MinWidth="32" Text="{Binding MinUsageText}"/>
                 </StackPanel>
             </WrapPanel>
-        </StackPanel>
 
-        <Border Classes="card">
             <Panel>
                 <TextBlock Classes="hint"
                            Text="{Binding EmptyHint}"
@@ -147,30 +201,35 @@
                 <DockPanel IsVisible="{Binding !IsEmpty}">
                     <!-- The rows' columns, inset by their icon, padding and the scroll bar's gutter, so each header sits over its column. -->
                     <Grid DockPanel.Dock="Top" ColumnDefinitions="*,72,84,76,168,76,96" Margin="50,0,28,4">
-                        <Button Classes="header name" Content="{Binding ItemHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.Item}"/>
-                        <Button Grid.Column="1" Classes="header" Content="{Binding CostHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.Cost}"/>
-                        <Button Grid.Column="2" Classes="header" Content="{Binding WinRateHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.WinRate}"/>
-                        <Button Grid.Column="3" Classes="header" Content="{Binding WinRateChangeHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.WinRateChange}"
-                                ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.ChangeTip}"/>
-                        <Button Grid.Column="4" Classes="header" Content="{Binding UsageHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.Usage}"
+                        <Button Classes="header name" Classes.sorted="{Binding ItemHeader.IsSorted}" Content="{Binding ItemHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Item}"/>
+                        <Button Grid.Column="1" Classes="header" Classes.sorted="{Binding CostHeader.IsSorted}" Content="{Binding CostHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Cost}"/>
+                        <!-- Inset by the chip's padding, so it lines up with the numbers inside it. -->
+                        <Button Grid.Column="2" Classes="header" Classes.sorted="{Binding WinRateHeader.IsSorted}" Content="{Binding WinRateHeader.Text}"
+                                Padding="0,4,8,4"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRate}"/>
+                        <Button Grid.Column="3" Classes="header" Classes.sorted="{Binding WinRateChangeHeader.IsSorted}" Content="{Binding WinRateChangeHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRateChange}"
+                                ToolTip.Tip="{Binding ChangeTip}"/>
+                        <Button Grid.Column="4" Classes="header" Classes.sorted="{Binding UsageHeader.IsSorted}" Content="{Binding UsageHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Usage}"
                                 ToolTip.Tip="The share of this hero's matches the item was bought in"/>
-                        <Button Grid.Column="5" Classes="header" Content="{Binding UsageChangeHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.UsageChange}"
-                                ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.ChangeTip}"/>
-                        <Button Grid.Column="6" Classes="header" Content="{Binding MatchesHeader.Text}" Command="{Binding SortCommand}"
-                                CommandParameter="{x:Static heroItems:HeroItemSort.Matches}"/>
+                        <Button Grid.Column="5" Classes="header" Classes.sorted="{Binding UsageChangeHeader.IsSorted}" Content="{Binding UsageChangeHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.UsageChange}"
+                                ToolTip.Tip="{Binding ChangeTip}"/>
+                        <Button Grid.Column="6" Classes="header" Classes.sorted="{Binding MatchesHeader.IsSorted}" Content="{Binding MatchesHeader.Text}"
+                                Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Matches}"/>
                     </Grid>
 
-                    <TextBlock DockPanel.Dock="Bottom"
-                               Classes="faint"
-                               Margin="0,6,0,0"
-                               Text="{Binding HiddenText}"
-                               IsVisible="{Binding HiddenText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    <StackPanel DockPanel.Dock="Bottom" Spacing="2" Margin="0,8,0,0">
+                        <TextBlock Classes="faint"
+                                   Text="{Binding HiddenText}"
+                                   IsVisible="{Binding HiddenText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <TextBlock Classes="faint"
+                                   Text="{Binding PatchNote}"
+                                   IsVisible="{Binding PatchNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                    </StackPanel>
 
                     <ScrollViewer HorizontalScrollBarVisibility="Disabled">
                         <ItemsControl x:Name="Table" ItemsSource="{Binding Rows}" Margin="0,0,8,0">
@@ -195,17 +254,23 @@
                                                           card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                             <Grid ColumnDefinitions="*,72,84,76,168,76,96">
                                                 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-                                                    <TextBlock Text="{Binding Name}" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
                                                     <controls:Badge VerticalAlignment="Center" Text="{Binding TierText}" Color="{Binding TierColor}"/>
                                                 </StackPanel>
                                                 <TextBlock Grid.Column="1" Classes="number dim" Text="{Binding CostText}"/>
-                                                <TextBlock Grid.Column="2"
-                                                           Classes="number winRate"
-                                                           Classes.above="{Binding AboveAverage}"
-                                                           Classes.below="{Binding BelowAverage}"
-                                                           Background="Transparent"
-                                                           Text="{Binding WinRateText}"
-                                                           ToolTip.Tip="{Binding WinRateTip}"/>
+                                                <Border Grid.Column="2"
+                                                        MinWidth="64"
+                                                        Padding="8,3"
+                                                        CornerRadius="5"
+                                                        HorizontalAlignment="Right"
+                                                        VerticalAlignment="Center"
+                                                        Background="{Binding WinRateFill}"
+                                                        ToolTip.Tip="{Binding WinRateTip}">
+                                                    <TextBlock Classes="number winRate"
+                                                               Classes.above="{Binding AboveAverage}"
+                                                               Classes.below="{Binding BelowAverage}"
+                                                               Text="{Binding WinRateText}"/>
+                                                </Border>
                                                 <TextBlock Grid.Column="3"
                                                            Classes="number change"
                                                            Classes.rose="{Binding WinRateRose}"
@@ -237,6 +302,6 @@
                     </ScrollViewer>
                 </DockPanel>
             </Panel>
-        </Border>
-    </DockPanel>
+        </DockPanel>
+    </Border>
 </UserControl>

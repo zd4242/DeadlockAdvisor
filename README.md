@@ -112,8 +112,13 @@ lists what the match data likes that the hand model doesn't.
 Every item bought on a hero in a patch's matches, with its win rate, how
 often it's bought (its usage), its wins and losses, and how the win rate and
 usage moved since the patch before. Pick the hero (it opens on yours from
-the Match page), the patch, ranked or unranked matches or both, a range of
-ranks and the tiers; click a column's header to sort by it. **Usage at
+the Match page, and you can type to search them), the patch, ranked or
+unranked matches or both, a range of ranks and the tiers; click a column's
+header to sort by it. Tick several patches to add their matches up; the
+changes are then since the patch before the oldest one. A win rate half a
+point or more above or below the hero's own average is tinted green or red,
+the more strongly the further it is. Right-click an item for its Deadlock
+Wiki page, or its formula while the model editors are shown. **Usage at
 least** hides the items bought in only a few of the hero's matches, whose
 win rates rest on too few matches, and on who buys them, to mean much. It
 reads the downloaded match data, so it needs **Data → Download Match Data**.

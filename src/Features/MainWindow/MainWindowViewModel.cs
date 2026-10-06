@@ -182,7 +182,7 @@ public class MainWindowViewModel : ViewModelBase
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
-        match.FormulaRequested.Subscribe(ShowFormula).DisposeWith(Disposables);
+        match.FormulaRequested.Merge(heroItems.FormulaRequested).Subscribe(ShowFormula).DisposeWith(Disposables);
 
         var zoom = settings.SettingsChanged.Select(s => ZoomLevels.Clamp(s.ZoomIndex));
         ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1),

@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
@@ -28,9 +29,13 @@ public sealed record ModeOption(MatchMode Mode, string Label)
     public override string ToString() => Label;
 }
 
-/// <summary>A patch on offer: its counts, by date.</summary>
-public sealed record PatchOption(MatchSegment Segment, string Label)
+/// <summary>A patch on offer: its counts, by date, ticked while they're in the table.</summary>
+public sealed class PatchOption(MatchSegment segment, string label) : ReactiveObject
 {
+    public MatchSegment Segment { get; } = segment;
+    public string Label { get; } = label;
+    [Reactive] public bool IsChecked { get; set; }
+
     public override string ToString() => Label;
 }
 
@@ -40,11 +45,16 @@ public class ColumnHeader(HeroItemSort column, string title) : ReactiveObject
     public HeroItemSort Column { get; } = column;
     public string Title { get; } = title;
     [Reactive] public string Text { get; private set; } = "";
+    [Reactive] public bool IsSorted { get; private set; }
 
-    public void Show(HeroItemSort sorted, bool descending) => Text = Column == sorted ? $"{Title} {(descending ? "▾" : "▴")}" : Title;
+    public void Show(HeroItemSort sorted, bool descending)
+    {
+        IsSorted = Column == sorted;
+        Text = IsSorted ? $"{Title} {(descending ? "▾" : "▴")}" : Title;
+    }
 }
 
-/// <summary>A tier's filter pill: every tier shows until it's switched off.</summary>
+/// <summary>A tier's filter toggle: every tier shows until it's switched off.</summary>
 public class TierToggle(int tier) : ReactiveObject
 {
     public int Tier { get; } = tier;
@@ -64,8 +74,6 @@ public class HeroItemsViewModel : ViewModelBase
         "Hide items bought in fewer of this hero's matches than this.\n"
         + "A rarely bought item's win rate rests on few matches, and on who buys it, so it says little.";
 
-    public const string ChangeTip = "Since the patch before, in percentage points.";
-
     public const double MaxMinUsagePercent = 50;
 
     public static readonly IReadOnlyList<ModeOption> Modes =
@@ -77,6 +85,8 @@ public class HeroItemsViewModel : ViewModelBase
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
+    private readonly Subject<string> _formulaRequested = new();
+    private readonly SerialDisposable _patchChanges = new();
     private string? _offeredSelf;
     private bool _loading;
 
@@ -84,6 +94,7 @@ public class HeroItemsViewModel : ViewModelBase
     {
         _data = data;
         _settings = settings;
+        _patchChanges.DisposeWith(Disposables);
         Tiers = Enumerable.Range(1, 4).Select(tier => new TierToggle(tier)).ToList();
         Headers = new Dictionary<HeroItemSort, ColumnHeader>
         {
@@ -97,6 +108,14 @@ public class HeroItemsViewModel : ViewModelBase
         };
         ShowSort();
         SortCommand = ReactiveCommand.Create<HeroItemSort>(Sort);
+        OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
+        PickLatestPatchCommand = ReactiveCommand.Create(() => PickPatches(index => index == 0));
+        PickAllPatchesCommand = ReactiveCommand.Create(() => PickPatches(_ => true));
+        settings.SettingsChanged
+            .Select(s => s.ShowModelEditors)
+            .DistinctUntilChanged()
+            .Subscribe(show => ShowsEditors = show)
+            .DisposeWith(Disposables);
 
         _loading = true;
         SelectedMode = Modes.FirstOrDefault(option => option.Mode == settings.Current.HeroItemsMode) ?? Modes[0];
@@ -104,8 +123,7 @@ public class HeroItemsViewModel : ViewModelBase
         Load(settings.Current.HeroItemsHero);
         _loading = false;
 
-        this.WhenAnyValue(vm => vm.SelectedHero, vm => vm.SelectedPatch, vm => vm.SelectedMode, vm => vm.From, vm => vm.To,
-                vm => vm.MinUsagePercent)
+        this.WhenAnyValue(vm => vm.SelectedHero, vm => vm.SelectedMode, vm => vm.From, vm => vm.To, vm => vm.MinUsagePercent)
             .Skip(1)
             .Where(_ => !_loading)
             .Subscribe(_ =>
@@ -150,8 +168,17 @@ public class HeroItemsViewModel : ViewModelBase
     public IReadOnlyList<Hero> Heroes { get; private set; } = [];
     [Reactive] public Hero? SelectedHero { get; set; }
 
+    /// <summary>Newest first. At least one is always ticked; the table adds up the ticked ones' counts.</summary>
     [Reactive] public IReadOnlyList<PatchOption> Patches { get; private set; } = [];
-    [Reactive] public PatchOption? SelectedPatch { get; set; }
+
+    /// <summary>"Patch 09-29", "Patches 09-16 – 09-29" for neighbours, or "2 patches".</summary>
+    [Reactive] public string PatchSummary { get; private set; } = "";
+
+    public ReactiveCommand<Unit, Unit> PickLatestPatchCommand { get; }
+    public ReactiveCommand<Unit, Unit> PickAllPatchesCommand { get; }
+
+    /// <summary>What the Change columns are since: the patch before the oldest one ticked.</summary>
+    [Reactive] public string ChangeTip { get; private set; } = "";
 
     /// <summary>Any patch's counts at all: without them there's nothing to pick from.</summary>
     [Reactive] public bool HasMatchData { get; private set; }
@@ -194,6 +221,17 @@ public class HeroItemsViewModel : ViewModelBase
     /// <summary>"12 items bought in under 5% of matches are hidden."; empty when none are.</summary>
     [Reactive] public string HiddenText { get; private set; } = "";
 
+    /// <summary>Which ticked patches the counts leave out, and why; empty when none.</summary>
+    [Reactive] public string PatchNote { get; private set; } = "";
+
+    /// <summary>Opens an item's formula on the Item Formulas page, for as long as the model editors are shown.</summary>
+    public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
+
+    public IObservable<string> FormulaRequested => _formulaRequested;
+
+    /// <summary>Whether the model editors (the Item Formulas page among them) are shown.</summary>
+    [Reactive] public bool ShowsEditors { get; private set; }
+
     /// <summary>Why there's no table, in place of it; null when there is one.</summary>
     [Reactive] public string? EmptyHint { get; private set; }
 
@@ -226,9 +264,17 @@ public class HeroItemsViewModel : ViewModelBase
             this.RaisePropertyChanged(nameof(Heroes));
             SelectedHero = Heroes.FirstOrDefault(hero => hero.HeroId == heroId) ?? Heroes.FirstOrDefault();
 
-            var patch = SelectedPatch?.Segment.Patch.Start;
+            var ticked = Patches.Where(option => option.IsChecked).Select(option => option.Segment.Patch.Start).ToHashSet();
             Patches = store.MatchSegments.Select(segment => new PatchOption(segment, $"Patch {segment.Patch.Label}")).ToList();
-            SelectedPatch = Patches.FirstOrDefault(option => option.Segment.Patch.Start == patch) ?? Patches.FirstOrDefault();
+            foreach (var option in Patches)
+                option.IsChecked = ticked.Contains(option.Segment.Patch.Start);
+            if (Patches.Count > 0 && !Patches.Any(option => option.IsChecked))
+                Patches[0].IsChecked = true;
+            _patchChanges.Disposable = Patches
+                .Select(option => option.WhenAnyValue(o => o.IsChecked).Skip(1).Select(_ => option))
+                .Merge()
+                .Subscribe(OnPatchToggled);
+            ShowPatches();
             HasMatchData = Patches.Count > 0;
 
             var (from, to) = (From?.FirstTier, To?.FirstTier);
@@ -243,6 +289,63 @@ public class HeroItemsViewModel : ViewModelBase
         }
         if (!_loading)
             Refresh();
+    }
+
+    /// <summary>The ticked patches' counts, newest first.</summary>
+    private List<MatchSegment> PickedSegments => Patches.Where(option => option.IsChecked).Select(option => option.Segment).ToList();
+
+    private void OnPatchToggled(PatchOption option)
+    {
+        if (_loading)
+            return;
+        // The last one stays: the table needs a patch to count.
+        if (!Patches.Any(other => other.IsChecked))
+        {
+            option.IsChecked = true;
+            return;
+        }
+        ShowPatches();
+        Refresh();
+    }
+
+    /// <summary>Ticks the patches <paramref name="pick"/> says yes to, by position (0 is the newest), and shows them once.</summary>
+    private void PickPatches(Func<int, bool> pick)
+    {
+        var wasLoading = _loading;
+        _loading = true;
+        try
+        {
+            for (var index = 0; index < Patches.Count; index++)
+                Patches[index].IsChecked = pick(index);
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
+        if (_loading)
+            return;
+        ShowPatches();
+        Refresh();
+    }
+
+    private void ShowPatches()
+    {
+        var picked = Enumerable.Range(0, Patches.Count).Where(index => Patches[index].IsChecked).ToList();
+        ChangeTip = picked.Count > 1
+            ? "Since the patch before the oldest one picked, in percentage points."
+            : "Since the patch before, in percentage points.";
+        if (picked.Count == 0)
+        {
+            PatchSummary = "";
+            return;
+        }
+        var (newest, oldest) = (Patches[picked[0]], Patches[picked[^1]]);
+        var neighbours = picked[^1] - picked[0] == picked.Count - 1;
+        PatchSummary = picked.Count == 1
+            ? newest.Label
+            : neighbours
+                ? $"Patches {oldest.Segment.Patch.Label} – {newest.Segment.Patch.Label}"
+                : $"{picked.Count} patches";
     }
 
     private bool RanksApply => Ranks.Count > 0 && SelectedMode.Mode != MatchMode.Unranked;
@@ -271,22 +374,24 @@ public class HeroItemsViewModel : ViewModelBase
     private void Refresh()
     {
         this.RaisePropertyChanged(nameof(MinUsageText));
-        var table = SelectedHero is null || SelectedPatch is null
+        var picked = PickedSegments;
+        var table = SelectedHero is null || picked.Count == 0
             ? null
-            : HeroItemTable.Build(_data.Store.MatchSegments, SelectedPatch.Segment, SelectedHero.HeroId, SelectedMode.Mode, Range,
-                _data.Store.Items.Values);
+            : HeroItemTable.Build(_data.Store.MatchSegments, picked, SelectedHero.HeroId, SelectedMode.Mode, Range, _data.Store.Items.Values);
+        var theirs = picked.Count == 1 ? "this patch's" : "these patches'";
         EmptyHint = !HasMatchData
             ? "No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy."
             : table is null
-                ? "This patch's match data has no rank groups. Download the match data again with them to narrow it to ranks."
+                ? $"{(picked.Count == 1 ? "This patch's" : "These patches'")} match data has no rank groups. "
+                  + "Download the match data again with them to narrow it to ranks."
                 : table.Matches.Matches == 0
-                    ? $"No {SelectedHero!.HeroName} matches in this patch's match data{(Range is null ? "" : " at these ranks")}."
+                    ? $"No {SelectedHero!.HeroName} matches in {theirs} match data{(Range is null ? "" : " at these ranks")}."
                     : null;
         this.RaisePropertyChanged(nameof(IsEmpty));
         if (table is null || EmptyHint is not null)
         {
             Rows = [];
-            Summary = HiddenText = "";
+            Summary = HiddenText = PatchNote = "";
             return;
         }
 
@@ -304,7 +409,12 @@ public class HeroItemsViewModel : ViewModelBase
             MatchMode.Unranked => "unranked ",
             _ => "",
         };
-        Summary = $"{Format.Thousands(matches)} {mode}matches · {HeroItemRowViewModel.Percent(average)} won";
+        var over = table.PatchCount > 1 ? $" over {table.PatchCount} patches" : "";
+        Summary = $"{Format.Thousands(matches)} {mode}matches{over} · {HeroItemRowViewModel.Percent(average)} won";
+        var left = picked.Count - table.PatchCount;
+        PatchNote = left == 0
+            ? ""
+            : $"{left} of the {picked.Count} patches picked {(left == 1 ? "has" : "have")} no rank groups, so {(left == 1 ? "its" : "their")} counts are left out.";
         var hidden = inTiers.Count - shown.Count;
         HiddenText = hidden == 0
             ? ""

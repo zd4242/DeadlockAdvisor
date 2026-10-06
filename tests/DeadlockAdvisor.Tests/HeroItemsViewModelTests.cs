@@ -1,4 +1,5 @@
 using System.Reactive.Linq;
+using Avalonia.Media;
 using DeadlockAdvisor.Features.HeroItems;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Tests.Fakes;
@@ -74,6 +75,82 @@ public sealed class HeroItemsViewModelTests : IDisposable
         Assert.Equal((false, false), (Row(504).AboveAverage, Row(504).BelowAverage));
         Assert.Equal((true, false), (Row(505).AboveAverage, Row(505).BelowAverage));
         Assert.Equal("+6.0 points on the hero's 50.00% average win rate with these filters", Row(560).WinRateTip);
+    }
+
+    [Fact]
+    public void ATintBehindTheWinRateGrowsWithItsDistanceFromTheAverageAndIsClearForAnAverageOne()
+    {
+        var item = new DeadlockAdvisor.Models.Item("boots", "Boots", "vitality", 1, GameId: 1, Cost: 800);
+        byte AlphaOf(long wins) => ((ISolidColorBrush)new HeroItemRowViewModel(new HeroItemRow(item, wins, 1000, 0.5, null, null), average: 0.5).WinRateFill).Color.A;
+
+        Assert.Equal(0, AlphaOf(504));
+        Assert.InRange(AlphaOf(510), 1, AlphaOf(530) - 1);
+        Assert.InRange(AlphaOf(530), AlphaOf(510) + 1, AlphaOf(550) - 1);
+        Assert.Equal(AlphaOf(550), AlphaOf(700));
+        var above = (ISolidColorBrush)new HeroItemRowViewModel(new HeroItemRow(item, 560, 1000, 0.5, null, null), 0.5).WinRateFill;
+        var below = (ISolidColorBrush)new HeroItemRowViewModel(new HeroItemRow(item, 440, 1000, 0.5, null, null), 0.5).WinRateFill;
+        Assert.Equal((DeadlockAdvisor.Theme.Palette.Positive.G, DeadlockAdvisor.Theme.Palette.Negative.G), (above.Color.G, below.Color.G));
+    }
+
+    [Fact]
+    public async Task SeveralPatchesAddUpAndTheLastOneTickedStays()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        Assert.Equal("Patch 09-29", page.PatchSummary);
+        Assert.Equal([true, false], page.Patches.Select(patch => patch.IsChecked));
+        var single = page.Summary;
+        Assert.DoesNotContain(" patches · ", single);
+
+        page.Patches[1].IsChecked = true;
+
+        Assert.Equal("Patches 09-16 – 09-29", page.PatchSummary);
+        Assert.Contains(" over 2 patches · ", page.Summary);
+        Assert.Contains("before the oldest", page.ChangeTip);
+        // Nothing comes before 09-16, so there's no change to show.
+        Assert.All(page.Rows, row => Assert.Equal("", row.UsageChangeText));
+
+        page.Patches[0].IsChecked = false;
+        Assert.Equal("Patch 09-16", page.PatchSummary);
+        Assert.DoesNotContain(" patches · ", page.Summary);
+
+        page.Patches[1].IsChecked = false;
+        Assert.Equal([false, true], page.Patches.Select(patch => patch.IsChecked));
+
+        await page.PickLatestPatchCommand.Execute();
+        Assert.Equal(("Patch 09-29", single), (page.PatchSummary, page.Summary));
+        await page.PickAllPatchesCommand.Execute();
+        Assert.Equal("Patches 09-16 – 09-29", page.PatchSummary);
+    }
+
+    [Fact]
+    public async Task ThePatchesPickedSurviveANewDownload()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        await page.PickAllPatchesCommand.Execute();
+
+        await DownloadAsync();
+
+        Assert.Equal([true, true], page.Patches.Select(patch => patch.IsChecked));
+    }
+
+    [Fact]
+    public async Task TheFormulaCanBeAskedForOnlyWhileTheEditorsAreShown()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        var asked = new List<string>();
+        using var _ = page.FormulaRequested.Subscribe(asked.Add);
+        var command = (System.Windows.Input.ICommand)page.OpenFormulaCommand;
+        Assert.False(page.ShowsEditors);
+        Assert.False(command.CanExecute("sprint_boots"));
+
+        _fixture.Settings.Update(settings => settings.ShowModelEditors = true);
+
+        Assert.True(page.ShowsEditors);
+        await page.OpenFormulaCommand.Execute("sprint_boots");
+        Assert.Equal(["sprint_boots"], asked);
     }
 
     [Fact]

@@ -1,4 +1,5 @@
 using Avalonia.Media;
+using Avalonia.Media.Immutable;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Formats;
@@ -12,6 +13,9 @@ public class HeroItemRowViewModel(HeroItemRow row, double average)
 {
     /// <summary>A win rate within this of the average, as a fraction, reads as average.</summary>
     public const double AverageMargin = 0.005;
+
+    /// <summary>The distance from the average, as a fraction, at which the win rate's tint is at its strongest.</summary>
+    public const double FullTintAt = 0.05;
 
     /// <summary>"52.59%".</summary>
     public static string Percent(double share) => NumberFormat.Fixed(share * 100, 2) + "%";
@@ -32,6 +36,18 @@ public class HeroItemRowViewModel(HeroItemRow row, double average)
     public string WinRateText => Percent(row.WinRate);
     public bool AboveAverage => row.WinRate - average >= AverageMargin;
     public bool BelowAverage => row.WinRate - average <= -AverageMargin;
+
+    /// <summary>Green or red behind the win rate, stronger the further it is from the average; clear for an average one.</summary>
+    public IBrush WinRateFill
+    {
+        get
+        {
+            if (!AboveAverage && !BelowAverage)
+                return Brushes.Transparent;
+            var strength = Math.Min(1, Math.Abs(row.WinRate - average) / FullTintAt);
+            return new ImmutableSolidColorBrush(Palette.WithAlpha(AboveAverage ? Palette.Positive : Palette.Negative, (byte)Math.Round(36 + 84 * strength)));
+        }
+    }
 
     /// <summary>"+1.8 points on the hero's 50.06% average".</summary>
     public string WinRateTip =>

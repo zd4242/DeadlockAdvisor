@@ -14,25 +14,37 @@ public sealed record HeroItemRow(Item Item, long Wins, long Matches, double Usag
 }
 
 /// <summary>
-/// One hero's items over one patch, as sites like tracklock.gg show them: every item its players bought,
-/// with its win rate and usage, and how both moved since the patch before.
+/// One hero's items over one or more patches, as sites like tracklock.gg show them: every item its players
+/// bought, with its win rate and usage, and how both moved since the patch before.
 /// </summary>
 /// <param name="Matches">The hero's matches, the usage's denominator.</param>
 /// <param name="Rows">Most used first.</param>
-public sealed record HeroItemTable(WinTotals Matches, IReadOnlyList<HeroItemRow> Rows)
+/// <param name="PatchCount">How many patches' counts these are, which can be fewer than were asked for.</param>
+public sealed record HeroItemTable(WinTotals Matches, IReadOnlyList<HeroItemRow> Rows, int PatchCount)
 {
     /// <summary>
-    /// The table for <paramref name="heroId"/> in <paramref name="patch"/>'s counts, compared with the patch
-    /// before it in <paramref name="segments"/> (newest first). Null when <paramref name="range"/> needs
-    /// rank groups the patch was fetched without. Items the store doesn't know are left out.
+    /// The table for <paramref name="heroId"/> over <paramref name="patches"/>' counts added up, compared with
+    /// the patch before the oldest of them in <paramref name="segments"/> (newest first). A patch without the
+    /// rank groups <paramref name="range"/> needs is left out; null when that's all of them. Items the store
+    /// doesn't know are left out.
     /// </summary>
-    public static HeroItemTable? Build(IReadOnlyList<MatchSegment> segments, MatchSegment patch, string heroId, MatchMode mode,
-        RankRange? range, IEnumerable<Item> items)
+    public static HeroItemTable? Build(IReadOnlyList<MatchSegment> segments, IReadOnlyList<MatchSegment> patches, string heroId,
+        MatchMode mode, RankRange? range, IEnumerable<Item> items)
     {
-        if (patch.HeroItems(mode, range) is not { } heroes)
+        var counts = HeroCounts.Empty;
+        var oldest = long.MaxValue;
+        var patchCount = 0;
+        foreach (var patch in patches)
+        {
+            if (patch.HeroItems(mode, range) is not { } heroes)
+                continue;
+            counts = counts.Plus(heroes.GetValueOrDefault(heroId) ?? HeroCounts.Empty);
+            oldest = Math.Min(oldest, patch.Patch.Start);
+            patchCount++;
+        }
+        if (patchCount == 0)
             return null;
-        var counts = heroes.GetValueOrDefault(heroId) ?? HeroCounts.Empty;
-        var before = segments.SkipWhile(segment => segment.Patch.Start >= patch.Patch.Start).FirstOrDefault()
+        var before = segments.SkipWhile(segment => segment.Patch.Start >= oldest).FirstOrDefault()
             ?.HeroItems(mode, range)?.GetValueOrDefault(heroId) is { Matches.Matches: > 0 } earlier
             ? earlier
             : null;
@@ -55,7 +67,7 @@ public sealed record HeroItemTable(WinTotals Matches, IReadOnlyList<HeroItemRow>
             }
             rows.Add(row);
         }
-        return new HeroItemTable(counts.Matches, rows.OrderByDescending(row => row.Usage).ThenBy(row => row.Item.ItemName).ToList());
+        return new HeroItemTable(counts.Matches, rows.OrderByDescending(row => row.Usage).ThenBy(row => row.Item.ItemName).ToList(), patchCount);
     }
 
     private static double Share(long matches, WinTotals hero) => hero.Matches > 0 ? Math.Min(1, (double)matches / hero.Matches) : 0;
