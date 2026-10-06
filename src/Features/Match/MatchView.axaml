@@ -66,7 +66,14 @@
                                 IsEnabled="{Binding !IsMatchEmpty}"
                                 IsVisible="{Binding !Results.IsSearchOpen}"
                                 ToolTip.Tip="Search the recommended items (Ctrl+F)">
-                            <Path Data="M6.5,1.5 A5,5 0 1 1 6.5,11.5 A5,5 0 1 1 6.5,1.5 Z M10,10 L14.5,14.5" Stretch="Uniform"/>
+                            <!-- The ring and handle weigh toward the top left, so the drawing sits a little low and right to look centred. -->
+                            <Path Data="M7,1.5 A5.5,5.5 0 1 1 7,12.5 A5.5,5.5 0 1 1 7,1.5 Z M11,11 L14.5,14.5"
+                                  Stretch="Uniform"
+                                  Width="18"
+                                  Height="18"
+                                  Margin="1.5,1.5,0,0"
+                                  StrokeThickness="1.9"
+                                  StrokeLineCap="Round"/>
                         </Button>
 
                         <!-- A funnel, filled while a filter changes the list out of sight. -->

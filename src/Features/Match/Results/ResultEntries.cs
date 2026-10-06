@@ -90,6 +90,9 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
+    /// <summary>Why the plain list leaves the item out, for a search that found it anyway; null when the list has it.</summary>
+    [Reactive] public string? HiddenReason { get; set; }
+
     /// <param name="shown">The number on the right, when it isn't the formula score.</param>
     public void SetValues(ScoredItem scored, Bars bars, string dataTip, double? shown = null, bool disagrees = false)
     {

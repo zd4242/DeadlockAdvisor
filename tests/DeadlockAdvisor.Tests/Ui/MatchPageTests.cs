@@ -98,6 +98,7 @@ public class MatchPageTests
         ui.Window.KeyTextInput("knock");
         UiHarness.Settle();
         Assert.Equal("knock", results.SearchText);
+        ui.Screenshot("match_search.png");
         Assert.NotEmpty(results.Entries.OfType<ResultRowViewModel>());
         Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.Contains("knock", row.Name, StringComparison.OrdinalIgnoreCase));
 
@@ -114,7 +115,46 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
-    public async Task ARandomMatchPutsTheItemSearchAway()
+    public void AnItemTheFiltersHideIsGreyedWithItsReasonWhenSearchedFor()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        var match = ui.ViewModel.Match;
+        match.HideDisagreed = true;
+        Assert.DoesNotContain(match.Results.Entries.OfType<ResultRowViewModel>(), row => row.ItemId == "knockdown");
+
+        match.SearchItemsCommand.Execute().Subscribe();
+        match.Results.SearchText = "knock";
+
+        var row = match.Results.Entries.OfType<ResultRowViewModel>().Single();
+        Assert.Equal("Left out of the list: the formula and the match data disagree on it (Filters).", row.HiddenReason);
+        Assert.Equal("knockdown", match.Results.SelectedItemId);
+        ui.Screenshot("match_search_hidden.png");
+    }
+
+    [AvaloniaFact]
+    public async Task ARandomMatchKeepsTheItemSearchAndThePickedItem()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+        match.SearchItemsCommand.Execute().Subscribe();
+        match.Results.SearchText = "knock";
+        var knockdown = match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown");
+        if (!knockdown.IsSelected)
+            match.Results.Select(knockdown);
+
+        await match.Board.RandomizeCommand.Execute(RandomizeKeep.Nothing);
+
+        Assert.Equal("knock", match.Results.SearchText);
+        Assert.True(match.Results.IsSearchOpen);
+        Assert.Equal("knockdown", match.Results.SelectedItemId);
+        Assert.Equal("knockdown", match.Explain.ItemId);
+    }
+
+    [AvaloniaFact]
+    public async Task ClearingTheMatchPutsTheItemSearchAway()
     {
         using var ui = new UiHarness();
         SetUpMatch(ui);
@@ -122,11 +162,10 @@ public class MatchPageTests
         match.SearchItemsCommand.Execute().Subscribe();
         match.Results.SearchText = "knock";
 
-        await match.Board.RandomizeCommand.Execute(RandomizeKeep.Nothing);
+        await match.Board.ClearCommand.Execute();
 
         Assert.Equal("", match.Results.SearchText);
         Assert.False(match.Results.IsSearchOpen);
-        Assert.True(match.Results.Entries.OfType<ResultRowViewModel>().First().IsSelected);
     }
 
     [AvaloniaTheory]

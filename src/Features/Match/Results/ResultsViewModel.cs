@@ -41,6 +41,7 @@ public class ResultsViewModel : ViewModelBase
     private bool _hideDisagreed;
     private string? _topItemId;
     private string? _searchHitId;
+    private readonly Dictionary<string, string> _hiddenReasons = [];
     private readonly Func<ScoredItem, string, bool> _itemMatches;
 
     /// <param name="itemMatches">Whether an item answers a search (a trimmed, lower-cased needle); by default, its name does.</param>
@@ -165,6 +166,9 @@ public class ResultsViewModel : ViewModelBase
         Render();
     }
 
+    /// <summary>The list is narrowed to what the search matches.</summary>
+    public bool IsSearching => Needle.Length > 0;
+
     /// <summary>Back to the whole list, with the box put away.</summary>
     public void ResetSearch()
     {
@@ -204,11 +208,21 @@ public class ResultsViewModel : ViewModelBase
         var nothingScored = _scored.All(item => item.Score == 0 && item.Data.Count == 0);
         var listsNothing = nothingScored || (shown.Count == 0 && picks.Count == 0);
 
-        // A search looks through every item the filters leave in, in ranked order, so it can find one the cutoff hides.
+        // A search looks through every item, in ranked order, so it can find one the filters hide; those say why.
         var needle = Needle;
         var searching = needle.Length > 0;
-        var found = searching ? ranked.Where(entry => _itemMatches(entry.Item, needle)).ToList() : shown;
+        var found = searching ? Rank(_scored, blend).Where(entry => _itemMatches(entry.Item, needle)).ToList() : shown;
         var listedPicks = searching ? [] : picks;
+        _hiddenReasons.Clear();
+        if (searching)
+        {
+            var inList = shown.Select(entry => entry.Item.ItemId).Concat(picks.Select(item => item.ItemId)).ToHashSet();
+            foreach (var (item, _) in found)
+            {
+                if ((HiddenReason(item, blend) ?? (inList.Contains(item.ItemId) ? null : "below the cutoff")) is { } reason)
+                    _hiddenReasons[item.ItemId] = $"Left out of the list: {reason} (Filters).";
+            }
+        }
         _searchHitId = searching && found.Count == 1 ? found[0].Item.ItemId : null;
 
         IsEmpty = searching ? nothingScored || found.Count == 0 : listsNothing;
@@ -258,9 +272,11 @@ public class ResultsViewModel : ViewModelBase
         Entries.ReplaceAll(placed);
     }
 
-    /// <summary>Every item with the measure the list is ranked by, best first.</summary>
-    private List<(ScoredItem Item, double Measure)> Ranked(BlendScale blend) =>
-        Listable(blend)
+    /// <summary>Every item the filters leave in, with the measure the list is ranked by, best first.</summary>
+    private List<(ScoredItem Item, double Measure)> Ranked(BlendScale blend) => Rank(Listable(blend), blend);
+
+    private List<(ScoredItem Item, double Measure)> Rank(IEnumerable<ScoredItem> items, BlendScale blend) =>
+        items
             .Select(item => (Item: item, Measure: _rankBy switch
             {
                 RankBy.MatchData => item.DataStrength,
@@ -275,6 +291,14 @@ public class ResultsViewModel : ViewModelBase
     /// <summary>The items the filters leave in. Only blending puts the two opinions on one scale, so only then can they disagree.</summary>
     private IEnumerable<ScoredItem> Listable(BlendScale blend) =>
         _scored.Where(item => !(_hideRarelyBuilt && item.RarelyBuilt) && !(_hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item)));
+
+    /// <summary>Which hide filter leaves the item out of <see cref="Listable"/>, in words for the end of "Left out of the list: ".</summary>
+    private string? HiddenReason(ScoredItem item, BlendScale blend)
+    {
+        if (_hideRarelyBuilt && item.RarelyBuilt)
+            return "your hero rarely builds it";
+        return _hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item) ? "the formula and the match data disagree on it" : null;
+    }
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
 
@@ -409,6 +433,7 @@ public class ResultsViewModel : ViewModelBase
         }
         row.SetValues(scored, bars, _dataTip, shown, disagrees);
         row.IsSelected = scored.ItemId == SelectedItemId;
+        row.HiddenReason = _hiddenReasons.GetValueOrDefault(scored.ItemId);
         row.ShowsTier = ShowsTiers && (showsTier ?? !_byTier);
         return row;
     }

@@ -310,6 +310,30 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void ASearchSaysWhyTheFiltersLeaveAMatchOutOfTheList()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults([Scored("a", 10, against: 0.4) with { BuildRatio = 0.1 }, Scored("b", 5, against: 1.0), Scored("c", 1)], "");
+        results.SetDisplay(RankBy.Formula, false, 0.5, hideRarelyBuilt: true);
+        Assert.Equal(["b"], Rows(results));
+        string? Reason(string itemId) => results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == itemId).HiddenReason;
+
+        results.SearchText = "a";
+        Assert.Equal("Left out of the list: your hero rarely builds it (Filters).", Reason("a"));
+        Assert.Equal("a", results.SelectedItemId);
+
+        results.SearchText = "c";
+        Assert.Equal("Left out of the list: below the cutoff (Filters).", Reason("c"));
+
+        // b is in the plain list, so there's nothing to say about it.
+        results.SearchText = "b";
+        Assert.Null(Reason("b"));
+
+        results.SearchText = "";
+        Assert.Null(Reason("b"));
+    }
+
+    [Fact]
     public void ASearchPicksItsOnlyMatchAndKeepsThePickWhenNothingMatches()
     {
         var results = Show(RankBy.Formula, null);

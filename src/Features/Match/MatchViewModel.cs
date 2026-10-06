@@ -130,7 +130,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
         // Runs after the board's own rescore, so the list is already ranked for the new heroes.
-        Board.RandomizeCommand.Subscribe(_ => StartOver()).DisposeWith(Disposables);
+        Board.RandomizeCommand.Subscribe(_ => StartOnBestItem()).DisposeWith(Disposables);
 
         Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
         settings.SettingsChanged
@@ -326,24 +326,21 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var before = LineUp();
         return () =>
         {
-            var newLineUp = !before.SetEquals(LineUp());
-            if (newLineUp)
-                Results.ResetSearch();
             Board.Refresh();
             OnMatchChanged();
-            if (newLineUp)
-                ShowTopPick();
+            if (!before.SetEquals(LineUp()))
+                StartOnBestItem();
         };
     }
 
     private HashSet<(string HeroId, Role Role)> LineUp() =>
         Match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => (entry.Key, entry.Value)).ToHashSet();
 
-    /// <summary>A whole new match: the list comes back unsearched, on its best item.</summary>
-    private void StartOver()
+    /// <summary>A whole new match starts on its best item, unless a search is on: it stays, and so does the pick.</summary>
+    private void StartOnBestItem()
     {
-        Results.ResetSearch();
-        ShowTopPick();
+        if (!Results.IsSearching)
+            ShowTopPick();
     }
 
     private void ShowTopPick()
