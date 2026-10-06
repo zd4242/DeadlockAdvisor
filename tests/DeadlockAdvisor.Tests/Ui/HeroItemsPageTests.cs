@@ -1,5 +1,6 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -167,6 +168,26 @@ public class HeroItemsPageTests
             var tinted = pair.Chip.Background is ISolidColorBrush { Color.A: > 0 };
             Assert.Equal(pair.Row.AboveAverage || pair.Row.BelowAverage, tinted);
         });
+    }
+
+    [AvaloniaFact]
+    public async Task RightClickingATierShowsOnlyIt()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var page = ui.ViewModel.HeroItems;
+        var toggles = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<ToggleButton>().Where(toggle => toggle.DataContext is TierToggle).ToList();
+        Assert.Equal(4, toggles.Count);
+
+        var at = toggles[1].TranslatePoint(new Point(toggles[1].Bounds.Width / 2, toggles[1].Bounds.Height / 2), ui.Window)!.Value;
+        ui.Window.MouseDown(at, MouseButton.Right);
+        ui.Window.MouseUp(at, MouseButton.Right);
+        UiHarness.Settle();
+
+        Assert.Equal([false, true, false, false], page.Tiers.Select(tier => tier.IsChecked));
+        Assert.Equal([false, true, false, false], toggles.Select(toggle => toggle.IsChecked));
     }
 
     private static List<Border> Rows(UiHarness ui) =>
