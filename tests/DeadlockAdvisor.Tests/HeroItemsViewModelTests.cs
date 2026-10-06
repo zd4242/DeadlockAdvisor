@@ -93,6 +93,21 @@ public sealed class HeroItemsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void TheWinRateGoesToWhiteAsTheTintBehindItStrengthensSoItStaysReadable()
+    {
+        var item = new DeadlockAdvisor.Models.Item("boots", "Boots", "vitality", 1, GameId: 1, Cost: 800);
+        Color ForegroundOf(long wins) =>
+            ((ISolidColorBrush)new HeroItemRowViewModel(new HeroItemRow(item, wins, 1000, 0.5, null, null), average: 0.5).WinRateForeground).Color;
+        var text = DeadlockAdvisor.Theme.Palette.Text;
+        int Distance(Color color) => Math.Abs(color.R - text.R) + Math.Abs(color.G - text.G) + Math.Abs(color.B - text.B);
+
+        Assert.Equal(text, ForegroundOf(504));
+        Assert.True(Distance(ForegroundOf(510)) > Distance(ForegroundOf(530)));
+        Assert.True(Distance(ForegroundOf(530)) > Distance(ForegroundOf(560)));
+        Assert.True(Distance(ForegroundOf(440)) < Distance(ForegroundOf(490)));
+    }
+
+    [Fact]
     public async Task SeveralPatchesAddUpAndTheLastOneTickedStays()
     {
         await DownloadAsync();

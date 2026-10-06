@@ -58,12 +58,6 @@
         <Style Selector="TextBlock.winRate">
             <Setter Property="FontWeight" Value="SemiBold"/>
         </Style>
-        <Style Selector="TextBlock.winRate.above">
-            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
-        </Style>
-        <Style Selector="TextBlock.winRate.below">
-            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
-        </Style>
         <Style Selector="TextBlock.change">
             <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
         </Style>
@@ -232,9 +226,11 @@
                                 Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Item}"/>
                         <Button Grid.Column="1" Classes="header" Classes.sorted="{Binding CostHeader.IsSorted}" Content="{Binding CostHeader.Text}"
                                 Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Cost}"/>
-                        <!-- Inset by the chip's padding, so it lines up with the numbers inside it. -->
+                        <!-- As wide as the chip below, and centred like the numbers in it. -->
                         <Button Grid.Column="2" Classes="header" Classes.sorted="{Binding WinRateHeader.IsSorted}" Content="{Binding WinRateHeader.Text}"
-                                Padding="0,4,8,4"
+                                MinWidth="64"
+                                HorizontalAlignment="Right"
+                                HorizontalContentAlignment="Center"
                                 Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRate}"/>
                         <Button Grid.Column="3" Classes="header" Classes.sorted="{Binding WinRateChangeHeader.IsSorted}" Content="{Binding WinRateChangeHeader.Text}"
                                 Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRateChange}"
@@ -293,9 +289,9 @@
                                                         VerticalAlignment="Center"
                                                         Background="{Binding WinRateFill}"
                                                         ToolTip.Tip="{Binding WinRateTip}">
-                                                    <TextBlock Classes="number winRate"
-                                                               Classes.above="{Binding AboveAverage}"
-                                                               Classes.below="{Binding BelowAverage}"
+                                                    <TextBlock Classes="winRate"
+                                                               HorizontalAlignment="Center"
+                                                               Foreground="{Binding WinRateForeground}"
                                                                Text="{Binding WinRateText}"/>
                                                 </Border>
                                                 <TextBlock Grid.Column="3"
