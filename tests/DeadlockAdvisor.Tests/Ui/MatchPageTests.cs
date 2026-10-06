@@ -519,11 +519,29 @@ public class MatchPageTests
         Assert.True(picker.IsEffectivelyVisible);
         Assert.NotNull(picker.FindAncestorOfType<RosterView>());
 
-        var done = picker.GetVisualDescendants().OfType<Button>().Single(b => Equals(b.Content, "Done"));
+        var done = picker.GetVisualDescendants().OfType<Button>().Single(b => b.GetVisualDescendants().OfType<TextBlock>().Any(text => text.Text == "Done"));
         done.Command!.Execute(null);
         UiHarness.Settle();
         Assert.False(board.IsPickerOpen);
         Assert.False(picker.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public void EscapeClosesThePickerWhenFocusIsOnAButtonInThePage()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+
+        ui.ViewModel.Match.FocusSearch();
+        UiHarness.Settle();
+        Assert.True(board.IsPickerOpen);
+        Picker(ui).GetVisualDescendants().OfType<Button>().First(b => b.Focusable).Focus();
+        UiHarness.Settle();
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.False(board.IsPickerOpen);
     }
 
     private static MatchBoardView Picker(UiHarness ui) =>

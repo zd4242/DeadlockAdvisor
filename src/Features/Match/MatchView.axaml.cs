@@ -26,6 +26,17 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
                 CloseItemSearch();
         };
 
+        // Escape that nothing inside the page used (a search box clearing itself, say) puts the hero picker away,
+        // wherever focus sits in the page.
+        KeyDown += (_, e) =>
+        {
+            if (e.Key == Key.Escape && e.KeyModifiers == KeyModifiers.None && ViewModel?.Board is { IsPickerOpen: true } board)
+            {
+                board.IsPickerOpen = false;
+                e.Handled = true;
+            }
+        };
+
         this.WhenActivated(disposables =>
         {
             ViewModel!.ViewInteraction

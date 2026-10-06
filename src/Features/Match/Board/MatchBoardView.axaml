@@ -47,11 +47,14 @@
                                     Watermark="{Binding SearchPlaceholder}"/>
                 <Button Grid.Column="4"
                         Classes="primary"
-                        Content="Done"
-                        MinWidth="80"
                         VerticalAlignment="Center"
                         Command="{Binding ClosePickerCommand}"
-                        ToolTip.Tip="Hide the hero list (Esc)"/>
+                        ToolTip.Tip="Hide the hero list">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <TextBlock Text="Done" VerticalAlignment="Center"/>
+                        <TextBlock Classes="shortcut" Text="Esc"/>
+                    </StackPanel>
+                </Button>
             </Grid>
 
             <!-- Full width fits every hero in two or three rows; past three, it scrolls rather than crowding out the results. -->
