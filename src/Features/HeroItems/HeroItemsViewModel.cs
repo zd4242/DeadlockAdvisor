@@ -77,12 +77,26 @@ public class HeroItemsViewModel : ViewModelBase
 
     public const double MaxMinUsagePercent = 50;
 
+    public const string FiltersTip = "Which matches count, and which columns show";
+
+    public const string ShowChangesTip =
+        "Show how each item's win rate and usage moved since the patch before, in percentage points (Win Δ and Usage Δ)";
+
     public static readonly IReadOnlyList<ModeOption> Modes =
     [
         new(MatchMode.Ranked, "Ranked"),
         new(MatchMode.Unranked, "Unranked"),
         new(MatchMode.All, "Ranked and unranked"),
     ];
+
+    /// <summary>
+    /// Where <paramref name="percent"/> sits on the usage slider, 0 to 100. The slider is square-law, so its
+    /// low end, where the useful cut-offs are, gets most of its travel: 5% is a third of the way along.
+    /// </summary>
+    public static double UsageToPosition(double percent) => Math.Sqrt(Math.Clamp(percent, 0, MaxMinUsagePercent) / MaxMinUsagePercent) * 100;
+
+    /// <summary>The whole percent at <paramref name="position"/> on the usage slider.</summary>
+    public static double PositionToUsage(double position) => Math.Round(Math.Pow(Math.Clamp(position, 0, 100) / 100, 2) * MaxMinUsagePercent);
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
@@ -99,13 +113,13 @@ public class HeroItemsViewModel : ViewModelBase
         Tiers = Enumerable.Range(1, 4).Select(tier => new TierToggle(tier)).ToList();
         Headers = new Dictionary<HeroItemSort, ColumnHeader>
         {
-            [HeroItemSort.Item] = new(HeroItemSort.Item, "Item"),
-            [HeroItemSort.Cost] = new(HeroItemSort.Cost, "Cost"),
-            [HeroItemSort.WinRate] = new(HeroItemSort.WinRate, "Win rate"),
-            [HeroItemSort.WinRateChange] = new(HeroItemSort.WinRateChange, "Win Δ"),
-            [HeroItemSort.Usage] = new(HeroItemSort.Usage, "Usage"),
-            [HeroItemSort.UsageChange] = new(HeroItemSort.UsageChange, "Usage Δ"),
-            [HeroItemSort.Matches] = new(HeroItemSort.Matches, "Won / lost"),
+            [HeroItemSort.Item] = new(HeroItemSort.Item, "ITEM"),
+            [HeroItemSort.Cost] = new(HeroItemSort.Cost, "COST"),
+            [HeroItemSort.WinRate] = new(HeroItemSort.WinRate, "WIN RATE"),
+            [HeroItemSort.WinRateChange] = new(HeroItemSort.WinRateChange, "WIN Δ"),
+            [HeroItemSort.Usage] = new(HeroItemSort.Usage, "USAGE"),
+            [HeroItemSort.UsageChange] = new(HeroItemSort.UsageChange, "USAGE Δ"),
+            [HeroItemSort.Matches] = new(HeroItemSort.Matches, "WON / LOST"),
         };
         ShowSort();
         SortCommand = ReactiveCommand.Create<HeroItemSort>(Sort);
@@ -121,8 +135,23 @@ public class HeroItemsViewModel : ViewModelBase
         _loading = true;
         SelectedMode = Modes.FirstOrDefault(option => option.Mode == settings.Current.HeroItemsMode) ?? Modes[0];
         MinUsagePercent = Math.Clamp(settings.Current.HeroItemsMinUsagePercent, 0, MaxMinUsagePercent);
+        UsagePosition = UsageToPosition(MinUsagePercent);
+        ShowChanges = settings.Current.HeroItemsShowChanges;
         Load(settings.Current.HeroItemsHero);
         _loading = false;
+
+        // The slider's position and the percent it sets follow each other; the position only moves for a percent it doesn't already read as, so a drag stays smooth.
+        this.WhenAnyValue(vm => vm.UsagePosition)
+            .Subscribe(position => MinUsagePercent = PositionToUsage(position))
+            .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.MinUsagePercent)
+            .Where(percent => PositionToUsage(UsagePosition) != percent)
+            .Subscribe(percent => UsagePosition = UsageToPosition(percent))
+            .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ShowChanges)
+            .Skip(1)
+            .Subscribe(show => _settings.Update(s => s.HeroItemsShowChanges = show))
+            .DisposeWith(Disposables);
 
         this.WhenAnyValue(vm => vm.SelectedHero, vm => vm.SelectedMode, vm => vm.From, vm => vm.To, vm => vm.MinUsagePercent)
             .Skip(1)
@@ -198,7 +227,20 @@ public class HeroItemsViewModel : ViewModelBase
     /// <summary>Items bought in under this share of the hero's matches are hidden: 0 to <see cref="MaxMinUsagePercent"/>.</summary>
     [Reactive] public double MinUsagePercent { get; set; }
 
+    /// <summary>Where the usage slider sits, 0 to 100: not linear, see <see cref="UsageToPosition"/>.</summary>
+    [Reactive] public double UsagePosition { get; set; }
+
     public string MinUsageText => $"{Math.Round(MinUsagePercent):0}%";
+
+    /// <summary>Whether the Win Δ and Usage Δ columns show. They're off until asked for.</summary>
+    [Reactive] public bool ShowChanges { get; set; }
+
+    /// <summary>A filter has the table counting other than ranked matches at every rank.</summary>
+    [Reactive] public bool HasActiveFilters { get; private set; }
+    [Reactive] public string FiltersButtonTip { get; private set; } = FiltersTip;
+
+    /// <summary>Said under the match mode while a rank range makes "Ranked" and "Ranked and unranked" the same; empty otherwise.</summary>
+    [Reactive] public string ModeNote { get; private set; } = "";
 
     [Reactive] public HeroItemSort SortColumn { get; private set; } = HeroItemSort.Usage;
     [Reactive] public bool SortDescending { get; private set; } = true;
@@ -403,9 +445,24 @@ public class HeroItemsViewModel : ViewModelBase
             header.Show(SortColumn, SortDescending);
     }
 
+    private void ShowFilters()
+    {
+        var active = new List<string>();
+        if (SelectedMode.Mode != MatchMode.Ranked)
+            active.Add($"{SelectedMode.Label} matches");
+        if (Range is not null)
+            active.Add($"Ranks {From!.FirstName} to {To!.LastName}");
+        HasActiveFilters = active.Count > 0;
+        FiltersButtonTip = HasActiveFilters ? $"{FiltersTip}\n\nOn now:\n• {string.Join("\n• ", active)}" : FiltersTip;
+        ModeNote = Range is not null && SelectedMode.Mode == MatchMode.All
+            ? "A rank range counts ranked matches only, since unranked ones have no rank. Pick every rank to count both."
+            : "";
+    }
+
     private void Refresh()
     {
         this.RaisePropertyChanged(nameof(MinUsageText));
+        ShowFilters();
         var picked = PickedSegments;
         var table = SelectedHero is null || picked.Count == 0
             ? null
@@ -437,9 +494,9 @@ public class HeroItemsViewModel : ViewModelBase
 
         var mode = SelectedMode.Mode switch
         {
-            MatchMode.Ranked => "ranked ",
             MatchMode.Unranked => "unranked ",
-            _ => "",
+            MatchMode.Ranked => "ranked ",
+            _ => Range is null ? "" : "ranked ",
         };
         var over = table.PatchCount > 1 ? $" over {table.PatchCount} patches" : "";
         Summary = $"{Format.Thousands(matches)} {mode}matches{over} · {HeroItemRowViewModel.Percent(average)} won";

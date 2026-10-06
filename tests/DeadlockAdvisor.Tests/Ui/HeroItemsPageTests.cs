@@ -39,17 +39,75 @@ public class HeroItemsPageTests
         Assert.True(rows > 5);
         ui.Screenshot("hero_items.png");
 
-        var from = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<ComboBox>().Single(combo => combo.ItemsSource == page.Ranks && Equals(combo.SelectedItem, page.From));
-        from.IsDropDownOpen = true;
-        UiHarness.Settle();
-        ui.Screenshot("hero_items_rank_menu.png");
-        from.IsDropDownOpen = false;
-        UiHarness.Settle();
-
-        var winRate = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Win rate"));
+        var winRate = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "WIN RATE"));
         Click(ui.Window, winRate);
         Assert.Equal(HeroItemSort.WinRate, page.SortColumn);
-        Assert.Equal("Win rate ▾", winRate.Content);
+        Assert.Equal("WIN RATE ▾", winRate.Content);
+    }
+
+    /// <summary>The filter button opens the match mode, the rank range and the change columns' switch.</summary>
+    [AvaloniaFact]
+    public async Task TheFiltersMenuHoldsTheMatchModeTheRanksAndTheChangeColumns()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var page = ui.ViewModel.HeroItems;
+        var button = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Single(candidate => candidate.Name == "FiltersButton");
+        List<string> HeaderTexts() => ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>()
+            .Where(candidate => candidate.Classes.Contains("header") && candidate.IsEffectivelyVisible).Select(candidate => (string)candidate.Content!).ToList();
+        // Off until asked for: the two change columns have no header either.
+        Assert.Equal(5, HeaderTexts().Count);
+        Assert.DoesNotContain(HeaderTexts(), text => text.Contains('Δ'));
+
+        button.Flyout!.ShowAt(button);
+        UiHarness.Settle();
+        var content = (Control)((Flyout)button.Flyout).Content!;
+        var combos = content.GetLogicalDescendants().OfType<ComboBox>().ToList();
+        Assert.Equal(3, combos.Count);
+        Assert.Contains(combos, combo => combo.ItemsSource == page.Ranks && Equals(combo.SelectedItem, page.From));
+        var showChanges = content.GetLogicalDescendants().OfType<CheckBox>().Single();
+        showChanges.IsChecked = true;
+        UiHarness.Settle();
+        ui.Screenshot("hero_items_filters.png");
+
+        Assert.True(page.ShowChanges);
+        Assert.Contains(HeaderTexts(), text => text.StartsWith("WIN Δ"));
+        Assert.Contains(HeaderTexts(), text => text.StartsWith("USAGE Δ"));
+        var row = Rows(ui).First();
+        Assert.Contains(row.GetVisualDescendants().OfType<TextBlock>(), text => text.Classes.Contains("change") && text.IsEffectivelyVisible);
+        ui.Screenshot("hero_items_changes.png");
+        button.Flyout.Hide();
+    }
+
+    /// <summary>Each header is as wide as its column's cells, and sits at the same place, so it's centred over them.</summary>
+    [AvaloniaFact]
+    public async Task EachHeaderSitsOverItsColumn()
+    {
+        using var ui = new UiHarness(settings =>
+        {
+            settings.Current.LastPage = 1;
+            settings.Current.HeroItemsShowChanges = true;
+        });
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var page = ui.ViewModel.HeroItems;
+        var row = Rows(ui).First();
+        var headers = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Where(candidate => candidate.Classes.Contains("header")).ToList();
+        Assert.Equal(7, headers.Count);
+
+        double CentreOf(Visual visual) => visual.TranslatePoint(new Point(visual.Bounds.Width / 2, 0), ui.Window)!.Value.X;
+        var cells = row.GetVisualDescendants().OfType<Control>().Where(control => control.Parent is Grid grid && grid == row.Child).ToList();
+        Assert.Equal(7, cells.Count);
+        // Cost is right-aligned and the item left-aligned, so their cells' edges line up with the header's instead of their middles.
+        foreach (var (header, cell) in headers.Zip(cells).Skip(2))
+            Assert.InRange(CentreOf(header) - CentreOf(cell), -1, 1);
+        Assert.Equal(row.TranslatePoint(new Point(), ui.Window)!.Value.X + row.Padding.Left,
+            cells[0].TranslatePoint(new Point(), ui.Window)!.Value.X, 1);
+        Assert.Equal(cells[0].TranslatePoint(new Point(), ui.Window)!.Value.X, headers[0].TranslatePoint(new Point(), ui.Window)!.Value.X, 1);
+        Assert.True(page.ShowChanges);
     }
 
     [AvaloniaFact]
@@ -130,7 +188,10 @@ public class HeroItemsPageTests
         ui.Data.NotifyReplaced();
         ui.Art.SetAssetsDir(ui.Data.AssetsDir);
         ui.Show();
-        List<ArtImage> Badges() => ui.Window.HeroItemsPage.GetVisualDescendants().OfType<ArtImage>().Where(image => image.Kind == ArtKind.Rank).ToList();
+        var filters = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Single(candidate => candidate.Name == "FiltersButton");
+        filters.Flyout!.ShowAt(filters);
+        UiHarness.Settle();
+        List<ArtImage> Badges() => ((Control)((Flyout)filters.Flyout).Content!).GetVisualDescendants().OfType<ArtImage>().Where(image => image.Kind == ArtKind.Rank).ToList();
 
         Assert.Equal(2, Badges().Count);
         Assert.All(Badges(), badge => Assert.False(badge.IsVisible));

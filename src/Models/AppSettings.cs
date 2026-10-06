@@ -90,6 +90,7 @@ public class AppSettings
     public MatchMode HeroItemsMode { get; set; } = MatchMode.Ranked;
 
     public int HeroItemsMinUsagePercent { get; set; } = 5;
+    public bool HeroItemsShowChanges { get; set; }
 
     // Item Formulas tab
     public double? ByItemSplitterPosition { get; set; }

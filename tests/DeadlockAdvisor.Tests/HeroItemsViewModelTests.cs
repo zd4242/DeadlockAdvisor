@@ -233,16 +233,16 @@ public sealed class HeroItemsViewModelTests : IDisposable
     {
         await DownloadAsync();
         using var page = Page();
-        Assert.Equal("Usage ▾", page.UsageHeader.Text);
+        Assert.Equal("USAGE ▾", page.UsageHeader.Text);
 
         await page.SortCommand.Execute(HeroItemSort.Item);
         var names = page.Rows.Select(row => row.Name).ToList();
         Assert.Equal(names.Order(StringComparer.OrdinalIgnoreCase), names);
-        Assert.Equal(("Item ▴", "Usage"), (page.ItemHeader.Text, page.UsageHeader.Text));
+        Assert.Equal(("ITEM ▴", "USAGE"), (page.ItemHeader.Text, page.UsageHeader.Text));
 
         await page.SortCommand.Execute(HeroItemSort.Item);
         Assert.Equal(names.AsEnumerable().Reverse(), page.Rows.Select(row => row.Name));
-        Assert.Equal("Item ▾", page.ItemHeader.Text);
+        Assert.Equal("ITEM ▾", page.ItemHeader.Text);
     }
 
     [Fact]
@@ -263,6 +263,83 @@ public sealed class HeroItemsViewModelTests : IDisposable
         Assert.False(page.CanPickRanks);
         Assert.Contains(" unranked matches · ", page.Summary);
         Assert.Equal(MatchMode.Unranked, _fixture.Settings.Current.HeroItemsMode);
+    }
+
+    /// <summary>The rank groups hold ranked matches alone, so with a range picked the two modes count the same matches, and the page says so.</summary>
+    [Fact]
+    public async Task ARankRangeCountsRankedMatchesInEitherModeAndTheFiltersSayWhatIsOn()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        var ranked = page.Summary;
+        Assert.False(page.HasActiveFilters);
+        Assert.Equal("", page.ModeNote);
+
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.All);
+        Assert.True(page.HasActiveFilters);
+        Assert.NotEqual(ranked, page.Summary);
+        Assert.DoesNotContain(" ranked matches", page.Summary);
+
+        page.From = page.Ranks[1];
+        page.To = page.Ranks[^2];
+        var narrowed = page.Summary;
+        Assert.Contains(" ranked matches", narrowed);
+        Assert.NotEqual("", page.ModeNote);
+        Assert.Contains($"Ranks {page.Ranks[1].FirstName} to {page.Ranks[^2].LastName}", page.FiltersButtonTip);
+
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.Ranked);
+        Assert.Equal(narrowed, page.Summary);
+        Assert.Equal("", page.ModeNote);
+    }
+
+    [Fact]
+    public void TheUsageSliderSpendsMostOfItsTravelOnTheLowEnd()
+    {
+        Assert.Equal(0, HeroItemsViewModel.UsageToPosition(0));
+        Assert.Equal(100, HeroItemsViewModel.UsageToPosition(HeroItemsViewModel.MaxMinUsagePercent));
+        // The first 5% of the range takes about a third of the slider, and each whole percent from there on is further apart than the next.
+        Assert.InRange(HeroItemsViewModel.UsageToPosition(5), 30, 34);
+        Assert.True(HeroItemsViewModel.UsageToPosition(1) - HeroItemsViewModel.UsageToPosition(0)
+            > HeroItemsViewModel.UsageToPosition(41) - HeroItemsViewModel.UsageToPosition(40));
+        // A whole percent reads back as itself from its own position, so nothing drifts between the slider and its label.
+        Assert.All(Enumerable.Range(0, 51), percent =>
+            Assert.Equal(percent, HeroItemsViewModel.PositionToUsage(HeroItemsViewModel.UsageToPosition(percent))));
+    }
+
+    [Fact]
+    public async Task TheSliderAndTheUsageItSetsFollowEachOther()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        Assert.Equal(5, page.MinUsagePercent);
+        Assert.InRange(page.UsagePosition, 30, 34);
+
+        page.UsagePosition = HeroItemsViewModel.UsageToPosition(20);
+        Assert.Equal(20, page.MinUsagePercent);
+        Assert.Equal("20%", page.MinUsageText);
+        Assert.Equal(20, _fixture.Settings.Current.HeroItemsMinUsagePercent);
+
+        // A nudge that stays on the same whole percent leaves the slider where it is.
+        var position = page.UsagePosition + 0.1;
+        page.UsagePosition = position;
+        Assert.Equal((20, position), (page.MinUsagePercent, page.UsagePosition));
+
+        page.MinUsagePercent = 3;
+        Assert.Equal(3, HeroItemsViewModel.PositionToUsage(page.UsagePosition));
+    }
+
+    [Fact]
+    public async Task TheChangeColumnsAreOffUntilAskedForAndRemembered()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        Assert.False(page.ShowChanges);
+
+        page.ShowChanges = true;
+
+        Assert.True(_fixture.Settings.Current.HeroItemsShowChanges);
+        using var reopened = Page();
+        Assert.True(reopened.ShowChanges);
     }
 
     [Fact]
