@@ -66,13 +66,10 @@
                                 IsEnabled="{Binding !IsMatchEmpty}"
                                 IsVisible="{Binding !Results.IsSearchOpen}"
                                 ToolTip.Tip="Search the recommended items (Ctrl+F)">
-                            <!-- The ring and handle weigh toward the top left, so the drawing sits a little low and right to look centred. -->
-                            <Path Data="M7,1.5 A5.5,5.5 0 1 1 7,12.5 A5.5,5.5 0 1 1 7,1.5 Z M11,11 L14.5,14.5"
-                                  Stretch="Uniform"
-                                  Width="18"
-                                  Height="18"
-                                  Margin="1.5,1.5,0,0"
-                                  StrokeThickness="1.9"
+                            <!-- Drawn at the glyph's own 16px size, about as wide as the funnel and centred on its box, with a stroke that matches the funnel's weight. -->
+                            <Path Data="M7,1.2 A5.8,5.8 0 1 1 7,12.8 A5.8,5.8 0 1 1 7,1.2 Z M11.1,11.1 L14.6,14.6"
+                                  Stretch="None"
+                                  StrokeThickness="1.6"
                                   StrokeLineCap="Round"/>
                         </Button>
 
