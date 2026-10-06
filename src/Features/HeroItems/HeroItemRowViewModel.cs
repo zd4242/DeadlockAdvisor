@@ -40,17 +40,22 @@ public class HeroItemRowViewModel(HeroItemRow row, double average)
     /// <summary>Green or red behind the win rate, stronger the further it is from the average; clear for an average one.</summary>
     public IBrush WinRateFill =>
         AboveAverage || BelowAverage
-            ? new ImmutableSolidColorBrush(Palette.WithAlpha(TintColor, (byte)Math.Round(36 + 84 * TintStrength)))
+            ? new ImmutableSolidColorBrush(Palette.WithAlpha(TintColor, (byte)Math.Round(10 + 110 * TintStrength)))
             : Brushes.Transparent;
 
-    /// <summary>The win rate's colour: the tint's own on a faint one, going to white as the tint behind it strengthens so it stays readable.</summary>
+    /// <summary>
+    /// The win rate's colour. It leaves the plain text colour's for the tint's own as soon as it's tinted, then goes
+    /// back towards it as the tint behind it strengthens, so it stays readable on the strongest.
+    /// </summary>
     public IBrush WinRateForeground =>
-        new ImmutableSolidColorBrush(AboveAverage || BelowAverage ? Palette.Mix(TintColor, Palette.Text, 0.9 * TintStrength) : Palette.Text);
+        new ImmutableSolidColorBrush(AboveAverage || BelowAverage
+            ? Palette.Mix(Palette.Mix(Palette.Text, TintColor, 0.7), Palette.Text, 0.9 * TintStrength)
+            : Palette.Text);
 
     private Color TintColor => AboveAverage ? Palette.Positive : Palette.Negative;
 
-    /// <summary>0 at average to 1 at <see cref="FullTintAt"/> from it and beyond.</summary>
-    private double TintStrength => Math.Min(1, Math.Abs(row.WinRate - average) / FullTintAt);
+    /// <summary>0 at the margin from the average, to 1 at <see cref="FullTintAt"/> from it and beyond.</summary>
+    private double TintStrength => Math.Clamp((Math.Abs(row.WinRate - average) - AverageMargin) / (FullTintAt - AverageMargin), 0, 1);
 
     /// <summary>"+1.8 points on the hero's 50.06% average".</summary>
     public string WinRateTip =>
