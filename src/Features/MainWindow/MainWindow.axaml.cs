@@ -49,6 +49,7 @@ public partial class MainWindow : Window
         Closed += (_, _) => AutoScroll.Dispose();
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
         PointerPressed += OnDismissLayerPressed;
+        PointerPressed += OnNavigationButtonPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
         ItemCardHover.SetPresenter(this, ItemCards);
     }
@@ -200,6 +201,21 @@ public partial class MainWindow : Window
             command.Execute().Subscribe();
             e.Handled = true;
         }
+    }
+
+    /// <summary>The mouse's back and forward buttons step through the pages. Settings takes the back button first, to close itself.</summary>
+    private void OnNavigationButtonPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
+            return;
+        var properties = e.GetCurrentPoint(this).Properties;
+        if (properties.IsXButton1Pressed)
+            vm.BackCommand.Execute().Subscribe();
+        else if (properties.IsXButton2Pressed)
+            vm.ForwardCommand.Execute().Subscribe();
+        else
+            return;
+        e.Handled = true;
     }
 
     /// <summary>Ctrl+wheel zooms anywhere in the window, even over a scroll area that would otherwise eat it.</summary>

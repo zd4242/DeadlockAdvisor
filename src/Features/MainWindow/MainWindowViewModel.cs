@@ -88,6 +88,9 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IArtService _art;
     private readonly IAppUpdateService _appUpdates;
     private bool _closeConfirmed;
+    /// <summary>The pages opened in order, for the mouse's back and forward buttons, with the one showing at <see cref="_historyIndex"/>.</summary>
+    private readonly List<int> _history = [];
+    private int _historyIndex;
 
     public MainWindowViewModel(
         NotificationOverlayViewModel notificationOverlay,
@@ -123,6 +126,7 @@ public class MainWindowViewModel : ViewModelBase
         // A model editor's page, hidden since, opens on Match like a page that's gone.
         var lastPage = settings.Current.LastPage;
         CurrentPage = settings.Current.ReopenLastPage && lastPage >= 0 && lastPage < PageCount ? lastPage : 0;
+        _history.Add(CurrentPage);
         this.WhenAnyValue(vm => vm.CurrentPage)
             .Skip(1)
             .Subscribe(page => _settings.Update(s => s.LastPage = page))
@@ -152,7 +156,7 @@ public class MainWindowViewModel : ViewModelBase
             {
                 ShowsEditors = show;
                 if (CurrentPage >= PageCount)
-                    CurrentPage = 0;
+                    Visit(0);
                 PageNames = _allPageNames.Take(PageCount).ToList();
                 this.RaisePropertyChanged(nameof(SelectedTab));
             })
@@ -191,6 +195,8 @@ public class MainWindowViewModel : ViewModelBase
         ResetZoomCommand = ReactiveCommand.Create(() => SetZoom(ZoomLevels.DefaultIndex), zoom.Select(index => index != ZoomLevels.DefaultIndex));
         NextPageCommand = ReactiveCommand.Create(() => CyclePage(1));
         PreviousPageCommand = ReactiveCommand.Create(() => CyclePage(-1));
+        BackCommand = ReactiveCommand.Create(() => StepHistory(-1));
+        ForwardCommand = ReactiveCommand.Create(() => StepHistory(1));
         ShowPageCommand = ReactiveCommand.Create<int>(ShowPage);
         ReloadCommand = ReactiveCommand.CreateFromObservable(() => DataMenu.ReloadCommand.Execute(), this.WhenAnyValue(vm => vm.ShowsEditors));
 
@@ -292,6 +298,10 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> ResetZoomCommand { get; }
     public ReactiveCommand<Unit, Unit> NextPageCommand { get; }
     public ReactiveCommand<Unit, Unit> PreviousPageCommand { get; }
+
+    /// <summary>The mouse's back and forward buttons, through the pages opened as in a browser.</summary>
+    public ReactiveCommand<Unit, Unit> BackCommand { get; }
+    public ReactiveCommand<Unit, Unit> ForwardCommand { get; }
     public ReactiveCommand<int, Unit> ShowPageCommand { get; }
 
     /// <summary>Data → Reload from Disk and Ctrl+R, for picking up CSVs edited by hand: only with the model editors.</summary>
@@ -369,7 +379,32 @@ public class MainWindowViewModel : ViewModelBase
     {
         if (page >= PageCount)
             return;
+        Visit(page);
+        IsSettingsOpen = false;
+    }
+
+    /// <summary>Opens a page as the newest history entry, dropping any the back button had stepped over, as a browser does.</summary>
+    private void Visit(int page)
+    {
+        if (page != CurrentPage)
+        {
+            _history.RemoveRange(_historyIndex + 1, _history.Count - _historyIndex - 1);
+            _history.Add(page);
+            _historyIndex = _history.Count - 1;
+        }
         CurrentPage = page;
+    }
+
+    /// <summary>Steps back or forward through the pages opened, past any the Settings have hidden since.</summary>
+    private void StepHistory(int step)
+    {
+        var index = _historyIndex + step;
+        while (index >= 0 && index < _history.Count && _history[index] >= PageCount)
+            index += step;
+        if (index < 0 || index >= _history.Count)
+            return;
+        _historyIndex = index;
+        CurrentPage = _history[index];
         IsSettingsOpen = false;
     }
 
