@@ -7,8 +7,12 @@ using DeadlockAdvisor.Theme;
 namespace DeadlockAdvisor.Features.HeroItems;
 
 /// <summary>One item's row in a hero's item table, as printed.</summary>
-public class HeroItemRowViewModel(HeroItemRow row)
+/// <param name="average">The hero's own win rate over the same matches, which each row's is read against.</param>
+public class HeroItemRowViewModel(HeroItemRow row, double average)
 {
+    /// <summary>A win rate within this of the average, as a fraction, reads as average.</summary>
+    public const double AverageMargin = 0.005;
+
     /// <summary>"52.59%".</summary>
     public static string Percent(double share) => NumberFormat.Fixed(share * 100, 2) + "%";
 
@@ -26,6 +30,13 @@ public class HeroItemRowViewModel(HeroItemRow row)
     public string CostText => row.Item.Cost > 0 ? Format.Thousands(row.Item.Cost) : "";
 
     public string WinRateText => Percent(row.WinRate);
+    public bool AboveAverage => row.WinRate - average >= AverageMargin;
+    public bool BelowAverage => row.WinRate - average <= -AverageMargin;
+
+    /// <summary>"+1.8 points on the hero's 50.06% average".</summary>
+    public string WinRateTip =>
+        $"{Format.SignedFixed((row.WinRate - average) * 100, 1)} points on the hero's {Percent(average)} average win rate with these filters";
+
     public string WinRateChangeText => Change(row.WinRateChange);
     public bool WinRateRose => SignOf(row.WinRateChange) > 0;
     public bool WinRateFell => SignOf(row.WinRateChange) < 0;

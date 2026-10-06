@@ -294,16 +294,17 @@ public class HeroItemsViewModel : ViewModelBase
         var tiers = Tiers.Where(tier => tier.IsChecked).Select(tier => tier.Tier).ToHashSet();
         var inTiers = table.Rows.Where(row => tiers.Contains(row.Item.Tier)).ToList();
         var shown = inTiers.Where(row => row.Usage >= minUsage).ToList();
-        Rows = Sorted(shown).Select(row => new HeroItemRowViewModel(row)).ToList();
-
         var (wins, matches) = table.Matches;
+        var average = (double)wins / matches;
+        Rows = Sorted(shown).Select(row => new HeroItemRowViewModel(row, average)).ToList();
+
         var mode = SelectedMode.Mode switch
         {
             MatchMode.Ranked => "ranked ",
             MatchMode.Unranked => "unranked ",
             _ => "",
         };
-        Summary = $"{Format.Thousands(matches)} {mode}matches · {HeroItemRowViewModel.Percent((double)wins / matches)} won";
+        Summary = $"{Format.Thousands(matches)} {mode}matches · {HeroItemRowViewModel.Percent(average)} won";
         var hidden = inTiers.Count - shown.Count;
         HiddenText = hidden == 0
             ? ""

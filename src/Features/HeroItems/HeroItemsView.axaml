@@ -36,6 +36,15 @@
             <Setter Property="HorizontalAlignment" Value="Right"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
+        <!-- The win rate against the hero's own average: bold in green or red, plain within half a point of it. -->
+        <Style Selector="TextBlock.winRate.above">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBlock.winRate.below">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
         <Style Selector="TextBlock.change">
             <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
         </Style>
@@ -51,7 +60,10 @@
         <StackPanel DockPanel.Dock="Top" Spacing="10" Margin="0,0,0,10">
             <StackPanel Spacing="3">
                 <TextBlock Classes="section" Text="HERO ITEMS"/>
-                <TextBlock Classes="faint" Text="{Binding Summary}" IsVisible="{Binding !IsEmpty}"/>
+                <TextBlock Classes="faint"
+                           Text="{Binding Summary}"
+                           IsVisible="{Binding !IsEmpty}"
+                           ToolTip.Tip="A win rate in green or red is half a point or more above or below this hero's average with these filters."/>
             </StackPanel>
 
             <WrapPanel Orientation="Horizontal" ItemSpacing="12" LineSpacing="8" IsVisible="{Binding HasMatchData}">
@@ -187,7 +199,13 @@
                                                     <controls:Badge VerticalAlignment="Center" Text="{Binding TierText}" Color="{Binding TierColor}"/>
                                                 </StackPanel>
                                                 <TextBlock Grid.Column="1" Classes="number dim" Text="{Binding CostText}"/>
-                                                <TextBlock Grid.Column="2" Classes="number" Text="{Binding WinRateText}"/>
+                                                <TextBlock Grid.Column="2"
+                                                           Classes="number winRate"
+                                                           Classes.above="{Binding AboveAverage}"
+                                                           Classes.below="{Binding BelowAverage}"
+                                                           Background="Transparent"
+                                                           Text="{Binding WinRateText}"
+                                                           ToolTip.Tip="{Binding WinRateTip}"/>
                                                 <TextBlock Grid.Column="3"
                                                            Classes="number change"
                                                            Classes.rose="{Binding WinRateRose}"

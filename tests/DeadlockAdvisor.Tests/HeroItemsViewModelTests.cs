@@ -64,6 +64,19 @@ public sealed class HeroItemsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void AWinRateIsMarkedAboveOrBelowTheHerosAverageOnlyBeyondHalfAPoint()
+    {
+        var item = new DeadlockAdvisor.Models.Item("boots", "Boots", "vitality", 1, GameId: 1, Cost: 800);
+        HeroItemRowViewModel Row(long wins) => new(new HeroItemRow(item, wins, 1000, 0.5, null, null), average: 0.5);
+
+        Assert.Equal((true, false), (Row(560).AboveAverage, Row(560).BelowAverage));
+        Assert.Equal((false, true), (Row(440).AboveAverage, Row(440).BelowAverage));
+        Assert.Equal((false, false), (Row(504).AboveAverage, Row(504).BelowAverage));
+        Assert.Equal((true, false), (Row(505).AboveAverage, Row(505).BelowAverage));
+        Assert.Equal("+6.0 points on the hero's 50.00% average win rate with these filters", Row(560).WinRateTip);
+    }
+
+    [Fact]
     public async Task TierPillsLeaveOutTheirTiers()
     {
         await DownloadAsync();
