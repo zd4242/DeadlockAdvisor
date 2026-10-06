@@ -21,8 +21,8 @@ public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int S
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette
 /// and a hero in a skin won't look like the reference art. Correcting a slot can also keep its crop
 /// as reference art, which is how the matcher learns alternate portraits. Nothing applies until
-/// you're known, since that's what splits the teams; a You button on each slot covers the captures
-/// where the backplate couldn't be read.
+/// you're known, since that's what splits the teams; each slot's portrait and "This is me" button
+/// cover the captures where the backplate couldn't be read.
 /// </summary>
 public class DetectReviewViewModel : ViewModelBase
 {

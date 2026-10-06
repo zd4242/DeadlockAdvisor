@@ -17,6 +17,25 @@
         <Style Selector="Border.slot.you">
             <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
         </Style>
+        <Style Selector="ToggleButton.portrait">
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="2"/>
+            <Setter Property="CornerRadius" Value="6"/>
+            <Setter Property="VerticalAlignment" Value="Top"/>
+            <Setter Property="Cursor" Value="Hand"/>
+        </Style>
+        <Style Selector="ToggleButton.portrait:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="ToggleButton.portrait:checked /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        </Style>
+        <Style Selector=".picking ToggleButton.portrait:not(:checked) /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource SelfBrush}"/>
+        </Style>
         <Style Selector="TextBlock.role">
             <Setter Property="FontSize" Value="11"/>
             <Setter Property="FontWeight" Value="Bold"/>
@@ -38,10 +57,16 @@
         <DataTemplate x:DataType="detect:SlotReviewViewModel">
             <Border Classes="slot" Classes.you="{Binding IsYou}">
                 <Grid ColumnDefinitions="Auto,*">
-                    <Border Width="44" Height="73" CornerRadius="4" ClipToBounds="True"
-                            Background="{DynamicResource BgBrush}" VerticalAlignment="Top">
-                        <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
-                    </Border>
+                    <!-- The portrait is the big target for picking yourself, as well as the button beside the name. -->
+                    <ToggleButton Classes="portrait"
+                                  IsChecked="{Binding IsYou, Mode=OneWay}"
+                                  Command="{Binding SetSelfCommand}"
+                                  ToolTip.Tip="This slot is you: the teams follow from it">
+                        <Border Width="44" Height="73" CornerRadius="4" ClipToBounds="True"
+                                Background="{DynamicResource BgBrush}">
+                            <Image Source="{Binding Thumbnail}" Stretch="UniformToFill"/>
+                        </Border>
+                    </ToggleButton>
                     <StackPanel Grid.Column="1" Spacing="4" Margin="10,0,0,0">
                         <Grid ColumnDefinitions="*,Auto,Auto">
                             <TextBlock Classes="role"
@@ -54,7 +79,10 @@
                                        ToolTip.Tip="Net worth, as read under the portrait"/>
                             <ToggleButton Grid.Column="2"
                                           Classes="pill self"
-                                          Content="You"
+                                          Content="This is me"
+                                          FontSize="13"
+                                          Padding="12,4"
+                                          MinHeight="28"
                                           IsChecked="{Binding IsYou, Mode=OneWay}"
                                           Command="{Binding SetSelfCommand}"
                                           ToolTip.Tip="This slot is you: the teams follow from it"/>
@@ -124,7 +152,7 @@
             <Border Classes="blocker" Margin="0,0,16,0" IsVisible="{Binding !HasSelf}">
                 <StackPanel>
                     <PathIcon/>
-                    <TextBlock Text="Press You on your own slot to apply"/>
+                    <TextBlock Text="Pick your own slot to apply"/>
                 </StackPanel>
             </Border>
             <CheckBox Content="Remember my corrections as reference art"
