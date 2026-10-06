@@ -59,6 +59,7 @@ public class TierToggle(int tier) : ReactiveObject
 {
     public int Tier { get; } = tier;
     public string Label => $"T{Tier}";
+    public string Tip => $"Right-click to show only T{Tier}. Right-click it again to show every tier.";
     [Reactive] public bool IsChecked { get; set; } = true;
 }
 
@@ -155,10 +156,9 @@ public class HeroItemsViewModel : ViewModelBase
         this.WhenAnyValue(vm => vm.SelectedMode)
             .Subscribe(_ => CanPickRanks = RanksApply)
             .DisposeWith(Disposables);
-        Tiers.Select(tier => tier.WhenAnyValue(t => t.IsChecked))
+        Tiers.Select(tier => tier.WhenAnyValue(t => t.IsChecked).Skip(1).Select(_ => tier))
             .Merge()
-            .Skip(Tiers.Count)
-            .Subscribe(_ => Refresh())
+            .Subscribe(OnTierToggled)
             .DisposeWith(Disposables);
         data.StoreReplaced.Subscribe(_ => Reload()).DisposeWith(Disposables);
 
@@ -293,6 +293,38 @@ public class HeroItemsViewModel : ViewModelBase
 
     /// <summary>The ticked patches' counts, newest first.</summary>
     private List<MatchSegment> PickedSegments => Patches.Where(option => option.IsChecked).Select(option => option.Segment).ToList();
+
+    /// <summary>Shows just <paramref name="tier"/>, or every tier again when it's the only one shown.</summary>
+    public void ShowOnlyTier(TierToggle tier)
+    {
+        var alone = tier.IsChecked && Tiers.All(other => other == tier || !other.IsChecked);
+        var wasLoading = _loading;
+        _loading = true;
+        try
+        {
+            foreach (var other in Tiers)
+                other.IsChecked = alone || other == tier;
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
+        if (!_loading)
+            Refresh();
+    }
+
+    private void OnTierToggled(TierToggle tier)
+    {
+        if (_loading)
+            return;
+        // The last one stays: the table needs a tier to show.
+        if (!Tiers.Any(other => other.IsChecked))
+        {
+            tier.IsChecked = true;
+            return;
+        }
+        Refresh();
+    }
 
     private void OnPatchToggled(PatchOption option)
     {

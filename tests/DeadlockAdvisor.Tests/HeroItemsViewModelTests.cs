@@ -184,6 +184,50 @@ public sealed class HeroItemsViewModelTests : IDisposable
     }
 
     [Fact]
+    public async Task RightClickingATierShowsOnlyThatTierThenEveryTier()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        var store = _fixture.Data.Store;
+        int TierOf(HeroItemRowViewModel row) => store.Items[row.ItemId].Tier;
+
+        page.ShowOnlyTier(page.Tiers[1]);
+
+        Assert.Equal([false, true, false, false], page.Tiers.Select(tier => tier.IsChecked));
+        Assert.NotEmpty(page.Rows);
+        Assert.All(page.Rows, row => Assert.Equal(2, TierOf(row)));
+
+        page.ShowOnlyTier(page.Tiers[1]);
+
+        Assert.All(page.Tiers, tier => Assert.True(tier.IsChecked));
+    }
+
+    [Fact]
+    public async Task RightClickingAnUnshownTierShowsOnlyIt()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        page.ShowOnlyTier(page.Tiers[0]);
+
+        page.ShowOnlyTier(page.Tiers[3]);
+
+        Assert.Equal([false, false, false, true], page.Tiers.Select(tier => tier.IsChecked));
+    }
+
+    [Fact]
+    public async Task TheLastShownTierCantBeClickedOff()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        page.ShowOnlyTier(page.Tiers[2]);
+
+        page.Tiers[2].IsChecked = false;
+
+        Assert.Equal([false, false, true, false], page.Tiers.Select(tier => tier.IsChecked));
+        Assert.NotEmpty(page.Rows);
+    }
+
+    [Fact]
     public async Task AHeaderSortsByItsColumnAndAgainTheOtherWay()
     {
         await DownloadAsync();

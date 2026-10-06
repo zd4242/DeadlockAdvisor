@@ -101,7 +101,10 @@
                         <TextBlock VerticalAlignment="Center" MinWidth="32" Text="{Binding MinUsageText}"/>
                     </StackPanel>
 
-                    <Border Classes="segmented" VerticalAlignment="Center" ToolTip.Tip="Which tiers of item show">
+                    <Border x:Name="TierSwitch"
+                            Classes="segmented"
+                            VerticalAlignment="Center"
+                            ToolTip.Tip="Which tiers of item show. Click a tier to add or remove it; right-click one to show only that tier.">
                         <ItemsControl ItemsSource="{Binding Tiers}">
                             <ItemsControl.ItemsPanel>
                                 <ItemsPanelTemplate>
@@ -110,7 +113,9 @@
                             </ItemsControl.ItemsPanel>
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="heroItems:TierToggle">
-                                    <ToggleButton Content="{Binding Label}" IsChecked="{Binding IsChecked}"/>
+                                    <ToggleButton Content="{Binding Label}"
+                                                  IsChecked="{Binding IsChecked}"
+                                                  ToolTip.Tip="{Binding Tip}"/>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
