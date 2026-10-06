@@ -102,9 +102,9 @@ public class HeroItemsViewModel : ViewModelBase
             [HeroItemSort.Item] = new(HeroItemSort.Item, "Item"),
             [HeroItemSort.Cost] = new(HeroItemSort.Cost, "Cost"),
             [HeroItemSort.WinRate] = new(HeroItemSort.WinRate, "Win rate"),
-            [HeroItemSort.WinRateChange] = new(HeroItemSort.WinRateChange, "Change"),
+            [HeroItemSort.WinRateChange] = new(HeroItemSort.WinRateChange, "Win Δ"),
             [HeroItemSort.Usage] = new(HeroItemSort.Usage, "Usage"),
-            [HeroItemSort.UsageChange] = new(HeroItemSort.UsageChange, "Change"),
+            [HeroItemSort.UsageChange] = new(HeroItemSort.UsageChange, "Usage Δ"),
             [HeroItemSort.Matches] = new(HeroItemSort.Matches, "Won / lost"),
         };
         ShowSort();

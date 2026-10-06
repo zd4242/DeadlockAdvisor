@@ -158,7 +158,7 @@ public class HeroItemsPageTests
         ui.Show();
 
         var chips = Rows(ui).Select(row => (Row: (HeroItemRowViewModel)row.DataContext!,
-            Chip: row.GetVisualDescendants().OfType<Border>().Single(border => border.Child is TextBlock text && text.Classes.Contains("winRate"))))
+            Chip: row.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Classes.Contains("winRate")).GetVisualAncestors().OfType<Border>().First()))
             .ToList();
 
         Assert.Contains(chips, pair => pair.Row.AboveAverage);

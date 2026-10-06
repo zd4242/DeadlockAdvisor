@@ -75,6 +75,7 @@ public sealed class HeroItemsViewModelTests : IDisposable
         Assert.Equal((false, false), (Row(504).AboveAverage, Row(504).BelowAverage));
         Assert.Equal((true, false), (Row(505).AboveAverage, Row(505).BelowAverage));
         Assert.Equal("+6.0 points on the hero's 50.00% average win rate with these filters", Row(560).WinRateTip);
+        Assert.Equal(("+6.0", "-6.0", "+0.0"), (Row(560).WinRateGapText, Row(440).WinRateGapText, Row(500).WinRateGapText));
     }
 
     [Fact]

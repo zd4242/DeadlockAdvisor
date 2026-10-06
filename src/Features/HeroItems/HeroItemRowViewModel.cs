@@ -34,6 +34,9 @@ public class HeroItemRowViewModel(HeroItemRow row, double average)
     public string CostText => row.Item.Cost > 0 ? Format.Thousands(row.Item.Cost) : "";
 
     public string WinRateText => Percent(row.WinRate);
+
+    /// <summary>"+1.8", "−0.4": the win rate's distance from the average, in points, beside it.</summary>
+    public string WinRateGapText => Format.SignedFixed((row.WinRate - average) * 100, 1);
     public bool AboveAverage => row.WinRate - average >= AverageMargin;
     public bool BelowAverage => row.WinRate - average <= -AverageMargin;
 
