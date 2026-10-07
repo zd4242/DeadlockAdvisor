@@ -1076,7 +1076,8 @@ public static partial class MatchStatsMath
         var mine = FamilyMeta(meta, "as");
         if (IsTrue(mine["kept"]))
             lines.Add($"You (hero fit): how much more your hero wins with it than everyone who builds it, since patch {Text(mine["since_patch"]) ?? "?"}. "
-                      + "Usually about three times bigger, and partly shows who builds it on this hero, not only what it does.");
+                      + "Usually about three times bigger, and partly shows who builds it on this hero, not only what it does. "
+                      + "A low one doesn't make the item a bad buy, only one your hero gains less from than from its usual picks.");
         return string.Join("\n", lines);
     }
 

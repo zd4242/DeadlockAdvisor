@@ -2,7 +2,7 @@ using DeadlockAdvisor.Models;
 
 namespace DeadlockAdvisor.Scoring;
 
-/// <summary>How much more one hero wins with an item than the other players who build it do, next to its other items of the same tier.</summary>
+/// <summary>How much more one hero wins with an item than everyone who builds it does, that hero's players included, next to its other items of the same tier.</summary>
 /// <param name="EveryoneWinRate">The share of every player's matches with the item that were won, as a fraction.</param>
 /// <param name="TierAverage">What the hero's items of the item's tier gain over everyone's, in win-rate points: the lift's zero.</param>
 /// <param name="Raw">The lift in win-rate points, before shrinking.</param>

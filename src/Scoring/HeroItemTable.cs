@@ -6,7 +6,7 @@ namespace DeadlockAdvisor.Scoring;
 /// <param name="Usage">The share of the hero's matches it was bought in, 0 to 1.</param>
 /// <param name="WinRateChange">Since the patch before, as a fraction; null when that patch has no win rate for it.</param>
 /// <param name="UsageChange">Since the patch before, as a fraction; null without the patch before.</param>
-/// <param name="Fit">How much more the hero wins with it than everyone else; null when it was bought in too few matches to measure.</param>
+/// <param name="Fit">How much more the hero wins with it than everyone who builds it; null when it was bought in too few matches to measure.</param>
 public sealed record HeroItemRow(
     Item Item, long Wins, long Matches, double Usage, double? WinRateChange, double? UsageChange, HeroFit? Fit = null)
 {

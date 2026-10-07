@@ -79,10 +79,12 @@ public class HeroItemsViewModel : ViewModelBase
     public const double MaxMinUsagePercent = 50;
 
     public const string FitHeaderTip =
-        "How much more this hero wins with the item than everyone else who builds it, next to the hero's other items of the "
+        "How much more this hero wins with the item than everyone who builds it, next to the hero's other items of the "
         + "same tier, in win-rate points. 0 is typical, and above 0 suits this hero better than its usual picks.\n"
         + "Unlike the win rate, it isn't raised by items being bought late in games already going well, but it says nothing "
-        + "about how strong the item is for everyone. The Match page's \"you\" match data is the same measure.";
+        + "about how strong the item is for everyone. A low fit doesn't make an item a bad buy: it only means this hero "
+        + "gains less from it than from its usual picks, and a strong item can fit every hero below that.\n"
+        + "The Match page's \"you\" match data is the same measure.";
 
     public const string FiltersTip = "Which matches count, and which columns show";
 
