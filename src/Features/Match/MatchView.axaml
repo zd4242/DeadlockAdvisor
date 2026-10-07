@@ -48,8 +48,8 @@
             <Border Classes="card">
                 <DockPanel>
                     <!-- What ranks the list stays in view; the rest sits behind Filters. -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
-                        <StackPanel VerticalAlignment="Center" Spacing="3">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" RowDefinitions="Auto,Auto" Margin="0,0,0,8">
+                        <StackPanel Grid.RowSpan="2" VerticalAlignment="Center" Spacing="3">
                             <Grid ColumnDefinitions="Auto,*">
                                 <TextBlock Classes="section" VerticalAlignment="Center" Text="RECOMMENDED ITEMS"/>
                                 <!-- The enemies clicked on the match bar, and a way to stop focusing on them. -->
@@ -91,41 +91,44 @@
                                        IsVisible="{Binding !Results.IsEmpty}"/>
                         </StackPanel>
                         <!-- The caption sits over the box rather than beside it, so it costs no width. -->
-                        <StackPanel Grid.Column="1" VerticalAlignment="Center" Spacing="1">
-                            <TextBlock Classes="faint"
-                                       FontSize="11"
-                                       Margin="2,0,0,0"
-                                       Text="Items ranked by"/>
-                            <ComboBox ItemsSource="{Binding Ranks}"
-                                      SelectedItem="{Binding SelectedRank}"
-                                      IsEnabled="{Binding HasMatchData}"
-                                      ToolTip.ShowOnDisabled="True"
-                                      ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;plus its hero fit: how much more your hero wins with it than everyone who builds it. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Download Match Data).">
-                                <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
-                                <ComboBox.Resources>
-                                    <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
-                                    <StaticResource x:Key="ComboBoxItemForegroundPointerOver" ResourceKey="TextBrush"/>
-                                </ComboBox.Resources>
-                                <ComboBox.ItemTemplate>
-                                    <DataTemplate x:DataType="match:RankPreset">
-                                        <controls:RichText Spans="{Binding MenuLabel, Converter={x:Static controls:OpinionTerms.Converter}}"/>
-                                    </DataTemplate>
-                                </ComboBox.ItemTemplate>
-                                <ComboBox.SelectionBoxItemTemplate>
-                                    <DataTemplate x:DataType="match:RankPreset">
-                                        <controls:RichText Spans="{Binding Label, Converter={x:Static controls:OpinionTerms.Converter}}"/>
-                                    </DataTemplate>
-                                </ComboBox.SelectionBoxItemTemplate>
-                            </ComboBox>
-                        </StackPanel>
+                        <TextBlock Grid.Column="1"
+                                   Classes="faint"
+                                   FontSize="11"
+                                   Margin="2,0,0,1"
+                                   Text="Items ranked by"/>
+                        <ComboBox Grid.Row="1"
+                                  Grid.Column="1"
+                                  VerticalAlignment="Stretch"
+                                  ItemsSource="{Binding Ranks}"
+                                  SelectedItem="{Binding SelectedRank}"
+                                  IsEnabled="{Binding HasMatchData}"
+                                  ToolTip.ShowOnDisabled="True"
+                                  ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;plus its hero fit: how much more your hero wins with it than everyone who builds it. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Download Match Data).">
+                            <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
+                            <ComboBox.Resources>
+                                <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
+                                <StaticResource x:Key="ComboBoxItemForegroundPointerOver" ResourceKey="TextBrush"/>
+                            </ComboBox.Resources>
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate x:DataType="match:RankPreset">
+                                    <controls:RichText Spans="{Binding MenuLabel, Converter={x:Static controls:OpinionTerms.Converter}}"/>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                            <ComboBox.SelectionBoxItemTemplate>
+                                <DataTemplate x:DataType="match:RankPreset">
+                                    <controls:RichText Spans="{Binding Label, Converter={x:Static controls:OpinionTerms.Converter}}"/>
+                                </DataTemplate>
+                            </ComboBox.SelectionBoxItemTemplate>
+                        </ComboBox>
 
                         <!-- Shows or puts away the search box below. It keeps focus off itself, so a click on it while the box
                              has focus doesn't first close an empty box through its lost focus. -->
                         <Button x:Name="ItemSearchToggle"
+                                Grid.Row="1"
                                 Grid.Column="2"
                                 Focusable="False"
                                 Margin="8,0,0,0"
-                                VerticalAlignment="Center"
+                                VerticalAlignment="Stretch"
                                 Classes="glyph"
                                 Classes.open="{Binding Results.IsSearchOpen}"
                                 Command="{Binding ToggleItemSearchCommand}"
@@ -140,9 +143,10 @@
 
                         <!-- A funnel, filled while a filter changes the list out of sight. -->
                         <Button x:Name="FiltersButton"
+                                Grid.Row="1"
                                 Grid.Column="3"
                                 Margin="8,0,0,0"
-                                VerticalAlignment="Center"
+                                VerticalAlignment="Stretch"
                                 Classes="glyph"
                                 Classes.active="{Binding HasActiveFilters}"
                                 ToolTip.Tip="{Binding FiltersButtonTip}">
