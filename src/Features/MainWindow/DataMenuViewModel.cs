@@ -515,17 +515,67 @@ public class DataMenuViewModel : ViewModelBase
         if (!_data.FlushSaves())
             return;
         var dataDir = _data.DataDir;
+        var added = await TakeNewHeroesAsync(published, dataDir, askAgain: manual);
         var update = ModelUpdatePlan.For(published, dataDir, askAgain: manual);
         if (update.Edited.Count > 0)
+        {
+            if (added.Count > 0)
+                ShowNewHeroes(update, added, withNews: false);
             _modals.ShowModal(ModelUpdateViewModel.Update(_modals, update, replace => Launch(() => InstallModelAsync(dataDir, update, replace, manual: true))));
+        }
         else if (update.Quiet.Count > 0)
+        {
             await InstallModelAsync(dataDir, update, new HashSet<string>(), manual);
+        }
         else
         {
             WriteModelRecord(dataDir, update);
-            if (manual)
+            if (added.Count > 0)
+                ShowNewHeroes(update, added, withNews: true);
+            else if (manual)
                 ShowMessage("Formula update", [$"The hero ratings and item formulas are up to date: the version published {published.Published}."]);
         }
+    }
+
+    /// <summary>
+    /// Adds the heroes the published model has and this data folder lacks to the hero files its owner has changed,
+    /// which would otherwise ask or be left out (<see cref="ModelUpdateService.AddNewHeroes"/>): a hero the game
+    /// releases is never worth a question. A failure to fetch or write changes nothing and says nothing: the update
+    /// goes on as it would have.
+    /// </summary>
+    /// <returns>The heroes added to heroes.csv, as the published model names them.</returns>
+    private async Task<IReadOnlyList<string>> TakeNewHeroesAsync(ModelManifest published, string dataDir, bool askAgain)
+    {
+        var files = ModelUpdateService.HeroFilesToMerge(published, dataDir, askAgain);
+        if (files.Count == 0)
+            return [];
+        HeroMerge merged;
+        try
+        {
+            merged = ModelUpdateService.AddNewHeroes(dataDir, files, await _models.DownloadAsync(published, ModelUpdateService.HeroFiles));
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex) || ex is IOException or UnauthorizedAccessException)
+        {
+            _log.Warning($"Formula update: couldn't add the new heroes\n{ex}");
+            return [];
+        }
+        if (merged.Written.Count == 0)
+            return [];
+        _data.Reload();
+        if (merged.Added.Count > 0 && HeroesMissingArt())
+            Launch(() => DownloadArtAsync(force: false, quiet: true));
+        return merged.Added;
+    }
+
+    /// <summary>Says heroes were added, when no install is about to say what the update changed.</summary>
+    private void ShowNewHeroes(ModelUpdatePlan update, IReadOnlyList<string> added, bool withNews)
+    {
+        var news = withNews ? update.News : [];
+        _notifications.ShowSuccess(
+            news.Count > 0
+                ? $"Formulas updated: {string.Join(" ", news.Select(note => note.Text))}"
+                : $"Added {string.Join(", ", added)} from the published heroes.",
+            news.Count > 0 ? _newsToastTime : _toastTime);
     }
 
     private const string Unreachable = "Couldn't reach GitHub for the published hero ratings and item formulas. Try again later.";

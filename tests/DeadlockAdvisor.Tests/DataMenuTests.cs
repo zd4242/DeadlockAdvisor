@@ -751,6 +751,67 @@ public sealed class DataMenuTests : IDisposable
         Assert.Equal("2026-10-09", ModelManifest.Installed(_fixture.Data.DataDir)!.Published);
     }
 
+    private static byte[] Appended(byte[] csv, string row) => Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(csv).TrimEnd() + "\r\n" + row + "\r\n");
+
+    /// <summary>The data folder's hero files with one more hero, "Newcomer", rated 3 on the first trait: a newer model's.</summary>
+    private (byte[] Heroes, byte[] Scores) WithANewcomer() =>
+        (Appended(DataBytes(DataStore.HeroesFile), "newcomer,Newcomer,9001"),
+            Appended(DataBytes(DataStore.HeroScoresFile), $"newcomer,{_fixture.Data.Store.Categories.Keys.First()},3"));
+
+    private void Edit(string file, Func<byte[], byte[]> edit) =>
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, file), edit(DataBytes(file)));
+
+    [Fact]
+    public void ANewHeroIsTakenIntoAHeroesFileTheOwnerChangedWithoutAskingAndGetsItsArt()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        HavePortraits();
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now;
+        var (heroes, scores) = WithANewcomer();
+        PublishModelWithNotes([new("2026-10-09", "New hero: Newcomer.")], (DataStore.HeroesFile, heroes));
+        Edit(DataStore.HeroesFile, csv => Appended(csv, "mine,Mine,9100"));
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        Assert.DoesNotContain(_shown, shown => shown is ModelUpdateViewModel);
+        Assert.Equal(["mine", "newcomer"], _fixture.Data.Store.Heroes.Keys.TakeLast(2));
+        Assert.Equal("Formulas updated: New hero: Newcomer.", Assert.Single(_toasts).Message);
+        // Taken, so the next startup has nothing to do about it.
+        Assert.Equal(ModelManifest.Hash(heroes), ModelManifest.Installed(_fixture.Data.DataDir)!.Files[DataStore.HeroesFile]);
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+        _toasts.Clear();
+        using var later = Menu();
+        later.OnStartup();
+        Assert.Empty(_toasts);
+    }
+
+    [Fact]
+    public async Task ANewHeroIsAddedToChangedRatingsWhileTheDialogOnlyAsksAboutTheRatings()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var (heroes, scores) = WithANewcomer();
+        PublishModel((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+        var mine = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.HeroScoresFile), "1");
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.HeroScoresFile), mine);
+        Edit(DataStore.HeroesFile, csv => Appended(csv, "mine,Mine,9100"));
+
+        _menu.OnStartup();
+
+        var dialog = Assert.IsType<ModelUpdateViewModel>(_shown[^1]);
+        Assert.Equal(["Hero trait ratings"], dialog.Choices.Select(choice => choice.Title));
+        Assert.Equal("Added Newcomer from the published heroes.", Assert.Single(_toasts).Message);
+        Assert.Equal(3, _fixture.Data.Store.HeroScore("newcomer", _fixture.Data.Store.Categories.Keys.First()));
+        await dialog.UpdateCommand.Execute();
+
+        // Kept as theirs, the new hero's ratings with them.
+        var kept = Encoding.UTF8.GetString(DataBytes(DataStore.HeroScoresFile));
+        Assert.StartsWith(Encoding.UTF8.GetString(mine).TrimEnd(), kept);
+        Assert.Contains("\r\nnewcomer,", kept);
+    }
+
     [Fact]
     public async Task AnUpdateSaysWhatItsPublisherSaidChanged()
     {

@@ -357,6 +357,120 @@ public sealed class ModelUpdateTests : IDisposable
         Assert.Equal([DataStore.TraitWeightsFile, DataStore.HeroesFile], ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09").Files);
     }
 
+    // -- new heroes ---------------------------------------------------------------------
+
+    /// <summary>The hero files as a newer model publishes them with one more hero, "Newcomer", rated 3 on the first trait.</summary>
+    private (byte[] Heroes, byte[] Scores) WithANewcomer()
+    {
+        var firstTrait = DataStore.Load(_data.Path).Categories.Keys.First();
+        var heroes = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(Seed(DataStore.HeroesFile)).TrimEnd() + "\r\nnewcomer,Newcomer,9001\r\n");
+        var scores = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(Seed(DataStore.HeroScoresFile)).TrimEnd() + $"\r\nnewcomer,{firstTrait},3\r\n");
+        return (heroes, scores);
+    }
+
+    private void AddRowTo(string file, string row) => File.WriteAllText(DataFile(file), File.ReadAllText(DataFile(file)).TrimEnd() + "\r\n" + row + "\r\n");
+
+    private static void InstalledAsPublished(string dataDir) => ModelUpdateService.Record(dataDir, ModelManifest.Of(dataDir, "2026-10-02"));
+
+    [Fact]
+    public async Task AChangedHeroesFileGainsTheNewHeroesWithoutAskingAndKeepsItsOwnRows()
+    {
+        InstalledAsPublished(_data.Path);
+        AddRowTo(DataStore.HeroesFile, "mine,Mine,9100");
+        var (heroes, scores) = WithANewcomer();
+        var published = Publish((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+
+        Assert.Equal([DataStore.HeroesFile], ModelUpdateService.HeroFilesToMerge(published, _data.Path, askAgain: false));
+        var merged = ModelUpdateService.AddNewHeroes(_data.Path, [DataStore.HeroesFile], await _service.DownloadAsync(published, ModelUpdateService.HeroFiles));
+
+        Assert.Equal(["Newcomer"], merged.Added);
+        Assert.Equal([DataStore.HeroesFile], merged.Written);
+        var store = DataStore.Load(_data.Path);
+        Assert.Equal(["mine", "newcomer"], store.Heroes.Keys.TakeLast(2));
+        Assert.Equal(9001, store.Heroes["newcomer"].GameId);
+        // Its owner is asked about nothing, and what nobody changed still updates quietly, bringing the ratings.
+        var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
+        Assert.Empty(plan.Edited);
+        Assert.Equal([DataStore.HeroScoresFile], plan.Quiet);
+        Assert.Equal([DataStore.HeroesFile], plan.Additive);
+        await InstallAsync(plan);
+        Assert.Equal(scores, File.ReadAllBytes(DataFile(DataStore.HeroScoresFile)));
+        var again = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
+        Assert.False(again.HasWork);
+        Assert.Empty(again.Additive);
+        Assert.Empty(ModelUpdateService.HeroFilesToMerge(published, _data.Path, askAgain: true));
+    }
+
+    [Fact]
+    public async Task ChangedRatingsGainTheNewHeroesRowsAndKeepTheOwnersEdits()
+    {
+        InstalledAsPublished(_data.Path);
+        var mine = ModelUpdateTests.FirstRowEnding(Seed(DataStore.HeroScoresFile), "1");
+        File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), mine);
+        var (heroes, scores) = WithANewcomer();
+        var published = Publish((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+
+        // The heroes file is unchanged here, so the update replaces it whole; only the ratings need the merge.
+        Assert.Equal([DataStore.HeroScoresFile], ModelUpdateService.HeroFilesToMerge(published, _data.Path, askAgain: false));
+        var merged = ModelUpdateService.AddNewHeroes(_data.Path, [DataStore.HeroScoresFile], await _service.DownloadAsync(published, ModelUpdateService.HeroFiles));
+
+        Assert.Empty(merged.Added);
+        Assert.Equal([DataStore.HeroScoresFile], merged.Written);
+        Assert.Equal(Seed(DataStore.HeroesFile), File.ReadAllBytes(DataFile(DataStore.HeroesFile)));
+        var text = File.ReadAllText(DataFile(DataStore.HeroScoresFile));
+        Assert.StartsWith(Encoding.UTF8.GetString(mine).TrimEnd(), text);
+        Assert.EndsWith(",3", text.TrimEnd());
+        Assert.Contains("\r\nnewcomer,", text);
+        // What's left to ask about is the owner's own ratings, as before.
+        var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
+        Assert.Equal([DataStore.HeroScoresFile], plan.Edited);
+        Assert.Equal([DataStore.HeroesFile], plan.Quiet);
+    }
+
+    [Fact]
+    public async Task AHeroTheFolderSpellsWithAnotherIdIsTheSameHeroAndIsntAddedTwice()
+    {
+        AddRowTo(DataStore.HeroesFile, "newcomer_two,Newcomer,9001");
+        var before = File.ReadAllBytes(DataFile(DataStore.HeroesFile));
+        var (heroes, scores) = WithANewcomer();
+        var published = Publish((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+
+        var merged = ModelUpdateService.AddNewHeroes(_data.Path, ModelUpdateService.HeroFiles, await _service.DownloadAsync(published, ModelUpdateService.HeroFiles));
+
+        Assert.Empty(merged.Added);
+        Assert.Empty(merged.Written);
+        Assert.Equal(before, File.ReadAllBytes(DataFile(DataStore.HeroesFile)));
+    }
+
+    [Fact]
+    public async Task OnlyTheTraitsTheFolderHasAreTakenForANewHero()
+    {
+        InstalledAsPublished(_data.Path);
+        File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), FirstRowEnding(Seed(DataStore.HeroScoresFile), "1"));
+        var (heroes, scores) = WithANewcomer();
+        scores = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(scores).TrimEnd() + "\r\nnewcomer,a_trait_this_folder_lacks,5\r\n");
+        var published = Publish((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+
+        ModelUpdateService.AddNewHeroes(_data.Path, [DataStore.HeroScoresFile], await _service.DownloadAsync(published, ModelUpdateService.HeroFiles));
+
+        Assert.DoesNotContain("a_trait_this_folder_lacks", File.ReadAllText(DataFile(DataStore.HeroScoresFile)));
+        Assert.Equal(1, File.ReadAllLines(DataFile(DataStore.HeroScoresFile)).Count(line => line.StartsWith("newcomer,", StringComparison.Ordinal)));
+    }
+
+    [Fact]
+    public void AFileKeptOverThisVersionIsntMergedIntoAgainUnlessAskedFor()
+    {
+        InstalledAsPublished(_data.Path);
+        File.WriteAllBytes(DataFile(DataStore.HeroScoresFile), FirstRowEnding(Seed(DataStore.HeroScoresFile), "1"));
+        var (heroes, scores) = WithANewcomer();
+        var published = Publish((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+        var installed = ModelManifest.Installed(_data.Path)!;
+        ModelUpdateService.Record(_data.Path, installed with { Kept = new Dictionary<string, string> { [DataStore.HeroScoresFile] = published.Files[DataStore.HeroScoresFile] } });
+
+        Assert.Empty(ModelUpdateService.HeroFilesToMerge(published, _data.Path, askAgain: false));
+        Assert.Equal([DataStore.HeroScoresFile], ModelUpdateService.HeroFilesToMerge(published, _data.Path, askAgain: true));
+    }
+
     [Fact]
     public void TheReleaseHoldsEachFileUnderTheNameItsHashGivesIt()
     {

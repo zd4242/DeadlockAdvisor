@@ -1,8 +1,10 @@
 using System.IO;
 using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading;
 using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Services.Formats;
 
 namespace DeadlockAdvisor.Services;
 
@@ -159,6 +161,12 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
 
     public bool HasWork => Quiet.Count > 0 || Edited.Count > 0;
 
+    /// <summary>
+    /// A changed heroes.csv with a newer one published: never asked about, since the heroes it lacks are added
+    /// to it (<see cref="ModelUpdateService.AddNewHeroes"/>) and the rest is its owner's. Recorded as taken.
+    /// </summary>
+    public IReadOnlyList<string> Additive { get; init; } = [];
+
     /// <summary>What's changed since the version installed here, newest first, as the update says it.</summary>
     public IReadOnlyList<ModelNote> News => Published.Notes.Except(Installed?.Notes ?? []).Take(MaxNewsShown).ToList();
 
@@ -169,6 +177,7 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
         var current = new Dictionary<string, string?>();
         var quiet = new List<string>();
         var edited = new List<string>();
+        var additive = new List<string>();
         foreach (var file in ModelManifest.ModelFiles.Where(published.Files.ContainsKey))
         {
             var now = ModelManifest.HashOf(Path.Combine(dataDir, file));
@@ -180,10 +189,12 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
                 continue;
             if (now is null || now == before)
                 quiet.Add(file);
+            else if (file == DataStore.HeroesFile)
+                additive.Add(file);
             else if (askAgain || installed?.Kept.GetValueOrDefault(file) != latest)
                 edited.Add(file);
         }
-        return new ModelUpdatePlan(published, installed, current, quiet, edited);
+        return new ModelUpdatePlan(published, installed, current, quiet, edited) { Additive = additive };
     }
 
     /// <summary>
@@ -209,7 +220,7 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
         var kept = Installed?.Kept.Where(pair => !replaced.Contains(pair.Key)).ToDictionary() ?? [];
         foreach (var (file, latest) in Published.Files)
         {
-            if (replaced.Contains(file) || Current.GetValueOrDefault(file) == latest)
+            if (replaced.Contains(file) || Additive.Contains(file) || Current.GetValueOrDefault(file) == latest)
             {
                 files[file] = latest;
                 kept.Remove(file);
@@ -348,4 +359,95 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
         if (!File.Exists(path) || !File.ReadAllBytes(path).AsSpan().SequenceEqual(bytes))
             AtomicFile.Write(path, bytes);
     }
+
+    // -- new heroes ---------------------------------------------------------------------
+
+    /// <summary>The files a hero lives in: its row, and its trait ratings.</summary>
+    public static readonly IReadOnlyList<string> HeroFiles = [DataStore.HeroesFile, DataStore.HeroScoresFile];
+
+    /// <summary>
+    /// The hero files <see cref="AddNewHeroes"/> should add to: changed here, with a newer version published,
+    /// which would otherwise be asked about (or, for heroes.csv, left out). One the owner kept over this version
+    /// isn't offered again, unless <paramref name="askAgain"/>. A file nobody changed is replaced whole, which
+    /// brings the heroes with it.
+    /// </summary>
+    public static IReadOnlyList<string> HeroFilesToMerge(ModelManifest published, string dataDir, bool askAgain)
+    {
+        var installed = ModelManifest.Installed(dataDir);
+        return HeroFiles.Where(file =>
+        {
+            var before = installed?.Files.GetValueOrDefault(file);
+            return published.Files.TryGetValue(file, out var latest)
+                   && ModelManifest.HashOf(Path.Combine(dataDir, file)) is { } now
+                   && now != latest && now != before && latest != before
+                   && (askAgain || installed?.Kept.GetValueOrDefault(file) != latest);
+        }).ToList();
+    }
+
+    /// <summary>
+    /// Add the heroes of the published model that this folder lacks to <paramref name="files"/>, with their published
+    /// trait ratings, leaving every row already there as it is: a hero the game releases shouldn't cost anyone a
+    /// question, or make them choose between their own ratings and the new hero. A hero is the same one by hero id
+    /// or by game id. Ratings are only taken for traits this folder has.
+    /// </summary>
+    /// <param name="files">The hero files to add to (<see cref="HeroFilesToMerge"/>).</param>
+    /// <param name="published">The published <see cref="HeroFiles"/>, as downloaded.</param>
+    public static HeroMerge AddNewHeroes(string dataDir, IReadOnlyCollection<string> files, IReadOnlyDictionary<string, byte[]> published)
+    {
+        var heroesPath = Path.Combine(dataDir, DataStore.HeroesFile);
+        var ours = File.Exists(heroesPath) ? CsvReader.ReadFile(heroesPath).Where(row => row.Has("hero_id")).ToList() : [];
+        var ids = ours.Select(row => row.Required("hero_id")).ToHashSet(StringComparer.Ordinal);
+        var gameIds = ours.Select(GameIdOf).Where(gameId => gameId != 0).ToHashSet();
+        var missing = Rows(published, DataStore.HeroesFile)
+            .Where(row => row.Has("hero_id") && row.Has("hero_name") && !ids.Contains(row.Required("hero_id"))
+                          && !(GameIdOf(row) is var gameId && gameId != 0 && gameIds.Contains(gameId)))
+            .ToList();
+        var written = new HashSet<string>();
+        if (missing.Count == 0)
+            return new HeroMerge([], written);
+
+        var added = new List<string>();
+        if (files.Contains(DataStore.HeroesFile))
+        {
+            var rows = ours.Concat(missing).Select(row => (IReadOnlyList<string>)[row.Required("hero_id"), row.Required("hero_name"), row.Get("game_id") ?? ""]);
+            BackedUpFile.Write(heroesPath, CsvWriter.ToBytes(["hero_id", "hero_name", "game_id"], rows));
+            written.Add(DataStore.HeroesFile);
+            added.AddRange(missing.Select(row => row.Required("hero_name")));
+        }
+        if (files.Contains(DataStore.HeroScoresFile) && AddNewHeroRatings(dataDir, missing.Select(row => row.Required("hero_id")).ToHashSet(StringComparer.Ordinal), published))
+            written.Add(DataStore.HeroScoresFile);
+        return new HeroMerge(added, written);
+    }
+
+    /// <summary>The new heroes' published rows appended to this folder's ratings, for the traits it has. Whether any were.</summary>
+    private static bool AddNewHeroRatings(string dataDir, HashSet<string> heroIds, IReadOnlyDictionary<string, byte[]> published)
+    {
+        var scoresPath = Path.Combine(dataDir, DataStore.HeroScoresFile);
+        var categoriesPath = Path.Combine(dataDir, DataStore.CategoriesFile);
+        if (!File.Exists(scoresPath) || !File.Exists(categoriesPath))
+            return false;
+        var categories = CsvReader.ReadFile(categoriesPath).Where(row => row.Has("category_id")).Select(row => row.Required("category_id")).ToHashSet(StringComparer.Ordinal);
+        var ours = CsvReader.ReadFile(scoresPath).Where(row => row.Has("hero_id") && row.Has("category_id")).ToList();
+        var present = ours.Select(row => (row.Required("hero_id"), row.Required("category_id"))).ToHashSet();
+        var extra = Rows(published, DataStore.HeroScoresFile)
+            .Where(row => row.Has("hero_id") && row.Has("category_id") && heroIds.Contains(row.Required("hero_id"))
+                          && categories.Contains(row.Required("category_id")) && !present.Contains((row.Required("hero_id"), row.Required("category_id"))))
+            .ToList();
+        if (extra.Count == 0)
+            return false;
+        var rows = ours.Concat(extra).Select(row => (IReadOnlyList<string>)[row.Required("hero_id"), row.Required("category_id"), row.Get("score") ?? ""]);
+        BackedUpFile.Write(scoresPath, CsvWriter.ToBytes(["hero_id", "category_id", "score"], rows));
+        return true;
+    }
+
+    private static List<CsvRow> Rows(IReadOnlyDictionary<string, byte[]> files, string file) =>
+        files.TryGetValue(file, out var bytes) ? CsvReader.Read(Encoding.UTF8.GetString(bytes)) : [];
+
+    private static long GameIdOf(CsvRow row) =>
+        long.TryParse(row.Get("game_id"), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var gameId) ? gameId : 0;
 }
+
+/// <summary>What <see cref="ModelUpdateService.AddNewHeroes"/> did.</summary>
+/// <param name="Added">The heroes added to heroes.csv, as the published model names them.</param>
+/// <param name="Written">The hero files it wrote.</param>
+public sealed record HeroMerge(IReadOnlyList<string> Added, IReadOnlySet<string> Written);
