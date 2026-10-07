@@ -1,7 +1,10 @@
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Formats;
+using DeadlockAdvisor.Theme;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
@@ -56,21 +59,44 @@ public static class ExplainText
     /// already beside it, so a lone stat just names itself: "from Spirit Resist 30%", otherwise
     /// "(2 typed + 3 from Spirit Resist 30%) × 0.8 trait weight".
     /// </summary>
-    public static string? CoefficientSource(TraitPart part)
+    public static IReadOnlyList<TextSpan>? CoefficientSource(TraitPart part)
     {
         if (part.StatParts.Count == 0 && part.Weight == 1)
             return null;
         if (part.Coefficient == 0 && part.StatParts.Count == 1 && part.Weight == 1)
-            return $"from {part.StatParts[0].Short()}";
+            return [new TextSpan("from "), .. StatSpans(part.StatParts[0])];
 
-        var pieces = new List<string>();
+        var pieces = new List<IEnumerable<TextSpan>>();
         if (part.Coefficient != 0)
-            pieces.Add($"{Format.Num(part.Coefficient)} typed");
-        pieces.AddRange(part.StatParts.Select(stat => $"{Format.Num(NumberFormat.Round(stat.Amount, 3))} from {stat.Short()}"));
-        var text = string.Join(" + ", pieces);
+            pieces.Add([new TextSpan($"{Format.Num(part.Coefficient)} typed")]);
+        pieces.AddRange(part.StatParts.Select(stat =>
+            StatSpans(stat).Prepend(new TextSpan($"{Format.Num(NumberFormat.Round(stat.Amount, 3))} from "))));
+
+        var spans = new List<TextSpan>();
+        var parenthesise = part.Weight != 1 && pieces.Count > 1;
+        if (parenthesise)
+            spans.Add(new TextSpan("("));
+        for (var i = 0; i < pieces.Count; i++)
+        {
+            if (i > 0)
+                spans.Add(new TextSpan(" + "));
+            spans.AddRange(pieces[i]);
+        }
+        if (parenthesise)
+            spans.Add(new TextSpan(")"));
         if (part.Weight != 1)
-            text = (pieces.Count > 1 ? $"({text})" : text) + $" × {Format.Num(part.Weight)} trait weight";
-        return text;
+            spans.Add(new TextSpan($" × {Format.Num(part.Weight)} trait weight"));
+        return spans;
+    }
+
+    /// <summary>A stat named for what the item does: its label and value stand out from the sentence around them.</summary>
+    private static IEnumerable<TextSpan> StatSpans(StatPart stat)
+    {
+        yield return new TextSpan(stat.Label, Palette.TextDim, Bold: true);
+        yield return new TextSpan(" ");
+        yield return new TextSpan(stat.ValueText, Palette.Text, Bold: true);
+        if (stat.Conditional)
+            yield return new TextSpan(" (conditional)");
     }
 
     /// <summary>The full derivation, stat by stat, for hovering the short source.</summary>

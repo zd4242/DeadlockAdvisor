@@ -9,7 +9,7 @@
              x:DataType="explain:ExplainViewModel">
 
     <UserControl.Styles>
-        <Style Selector="TextBlock.faintText">
+        <Style Selector="TextBlock.faintText, controls|RichText.faintText">
             <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
         </Style>
         <Style Selector="art|ArtImage.heroIcon">
@@ -294,11 +294,11 @@
                                                                            ToolTip.Tip="{Binding Share.Tip}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
                                                     <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="math">
-                                                        <TextBlock Classes="faintText"
+                                                        <controls:RichText Classes="faintText"
                                                                    Margin="12,1,0,0"
                                                                    FontSize="12"
                                                                    TextWrapping="Wrap"
-                                                                   Text="{Binding Source}"
+                                                                   Spans="{Binding Source}"
                                                                    ToolTip.Tip="{Binding SourceTip}"
                                                                    IsVisible="{Binding Source, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                                                     </Border>

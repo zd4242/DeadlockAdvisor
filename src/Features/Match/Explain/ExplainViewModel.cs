@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Subjects;
 using Avalonia.Media;
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
@@ -16,7 +17,7 @@ namespace DeadlockAdvisor.Features.Match.Explain;
 
 /// <param name="IsSole">The hero's only line, so without the math the card's amount stands for it.</param>
 /// <param name="Cell">The Hero Traits cell the line was worked from; null for a line that isn't a hero's, such as the typical team.</param>
-public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share, bool IsSole = false,
+public sealed record TraitLine(string TraitName, IReadOnlyList<TextSpan>? Source, string? SourceTip, string Arithmetic, DisplayAmount Share, bool IsSole = false,
     TraitCell? Cell = null)
 {
     /// <summary>The arithmetic and where its coefficient came from, for hovering the line when the math is hidden.</summary>
@@ -234,14 +235,18 @@ public class ExplainViewModel : ViewModelBase
             ExplainText.RelationWord(contribution.Relation).ToUpperInvariant(),
             Palette.RelationColor(contribution.Relation),
             new DisplayAmount(contribution.Amount),
-            contribution.Parts.Select(part => new TraitLine(
-                part.CategoryName,
-                ExplainText.CoefficientSource(part),
-                ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
-                ExplainText.Arithmetic(part),
-                new DisplayAmount(part.Share),
-                IsSole: contribution.Parts.Count == 1,
-                Cell: contribution.TypicalOf is null ? new TraitCell(contribution.HeroId, part.CategoryId) : null)).ToList(),
+            contribution.Parts.Select(part =>
+            {
+                var source = ExplainText.CoefficientSource(part);
+                return new TraitLine(
+                    part.CategoryName,
+                    source,
+                    source is null ? null : ExplainText.CoefficientTooltip(part),
+                    ExplainText.Arithmetic(part),
+                    new DisplayAmount(part.Share),
+                    IsSole: contribution.Parts.Count == 1,
+                    Cell: contribution.TypicalOf is null ? new TraitCell(contribution.HeroId, part.CategoryId) : null);
+            }).ToList(),
             notes.Count > 0 ? string.Join(" · ", notes) : null,
             tips.Count > 0 ? string.Join("\n\n", tips) : null,
             info);

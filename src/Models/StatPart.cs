@@ -15,13 +15,18 @@ public sealed record StatPart(
 {
     public double Amount => Value * PerUnit * Factor;
 
-    /// <summary>"Spirit Resist 15% (conditional)"</summary>
-    public string Short()
+    /// <summary>"15%", or "15 m" for a stat in other units.</summary>
+    public string ValueText
     {
-        var value = NumberFormat.Short(Value);
-        var amount = Unit == "%" ? value + Unit : $"{value} {Unit}".Trim();
-        return $"{Label} {amount}" + (Conditional ? " (conditional)" : "");
+        get
+        {
+            var value = NumberFormat.Short(Value);
+            return Unit == "%" ? value + Unit : $"{value} {Unit}".Trim();
+        }
     }
+
+    /// <summary>"Spirit Resist 15% (conditional)"</summary>
+    public string Short() => $"{Label} {ValueText}" + (Conditional ? " (conditional)" : "");
 
     /// <summary>"Spirit Resist 15% (conditional) × 0.1 × 0.5 = 0.75"</summary>
     public string Describe()
