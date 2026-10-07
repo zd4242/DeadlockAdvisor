@@ -206,7 +206,8 @@ change when the data does.
   items with hand-typed rules whose tooltip changed, stats it doesn't know
   how to map, and per-item overrides that no longer match the game. It
   also re-measures each hero's *Has High Max HP* from the game's health
-  numbers.
+  numbers. New heroes don't need it: a workflow adds them to the published
+  model, rated at 0 until they're rated ([formula updates](#formula-updates)).
 - **Download Match Data…**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
   of the score. A dialog first shows the patches stored, what the download
@@ -246,7 +247,11 @@ API. Files you haven't changed are replaced quietly, with the old ones
 kept in `data/.backups/`; for files you have changed, a dialog asks which
 to replace, and one you keep isn't asked about again for that version.
 Either way, the update says what changed, in the words of whoever
-published it.
+published it. Heroes are the exception to asking: the ones the game adds
+reach your data folder whatever you've changed, with their ratings (and
+their art, if you've downloaded art before), and nothing already there is
+touched. With updates off, a status bar
+chip offers them instead (Settings → Data, *Say when new heroes are out*).
 
 Settings → Data shows which version is installed and when it was last
 checked for, with **What's new** (every version's notes), **Reset…** (puts

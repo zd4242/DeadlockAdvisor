@@ -1,10 +1,11 @@
 # Publishing updates
 
-Three things reach the people using the app, each its own way:
+Four things reach the people using the app, each its own way:
 
 | What | How installs get it | What you do |
 |---|---|---|
 | **Hero ratings and item formulas** (the model) | At their next startup once CI passes, without a new download | `dotnet run --project tools/PublishModel -- --note "What changed" --push` |
+| **New heroes** | As part of the model: a workflow adds them, unrated, within hours of the game listing them | Nothing, until you rate them (an issue reminds you) |
 | **Match data** (item win rates) | At startup, when it's newer than theirs | Nothing: a workflow refreshes it daily |
 | **The app itself** | A new download from Releases | Actions → Release → Run workflow, choose `patch` / `minor` / `major` |
 
@@ -53,6 +54,10 @@ that release, and compare each file with what they installed:
   giving the notes they haven't seen yet (or the files updated, without any).
 - Files they have changed (by hand, or with Sync from Game API) are listed in a dialog, unticked, under
   the notes: they tick the ones to replace and keep the rest, and aren't asked about that version again.
+  The exception is heroes: whatever they changed, the heroes the published model has and their folder lacks
+  are added to `heroes.csv` and the ratings first (`ModelUpdateService.AddNewHeroes`), with every row already
+  there left as it is, so `heroes.csv` is never in the dialog and the ratings' dialog is only about their
+  own ratings.
 - New installs start from the seed built into their copy of the app, then update the same way.
 
 They can turn this off in Settings → Data, or check on demand with Data → Check for Formula Updates.
@@ -63,6 +68,34 @@ offer that version again.
 
 Versions 0.1.0 and 0.1.1 of the app read `model.json` straight from `main` instead, so they get a push
 before CI has tested it, and don't show notes. Both go away as people update.
+
+## New heroes
+
+A hero the game releases reaches everyone without anyone touching the app, except for rating it:
+
+1. **The workflow.** **New heroes** (`.github/workflows/new-heroes.yml`) runs every six hours and runs
+   `dotnet run --project tools/PublishModel -- --add-new-heroes` (`ModelPublisher.AddNewHeroesAsync`). That
+   compares the heroes deadlock-api.com lists as active (`/v1/assets/heroes?only_active=true`, so a hero the API doesn't list as active yet
+   doesn't count, and neither does a placeholder such as `hero_testhero`) with the seed's
+   `heroes.csv`, adds the missing ones with every trait at 0 (`GameSync.ApplyRoster`), and dates `model.json`
+   with a note ("New hero: Baba. Its ratings are still to come, …"). When the seed changed it commits it, and
+   starts CI by hand, because a push made with the workflow's own token doesn't start it. CI's tests and its
+   `publish-model` job then publish it as above. It also opens an issue, "Rate new hero: Baba".
+2. **Why that's safe to publish unattended.** A hero with every trait at 0 is unprofiled
+   (`DataStore.IsProfiled`): it's left out of the baselines and out of scoring, so no recommendation changes. It
+   just makes the hero pickable and detectable.
+3. **You rate it.** Data → Check for Formula Updates puts the new hero in your data folder, then rate it in Hero
+   Traits and publish as usual. `PublishModel` refuses to publish from a data folder that lacks a hero the seed
+   has, since copying its `heroes.csv` over the seed would drop the hero for everyone.
+4. **Installs.** They take it with the model update at their next startup, as above, with the note. Their art
+   follows at once: a hero without a portrait starts the quiet art check (for anyone who has downloaded art
+   before), and one the API had no art for yet is asked about again after a day rather than a week
+   (`DataMenuViewModel.MissingArtRetryInterval`). Someone who has turned model updates off gets a "New heroes"
+   chip in the status bar naming them, and a click adds them and their art (Settings → Data, "Say when new
+   heroes are out", turns that off).
+
+Run it now with `gh workflow run new-heroes.yml`, or `--add-new-heroes` locally, which only edits the seed for
+you to review with `git diff`.
 
 **Safety nets.** A test (`ModelUpdateTests.TheSeedsModelJsonListsEveryModelFileByItsHash`) fails if the
 seed's files and `model.json` disagree, so CI goes red, and nothing is published, if a file was copied
@@ -205,5 +238,6 @@ last version their app understands.
 | `tools/MatchSnapshot/` | What the Match data workflow runs |
 | `.github/workflows/ci.yml` | Builds and tests every push and pull request, then publishes the model from `main` |
 | `.github/workflows/match-data.yml` | The daily match data |
+| `.github/workflows/new-heroes.yml` | Adds the game's new heroes to the seed, every six hours |
 | `.github/workflows/release.yml` | App releases, signed once SignPath is set up |
 | `Properties/PublishProfiles/release.pubxml` | The single-file build: `dotnet publish -p:PublishProfile=release [-r linux-x64]` |

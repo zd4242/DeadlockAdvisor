@@ -544,6 +544,14 @@ afterwards (see "Tests and goldens" below).
    demand. Updates never start a first download, and a failed one says nothing.
 3. **Data → Model Health Report** to check the model as a whole (next section).
 
+**New heroes need no step here.** The New heroes workflow adds each hero the game
+lists as active to the seed with every trait at 0 (`GameSync.ApplyRoster`, run by
+`PublishModel --add-new-heroes`), and installs take it with the next model update, so
+the only manual work is rating it in Hero Traits and publishing as usual. Until then
+the hero is unprofiled: left out of the baselines and out of scoring, as above, so
+nothing about the other heroes' recommendations moves. [publishing.md](publishing.md),
+"New heroes", has the whole path.
+
 ## Model health report (`Scoring/ModelHealth.cs`)
 
 Data → Model Health Report simulates 2,000 random full matches (seed 1, drawn
