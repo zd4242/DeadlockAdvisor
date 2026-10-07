@@ -13,6 +13,38 @@ public partial class HeroItemsView : ReactiveUserControl<HeroItemsViewModel>
         InitializeComponent();
         // handledEventsToo: a tier's toggle may already have handled the press.
         TierSwitch.AddHandler(InputElement.PointerPressedEvent, OnTierPressed, RoutingStrategies.Bubble, handledEventsToo: true);
+        // Tunnelled, to step the slider by whole percents before it steps by its own (far finer) positions.
+        MinUsage.AddHandler(InputElement.KeyDownEvent, OnUsageKeyDown, RoutingStrategies.Tunnel);
+    }
+
+    private void OnUsageKeyDown(object? sender, KeyEventArgs e)
+    {
+        if (DataContext is not HeroItemsViewModel page)
+            return;
+        switch (e.Key)
+        {
+            case Key.Left or Key.Down:
+                page.StepUsage(-1);
+                break;
+            case Key.Right or Key.Up:
+                page.StepUsage(1);
+                break;
+            case Key.PageDown:
+                page.StepUsage(-5);
+                break;
+            case Key.PageUp:
+                page.StepUsage(5);
+                break;
+            case Key.Home:
+                page.StepUsage(-HeroItemsViewModel.MaxMinUsagePercent);
+                break;
+            case Key.End:
+                page.StepUsage(HeroItemsViewModel.MaxMinUsagePercent);
+                break;
+            default:
+                return;
+        }
+        e.Handled = true;
     }
 
     private void OnTierPressed(object? sender, PointerPressedEventArgs e)

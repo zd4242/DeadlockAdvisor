@@ -152,12 +152,15 @@ public class HeroItemsViewModel : ViewModelBase
         Load(settings.Current.HeroItemsHero);
         _loading = false;
 
-        // The slider's position and the percent it sets follow each other; the position only moves for a percent it doesn't already read as, so a drag stays smooth.
+        // The slider's position and the percent it sets follow each other, and the position snaps back to its percent's own spot: the thumb only rests on whole percents.
         this.WhenAnyValue(vm => vm.UsagePosition)
-            .Subscribe(position => MinUsagePercent = PositionToUsage(position))
+            .Subscribe(position =>
+            {
+                MinUsagePercent = PositionToUsage(position);
+                UsagePosition = UsageToPosition(MinUsagePercent);
+            })
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.MinUsagePercent)
-            .Where(percent => PositionToUsage(UsagePosition) != percent)
             .Subscribe(percent => UsagePosition = UsageToPosition(percent))
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.ShowChanges)
@@ -349,6 +352,9 @@ public class HeroItemsViewModel : ViewModelBase
 
     /// <summary>The ticked patches' counts, newest first.</summary>
     private List<MatchSegment> PickedSegments => Patches.Where(option => option.IsChecked).Select(option => option.Segment).ToList();
+
+    /// <summary>Moves the usage cut-off by whole percents, for the slider's keys: its own steps are in positions, which at the low end are far smaller than a percent.</summary>
+    public void StepUsage(double percents) => MinUsagePercent = Math.Round(Math.Clamp(MinUsagePercent + percents, 0, MaxMinUsagePercent));
 
     /// <summary>Shows just <paramref name="tier"/>, or every tier again when it's the only one shown.</summary>
     public void ShowOnlyTier(TierToggle tier)

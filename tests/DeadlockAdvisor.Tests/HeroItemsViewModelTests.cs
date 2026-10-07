@@ -378,13 +378,36 @@ public sealed class HeroItemsViewModelTests : IDisposable
         Assert.Equal("20%", page.MinUsageText);
         Assert.Equal(20, _fixture.Settings.Current.HeroItemsMinUsagePercent);
 
-        // A nudge that stays on the same whole percent leaves the slider where it is.
-        var position = page.UsagePosition + 0.1;
-        page.UsagePosition = position;
-        Assert.Equal((20, position), (page.MinUsagePercent, page.UsagePosition));
+        // The thumb snaps to the whole percent it's nearest, so a nudge within one doesn't move the slider off it.
+        var snapped = page.UsagePosition;
+        page.UsagePosition = snapped + 0.1;
+        Assert.Equal((20, snapped), (page.MinUsagePercent, page.UsagePosition));
+
+        page.UsagePosition = HeroItemsViewModel.UsageToPosition(2.4);
+        Assert.Equal((2, HeroItemsViewModel.UsageToPosition(2)), (page.MinUsagePercent, page.UsagePosition));
 
         page.MinUsagePercent = 3;
-        Assert.Equal(3, HeroItemsViewModel.PositionToUsage(page.UsagePosition));
+        Assert.Equal(HeroItemsViewModel.UsageToPosition(3), page.UsagePosition);
+    }
+
+    [Fact]
+    public async Task TheSlidersKeysStepByWholePercents()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        page.MinUsagePercent = 0;
+
+        page.StepUsage(1);
+        Assert.Equal(1, page.MinUsagePercent);
+        page.StepUsage(5);
+        Assert.Equal(6, page.MinUsagePercent);
+        page.StepUsage(-1);
+        Assert.Equal(5, page.MinUsagePercent);
+        page.StepUsage(-100);
+        Assert.Equal(0, page.MinUsagePercent);
+        page.StepUsage(100);
+        Assert.Equal(HeroItemsViewModel.MaxMinUsagePercent, page.MinUsagePercent);
+        Assert.Equal(100, page.UsagePosition);
     }
 
     [Fact]
