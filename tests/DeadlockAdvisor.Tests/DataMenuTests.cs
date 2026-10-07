@@ -1,5 +1,6 @@
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
+using System.Text;
 using System.Text.Json.Nodes;
 using ClosedXML.Excel;
 using DeadlockAdvisor.Core;
@@ -470,6 +471,83 @@ public sealed class DataMenuTests : IDisposable
         await Task.Yield();
 
         Assert.Equal(BackgroundJobState.Succeeded, Assert.Single(menu.Jobs).State);
+    }
+
+    /// <summary>Portraits for every hero but <paramref name="except"/>: art downloaded before those heroes were added.</summary>
+    private void HavePortraits(params string[] except)
+    {
+        var folder = _art.FolderOf(ArtKind.Hero);
+        Directory.CreateDirectory(folder);
+        foreach (var heroId in _fixture.Data.Store.Heroes.Keys.Except(except))
+            File.WriteAllBytes(Path.Combine(folder, heroId + ".png"), [1]);
+        _art.Refresh();
+    }
+
+    [Fact]
+    public void AModelUpdateThatBringsAHeroFetchesItsArtAtOnce()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        HavePortraits();
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now;
+        var heroes = Encoding.UTF8.GetBytes(Encoding.UTF8.GetString(DataBytes(DataStore.HeroesFile)).TrimEnd() + "\r\nnewcomer,Newcomer,9001\r\n");
+        PublishModel((DataStore.HeroesFile, heroes));
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        Assert.Equal(heroes, DataBytes(DataStore.HeroesFile));
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+    }
+
+    [Fact]
+    public void AModelUpdateWithoutNewHeroesLeavesTheArtAlone()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        HavePortraits();
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now;
+        PublishModel((DataStore.TraitWeightsFile, ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "1.3")));
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        Assert.Equal(0, download.Started);
+    }
+
+    [Fact]
+    public void AHeroWithoutArtIsAskedAboutADayAfterTheLastCheckNotAWeek()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        HavePortraits(except: _fixture.Data.Store.Heroes.Keys.First());
+        _fixture.Clock.AdvanceBy(TimeSpan.FromDays(30));
+        var download = new HeldArtDownload();
+
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now.AddHours(-12);
+        using var soon = Menu(artDownload: download);
+        soon.OnStartup();
+        Assert.Equal(0, download.Started);
+
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now.AddDays(-2);
+        using var later = Menu(artDownload: download);
+        later.OnStartup();
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+    }
+
+    [Fact]
+    public void WithoutAnyPortraitsADownloadOfArtIsntStartedForAMissingHero()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        _fixture.Clock.AdvanceBy(TimeSpan.FromDays(30));
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now.AddDays(-2);
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        Assert.Equal(0, download.Started);
     }
 
     [Fact]

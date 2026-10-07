@@ -149,6 +149,9 @@ public class DataMenuViewModel : ViewModelBase
     /// <summary>How often the art is checked against deadlock-api.com's, which costs one "not modified" per file.</summary>
     public static readonly TimeSpan ArtCheckInterval = TimeSpan.FromDays(7);
 
+    /// <summary>How soon after a check a hero it found no art for is asked about again, rather than waiting out <see cref="ArtCheckInterval"/>.</summary>
+    public static readonly TimeSpan MissingArtRetryInterval = TimeSpan.FromDays(1);
+
     private string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
 
     /// <summary>
@@ -170,10 +173,19 @@ public class DataMenuViewModel : ViewModelBase
         Launch(CheckMatchDataAsync);
         var hasTopbarArt = Directory.Exists(TopbarDir)
                            && Directory.EnumerateFiles(TopbarDir).Any(file => ImageFile.Suffixes.Contains(Path.GetExtension(file).ToLowerInvariant()));
-        var due = _settings.Current.ArtCheckedAt is not { } checkedAt || _clock.Now - checkedAt >= ArtCheckInterval;
+        var due = _settings.Current.ArtCheckedAt is not { } checkedAt
+                  || _clock.Now - checkedAt >= ArtCheckInterval
+                  || _clock.Now - checkedAt >= MissingArtRetryInterval && HeroesMissingArt();
         if (hasTopbarArt && (due || !TopbarDerivation.IsCurrent(TopbarDir)))
             Launch(() => DownloadArtAsync(force: false, quiet: true));
     }
+
+    /// <summary>
+    /// Whether a hero has no portrait, for someone who has downloaded art before: one added by a model update
+    /// (art can't come with it) or one the API didn't have art for at the last check.
+    /// </summary>
+    private bool HeroesMissingArt() =>
+        _art.Count(ArtKind.Hero) > 0 && _data.Store.Heroes.Keys.Any(heroId => !_art.Has(ArtKind.Hero, heroId));
 
     /// <summary>Download what art is missing or changed, in the background: what Detect asks for when it has nothing to match.</summary>
     public void DownloadArt() => Launch(() => DownloadArtAsync(force: false));
@@ -624,6 +636,9 @@ public class DataMenuViewModel : ViewModelBase
         if (written.Count == 0)
             return;
         _data.Reload();
+        // The startup's art check ran before this update brought the heroes, so a new one would wait for the next.
+        if (written.Contains(DataStore.HeroesFile) && HeroesMissingArt())
+            Launch(() => DownloadArtAsync(force: false, quiet: true));
         if (isReset)
         {
             _notifications.ShowSuccess($"Reset the {Listing(ModelManifest.ModelFiles.Where(written.Contains).ToList())} to the version published {update.Published.Published}. "
