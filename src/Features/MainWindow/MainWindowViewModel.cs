@@ -81,8 +81,8 @@ public class MainWindowViewModel : ViewModelBase
         + "matches (Data → Download Match Data): win-rate points the item gains\n"
         + "against your enemies, and on your own hero ('hero fit': how much more\n"
         + "your hero wins with it than everyone who builds it). They're never added\n"
-        + "into the score, but 'Rank by match data' orders the list by them\n"
-        + "instead, and 'Formula + match data' (the default) adds the two, each\n"
+        + "into the score, but ranking by 'Match data' orders the list by them\n"
+        + "instead, and 'Formula + match data' (recommended, the default) adds the two, each\n"
         + "measured by how far it typically strays from 0, so an item one of them\n"
         + "has nothing to say about still ranks on the other.\n"
         + "DATA ★ marks an item that stands out in real matches, and 'Match\n"
@@ -192,6 +192,14 @@ public class MainWindowViewModel : ViewModelBase
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         Connection = new ConnectionViewModel(connectivity, art).DisposeWith(Disposables);
+        connectivity.Reconnected
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(reconnected =>
+            {
+                dataMenu.OnReconnected();
+                _ = AppUpdate.CheckAsync();
+            })
+            .DisposeWith(Disposables);
         AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Merge(heroItems.FormulaRequested).Subscribe(ShowFormula).DisposeWith(Disposables);

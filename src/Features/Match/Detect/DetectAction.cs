@@ -44,10 +44,11 @@ public class DetectAction
     private readonly INotificationService _notifications;
     private readonly IScreenCaptureService _capture;
     private readonly ILoggingService _log;
+    private readonly IConnectivityService _connectivity;
     private Read? _lastApplied;
 
     public DetectAction(IDataService data, ISettingsService settings, IModalService modals, INotificationService notifications,
-        IScreenCaptureService capture, ILoggingService log)
+        IScreenCaptureService capture, ILoggingService log, IConnectivityService connectivity)
     {
         _data = data;
         _settings = settings;
@@ -55,6 +56,7 @@ public class DetectAction
         _notifications = notifications;
         _capture = capture;
         _log = log;
+        _connectivity = connectivity;
     }
 
     public string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
@@ -82,9 +84,13 @@ public class DetectAction
         if (bank.IsEmpty)
         {
             _log.Warning($"Detect: no reference art in {directory}");
-            _modals.Confirm($"There's no hero art to match against yet.\n\nDownload it from deadlock-api.com into {directory} now? "
-                            + "It downloads in the background; press Detect again once it's done.",
-                "Download", () => _artWanted.OnNext(Unit.Default), cancelText: "Not now");
+            if (_connectivity.IsOffline)
+                _modals.ShowMessage("No hero art to match against",
+                    "It downloads from deadlock-api.com, and you're offline. Connect to the internet, then press Detect again to download it.");
+            else
+                _modals.Confirm($"There's no hero art to match against yet.\n\nDownload it from deadlock-api.com into {directory} now? "
+                                + "It downloads in the background; press Detect again once it's done.",
+                    "Download", () => _artWanted.OnNext(Unit.Default), cancelText: "Not now");
             return;
         }
 

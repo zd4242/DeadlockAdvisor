@@ -48,7 +48,7 @@ public sealed class MatchImportTests : IDisposable
     {
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         var log = new FakeLoggingService();
-        var detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new NotificationService(log), new FakeScreenCapture(), log);
+        var detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new NotificationService(log), new FakeScreenCapture(), log, new FakeConnectivity());
         var import = new ImportMatchAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new MatchLookupService(_api), log);
         var dataRanks = new DataRanksViewModel(_fixture.Data, new MatchStatsService(new FakeDeadlockApi()), new NotificationService(log));
         _page = new MatchViewModel(_fixture.Data, _fixture.Settings, detect, import, dataRanks);

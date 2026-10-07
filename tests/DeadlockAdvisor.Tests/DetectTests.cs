@@ -29,6 +29,7 @@ public sealed class DetectTests : IDisposable
 
     private readonly DataFixture _fixture = new();
     private readonly FakeScreenCapture _capture = new();
+    private readonly FakeConnectivity _connectivity = new();
     private readonly List<ViewModelBase> _shown = [];
     private readonly IDisposable _watchModals;
     private readonly DetectAction _detect;
@@ -39,7 +40,7 @@ public sealed class DetectTests : IDisposable
         _watchModals = _fixture.Modals.ShowModalObservable.Subscribe(_shown.Add);
         // Most of these are about the review, which a certain read would otherwise skip.
         _fixture.Settings.Current.AutoApplyDetect = false;
-        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new NotificationService(new FakeLoggingService()), _capture, new FakeLoggingService());
+        _detect = new DetectAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new NotificationService(new FakeLoggingService()), _capture, new FakeLoggingService(), _connectivity);
         var dataRanks = new DataRanksViewModel(_fixture.Data, new MatchStatsService(new FakeDeadlockApi()), new NotificationService(new FakeLoggingService()));
         var import = new ImportMatchAction(_fixture.Data, _fixture.Settings, _fixture.Modals, new MatchLookupService(new FakeDeadlockApi()),
             new FakeLoggingService());
@@ -388,6 +389,23 @@ public sealed class DetectTests : IDisposable
         Assert.Equal(0, _capture.Captures);
         offer.ConfirmCommand!.Execute(null);
         Assert.Equal(1, wanted);
+    }
+
+    [AvaloniaFact]
+    public async Task NoReferenceArtWhileOfflineSaysSoInsteadOfOfferingADownloadThatCannotWork()
+    {
+        _capture.Next = Capture();
+        _connectivity.GoOffline();
+        var wanted = 0;
+        using var watch = _page.ArtWanted.Subscribe(_ => wanted++);
+
+        await _page.DetectCommand.Execute();
+
+        var message = Assert.IsType<MessageModalViewModel>(_shown[^1]);
+        Assert.Equal("No hero art to match against", message.Title);
+        Assert.Contains("you're offline", message.Body);
+        Assert.Equal(0, _capture.Captures);
+        Assert.Equal(0, wanted);
     }
 
     [AvaloniaFact]

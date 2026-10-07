@@ -535,6 +535,60 @@ public class StatusBarTests
         Assert.True(chip.IsEffectivelyEnabled);
     }
 
+    /// <summary>A version running that's always up to date, counting how often it was asked.</summary>
+    private sealed class CountedAppUpdate : IAppUpdateService
+    {
+        public int Checks { get; private set; }
+        public Version? Current => new(0, 1, 1);
+        public bool CanInstall(AppRelease release) => false;
+        public void RestartAfterExit(bool restart = true) { }
+        public Task CleanUpAsync() => Task.CompletedTask;
+
+        public Task<AppRelease?> LatestAsync(CancellationToken cancellationToken = default)
+        {
+            Checks++;
+            return Task.FromResult<AppRelease?>(null);
+        }
+
+        public Task DownloadAsync(AppRelease release, IProgress<DownloadProgress>? progress, CancellationToken cancellationToken = default) =>
+            Task.CompletedTask;
+    }
+
+    [AvaloniaFact]
+    public void WhenTheConnectionReturnsTheStartupChecksAreMadeAgain()
+    {
+        var update = new CountedAppUpdate();
+        using var ui = new UiHarness(overrides: services => services.AddSingleton<IAppUpdateService>(update));
+        ui.Show();
+        ui.Connectivity.GoOffline();
+        UiHarness.Settle();
+        ui.Api.Asked.Clear();
+        var checks = update.Checks;
+
+        ui.Connectivity.Reconnect();
+        UiHarness.Settle();
+
+        Assert.Contains(ModelManifest.ManifestUrl, ui.Api.Asked);
+        Assert.Equal(checks + 1, update.Checks);
+    }
+
+    [AvaloniaFact]
+    public void AFirstRunThatStartedOfflineOffersItsDownloadsAsAChipWhenTheConnectionReturns()
+    {
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = false);
+        ui.Connectivity.GoOffline();
+        ui.Show();
+        Assert.Empty(ui.ViewModel.DataMenu.Jobs);
+
+        ui.Connectivity.Reconnect();
+        UiHarness.Settle();
+
+        var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<BackgroundJobView>().Single();
+        Assert.Contains("Downloads", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        Assert.Contains("available: art and match data", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        ui.Screenshot("status_welcome_chip.png");
+    }
+
     private static Button OfflineChip(UiHarness ui) =>
         ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Retry");
 

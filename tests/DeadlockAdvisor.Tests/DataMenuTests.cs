@@ -32,6 +32,7 @@ public sealed class DataMenuTests : IDisposable
 
     private readonly DataFixture _fixture = new();
     private readonly FakeDeadlockApi _api = new();
+    private readonly FakeConnectivity _connectivity = new();
     private readonly ArtService _art = new(new FakeLoggingService());
     private readonly List<ViewModelBase> _shown = [];
     private readonly NotificationService _notifications = new(new FakeLoggingService());
@@ -56,7 +57,7 @@ public sealed class DataMenuTests : IDisposable
         return new DataMenuViewModel(_fixture.Data, gameApi, matchStats ?? new MatchStatsService(_api),
             snapshots ?? new MatchSnapshotService(_api), new ModelUpdateService(_api), new ExcelExportService(),
             artDownload ?? new ArtDownloadService(gameApi, _api), _art, _fixture.Modals, _notifications,
-            _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _fixture.Clock);
+            _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _connectivity, _fixture.Clock);
     }
 
     public void Dispose()
@@ -116,13 +117,26 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task OfflineThePatchListSaysSoAndStartsNothing()
+    public async Task AnUnreachablePatchListSaysSoAndStartsNothing()
     {
         await _menu.DownloadMatchDataCommand.Execute();
 
         Assert.Empty(_shown);
         Assert.Empty(_menu.Jobs);
         Assert.False(_menu.IsDownloadingMatchData);
+        Assert.StartsWith("Couldn't reach deadlock-api.com for the patch list:", Assert.Single(_toasts).Message);
+    }
+
+    [Fact]
+    public async Task OfflineThePatchListSaysYoureOffline()
+    {
+        _connectivity.GoOffline();
+
+        await _menu.DownloadMatchDataCommand.Execute();
+
+        Assert.Empty(_shown);
+        Assert.Equal("You're offline. The patch list comes from deadlock-api.com, so the match data waits for a connection.",
+            Assert.Single(_toasts).Message);
     }
 
     [Fact]
@@ -326,7 +340,7 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task OfflineTheWelcomeOffersTheArtAlone()
+    public async Task WithoutAMatchDataPlanTheWelcomeOffersTheArtAlone()
     {
         _menu.OnStartup();
 
@@ -336,6 +350,65 @@ public sealed class DataMenuTests : IDisposable
         welcome.MatchData = false;
         welcome.Art = false;
         Assert.False(await welcome.StartCommand.CanExecute.FirstAsync());
+    }
+
+    [Fact]
+    public void AFirstRunWithNoConnectionWaitsRatherThanOfferingWhatCannotBeDownloaded()
+    {
+        _connectivity.GoOffline();
+
+        _menu.OnStartup();
+
+        Assert.Empty(_shown);
+        Assert.Empty(_menu.Jobs);
+        Assert.False(_fixture.Settings.Current.WelcomeOffered);
+        Assert.DoesNotContain(MatchStatsService.Patches, _api.Asked);
+    }
+
+    [Fact]
+    public async Task WhenTheConnectionReturnsTheFirstRunOfferComesAsAChipThatOpensTheDialog()
+    {
+        _connectivity.GoOffline();
+        _menu.OnStartup();
+
+        _connectivity.Reconnect();
+        _menu.OnReconnected();
+
+        var chip = Assert.Single(_menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+        Assert.Empty(_shown);
+        Assert.False(_fixture.Settings.Current.WelcomeOffered);
+
+        await chip.OpenCommand.Execute();
+
+        Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.True(_fixture.Settings.Current.WelcomeOffered);
+        Assert.DoesNotContain(_menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+    }
+
+    [Fact]
+    public void AFirstRunOfferThatFindsAnotherDialogOpenBecomesAChipInsteadOfBeingDropped()
+    {
+        _fixture.Modals.ShowMessage("Formula update", "Something to read first.");
+
+        _menu.OnStartup();
+
+        Assert.Contains(_menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+        Assert.False(_fixture.Settings.Current.WelcomeOffered);
+    }
+
+    [Fact]
+    public void ReconnectingMakesTheStartupChecksAgain()
+    {
+        var now = new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-30), now);
+        _fixture.Settings.Current.AutoUpdateModel = true;
+        _api.Asked.Clear();
+
+        menu.OnReconnected();
+
+        Assert.Contains(ModelManifest.ManifestUrl, _api.Asked);
+        Assert.Contains(MatchSnapshot.ManifestUrl, _api.Asked);
+        Assert.Empty(menu.Jobs);
     }
 
     private static readonly List<Patch> _patches = MatchStatsMath.ParsePatches(["09-29-2026", "09-16-2026 Update"]);

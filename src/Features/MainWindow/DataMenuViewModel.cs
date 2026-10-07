@@ -34,6 +34,7 @@ namespace DeadlockAdvisor.Features.MainWindow;
 public class DataMenuViewModel : ViewModelBase
 {
     public const string ArtChangedAction = "ArtChanged";
+    public const string WelcomeChipTitle = "Downloads";
 
     // Showing new art re-reads every image on screen, so it's done this often at most while art arrives.
     private static readonly TimeSpan _artShowGap = TimeSpan.FromSeconds(5);
@@ -54,21 +55,25 @@ public class DataMenuViewModel : ViewModelBase
     private readonly ISettingsService _settings;
     private readonly IFilePickerService _filePicker;
     private readonly ILoggingService _log;
+    private readonly IConnectivityService _connectivity;
 
     public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
         IModelUpdateService models, IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
-        INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log)
-        : this(data, gameApi, matchStats, snapshots, models, excel, artDownload, art, modals, notifications, settings, filePicker, log, Scheduler.Default)
+        INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log,
+        IConnectivityService connectivity)
+        : this(data, gameApi, matchStats, snapshots, models, excel, artDownload, art, modals, notifications, settings, filePicker, log, connectivity,
+            Scheduler.Default)
     {
     }
 
     internal DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
         IModelUpdateService models, IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
         INotificationService notifications, ISettingsService settings, IFilePickerService filePicker, ILoggingService log,
-        IScheduler clock)
+        IConnectivityService connectivity, IScheduler clock)
     {
         _clock = clock;
         _log = log;
+        _connectivity = connectivity;
         _data = data;
         _gameApi = gameApi;
         _matchStats = matchStats;
@@ -158,20 +163,46 @@ public class DataMenuViewModel : ViewModelBase
     /// Once the window is up: take a newer published model, if updates are on. On a first run without
     /// art, offer it and the match data in one dialog. Otherwise check the match data against the patch
     /// list in the background, and keep the top-bar art detection matches against current: quietly, about
-    /// weekly, and at once when this version cuts portraits differently from the last.
+    /// weekly, and at once when this version cuts portraits differently from the last. Checks that find
+    /// no connection are made again by <see cref="OnReconnected"/>.
     /// </summary>
     public void OnStartup()
+    {
+        StartModelCheck();
+        if (NeedsWelcome())
+        {
+            Launch(OfferWelcomeAsync);
+            return;
+        }
+        StartDataChecks();
+    }
+
+    /// <summary>
+    /// The connection is back after being down, so the startup checks that couldn't be made are made now. A first
+    /// run's offer that never got shown is made as a chip: a dialog would stop Detect from running until it was closed.
+    /// </summary>
+    public void OnReconnected()
+    {
+        StartModelCheck();
+        if (NeedsWelcome())
+            OfferWelcomeAsChip();
+        else
+            StartDataChecks();
+    }
+
+    private bool NeedsWelcome() =>
+        !_settings.Current.WelcomeOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0;
+
+    private void StartModelCheck()
     {
         if (_settings.Current.AutoUpdateModel)
             Launch(() => CheckModelAsync(manual: false));
         else if (_settings.Current.CheckForNewHeroes)
             Launch(OfferNewHeroesAsync);
-        if (!_settings.Current.WelcomeOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
-        {
-            _settings.Update(s => s.WelcomeOffered = true);
-            Launch(OfferWelcomeAsync);
-            return;
-        }
+    }
+
+    private void StartDataChecks()
+    {
         Launch(CheckMatchDataAsync);
         var hasTopbarArt = Directory.Exists(TopbarDir)
                            && Directory.EnumerateFiles(TopbarDir).Any(file => ImageFile.Suffixes.Contains(Path.GetExtension(file).ToLowerInvariant()));
@@ -194,10 +225,14 @@ public class DataMenuViewModel : ViewModelBase
 
     /// <summary>
     /// The first run's dialog: art and match data, each with what it costs. The match data comes from the
-    /// shared download, else deadlock-api.com; offline, it offers the art alone.
+    /// shared download, else deadlock-api.com; when only the match data can't be had, it offers the art alone.
+    /// With no connection there's nothing to offer yet, so it waits for <see cref="OnReconnected"/>, and it's
+    /// only counted as offered once it's shown.
     /// </summary>
     private async Task OfferWelcomeAsync()
     {
+        if (_connectivity.IsOffline)
+            return;
         var shared = await _snapshots.PlanAsync(_data.Store);
         MatchFetchPlan? everyMatch = null;
         MatchFetchPlan? withRanks = null;
@@ -213,6 +248,15 @@ public class DataMenuViewModel : ViewModelBase
             {
             }
         }
+        if (_connectivity.IsOffline)
+            return;
+        // A second dialog would be dropped, and the offer with it.
+        if (_modals.IsModalOpen)
+        {
+            OfferWelcomeAsChip();
+            return;
+        }
+        _settings.Update(s => s.WelcomeOffered = true);
         _modals.ShowModal(new WelcomeViewModel(_modals, shared, everyMatch, withRanks, Estimate, _settings.Current.MatchDataIncludeRanks,
             _settings.Current.AutoUpdateMatchData, choice =>
         {
@@ -226,6 +270,14 @@ public class DataMenuViewModel : ViewModelBase
             if (choice.MatchData is { } plan)
                 Launch(() => DownloadMatchDataAsync(plan));
         }));
+    }
+
+    /// <summary>The first run's offer as a chip in the status bar that opens the dialog, for when a dialog isn't the way to make it.</summary>
+    private void OfferWelcomeAsChip()
+    {
+        var job = new BackgroundJobViewModel(WelcomeChipTitle, _clock);
+        job.Succeed("available: art and match data", () => Launch(OfferWelcomeAsync), "Click to choose what to download");
+        Show(job);
     }
 
     /// <summary>
@@ -392,7 +444,9 @@ public class DataMenuViewModel : ViewModelBase
         }
         catch (Exception ex) when (IsNetworkFailure(ex))
         {
-            _notifications.ShowError($"Couldn't reach deadlock-api.com for the patch list: {ex.Message}", _toastTime);
+            _notifications.ShowError(_connectivity.IsOffline
+                ? "You're offline. The patch list comes from deadlock-api.com, so the match data waits for a connection."
+                : $"Couldn't reach deadlock-api.com for the patch list: {ex.Message}", _toastTime);
             return;
         }
         var store = _data.Store;
