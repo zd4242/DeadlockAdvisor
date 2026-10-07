@@ -159,7 +159,7 @@ the Match page rescores as you go.
 
 | Keys | Does |
 |---|---|
-| <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd>, <kbd>Ctrl</kbd>+wheel | zoom (remembered, along with the window and your last match) |
+| <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd>, <kbd>Ctrl</kbd>+wheel, or the wheel over the status bar's zoom buttons | zoom (remembered, along with the window and your last match) |
 | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | next / previous page |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search |
 | <kbd>Ctrl</kbd>+<kbd>R</kbd> | reload the data from disk |

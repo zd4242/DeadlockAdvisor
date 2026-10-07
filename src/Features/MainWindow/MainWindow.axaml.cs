@@ -49,6 +49,7 @@ public partial class MainWindow : Window
         Closed += (_, _) => AutoScroll.Dispose();
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
         ResizeGrip.PointerPressed += OnResizeGripPressed;
+        ZoomStepper.PointerWheelChanged += OnZoomStepperWheel;
         PointerPressed += OnDismissLayerPressed;
         PointerPressed += OnNavigationButtonPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
@@ -225,7 +226,16 @@ public partial class MainWindow : Window
     /// <summary>Ctrl+wheel zooms anywhere in the window, even over a scroll area that would otherwise eat it.</summary>
     private void OnPreviewWheel(object? sender, PointerWheelEventArgs e)
     {
-        if (!e.KeyModifiers.HasFlag(KeyModifiers.Control) || DataContext is not MainWindowViewModel vm)
+        if (e.KeyModifiers.HasFlag(KeyModifiers.Control))
+            ZoomByWheel(e);
+    }
+
+    /// <summary>Over the status bar's zoom buttons the wheel zooms without Ctrl.</summary>
+    private void OnZoomStepperWheel(object? sender, PointerWheelEventArgs e) => ZoomByWheel(e);
+
+    private void ZoomByWheel(PointerWheelEventArgs e)
+    {
+        if (DataContext is not MainWindowViewModel vm)
             return;
         if (e.Delta.Y > 0)
             vm.ZoomInCommand.Execute().Subscribe();

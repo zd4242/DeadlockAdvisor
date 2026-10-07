@@ -309,46 +309,60 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
-                        <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="12" Margin="12,0,0,0">
-                            <TextBlock Classes="saving"
-                                       Text="{Binding SaveText}"
-                                       IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <StackPanel x:Name="ZoomStepper" Orientation="Horizontal" VerticalAlignment="Center">
-                                <Button Classes="zoom"
-                                        ToolTip.Tip="Zoom out (Ctrl+-)"
-                                        Command="{Binding ZoomOutCommand}">
-                                    <Path Data="M0,5 H10"/>
-                                </Button>
-                                <Button x:Name="ZoomLevel"
-                                        Classes="zoom level"
-                                        Content="{Binding ZoomText}"
-                                        ToolTip.Tip="Zoom: click for 100% (Ctrl+0)"
-                                        Command="{Binding ResetZoomCommand}"/>
-                                <Button Classes="zoom"
-                                        ToolTip.Tip="Zoom in (Ctrl+=)"
-                                        Command="{Binding ZoomInCommand}">
-                                    <Path Data="M0,5 H10 M5,0 V10"/>
-                                </Button>
-                            </StackPanel>
-                        </StackPanel>
-                        <!-- Gives the bottom-right corner something to see and grab; the negative margins
-                             stretch it over the bar's padding without making the bar taller. -->
-                        <Border x:Name="ResizeGrip"
-                                Grid.Column="5"
-                                Width="22"
-                                Margin="0,-4"
-                                Background="Transparent"
-                                Cursor="BottomRightCorner"
-                                ToolTip.Tip="Drag to resize">
-                            <Path Data="M9,9 H11 V11 H9 Z M5,9 H7 V11 H5 Z M1,9 H3 V11 H1 Z M9,5 H11 V7 H9 Z M5,5 H7 V7 H5 Z M9,1 H11 V3 H9 Z"
-                                  Width="12"
-                                  Height="12"
-                                  Margin="0,0,5,5"
-                                  HorizontalAlignment="Right"
-                                  VerticalAlignment="Bottom"
-                                  Fill="{DynamicResource BorderStrongBrush}"
-                                  IsHitTestVisible="False"/>
-                        </Border>
+                        <TextBlock Grid.Column="4"
+                                   Classes="saving"
+                                   Margin="12,0,0,0"
+                                   Text="{Binding SaveText}"
+                                   IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
+                        <!-- The zoom buttons and the resize grip cancel the window's zoom, so they stay the
+                             same size in the same place at every step and a button stays under the cursor
+                             through repeated clicks. The negative margins stretch the corner over the bar's
+                             padding, down to the window's edge, without making the bar taller. -->
+                        <LayoutTransformControl Grid.Column="5" Margin="12,-4,0,-4">
+                            <LayoutTransformControl.LayoutTransform>
+                                <ScaleTransform ScaleX="{Binding CounterScale}" ScaleY="{Binding CounterScale}"/>
+                            </LayoutTransformControl.LayoutTransform>
+                            <Grid ColumnDefinitions="Auto,Auto">
+                                <!-- Transparent so the wheel still lands here over a disabled button. -->
+                                <StackPanel x:Name="ZoomStepper"
+                                            Orientation="Horizontal"
+                                            VerticalAlignment="Bottom"
+                                            Margin="0,0,0,4"
+                                            Background="Transparent">
+                                    <Button Classes="zoom"
+                                            ToolTip.Tip="Zoom out (Ctrl+-)"
+                                            Command="{Binding ZoomOutCommand}">
+                                        <Path Data="M0,5 H10"/>
+                                    </Button>
+                                    <Button x:Name="ZoomLevel"
+                                            Classes="zoom level"
+                                            Content="{Binding ZoomText}"
+                                            ToolTip.Tip="Zoom: click for 100% (Ctrl+0), scroll to change"
+                                            Command="{Binding ResetZoomCommand}"/>
+                                    <Button Classes="zoom"
+                                            ToolTip.Tip="Zoom in (Ctrl+=)"
+                                            Command="{Binding ZoomInCommand}">
+                                        <Path Data="M0,5 H10 M5,0 V10"/>
+                                    </Button>
+                                </StackPanel>
+                                <!-- Gives the bottom-right corner something to see and grab. -->
+                                <Border x:Name="ResizeGrip"
+                                        Grid.Column="1"
+                                        Width="22"
+                                        Background="Transparent"
+                                        Cursor="BottomRightCorner"
+                                        ToolTip.Tip="Drag to resize">
+                                    <Path Data="M9,9 H11 V11 H9 Z M5,9 H7 V11 H5 Z M1,9 H3 V11 H1 Z M9,5 H11 V7 H9 Z M5,5 H7 V7 H5 Z M9,1 H11 V3 H9 Z"
+                                          Width="12"
+                                          Height="12"
+                                          Margin="0,0,5,5"
+                                          HorizontalAlignment="Right"
+                                          VerticalAlignment="Bottom"
+                                          Fill="{DynamicResource BorderStrongBrush}"
+                                          IsHitTestVisible="False"/>
+                                </Border>
+                            </Grid>
+                        </LayoutTransformControl>
                     </Grid>
                 </Border>
 

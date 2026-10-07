@@ -30,7 +30,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Zoom"
-                                     Description="Ctrl + mouse wheel, Ctrl+= and Ctrl+- zoom from anywhere in the window.">
+                                     Description="Ctrl + mouse wheel, Ctrl+= and Ctrl+- zoom from anywhere in the window. The wheel alone does it over the zoom buttons in the status bar.">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Classes="segmented">
                             <StackPanel>

@@ -5,6 +5,7 @@ using Avalonia;
 using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
+using Avalonia.Input;
 using Avalonia.LogicalTree;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
@@ -298,8 +299,7 @@ public class StatusBarTests
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
         var barHeight = ui.Window.StatusBar.Bounds.Height;
-        var stepper = ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper");
-        var buttons = stepper.Children.OfType<Button>().ToList();
+        var buttons = ZoomButtons(ui);
         Assert.Equal("100%", ui.ViewModel.ZoomText);
         Assert.Equal("100%", buttons[1].Content);
         Assert.False(buttons[1].IsEffectivelyEnabled);
@@ -319,6 +319,86 @@ public class StatusBarTests
         Assert.Equal("100%", buttons[1].Content);
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
         ui.Screenshot("status_zoom.png");
+    }
+
+    /// <summary>Within the pixel or two that rounding the zoomed layout moves them: a button is 18 tall.</summary>
+    [AvaloniaFact]
+    public void TheZoomButtonsStayWhereTheyAreWhileTheZoomChanges()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var buttons = ZoomButtons(ui);
+        var atHundred = buttons.Select(button => ScreenBounds(ui, button)).ToList();
+
+        for (var index = 0; index < ZoomLevels.Steps.Count; index++)
+        {
+            ui.Settings.Update(settings => settings.ZoomIndex = index);
+            UiHarness.Settle();
+            for (var button = 0; button < buttons.Count; button++)
+            {
+                var bounds = ScreenBounds(ui, buttons[button]);
+                var shift = Math.Max(Math.Abs(bounds.X - atHundred[button].X), Math.Abs(bounds.Y - atHundred[button].Y));
+                var growth = Math.Max(Math.Abs(bounds.Width - atHundred[button].Width), Math.Abs(bounds.Height - atHundred[button].Height));
+                Assert.True(shift <= 2 && growth <= 0.5, $"Button {button} at {ZoomLevels.Steps[index]:P0} is {bounds}, not {atHundred[button]}");
+            }
+        }
+    }
+
+    /// <summary>Clicking one spot again and again, as someone stepping the zoom does, never leaves the button.</summary>
+    [AvaloniaFact]
+    public void ClickingAZoomButtonRepeatedlyKeepsSteppingTheZoom()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var buttons = ZoomButtons(ui);
+        var zoomOut = Center(ui, buttons[0]);
+        var zoomIn = Center(ui, buttons[2]);
+
+        for (var index = ZoomLevels.DefaultIndex + 1; index < ZoomLevels.Steps.Count; index++)
+        {
+            Click(ui, zoomIn);
+            Assert.Equal(ZoomLevels.Steps[index], ui.ViewModel.UiScale);
+        }
+        for (var index = ZoomLevels.Steps.Count - 2; index >= 0; index--)
+        {
+            Click(ui, zoomOut);
+            Assert.Equal(ZoomLevels.Steps[index], ui.ViewModel.UiScale);
+        }
+    }
+
+    [AvaloniaFact]
+    public void ScrollingOverTheZoomButtonsZoomsWithoutCtrl()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var level = Center(ui, ZoomButtons(ui)[1]);
+
+        ui.Window.MouseWheel(level, new Vector(0, 1));
+        Assert.Equal(1.15, ui.ViewModel.UiScale);
+        ui.Window.MouseWheel(level, new Vector(0, -1));
+        ui.Window.MouseWheel(level, new Vector(0, -1));
+        Assert.Equal(0.85, ui.ViewModel.UiScale);
+
+        var elsewhere = ui.Window.StatusBar.TranslatePoint(new Point(ui.Window.StatusBar.Bounds.Width / 2, 5), ui.Window)!.Value;
+        ui.Window.MouseWheel(elsewhere, new Vector(0, 1));
+        Assert.Equal(0.85, ui.ViewModel.UiScale);
+    }
+
+    private static List<Button> ZoomButtons(UiHarness ui) =>
+        ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper")
+            .Children.OfType<Button>().ToList();
+
+    private static Rect ScreenBounds(UiHarness ui, Control control) =>
+        new(control.TranslatePoint(default, ui.Window)!.Value,
+            control.TranslatePoint(new Point(control.Bounds.Width, control.Bounds.Height), ui.Window)!.Value);
+
+    private static Point Center(UiHarness ui, Control control) => ScreenBounds(ui, control).Center;
+
+    private static void Click(UiHarness ui, Point at)
+    {
+        ui.Window.MouseDown(at, MouseButton.Left);
+        ui.Window.MouseUp(at, MouseButton.Left);
+        UiHarness.Settle();
     }
 
     private static Button Chip(UiHarness ui) =>
