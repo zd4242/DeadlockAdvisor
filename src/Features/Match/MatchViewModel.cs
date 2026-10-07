@@ -28,8 +28,11 @@ public sealed record CutoffPreset(string Label, int Percent)
     public override string ToString() => Label;
 }
 
-public sealed record RankPreset(string Label, RankBy RankBy)
+/// <summary>A ranking choice. The closed box shows <see cref="Label"/>; the open list shows <see cref="MenuLabel"/>, which says which is recommended.</summary>
+public sealed record RankPreset(string Label, RankBy RankBy, bool Recommended = false)
 {
+    public string MenuLabel => Recommended ? $"{Label} (recommended)" : Label;
+
     public override string ToString() => Label;
 }
 
@@ -69,7 +72,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public static readonly IReadOnlyList<RankPreset> RankPresets =
     [
-        new("Formula + match data (recommended)", RankBy.Both),
+        new("Formula + match data", RankBy.Both, Recommended: true),
         new("Formula", RankBy.Formula),
         new("Match data", RankBy.MatchData),
     ];
