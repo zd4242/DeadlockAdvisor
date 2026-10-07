@@ -163,14 +163,13 @@ public class MainWindowViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
 
-        // The zoom only takes room on the status bar while it's off its default.
         settings.SettingsChanged
             .Select(s => ZoomLevels.Clamp(s.ZoomIndex))
             .DistinctUntilChanged()
             .Subscribe(index =>
             {
                 UiScale = ZoomLevels.Steps[index];
-                ZoomText = index == ZoomLevels.DefaultIndex ? "" : $"{Math.Round(UiScale * 100):0}%";
+                ZoomText = $"{Math.Round(UiScale * 100):0}%";
             })
             .DisposeWith(Disposables);
 

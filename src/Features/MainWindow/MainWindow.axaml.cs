@@ -48,6 +48,7 @@ public partial class MainWindow : Window
         AutoScroll = new MiddleClickAutoScroll(this);
         Closed += (_, _) => AutoScroll.Dispose();
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
+        ResizeGrip.PointerPressed += OnResizeGripPressed;
         PointerPressed += OnDismissLayerPressed;
         PointerPressed += OnNavigationButtonPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
@@ -148,6 +149,9 @@ public partial class MainWindow : Window
             var maximized = WindowState == WindowState.Maximized;
             MaximizeGlyph.Data = maximized ? _restoreGlyph : _maximizeGlyph;
             ToolTip.SetTip(MaximizeButton, maximized ? "Restore Down" : "Maximize");
+            var floating = WindowState == WindowState.Normal;
+            WindowOutline.IsVisible = floating;
+            ResizeGrip.IsVisible = floating;
         }
         else if (change.Property == IsActiveProperty)
         {
@@ -242,6 +246,12 @@ public partial class MainWindow : Window
         // OS move loop, which swallows the release, so the menu item would never see its click.
         if (e.Source is Visual source && (source == TitleBar || TitleBar.IsVisualAncestorOf(source)))
             DragFromTitleBar(e);
+    }
+
+    private void OnResizeGripPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.GetCurrentPoint(this).Properties.IsLeftButtonPressed)
+            BeginResizeDrag(WindowEdge.SouthEast, e);
     }
 
     /// <summary>

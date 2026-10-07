@@ -293,16 +293,32 @@ public class StatusBarTests
     }
 
     [AvaloniaFact]
-    public void TheZoomOnlyShowsWhileItsOffItsDefault()
+    public void TheStatusBarZoomButtonsStepAndResetTheZoom()
     {
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
-        Assert.Equal("", ui.ViewModel.ZoomText);
+        var barHeight = ui.Window.StatusBar.Bounds.Height;
+        var stepper = ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper");
+        var buttons = stepper.Children.OfType<Button>().ToList();
+        Assert.Equal("100%", ui.ViewModel.ZoomText);
+        Assert.Equal("100%", buttons[1].Content);
+        Assert.False(buttons[1].IsEffectivelyEnabled);
 
-        ui.ViewModel.ZoomInCommand.Execute().Subscribe();
-        Assert.Equal("115%", ui.ViewModel.ZoomText);
-        ui.ViewModel.ResetZoomCommand.Execute().Subscribe();
-        Assert.Equal("", ui.ViewModel.ZoomText);
+        buttons[2].Command!.Execute(null);
+        UiHarness.Settle();
+        Assert.Equal("115%", buttons[1].Content);
+        Assert.True(buttons[1].IsEffectivelyEnabled);
+
+        buttons[0].Command!.Execute(null);
+        buttons[0].Command!.Execute(null);
+        UiHarness.Settle();
+        Assert.Equal("85%", buttons[1].Content);
+
+        buttons[1].Command!.Execute(null);
+        UiHarness.Settle();
+        Assert.Equal("100%", buttons[1].Content);
+        Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
+        ui.Screenshot("status_zoom.png");
     }
 
     private static Button Chip(UiHarness ui) =>

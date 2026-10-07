@@ -121,11 +121,50 @@
             <Setter Property="Background" Value="{DynamicResource SurfaceBrush}"/>
             <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}"/>
             <Setter Property="BorderThickness" Value="0,1,0,0"/>
-            <Setter Property="Padding" Value="12,4"/>
+            <Setter Property="Padding" Value="12,4,0,4"/>
         </Style>
         <Style Selector="Border#StatusBar TextBlock">
             <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- The zoom stepper: flat buttons small enough not to make the bar taller. -->
+        <Style Selector="Border#StatusBar Button.zoom">
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="Width" Value="22"/>
+            <Setter Property="Height" Value="18"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="CornerRadius" Value="4"/>
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Focusable" Value="False"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom.level">
+            <Setter Property="Width" Value="44"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextDimBrush}"/>
+            <Setter Property="StrokeThickness" Value="1.25"/>
+            <Setter Property="Width" Value="10"/>
+            <Setter Property="Height" Value="10"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface3Brush}"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom:pressed /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="{DynamicResource Surface4Brush}"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom:pointerover Path">
+            <Setter Property="Stroke" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="Border#StatusBar Button.zoom:disabled">
+            <Setter Property="Opacity" Value="0.35"/>
+        </Style>
+        <!-- At 100% there is nothing to reset, but the level still reads as text rather than as a dead button. -->
+        <Style Selector="Border#StatusBar Button.zoom.level:disabled">
+            <Setter Property="Opacity" Value="1"/>
         </Style>
         <Style Selector="Border#StatusBar TextBlock.saving">
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
@@ -250,7 +289,7 @@
                 </Border>
 
                 <Border x:Name="StatusBar" DockPanel.Dock="Bottom">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
                         <mainWindow:DataStatusView x:Name="DataStatus" VerticalAlignment="Center" DataContext="{Binding DataStatus}"/>
                         <!-- The negative margins keep a chip from making the bar taller. -->
                         <mainWindow:AppUpdateView x:Name="AppUpdate"
@@ -274,11 +313,42 @@
                             <TextBlock Classes="saving"
                                        Text="{Binding SaveText}"
                                        IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                            <TextBlock Background="Transparent"
-                                       Text="{Binding ZoomText}"
-                                       IsVisible="{Binding ZoomText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
-                                       ToolTip.Tip="Zoom (Ctrl+0 resets it)"/>
+                            <StackPanel x:Name="ZoomStepper" Orientation="Horizontal" VerticalAlignment="Center">
+                                <Button Classes="zoom"
+                                        ToolTip.Tip="Zoom out (Ctrl+-)"
+                                        Command="{Binding ZoomOutCommand}">
+                                    <Path Data="M0,5 H10"/>
+                                </Button>
+                                <Button x:Name="ZoomLevel"
+                                        Classes="zoom level"
+                                        Content="{Binding ZoomText}"
+                                        ToolTip.Tip="Zoom: click for 100% (Ctrl+0)"
+                                        Command="{Binding ResetZoomCommand}"/>
+                                <Button Classes="zoom"
+                                        ToolTip.Tip="Zoom in (Ctrl+=)"
+                                        Command="{Binding ZoomInCommand}">
+                                    <Path Data="M0,5 H10 M5,0 V10"/>
+                                </Button>
+                            </StackPanel>
                         </StackPanel>
+                        <!-- Gives the bottom-right corner something to see and grab; the negative margins
+                             stretch it over the bar's padding without making the bar taller. -->
+                        <Border x:Name="ResizeGrip"
+                                Grid.Column="5"
+                                Width="22"
+                                Margin="0,-4"
+                                Background="Transparent"
+                                Cursor="BottomRightCorner"
+                                ToolTip.Tip="Drag to resize">
+                            <Path Data="M9,9 H11 V11 H9 Z M5,9 H7 V11 H5 Z M1,9 H3 V11 H1 Z M9,5 H11 V7 H9 Z M5,5 H7 V7 H5 Z M9,1 H11 V3 H9 Z"
+                                  Width="12"
+                                  Height="12"
+                                  Margin="0,0,5,5"
+                                  HorizontalAlignment="Right"
+                                  VerticalAlignment="Bottom"
+                                  Fill="{DynamicResource BorderStrongBrush}"
+                                  IsHitTestVisible="False"/>
+                        </Border>
                     </Grid>
                 </Border>
 
@@ -305,5 +375,11 @@
         </LayoutTransformControl>
 
         <card:ItemCardPresenter x:Name="ItemCards" Zoom="{Binding UiScale}"/>
+
+        <!-- The window's edge, for when it sits over something the same dark grey. -->
+        <Border x:Name="WindowOutline"
+                BorderBrush="{DynamicResource BorderStrongBrush}"
+                BorderThickness="1"
+                IsHitTestVisible="False"/>
     </Panel>
 </Window>
