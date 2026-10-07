@@ -3,6 +3,7 @@ using System.Reactive.Threading.Tasks;
 using System.Text.Json.Nodes;
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Primitives;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -371,6 +372,28 @@ public class StatusBarTests
         ui.Settings.Update(settings => settings.ZoomIndex = 0);
         UiHarness.Settle();
         Assert.NotEqual(0, layoutPasses);
+    }
+
+    /// <summary>A tooltip under the pointer took the hover from its button, so the hold let go and the press missed.</summary>
+    [AvaloniaFact]
+    public async Task TheZoomButtonTooltipsOpenAboveAndLeaveTheHoverWithTheButton()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        foreach (var button in ZoomButtons(ui).Where(button => button.IsEffectivelyEnabled))
+        {
+            var at = Center(ui, button);
+            ui.Window.MouseMove(at);
+            Assert.True(await UiHarness.WaitUntilAsync(() => ToolTip.GetIsOpen(button)));
+
+            var tooltip = OverlayLayer.GetOverlayLayer(ui.Window)!.Children.OfType<OverlayPopupHost>().Single();
+            Assert.True(tooltip.Bounds.Bottom <= ScreenBounds(ui, button).Top + 0.5, $"{tooltip.Bounds} is not above {button.Bounds}");
+            Assert.True(button.IsPointerOver);
+            Assert.True(ui.Window.InputHitTest(at) is Visual hit && (hit == button || button.IsVisualAncestorOf(hit)));
+
+            ui.Window.MouseMove(new Point(100, 100));
+            Assert.True(await UiHarness.WaitUntilAsync(() => !ToolTip.GetIsOpen(button)));
+        }
     }
 
     [AvaloniaFact]

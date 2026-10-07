@@ -169,6 +169,10 @@
         <Style Selector="Border#StatusBar TextBlock.saving">
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         </Style>
+        <!-- A tooltip that opens under the pointer would take the hover from the control it describes. -->
+        <Style Selector="ToolTip">
+            <Setter Property="IsHitTestVisible" Value="False"/>
+        </Style>
     </Window.Styles>
 
     <Panel>
@@ -332,6 +336,8 @@
                                         Background="Transparent">
                                 <Button Classes="zoom"
                                         ToolTip.Tip="Zoom out (Ctrl+-)"
+                                        ToolTip.Placement="Top"
+                                        ToolTip.VerticalOffset="-6"
                                         Command="{Binding ZoomOutCommand}">
                                     <Path Data="M0,5 H10"/>
                                 </Button>
@@ -339,9 +345,13 @@
                                         Classes="zoom level"
                                         Content="{Binding ZoomText}"
                                         ToolTip.Tip="Zoom: click for 100% (Ctrl+0), scroll to change"
+                                        ToolTip.Placement="Top"
+                                        ToolTip.VerticalOffset="-6"
                                         Command="{Binding ResetZoomCommand}"/>
                                 <Button Classes="zoom"
                                         ToolTip.Tip="Zoom in (Ctrl+=)"
+                                        ToolTip.Placement="Top"
+                                        ToolTip.VerticalOffset="-6"
                                         Command="{Binding ZoomInCommand}">
                                     <Path Data="M0,5 H10 M5,0 V10"/>
                                 </Button>
