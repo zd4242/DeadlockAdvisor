@@ -34,6 +34,14 @@ With the match data's "keep it up to date" on (the default, and in
 Settings → Data), later startups refresh it quietly when a newer patch is
 out or it's a day and a half old. Settings live beside it in `settings.json`.
 
+Offline, it all still works from what's saved: the starter data recommends
+items, and until the art has been downloaded heroes show as their initials
+(Detect from screen needs that art). A status bar chip says **Offline**;
+clicking it checks again, and it checks by itself every half minute. When the
+connection returns, the startup checks that couldn't be made are made then. A
+first run that starts offline offers its downloads, as a status bar chip, once
+you're back online.
+
 To build it yourself (.NET 10 SDK):
 
 ```

@@ -65,7 +65,8 @@ it for a hero with no cut portraits.
 **Keeping art current**: `assets/art_manifest.json` records each download's URL, ETag and hash.
 - Download Art only asks whether a file changed (If-None-Match, answered with 304).
 - The app checks quietly at startup about weekly, and at once when `_derived.json` is out of date.
-- Nothing hero-specific ships with the app.
+- A download whose connection fails for three images in a row stops and keeps what arrived. It isn't recorded as a check, so the next startup, or the connection returning, tries again. An image the site answers with an error status is skipped alone.
+- Nothing hero-specific ships with the app, so offline, a first run has no art to match against until the connection returns.
 
 ## Street Brawl
 
