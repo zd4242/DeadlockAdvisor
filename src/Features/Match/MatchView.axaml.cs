@@ -1,5 +1,6 @@
 using System.Reactive.Disposables;
 using Avalonia.Input;
+using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using ReactiveUI;
 
@@ -11,15 +12,16 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
     {
         InitializeComponent();
 
-        // The box is only there while it's wanted: Escape on an empty one, or leaving it empty, puts it away.
-        ItemSearchBox.KeyDown += (_, e) =>
+        // The box is only there while it's wanted: Escape puts it away, with whatever it held, and so does leaving it empty.
+        // Tunnelled, to get ahead of the box's own Escape, which only empties it.
+        ItemSearchBox.AddHandler(KeyDownEvent, (_, e) =>
         {
-            if (e.Key == Key.Escape && string.IsNullOrEmpty(ItemSearchBox.Text))
+            if (e.Key == Key.Escape)
             {
                 CloseItemSearch();
                 e.Handled = true;
             }
-        };
+        }, RoutingStrategies.Tunnel);
         ItemSearchBox.LostFocus += (_, _) =>
         {
             if (string.IsNullOrEmpty(ItemSearchBox.Text))
@@ -59,7 +61,6 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
 
     private void CloseItemSearch()
     {
-        if (ViewModel is { } match)
-            match.Results.IsSearchOpen = false;
+        ViewModel?.Results.ResetSearch();
     }
 }

@@ -127,7 +127,13 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
         PickHeroesCommand = ReactiveCommand.Create(Board.OpenPicker);
-        SearchItemsCommand = ReactiveCommand.Create(OpenItemSearch);
+        ToggleItemSearchCommand = ReactiveCommand.Create(() =>
+        {
+            if (Results.IsSearchOpen)
+                Results.ResetSearch();
+            else
+                OpenItemSearch();
+        });
 
         Board.MatchChanged.Subscribe(_ => OnMatchChanged()).DisposeWith(Disposables);
         // Runs after the board's own rescore, so the list is already ranked for the new heroes.
@@ -268,8 +274,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Look back at a detection that was applied without review.</summary>
     public ReactiveCommand<Unit, Unit> ReviewDetectionCommand { get; }
 
-    /// <summary>Show the item search, from its button.</summary>
-    public ReactiveCommand<Unit, Unit> SearchItemsCommand { get; }
+    /// <summary>Show the item search, or put it away (clearing it), from its button.</summary>
+    public ReactiveCommand<Unit, Unit> ToggleItemSearchCommand { get; }
 
     /// <summary>
     /// Ctrl+F searches the items once there's a match to rank them for; before that, or while the hero

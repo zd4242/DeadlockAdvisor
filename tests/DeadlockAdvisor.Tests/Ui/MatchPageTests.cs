@@ -121,16 +121,27 @@ public class MatchPageTests
         Assert.NotEmpty(results.Entries.OfType<ResultRowViewModel>());
         Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.Contains("knock", row.Name, StringComparison.OrdinalIgnoreCase));
 
-        // With text in the box, Escape clears it first.
         ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
         UiHarness.Settle();
         Assert.Equal("", results.SearchText);
-        Assert.True(results.IsSearchOpen);
-
-        ui.Window.KeyPressQwerty(PhysicalKey.Escape, RawInputModifiers.None);
-        UiHarness.Settle();
         Assert.False(results.IsSearchOpen);
         Assert.False(box.IsEffectivelyVisible);
+    }
+
+    [AvaloniaFact]
+    public void TheMagnifierTogglesTheItemSearchAndClosingItClearsTheSearch()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        var match = ui.ViewModel.Match;
+
+        match.ToggleItemSearchCommand.Execute().Subscribe();
+        match.Results.SearchText = "knock";
+        Assert.True(match.Results.IsSearchOpen);
+
+        match.ToggleItemSearchCommand.Execute().Subscribe();
+        Assert.False(match.Results.IsSearchOpen);
+        Assert.Equal("", match.Results.SearchText);
     }
 
     [AvaloniaFact]
@@ -143,7 +154,7 @@ public class MatchPageTests
         match.HideDisagreed = true;
         Assert.DoesNotContain(match.Results.Entries.OfType<ResultRowViewModel>(), row => row.ItemId == "knockdown");
 
-        match.SearchItemsCommand.Execute().Subscribe();
+        match.ToggleItemSearchCommand.Execute().Subscribe();
         match.Results.SearchText = "knock";
 
         var row = match.Results.Entries.OfType<ResultRowViewModel>().Single();
@@ -158,7 +169,7 @@ public class MatchPageTests
         using var ui = new UiHarness();
         SetUpMatch(ui);
         var match = ui.ViewModel.Match;
-        match.SearchItemsCommand.Execute().Subscribe();
+        match.ToggleItemSearchCommand.Execute().Subscribe();
         match.Results.SearchText = "knock";
         var knockdown = match.Results.Entries.OfType<ResultRowViewModel>().Single(row => row.ItemId == "knockdown");
         if (!knockdown.IsSelected)
@@ -178,7 +189,7 @@ public class MatchPageTests
         using var ui = new UiHarness();
         SetUpMatch(ui);
         var match = ui.ViewModel.Match;
-        match.SearchItemsCommand.Execute().Subscribe();
+        match.ToggleItemSearchCommand.Execute().Subscribe();
         match.Results.SearchText = "knock";
 
         await match.Board.ClearCommand.Execute();

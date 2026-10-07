@@ -14,6 +14,9 @@
             <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
         </Style>
+        <Style Selector="Button.glyph.open > Path">
+            <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
+        </Style>
         <!-- Who the list leans toward, in the enemy's colour, as the match bar marks them. -->
         <Style Selector="Border.focus">
             <Setter Property="Background">
@@ -106,15 +109,17 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <!-- A magnifier that gives way to the search box below once it's wanted. -->
+                        <!-- Shows or puts away the search box below. It keeps focus off itself, so a click while the box has it
+                             reaches the toggle rather than first closing an empty box through its lost focus. -->
                         <Button Grid.Column="2"
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 Classes="glyph"
-                                Command="{Binding SearchItemsCommand}"
+                                Classes.open="{Binding Results.IsSearchOpen}"
+                                Command="{Binding ToggleItemSearchCommand}"
+                                Focusable="False"
                                 IsEnabled="{Binding !IsMatchEmpty}"
-                                IsVisible="{Binding !Results.IsSearchOpen}"
-                                ToolTip.Tip="Search the recommended items (Ctrl+F)">
+                                ToolTip.Tip="Search the recommended items, or put the search away (Ctrl+F)">
                             <!-- Drawn at the glyph's own 16px size, about as wide as the funnel and centred on its box, with a stroke that matches the funnel's weight. -->
                             <Path Data="M7,1.2 A5.8,5.8 0 1 1 7,12.8 A5.8,5.8 0 1 1 7,1.2 Z M11.1,11.1 L14.6,14.6"
                                   Stretch="None"
