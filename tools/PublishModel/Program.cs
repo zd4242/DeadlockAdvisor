@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.Net.Http;
 using System.Text.Json;
 using DeadlockAdvisor.Services;
 
@@ -13,6 +14,11 @@ using DeadlockAdvisor.Services;
 // dotnet run --project tools/PublishModel -- --assets <dir>
 //
 // What CI runs: lays out the seed's files as the "model" release holds them.
+//
+// dotnet run --project tools/PublishModel -- --add-new-heroes
+//
+// What CI's New heroes workflow runs: adds the heroes deadlock-api.com lists and the seed lacks, every trait
+// at 0, and dates model.json. Only edits src/Assets/SeedData: committing and pushing it is the caller's.
 
 string? Option(string name)
 {
@@ -45,6 +51,24 @@ if (Option("--assets") is { } assetsDir)
     catch (InvalidOperationException ex)
     {
         Console.Error.WriteLine(ex.Message);
+        return 1;
+    }
+}
+
+if (args.Contains("--add-new-heroes"))
+{
+    try
+    {
+        using var api = new DeadlockApi();
+        var added = await ModelPublisher.AddNewHeroesAsync(new GameApiService(api), seedDir, DateTime.UtcNow.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture));
+        Console.WriteLine(added.Added.Count > 0
+            ? $"Added: {string.Join(", ", added.Added)}"
+            : "No new heroes: the seed has every hero the game lists.");
+        return 0;
+    }
+    catch (Exception ex) when (ex is HttpRequestException or TimeoutException or JsonException or InvalidOperationException or IOException)
+    {
+        Console.Error.WriteLine($"Couldn't add the new heroes: {ex.Message}");
         return 1;
     }
 }

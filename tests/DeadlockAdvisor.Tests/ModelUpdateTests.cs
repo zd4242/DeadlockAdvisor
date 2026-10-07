@@ -1,5 +1,7 @@
 using System.Text;
+using System.Text.Json.Nodes;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.GameApi;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using DeadlockAdvisor.Tests.Ui;
@@ -73,12 +75,14 @@ public sealed class ModelUpdateTests : IDisposable
             "The seed's files changed: regenerate model.json with DEADLOCK_UPDATE_GOLDENS=1, which publishes them as a new version once pushed.");
     }
 
-    /// <summary>A copy of the seed to publish into.</summary>
+    /// <summary>A copy of the seed to publish into, without the notes it has published so far: they come and go with the seed.</summary>
     private static TempDirectory SeedCopy()
     {
         var seed = new TempDirectory();
         foreach (var file in Directory.GetFiles(SeedDir))
             File.Copy(file, Path.Combine(seed.Path, Path.GetFileName(file)));
+        var manifest = Path.Combine(seed.Path, ModelManifest.FileName);
+        File.WriteAllBytes(manifest, (ModelManifest.Parse(File.ReadAllBytes(manifest)) with { Notes = [] }).ToJsonBytes());
         return seed;
     }
 
@@ -285,6 +289,75 @@ public sealed class ModelUpdateTests : IDisposable
     }
 
     [Fact]
+    public async Task NewHeroesAreAddedToTheSeedUnratedAndPublishedWithANote()
+    {
+        using var seed = SeedCopy();
+        var before = DataStore.Load(seed.Path);
+        var game = new JsonArray(before.Heroes.Values
+            .Select(hero => (JsonNode)new JsonObject { ["id"] = hero.GameId, ["name"] = hero.HeroName })
+            .Append(new JsonObject { ["id"] = 9001, ["name"] = "Newcomer" })
+            .Append(new JsonObject { ["id"] = 9002, ["name"] = "Latecomer" })
+            .ToArray());
+        _api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => game.DeepClone();
+        var service = new GameApiService(_api);
+
+        var result = await ModelPublisher.AddNewHeroesAsync(service, seed.Path, "2026-10-09");
+
+        Assert.Equal(["Newcomer", "Latecomer"], result.Added);
+        Assert.Equal([DataStore.HeroScoresFile, DataStore.HeroesFile], result.Published.Files);
+        Assert.Equal("New heroes: Newcomer and Latecomer. Their ratings are still to come, so recommendations leave them out until then.",
+            result.Published.Note?.Text);
+        var after = DataStore.Load(seed.Path);
+        Assert.Equal(before.Heroes.Keys.Concat(["newcomer", "latecomer"]), after.Heroes.Keys);
+        Assert.Equal(before.HeroScores.Count + 2 * after.Categories.Count, after.HeroScores.Count);
+        Assert.All(["newcomer", "latecomer"], heroId => Assert.False(after.IsProfiled(heroId)));
+        Assert.All(before.HeroScores, pair => Assert.Equal(pair.Value, after.HeroScore(pair.Key.HeroId, pair.Key.CategoryId)));
+        // The seed still passes TheSeedsModelJsonListsEveryModelFileByItsHash.
+        var listed = ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+        Assert.Equal(ModelPublisher.Listing(seed.Path, listed), File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+        Assert.Equal("2026-10-09", listed.Published);
+
+        var again = await ModelPublisher.AddNewHeroesAsync(service, seed.Path, "2026-10-10");
+
+        Assert.Empty(again.Added);
+        Assert.False(again.Published.Changed);
+        Assert.Equal("2026-10-09", ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName))).Published);
+    }
+
+    [Fact]
+    public async Task OneNewHeroIsNotedInTheSingular()
+    {
+        using var seed = SeedCopy();
+        var game = new JsonArray(new JsonObject { ["id"] = 9001, ["name"] = "Newcomer" });
+        _api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => game.DeepClone();
+
+        var result = await ModelPublisher.AddNewHeroesAsync(new GameApiService(_api), seed.Path, "2026-10-09");
+
+        Assert.Equal("New hero: Newcomer. Its ratings are still to come, so recommendations leave it out until then.", result.Published.Note?.Text);
+    }
+
+    [Fact]
+    public void PublishingRefusesADataFolderThatLacksAHeroTheSeedHas()
+    {
+        using var seed = SeedCopy();
+        var heroes = Path.Combine(seed.Path, DataStore.HeroesFile);
+        File.WriteAllText(heroes, File.ReadAllText(heroes).TrimEnd() + "\r\nnewcomer,Newcomer,9001\r\n");
+        var weights = FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3");
+        File.WriteAllBytes(DataFile(DataStore.TraitWeightsFile), weights);
+        var listed = File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName));
+
+        var refused = Assert.Throws<InvalidOperationException>(() => ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09"));
+
+        Assert.Contains("Newcomer", refused.Message);
+        Assert.Equal(Seed(DataStore.TraitWeightsFile), File.ReadAllBytes(Path.Combine(seed.Path, DataStore.TraitWeightsFile)));
+        Assert.Equal(listed, File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));
+
+        // The game id is what names a hero: one the folder spells with another id is the same hero.
+        File.WriteAllText(DataFile(DataStore.HeroesFile), File.ReadAllText(DataFile(DataStore.HeroesFile)).TrimEnd() + "\r\nnewcomer_two,Newcomer,9001\r\n");
+        Assert.Equal([DataStore.TraitWeightsFile, DataStore.HeroesFile], ModelPublisher.Publish(_data.Path, seed.Path, "2026-10-09").Files);
+    }
+
+    [Fact]
     public void TheReleaseHoldsEachFileUnderTheNameItsHashGivesIt()
     {
         using var seed = SeedCopy();
@@ -297,7 +370,7 @@ public sealed class ModelUpdateTests : IDisposable
         Assert.Equal(names.Order(), Directory.GetFiles(release.Path).Select(Path.GetFileName).Order());
         Assert.Equal($"trait_weights-{listed.Files[DataStore.TraitWeightsFile][..8]}.csv", ModelManifest.AssetOf(DataStore.TraitWeightsFile, listed.Files[DataStore.TraitWeightsFile]));
         Assert.EndsWith("/" + names[0], listed.UrlOf(listed.Files.Keys.First()));
-        Assert.Equal(Seed(ModelManifest.FileName), File.ReadAllBytes(Path.Combine(release.Path, ModelManifest.FileName)));
+        Assert.Equal(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)), File.ReadAllBytes(Path.Combine(release.Path, ModelManifest.FileName)));
 
         // A file that isn't the one model.json lists stops it.
         File.WriteAllBytes(Path.Combine(seed.Path, DataStore.TraitWeightsFile), FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3"));

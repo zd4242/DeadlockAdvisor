@@ -1,7 +1,16 @@
+using System.Globalization;
 using System.IO;
+using System.Threading;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services.Formats;
+using DeadlockAdvisor.Services.GameApi;
 
 namespace DeadlockAdvisor.Services;
+
+/// <summary>What adding the game's new heroes to the seed did.</summary>
+/// <param name="Added">The heroes that weren't in the seed, as the game names them.</param>
+public sealed record NewHeroesPublished(IReadOnlyList<string> Added, ModelPublished Published);
 
 /// <summary>What publishing a data folder's model changed in the seed.</summary>
 /// <param name="Files">The model files copied in, newer than the seed's.</param>
@@ -36,6 +45,17 @@ public static class ModelPublisher
             throw new InvalidOperationException($"{dataDir} doesn't load, so it isn't published: {ex.Message}", ex);
         }
 
+        // Copying its heroes.csv over the seed's would take them out of the game for everyone.
+        var missing = SeedHeroes(seedDir).Where(hero => !store.Heroes.ContainsKey(hero.HeroId)
+                                                          && (hero.GameId == 0 || store.Heroes.Values.All(ours => ours.GameId != hero.GameId))).ToList();
+        if (missing.Count > 0)
+        {
+            throw new InvalidOperationException(
+                $"The seed has {string.Join(", ", missing.Select(hero => hero.HeroName))} and {dataDir} doesn't, so publishing would drop "
+                + "them: take the published model (Data → Check for Formula Updates) or Sync from Game API first, "
+                + "or delete the rows from the seed if the game removed the hero.");
+        }
+
         var files = ModelManifest.ModelFiles.Where(file => CopyIfChanged(dataDir, seedDir, file)).ToList();
 
         // Only lifts over every match make a fair starting point: leaning ones would carry this folder's choice of ranks.
@@ -61,6 +81,56 @@ public static class ModelPublisher
             File.WriteAllBytes(manifestPath, (ModelManifest.Of(seedDir, published) with { Notes = notes }).ToJsonBytes());
         }
         return new ModelPublished(files, matchData, skipped, noted);
+    }
+
+    /// <summary>
+    /// What CI's new-heroes job runs (tools/PublishModel --add-new-heroes): the game's heroes folded into the
+    /// seed's and published as <see cref="Publish"/> does. A new hero arrives with every trait at 0, which
+    /// scoring leaves out until someone rates it, so it makes the hero pickable and detectable and changes no
+    /// recommendation. Nothing is written when the seed already has them all.
+    /// </summary>
+    public static async Task<NewHeroesPublished> AddNewHeroesAsync(IGameApiService gameApi, string seedDir, string published,
+        CancellationToken cancellationToken = default)
+    {
+        var records = await gameApi.FetchHeroesAsync(cancellationToken);
+        var work = Directory.CreateTempSubdirectory("new-heroes-");
+        try
+        {
+            foreach (var file in Directory.GetFiles(seedDir))
+                File.Copy(file, Path.Combine(work.FullName, Path.GetFileName(file)));
+            var store = DataStore.Load(work.FullName);
+            var report = GameSync.ApplyRoster(store, records);
+            if (!report.AnythingChanged)
+                return new NewHeroesPublished([], new ModelPublished([], false, null, null));
+            GameSync.SaveSynced(store, report);
+            var note = report.AddedHeroes.Count > 0 ? NewHeroesNote(report.AddedHeroes) : null;
+            return new NewHeroesPublished(report.AddedHeroes, Publish(work.FullName, seedDir, published, note));
+        }
+        finally
+        {
+            work.Delete(recursive: true);
+        }
+    }
+
+    /// <summary>"New hero: Baba. Its ratings are still to come, so recommendations leave it out until then."</summary>
+    private static string NewHeroesNote(IReadOnlyList<string> names)
+    {
+        var one = names.Count == 1;
+        var listed = one ? names[0] : $"{string.Join(", ", names.Take(names.Count - 1))} and {names[^1]}";
+        return $"New {(one ? "hero" : "heroes")}: {listed}. {(one ? "Its" : "Their")} ratings are still to come, "
+               + $"so recommendations leave {(one ? "it" : "them")} out until then.";
+    }
+
+    /// <summary>The seed's heroes; none when it has no heroes.csv yet.</summary>
+    private static IEnumerable<Hero> SeedHeroes(string seedDir)
+    {
+        var path = Path.Combine(seedDir, DataStore.HeroesFile);
+        if (!File.Exists(path))
+            return [];
+        return CsvReader.ReadFile(path)
+            .Where(row => row.Has("hero_id") && row.Has("hero_name"))
+            .Select(row => new Hero(row.Required("hero_id"), row.Required("hero_name"),
+                long.TryParse(row.Get("game_id"), CultureInfo.InvariantCulture, out var gameId) ? gameId : 0));
     }
 
     /// <summary>What model.json would say of the files in <paramref name="seedDir"/> now, keeping <paramref name="listed"/>'s date and notes.</summary>
