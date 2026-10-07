@@ -459,6 +459,33 @@ public class GameApiTests
     }
 
     [Fact]
+    public void TheRosterAloneAddsNewHeroesUnratedAndTouchesNothingElse()
+    {
+        var store = TestStore.Make();
+        var heroes = JsonNode.Parse("""
+            [{"id": 2, "name": "Low HP", "starting_stats": {"max_health": {"value": 680}}},
+             {"id": 84, "class_name": "hero_ratking", "name": "Rat King"},
+             {"id": 83, "class_name": "hero_testhero", "name": "hero_testhero"},
+             {"id": 99, "class_name": "hero_unnamed", "name": ""}]
+            """)!.AsArray();
+
+        var report = GameSync.ApplyRoster(store, heroes);
+
+        Assert.Equal(["Rat King"], report.AddedHeroes);
+        Assert.Equal(["heavy_spirit", "low_hp", "generic", "rat_king"], store.Heroes.Keys);
+        Assert.Equal(84, store.Heroes["rat_king"].GameId);
+        Assert.Equal(2, store.Heroes["low_hp"].GameId);
+        // Rows for every trait, all at 0: unprofiled, so left out of scoring until someone rates it.
+        Assert.All(store.Categories.Keys, category => Assert.True(store.HeroScores.ContainsKey(new ScoreKey("rat_king", category))));
+        Assert.False(store.IsProfiled("rat_king"));
+        // The measured max HP is part of a full sync only: it would move every rated hero's score with the median.
+        Assert.Empty(report.MeasuredChanges);
+        Assert.Equal(-4, store.HeroScore("low_hp", "max_hp"));
+        Assert.Equal(3, store.Items.Count);
+        Assert.Empty(GameSync.ApplyRoster(store, heroes).AddedHeroes);
+    }
+
+    [Fact]
     public void TooltipTextKeepsEmphasisAndDropsIcons()
     {
         const string source = "Deals bonus <svg width=\"1\"><path d=\"M0 0\"/></svg>"

@@ -616,17 +616,34 @@ public static partial class GameSync
         var report = new SyncReport();
         var knownItems = store.Items.Values.ToDictionary(item => item.ItemId);
         var heroes = heroRecords.OfType<JsonNode>().ToList();
-        ApplyHeroes(store, heroes, report);
+        ApplyRoster(store, heroes, report);
         var recordsByItem = ApplyItems(store, itemRecords.OfType<JsonNode>().ToList(), report);
         ApplyStats(store, recordsByItem, knownItems, ShopBonuses(heroes), report);
         ApplyTooltips(store, recordsByItem, report);
         var records = recordsByItem.Values.ToList();
         report.UnmappedStats.AddRange(UnmappedStats(records));
         report.StaleOverrides.AddRange(StaleOverrides(records));
-        if (report.AddedHeroes.Count > 0)
-            store.SyncCategories();
         ApplyMeasuredMaxHp(store, heroes, report);
         return report;
+    }
+
+    /// <summary>
+    /// Only the hero half of <see cref="Apply"/>: new heroes are added with every trait at 0, which leaves
+    /// them unprofiled (out of the baselines and out of scoring) until someone rates them, and renamed ones
+    /// follow the game. What a new hero's arrival means for items and measured scores waits for a full sync.
+    /// </summary>
+    public static SyncReport ApplyRoster(DataStore store, IEnumerable<JsonNode?> heroRecords)
+    {
+        var report = new SyncReport();
+        ApplyRoster(store, heroRecords.OfType<JsonNode>().ToList(), report);
+        return report;
+    }
+
+    private static void ApplyRoster(DataStore store, List<JsonNode> heroes, SyncReport report)
+    {
+        ApplyHeroes(store, heroes, report);
+        if (report.AddedHeroes.Count > 0)
+            store.SyncCategories();
     }
 
     // -- hero traits measured from the game ---------------------------------------------
@@ -749,6 +766,9 @@ public static partial class GameSync
         {
             var name = JsonRecord.Text(record, "name");
             var gameId = JsonRecord.Int(record, "id");
+            // A record the game leaves unnamed, or names after its own class ("hero_testhero"), isn't a hero anyone plays.
+            if (name.Length == 0 || name == JsonRecord.Text(record, "class_name"))
+                continue;
             if (ours.Find(gameId, name) is not { } hero)
             {
                 var heroId = MakeId(name);
