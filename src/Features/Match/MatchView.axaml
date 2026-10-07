@@ -5,6 +5,7 @@
              xmlns:results="using:DeadlockAdvisor.Features.Match.Results"
              xmlns:explain="using:DeadlockAdvisor.Features.Match.Explain"
              xmlns:controls="using:DeadlockAdvisor.Controls"
+             xmlns:theme="using:DeadlockAdvisor.Theme"
              x:Class="DeadlockAdvisor.Features.Match.MatchView"
              x:DataType="match:MatchViewModel">
 
@@ -12,6 +13,22 @@
         <Style Selector="Button.glyph.active > Path">
             <Setter Property="Stroke" Value="{DynamicResource AccentBrush}"/>
             <Setter Property="Fill" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <!-- Who the list leans toward, in the enemy's colour, as the match bar marks them. -->
+        <Style Selector="Border.focus">
+            <Setter Property="Background">
+                <SolidColorBrush Color="{x:Static theme:Palette.Enemy}" Opacity="0.15"/>
+            </Setter>
+            <Setter Property="BorderBrush" Value="{DynamicResource EnemyBrush}"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="CornerRadius" Value="10"/>
+            <Setter Property="Padding" Value="7,0,0,0"/>
+            <Setter Property="Height" Value="20"/>
+        </Style>
+        <Style Selector="Border.focus Button.icon">
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="Padding" Value="5,0,7,0"/>
+            <Setter Property="VerticalAlignment" Value="Center"/>
         </Style>
     </UserControl.Styles>
 
@@ -30,7 +47,39 @@
                     <!-- What ranks the list stays in view; the rest sits behind Filters. -->
                     <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
                         <StackPanel VerticalAlignment="Center" Spacing="3">
-                            <TextBlock Classes="section" TextTrimming="CharacterEllipsis" Text="RECOMMENDED ITEMS"/>
+                            <Grid ColumnDefinitions="Auto,*">
+                                <TextBlock Classes="section" VerticalAlignment="Center" Text="RECOMMENDED ITEMS"/>
+                                <!-- The enemies clicked on the match bar, and a way to stop focusing on them. -->
+                                <Border Grid.Column="1"
+                                        Classes="focus"
+                                        Margin="10,-3,8,-3"
+                                        HorizontalAlignment="Left"
+                                        IsVisible="{Binding Board.HasFocus}"
+                                        ToolTip.Tip="{Binding Board.FocusTip}">
+                                    <DockPanel>
+                                        <Path DockPanel.Dock="Left"
+                                              Width="12"
+                                              Height="12"
+                                              Margin="0,0,5,0"
+                                              VerticalAlignment="Center"
+                                              Stretch="None"
+                                              Stroke="{DynamicResource EnemyBrush}"
+                                              StrokeThickness="1.3"
+                                              StrokeLineCap="Round"
+                                              Data="M6,2.5 A3.5,3.5 0 1 1 6,9.5 A3.5,3.5 0 1 1 6,2.5 Z M6,0.5 V4 M6,8 V11.5 M0.5,6 H4 M8,6 H11.5"/>
+                                        <Button DockPanel.Dock="Right"
+                                                Classes="icon"
+                                                Content="×"
+                                                Command="{Binding Board.ClearFocusCommand}"
+                                                ToolTip.Tip="Stop focusing: every enemy counts the same again"/>
+                                        <TextBlock VerticalAlignment="Center"
+                                                   FontSize="12"
+                                                   FontWeight="SemiBold"
+                                                   TextTrimming="CharacterEllipsis"
+                                                   Text="{Binding Board.FocusLabel}"/>
+                                    </DockPanel>
+                                </Border>
+                            </Grid>
                             <TextBlock Classes="faint"
                                        TextTrimming="CharacterEllipsis"
                                        Background="Transparent"

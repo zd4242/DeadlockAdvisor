@@ -22,7 +22,26 @@ public sealed class MatchState
 
     public NetWorthHistory NetWorth { get; } = new();
 
+    private readonly HashSet<string> _focused = [];
+
+    /// <summary>The enemies the recommendations lean toward; a hero who stops being an enemy drops out.</summary>
+    public IReadOnlySet<string> Focused => _focused;
+
     public Role RoleOf(string heroId) => RoleMap.GetValueOrDefault(heroId, Role.None);
+
+    /// <summary>Focus on an enemy, or stop; anyone not an enemy can't be focused. Returns whether they're focused now.</summary>
+    public bool SetFocus(string heroId, bool focused)
+    {
+        if (focused && RoleOf(heroId) == Role.Enemy)
+            _focused.Add(heroId);
+        else
+            _focused.Remove(heroId);
+        return _focused.Contains(heroId);
+    }
+
+    public bool ToggleFocus(string heroId) => SetFocus(heroId, !_focused.Contains(heroId));
+
+    public void ClearFocus() => _focused.Clear();
 
     /// <summary>
     /// Only one hero can be you at a time. A hero already in the match who becomes you keeps everyone
@@ -50,6 +69,8 @@ public sealed class MatchState
             }
         }
 
+        if (role != Role.Enemy)
+            _focused.Remove(heroId);
         if (role == Role.None)
         {
             RoleMap.Remove(heroId);
@@ -67,9 +88,13 @@ public sealed class MatchState
         RoleMap[heroId] = role;
     }
 
-    /// <summary>Allies (you included) become enemies and enemies allies, each team keeping its order and top-bar slots.</summary>
+    /// <summary>
+    /// Allies (you included) become enemies and enemies allies, each team keeping its order and top-bar slots.
+    /// The focused enemies are allies now, so nobody is focused.
+    /// </summary>
     private void SwapSides()
     {
+        _focused.Clear();
         foreach (var (heroId, role) in RoleMap.ToList())
         {
             if (role != Role.None)
@@ -97,6 +122,7 @@ public sealed class MatchState
         RoleMap.Clear();
         Slots.Clear();
         NetWorth.Clear();
+        _focused.Clear();
     }
 
     /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
@@ -161,6 +187,7 @@ public sealed class MatchState
         saved.NetWorth = NetWorth.Snapshots
             .Select(snapshot => new SavedNetWorth { At = snapshot.At, Souls = snapshot.Souls.ToDictionary() })
             .ToList();
+        saved.Focused = Enemies.Where(_focused.Contains).ToList();
         return saved;
     }
 
@@ -184,5 +211,7 @@ public sealed class MatchState
         }
         foreach (var snapshot in saved.NetWorth)
             NetWorth.Add(new NetWorthSnapshot(snapshot.At, snapshot.Souls.Where(entry => valid.Contains(entry.Key)).ToDictionary()));
+        foreach (var heroId in saved.Focused)
+            SetFocus(heroId, true);
     }
 }

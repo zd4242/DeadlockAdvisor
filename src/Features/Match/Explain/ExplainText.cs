@@ -110,6 +110,20 @@ public static class ExplainText
             ? $"×{NumberFormat.Fixed(standing.Factor, 2)} · {Format.Compact(standing.Souls)} vs {Format.Compact((int)Math.Round(standing.Average))} avg"
             : null;
 
+    /// <summary>"focused ×3.00" or "not focused ×0.60": how focus scaled an enemy's share, or null while no enemy is focused.</summary>
+    public static string? Focus(double factor, bool isFocused) =>
+        factor == 1.0 ? null : $"{(isFocused ? "focused" : "not focused")} ×{NumberFormat.Fixed(factor, 2)}";
+
+    public static string FocusTooltip(string heroName, double factor, bool isFocused) =>
+        (isFocused
+            ? $"You focused on {heroName}, so their share counts ×{NumberFormat.Fixed(factor, 2)}.\n"
+            : $"Another enemy is focused, so {heroName}'s share counts ×{NumberFormat.Fixed(factor, 2)}.\n")
+        + FocusRule;
+
+    /// <summary>How focus weighs the enemies, for every tooltip that mentions it.</summary>
+    public static readonly string FocusRule =
+        $"A focused enemy counts {Format.Num(FocusWeights.Ratio)}× as much as each of the others, and the enemies together count as much as before.";
+
     /// <summary>Each opinion's part in the formula-and-data ranking, in its units, and their sum.</summary>
     public static BlendVerdict Verdict(ScoredItem item, BlendScale scale, bool noRules) => new(
         noRules ? null : scale.FormulaUnits(item),
@@ -132,7 +146,9 @@ public static class ExplainText
     /// <paramref name="targets"/> is what the heroes on the team come to as ranked targets, before it's taken off.
     /// </summary>
     /// <param name="castOn">The item is cast on one hero of this team; otherwise some of its rules are marked best-target.</param>
-    public static string TypicalInfo(string itemName, Relation relation, bool castOn, int count, double typical, double targets)
+    /// <param name="focused">Some of the team are focused, and so is the typical team.</param>
+    public static string TypicalInfo(string itemName, Relation relation, bool castOn, int count, double typical, double targets,
+        bool focused = false)
     {
         var (one, many) = relation == Relation.Against ? ("enemy", "enemies") : ("ally", "allies");
         var net = targets - typical;
@@ -148,6 +164,7 @@ public static class ExplainText
         return why
             + "the best counts in full, the next ×0.5, then ×0.25 and so on.\n\n"
             + $"Almost every team has someone it works well on, so even a typical team of {count} {many} "
+            + (focused ? "focused the same way " : "")
             + $"comes to {Format.SignedFixed(typical, 1)}. A score says how much more this match wants the item "
             + "than a typical match does, so that much is taken off.\n\n"
             + $"These {many} come to {Format.SignedFixed(targets, 1)} as targets, and {Format.SignedFixed(net, 1)} "

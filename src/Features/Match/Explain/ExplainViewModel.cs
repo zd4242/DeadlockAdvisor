@@ -157,9 +157,10 @@ public class ExplainViewModel : ViewModelBase
         ShopColor = Palette.ShopColor(item.Category);
         NoContributions = contributions.Count == 0;
         Contributions = contributions.Select(contribution => Card(contribution, TypicalInfo(store, item, contribution, contributions))).ToList();
-        var parts = ItemScoring.DataParts(store, match, itemId);
+        var lineUp = ItemScoring.RelevantHeroes(match);
+        var parts = ItemScoring.DataParts(store, lineUp, itemId);
         var self = match.SelfHero;
-        MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self)) : null;
+        MatchData = parts.Count > 0 ? DataCard(store, parts, now, self, ItemScoring.BuildRatio(store, itemId, self), lineUp.Focus) : null;
         MatchDataFirst = rankBy == RankBy.MatchData;
 
         var scored = new ScoredItem(itemId, item.ItemName, item.Tier, total, item.Category, ItemScoring.DataScores(store, match, itemId));
@@ -203,21 +204,27 @@ public class ExplainViewModel : ViewModelBase
     {
         if (contribution.TypicalOf is not { } count)
             return null;
-        var targets = contributions
-            .Where(other => other.Relation == contribution.Relation && other.Rank is not null)
-            .Sum(other => other.RankedAmount);
+        var team = contributions.Where(other => other.Relation == contribution.Relation).ToList();
+        var targets = team.Where(other => other.Rank is not null).Sum(other => other.RankedAmount);
         return ExplainText.TypicalInfo(item.ItemName, contribution.Relation, store.CastOnCovers(item.ItemId, contribution.Relation),
-            count, -contribution.Amount, targets);
+            count, -contribution.Amount, targets, team.Any(other => other.Focus != 1.0));
     }
 
     private static ContributionCard Card(HeroContribution contribution, string? info)
     {
-        var notes = new[] { ExplainText.Rank(contribution.Rank), ExplainText.NetWorth(contribution.NetWorth) }.OfType<string>().ToList();
+        var notes = new[]
+        {
+            ExplainText.Rank(contribution.Rank),
+            ExplainText.Focus(contribution.Focus, contribution.IsFocused),
+            ExplainText.NetWorth(contribution.NetWorth),
+        }.OfType<string>().ToList();
         if (contribution.TypicalOf is { } count)
             notes.Add(ExplainText.Typical(count));
         var tips = new List<string>();
         if (contribution.Rank is not null)
             tips.Add(contribution.PartlyRanked ? $"{ExplainText.BestTargetsTip}\n{ExplainText.PartlyRankedTip}" : ExplainText.BestTargetsTip);
+        if (contribution.Focus != 1.0)
+            tips.Add(ExplainText.FocusTooltip(contribution.HeroName, contribution.Focus, contribution.IsFocused));
         if (contribution.NetWorth is { Factor: not 1.0 } standing)
             tips.Add(ExplainText.NetWorthTooltip(standing));
 
@@ -242,9 +249,11 @@ public class ExplainViewModel : ViewModelBase
 
     /// <summary>
     /// One line per hero with match data for this item, then where the numbers come from. The enemies
-    /// total counts for less when your hero rarely builds the item, as it does in the list.
+    /// total counts for less when your hero rarely builds the item, as it does in the list, and each
+    /// enemy's line counts by their focus factor.
     /// </summary>
-    private static MatchDataCard DataCard(DataStore store, IReadOnlyList<MatchLift> parts, double now, string? self, double? buildRatio)
+    private static MatchDataCard DataCard(DataStore store, IReadOnlyList<MatchLift> parts, double now, string? self, double? buildRatio,
+        FocusWeights focus)
     {
         var relevance = ItemScoring.Relevance(buildRatio);
         var totals = new List<DataTotal>();
@@ -255,7 +264,7 @@ public class ExplainViewModel : ViewModelBase
                 continue;
             var sum = 0.0;
             foreach (var part in parts.Where(part => part.Relation == key))
-                sum += part.LiftShrunk;
+                sum += focus.Factor(part.HeroId) * part.LiftShrunk;
             if (relation == Relation.Against)
                 sum *= relevance;
             totals.Add(new DataTotal(ExplainText.DataWord(key), Palette.RelationColor(relation), new DisplayAmount(sum)));
@@ -264,18 +273,20 @@ public class ExplainViewModel : ViewModelBase
         if (buildRatio is { } ratio && relevance < 1 && parts.Any(part => part.Relation == Relation.Against.Key()))
             relevanceNote = ExplainText.RarelyBuilt(self is not null && store.Heroes.TryGetValue(self, out var selfHero) ? selfHero.HeroName : "Your hero", ratio);
 
-        var lines = parts.OrderBy(part => -part.LiftShrunk).Select(part =>
+        var lines = parts.OrderBy(part => -focus.Factor(part.HeroId) * part.LiftShrunk).Select(part =>
         {
             var relation = Relations.TryParse(part.Relation, out var parsed) ? parsed : Relation.As;
             var heroName = store.Heroes.TryGetValue(part.HeroId, out var hero) ? hero.HeroName : part.HeroId;
+            var factor = focus.Factor(part.HeroId);
             return new DataLine(
                 part.HeroId,
                 heroName,
                 ExplainText.RelationWord(relation).ToUpperInvariant(),
                 Palette.RelationColor(relation),
                 $"raw {Format.SignedFixed(part.Lift, 2)} ± {NumberFormat.Fixed(part.Se, 2)} · {Format.Compact(part.Matches)} matches"
-                + (Math.Abs(part.RankShift) >= RankLean.Visible ? $" · ranks {Format.SignedFixed(part.RankShift, 2)}" : ""),
-                new DisplayAmount(part.LiftShrunk));
+                + (Math.Abs(part.RankShift) >= RankLean.Visible ? $" · ranks {Format.SignedFixed(part.RankShift, 2)}" : "")
+                + (ExplainText.Focus(factor, focus.IsFocused(part.HeroId)) is { } note ? $" · {note}" : ""),
+                new DisplayAmount(factor * part.LiftShrunk));
         }).ToList();
 
         var meaning = MatchStatsMath.DataMeaning(store.MatchMeta);

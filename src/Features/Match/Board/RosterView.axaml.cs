@@ -12,6 +12,7 @@ public partial class RosterView : ReactiveUserControl<MatchBoardViewModel>
 
         AddHandler(RosterSlot.MenuRequestedEvent, (_, e) => RoleMenu.Show(ViewModel, e));
         AddHandler(RosterSlot.SelfRequestedEvent, (_, e) => ViewModel?.SetRole(e.HeroId, Role.Self));
+        AddHandler(RosterSlot.FocusRequestedEvent, (_, e) => ViewModel?.ToggleFocus(e.HeroId));
         AddHandler(RosterSlot.RemovedEvent, (_, e) => ViewModel?.SetRole(e.HeroId, Role.None));
         AddHandler(RosterSlot.EmptyClickedEvent, (_, e) =>
         {

@@ -120,6 +120,9 @@ public class SavedMatch
     public Dictionary<string, int> Slots { get; set; } = [];
 
     public List<SavedNetWorth> NetWorth { get; set; } = [];
+
+    /// <summary>The enemies the recommendations were focused on.</summary>
+    public List<string> Focused { get; set; } = [];
 }
 
 public class SavedNetWorth

@@ -6,9 +6,12 @@ using System.Reactive.Subjects;
 using Avalonia.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Services.Formats;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
 
@@ -25,7 +28,8 @@ public class MatchBoardViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
     public const string RosterHint =
-        "Click a hero to set them as You and see their items; an enemy brings their team to your side.\n"
+        "Click an enemy to focus the recommendations on items good against them; click again to stop.\n"
+        + "Click an ally to set them as You and see their items.\n"
         + "Right click a portrait to change its role.\n"
         + "× on a portrait removes the hero.\nAn empty slot adds a hero to that team.";
     public const string PickerHint =
@@ -63,6 +67,11 @@ public class MatchBoardViewModel : ViewModelBase
 
         SetModeCommand = ReactiveCommand.Create<Role>(SetMode);
         ClosePickerCommand = ReactiveCommand.Create(() => { IsPickerOpen = false; });
+        ClearFocusCommand = ReactiveCommand.Create(() =>
+        {
+            _match.ClearFocus();
+            AfterChange();
+        });
         ClearCommand = ReactiveCommand.Create(() =>
         {
             _match.Clear();
@@ -132,8 +141,18 @@ public class MatchBoardViewModel : ViewModelBase
     [Reactive] public string NetWorthLead { get; private set; } = "";
     [Reactive] public bool IsBehind { get; private set; }
 
+    /// <summary>Some enemy is focused, so the recommendations name who.</summary>
+    [Reactive] public bool HasFocus { get; private set; }
+
+    /// <summary>"vs Haze, Vindicta": who the recommendations are focused on, in top-bar order; empty without focus.</summary>
+    [Reactive] public string FocusLabel { get; private set; } = "";
+    [Reactive] public string FocusTip { get; private set; } = "";
+
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<Unit, Unit> ClosePickerCommand { get; }
+
+    /// <summary>Stop focusing on any enemy.</summary>
+    public ReactiveCommand<Unit, Unit> ClearFocusCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
 
@@ -217,6 +236,23 @@ public class MatchBoardViewModel : ViewModelBase
     public bool HasHero(string heroId) => _store().Heroes.ContainsKey(heroId);
     public string HeroName(string heroId) => _store().Heroes[heroId].HeroName;
 
+    public bool IsFocused(string heroId) => _match.Focused.Contains(heroId);
+
+    /// <summary>
+    /// An enemy rated on some trait: focus reweights what the formula knows about a hero, so an unrated
+    /// one would only take weight from the others.
+    /// </summary>
+    public bool CanFocus(string heroId) => _match.RoleOf(heroId) == Role.Enemy && _store().IsProfiled(heroId);
+
+    /// <summary>Focus the recommendations on an enemy, or stop; several can be focused, such as both your lane opponents.</summary>
+    public void ToggleFocus(string heroId)
+    {
+        if (!IsFocused(heroId) && !CanFocus(heroId))
+            return;
+        _match.ToggleFocus(heroId);
+        AfterChange();
+    }
+
     /// <summary>
     /// An empty slot on the match bar was clicked: open the picker aimed at that team. An empty ally
     /// slot means "You" until you're set.
@@ -296,6 +332,35 @@ public class MatchBoardViewModel : ViewModelBase
         FillSlots(EnemySlots, enemies);
         IsSelfMissing = _match.SelfHero is null;
         RefreshTotals(allies, enemies);
+        RefreshFocus(enemies);
+    }
+
+    private void RefreshFocus(IReadOnlyList<string> enemies)
+    {
+        var heroes = _store().Heroes;
+        var focused = enemies.Where(_match.Focused.Contains).Where(heroes.ContainsKey).ToList();
+        HasFocus = focused.Count > 0;
+        foreach (var slot in EnemySlots)
+        {
+            if (slot.HeroId is { } heroId)
+                slot.SetFocus(IsFocused(heroId), HasFocus && !IsFocused(heroId), CanFocus(heroId));
+        }
+        if (!HasFocus)
+        {
+            FocusLabel = FocusTip = "";
+            return;
+        }
+
+        var names = focused.Select(heroId => heroes[heroId].HeroName).ToList();
+        FocusLabel = $"vs {string.Join(", ", names)}";
+        var who = names.Count == 1 ? names[0] : $"{string.Join(", ", names[..^1])} and {names[^1]}";
+        var weights = FocusWeights.For(enemies, focused);
+        var factors = enemies.FirstOrDefault(heroId => !weights.IsFocused(heroId)) is { } other
+            ? $"Each focused enemy's share of a score counts ×{NumberFormat.Fixed(weights.Factor(focused[0]), 2)}, "
+              + $"every other enemy's ×{NumberFormat.Fixed(weights.Factor(other), 2)}.\n"
+            : "";
+        FocusTip = $"The recommendations lean toward items good against {who}.\n{factors}{ExplainText.FocusRule}\n\n"
+                   + "Click an enemy on the match bar to focus on them or stop; × here stops focusing on everyone.";
     }
 
     /// <summary>The team in order from the first slot, any past the sixth left off the bar.</summary>

@@ -16,9 +16,9 @@ namespace DeadlockAdvisor.Controls;
 /// poster-sized on a wide one.
 /// <para>
 /// Once the match has net worth, a pill under the portrait shows it the way the game's top bar does.
-/// A click on anyone but you makes them you, so their items show (an enemy brings their side with
-/// them); a click on you, or a right click, opens the role menu. Its × removes, and an empty slot
-/// starts filling this team.
+/// A click on an enemy focuses the recommendations on them, or stops; a click on an ally makes them
+/// you, so their items show; a click on you, or a right click, opens the role menu. Its × removes,
+/// and an empty slot starts filling this team. While any enemy is focused, the others are dimmed.
 /// </para>
 /// </summary>
 public class RosterSlot : Control
@@ -31,6 +31,9 @@ public class RosterSlot : Control
     private const double _nameHeight = 16;
     private const double _pillHeight = 16;
     private const double _radius = 8;
+    // The round badges in the portrait's corners: × top right, focus bottom left.
+    private const double _badge = 18;
+    private const double _badgeInset = 3;
 
     public static readonly StyledProperty<string?> HeroIdProperty =
         AvaloniaProperty.Register<RosterSlot, string?>(nameof(HeroId));
@@ -57,6 +60,18 @@ public class RosterSlot : Control
     public static readonly StyledProperty<bool> ShowsNetWorthProperty =
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(ShowsNetWorth));
 
+    /// <summary>An enemy the recommendations are focused on.</summary>
+    public static readonly StyledProperty<bool> IsFocusedProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsFocused));
+
+    /// <summary>An enemy counting for less because another is focused: drawn faded.</summary>
+    public static readonly StyledProperty<bool> IsDimmedProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsDimmed));
+
+    /// <summary>An enemy a click can focus on: one with trait ratings, since focus only reweights what they're rated on.</summary>
+    public static readonly StyledProperty<bool> CanFocusProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(CanFocus), true);
+
     public static readonly RoutedEvent<HeroEventArgs> RemovedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("Removed", RoutingStrategies.Bubble);
 
@@ -66,6 +81,9 @@ public class RosterSlot : Control
     public static readonly RoutedEvent<HeroEventArgs> SelfRequestedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("SelfRequested", RoutingStrategies.Bubble);
 
+    public static readonly RoutedEvent<HeroEventArgs> FocusRequestedEvent =
+        RoutedEvent.Register<RosterSlot, HeroEventArgs>("FocusRequested", RoutingStrategies.Bubble);
+
     public static readonly RoutedEvent<RoutedEventArgs> EmptyClickedEvent =
         RoutedEvent.Register<RosterSlot, RoutedEventArgs>("EmptyClicked", RoutingStrategies.Bubble);
 
@@ -74,8 +92,8 @@ public class RosterSlot : Control
 
     static RosterSlot()
     {
-        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty,
-            NetWorthProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
+        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, NetWorthProperty,
+            IsFocusedProperty, IsDimmedProperty, CanFocusProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
         AffectsMeasure<RosterSlot>(ShowsNetWorthProperty);
         CursorProperty.OverrideDefaultValue<RosterSlot>(new Cursor(StandardCursorType.Hand));
     }
@@ -127,13 +145,34 @@ public class RosterSlot : Control
         set => SetValue(ShowsNetWorthProperty, value);
     }
 
+    public bool IsFocused
+    {
+        get => GetValue(IsFocusedProperty);
+        set => SetValue(IsFocusedProperty, value);
+    }
+
+    public bool IsDimmed
+    {
+        get => GetValue(IsDimmedProperty);
+        set => SetValue(IsDimmedProperty, value);
+    }
+
+    public bool CanFocus
+    {
+        get => GetValue(CanFocusProperty);
+        set => SetValue(CanFocusProperty, value);
+    }
+
     public bool IsEmpty => string.IsNullOrEmpty(HeroId);
+
+    private bool IsEnemy => Team == Role.Enemy;
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == HeroIdProperty || change.Property == HeroNameProperty || change.Property == TeamProperty
-            || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty)
+            || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty
+            || change.Property == IsFocusedProperty || change.Property == CanFocusProperty)
             UpdateToolTip();
     }
 
@@ -169,9 +208,16 @@ public class RosterSlot : Control
         get
         {
             var portrait = PortraitRect;
-            const double diameter = 18;
-            const double inset = 3;
-            return new Rect(portrait.Right - diameter - inset, portrait.Top + inset, diameter, diameter);
+            return new Rect(portrait.Right - _badge - _badgeInset, portrait.Top + _badgeInset, _badge, _badge);
+        }
+    }
+
+    private Rect FocusBounds
+    {
+        get
+        {
+            var portrait = PortraitRect;
+            return new Rect(portrait.Left + _badgeInset, portrait.Bottom - _badge - _badgeInset, _badge, _badge);
         }
     }
 
@@ -211,7 +257,9 @@ public class RosterSlot : Control
         var heroId = HeroId!;
         if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
             RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && !IsSelf)
+        else if (properties.IsLeftButtonPressed && IsEnemy && CanFocus)
+            RaiseEvent(new HeroEventArgs(FocusRequestedEvent, heroId));
+        else if (properties.IsLeftButtonPressed && !IsSelf && !IsEnemy)
             RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
         else if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed)
             RaiseEvent(new HeroEventArgs(MenuRequestedEvent, heroId));
@@ -226,6 +274,12 @@ public class RosterSlot : Control
             tip = $"Remove {HeroName} from the match";
         else if (IsSelf)
             tip = $"{HeroName} (you) -- click to change";
+        else if (IsEnemy && !CanFocus)
+            tip = $"{HeroName} -- not rated on any trait yet, so there's nothing to focus on; click to change";
+        else if (IsEnemy && IsFocused)
+            tip = $"{HeroName} (focused) -- the recommendations lean toward items good against them.\nClick to stop focusing, right click to change";
+        else if (IsEnemy)
+            tip = $"{HeroName} -- click to focus the recommendations on items good against them, right click to change";
         else
             tip = $"{HeroName} -- click to play as them and see their items, right click to change";
         if (!IsEmpty && !_overRemove && NetWorth is { } souls)
@@ -240,9 +294,19 @@ public class RosterSlot : Control
         // The whole cell takes the pointer, not just what's painted on it.
         context.FillRectangle(Brushes.Transparent, new Rect(Bounds.Size));
         if (IsEmpty)
+        {
             PaintEmpty(context);
+        }
+        else if (IsDimmed && !IsPointerOver)
+        {
+            // The whole slot fades, net worth and all; hovering lifts it, so you see who a click would focus.
+            using (context.PushOpacity(0.4))
+                PaintHero(context);
+        }
         else
+        {
             PaintHero(context);
+        }
     }
 
     private void PaintEmpty(DrawingContext context)
@@ -262,10 +326,12 @@ public class RosterSlot : Control
         var hovered = IsPointerOver;
 
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId!, HeroName, rect, _radius);
-        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || hovered ? 3 : 2);
+        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || IsFocused || hovered ? 3 : 2);
         context.DrawRectangle(null, ring, new RoundedRect(rect, _radius));
         if (IsSelf)
             PaintYouTag(context, rect);
+        if (IsEnemy && (IsFocused || hovered && CanFocus))
+            PaintFocusBadge(context);
 
         if (hovered)
         {
@@ -279,9 +345,22 @@ public class RosterSlot : Control
         if (NetWorth is { } souls)
             PaintNetWorth(context, rect, souls);
 
-        var color = IsSelf || hovered ? Palette.Text : Palette.TextDim;
-        var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf);
+        var color = IsSelf || IsFocused || hovered ? Palette.Text : Palette.TextDim;
+        var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf || IsFocused);
         context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + (_nameHeight - name.Height) / 2));
+    }
+
+    /// <summary>A crosshair in the portrait's bottom-left corner: filled red on a focused enemy, outlined on a hovered one as a hint.</summary>
+    private void PaintFocusBadge(DrawingContext context)
+    {
+        var badge = FocusBounds;
+        var back = IsFocused ? Palette.Enemy : Palette.WithAlpha(Palette.Bg, 200);
+        context.DrawEllipse(new SolidColorBrush(back), null, badge);
+        var pen = new Pen(new SolidColorBrush(Palette.Text), 1.4, lineCap: PenLineCap.Round);
+        var center = badge.Center;
+        context.DrawEllipse(null, pen, center, 4, 4);
+        foreach (var direction in new[] { new Vector(1, 0), new Vector(-1, 0), new Vector(0, 1), new Vector(0, -1) })
+            context.DrawLine(pen, center + direction * 2, center + direction * 6.5);
     }
 
     /// <summary>A gold "YOU" tag along the bottom of your portrait, so you stand out from your team at a glance.</summary>

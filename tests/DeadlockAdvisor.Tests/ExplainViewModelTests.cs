@@ -68,6 +68,35 @@ public class ExplainViewModelTests
     }
 
     [Fact]
+    public void EachEnemySaysHowFocusScaledTheirShare()
+    {
+        var store = TestStore.Make();
+        TestStore.AddLifts(store);
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = Relation.Against };
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("generic", Role.Enemy);
+        match.SetFocus("generic", true);
+        var explain = new ExplainViewModel();
+
+        explain.ShowItem(store, match, "spirit_resist_t1", now: 0);
+
+        var focused = explain.Contributions.Single(card => card.HeroId == "generic");
+        Assert.Equal("2nd target ×0.5 · focused ×1.67", focused.Note);
+        Assert.Contains("You focused on Generic, so their share counts ×1.67.", focused.NoteTip);
+        Assert.Equal("best target · not focused ×0.33", explain.Contributions.Single(card => card.HeroId == "heavy_spirit").Note);
+        Assert.Contains("a typical team of 2 enemies focused the same way comes to",
+            explain.Contributions.Single(card => card.Info is not null).Info);
+
+        // The data card weighs each enemy's lift the same way: 1.5 at ×1/3 and -0.25 at ×5/3.
+        var data = explain.MatchData!;
+        Assert.Equal(1.5 / 3 - 0.25 * 5 / 3, data.Totals.Single(total => total.Word == "enemies").Value.Value, 9);
+        var line = data.Lines.Single(line => line.HeroId == "generic");
+        Assert.EndsWith(" · focused ×1.67", line.Detail);
+        Assert.Equal(-0.25 * 5 / 3, line.Share.Value, 9);
+    }
+
+    [Fact]
     public void OnlyHeroCardsShowAPortrait()
     {
         var store = TestStore.Make();

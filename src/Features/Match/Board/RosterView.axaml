@@ -32,7 +32,10 @@
                                  IsSelf="{Binding IsSelf}"
                                  NetWorth="{Binding NetWorth}"
                                  NetWorthChange="{Binding NetWorthChange}"
-                                 ShowsNetWorth="{Binding ShowsNetWorth}"/>
+                                 ShowsNetWorth="{Binding ShowsNetWorth}"
+                                 IsFocused="{Binding IsFocused}"
+                                 IsDimmed="{Binding IsDimmed}"
+                                 CanFocus="{Binding CanFocus}"/>
         </DataTemplate>
     </UserControl.DataTemplates>
 

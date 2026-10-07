@@ -65,6 +65,25 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
+    public void FocusingAnEnemyReranksTheListAndSaysWhy()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        var match = ui.ViewModel.Match;
+        string[] Listed() => match.Results.Entries.OfType<ResultRowViewModel>().Select(row => row.ItemId).ToArray();
+        var before = Listed();
+
+        match.Board.ToggleFocus("haze");
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
+
+        Assert.NotEqual(before, Listed());
+        var haze = match.Explain.Contributions.Single(card => card.HeroId == "haze");
+        Assert.Contains("focused ×3.00", haze.Note);
+        Assert.True(File.Exists(ui.Screenshot("match_focus.png")));
+    }
+
+    [AvaloniaFact]
     public async Task RandomOpensOnTheBestItem()
     {
         using var ui = new UiHarness();

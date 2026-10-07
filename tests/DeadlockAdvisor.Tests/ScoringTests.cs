@@ -167,6 +167,132 @@ public class ScoringTests
     }
 
     [Fact]
+    public void FocusMovesWeightBetweenTheEnemiesWithoutAddingAny()
+    {
+        string[] enemies = ["e1", "e2", "e3", "e4", "e5", "e6"];
+
+        // One focused counts as much as the other five together: 5 × 0.6 = 3.
+        var one = FocusWeights.For(enemies, ["e1", "ally"]);
+        AssertEx.Close(3.0, one.Factor("e1"));
+        AssertEx.Close(0.6, one.Factor("e2"));
+        AssertEx.Close(0.6, one.Unfocused);
+        Assert.Equal(1.0, one.Factor("ally"));
+        Assert.Equal(1, one.Count);
+        Assert.True(one.IsFocused("e1"));
+
+        // Two: 6 / (5 × 2 + 4) = 3/7 each for the rest, five times that for the pair.
+        var two = FocusWeights.For(enemies, ["e1", "e2"]);
+        AssertEx.Close(15.0 / 7, two.Factor("e2"));
+        AssertEx.Close(3.0 / 7, two.Factor("e3"));
+        foreach (var weights in new[] { one, two })
+            AssertEx.Close(enemies.Length, enemies.Sum(weights.Factor));
+
+        // Nobody focused, or everybody: every enemy counts the same.
+        Assert.Same(FocusWeights.None, FocusWeights.For(enemies, []));
+        Assert.Same(FocusWeights.None, FocusWeights.For(enemies, enemies));
+        Assert.Equal(1.0, FocusWeights.None.Factor("e1"));
+    }
+
+    [Fact]
+    public void FocusLeansTheScoreTowardItemsGoodAgainstTheFocusedEnemy()
+    {
+        var store = TestStore.Make();
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        double Score() => ItemScoring.ScoreAll(store, matrix, match).Single(item => item.ItemId == "spirit_resist_t1").Score;
+
+        // Two enemies, one focused: ×5/3 and ×1/3. Spirit Resist against heavy_spirit (6) and low_hp (-4).
+        match.SetFocus("heavy_spirit", true);
+        Assert.Equal(6 * 5.0 / 3 - 4 * 1.0 / 3, Score(), 9);
+        var contributions = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
+        Assert.Equal([("heavy_spirit", 10.0, true), ("low_hp", Math.Round(-4.0 / 3, 9), false)],
+            contributions.Select(c => (c.HeroId, Math.Round(c.Amount, 9), c.IsFocused)));
+        AssertEx.Close(5.0 / 3, contributions[0].Focus);
+        Assert.Equal(6.0, contributions[0].Parts.Sum(p => p.Amount)); // the trait lines stay unweighted
+
+        match.SetFocus("heavy_spirit", false);
+        match.SetFocus("low_hp", true);
+        Assert.Equal(6 * 1.0 / 3 - 4 * 5.0 / 3, Score(), 9);
+
+        // With net worth too, the two factors multiply: heavy_spirit 1.25 × 5/3, low_hp 0.75 × 1/3.
+        match.ClearFocus();
+        match.SetFocus("heavy_spirit", true);
+        match.NetWorth.Add(new NetWorthSnapshot(DateTimeOffset.UnixEpoch,
+            new Dictionary<string, int> { ["heavy_spirit"] = 15_000, ["low_hp"] = 5_000 }));
+        var both = ItemScoring.ExplainItem(store, match, "spirit_resist_t1", NetWorthWeights.For(match));
+        Assert.Equal(6 * 1.25 * 5 / 3 - 4 * 0.75 / 3, both.Sum(c => c.Amount), 9);
+        AssertEx.Close(1.25 * 5 / 3, both[0].Factor);
+    }
+
+    [Fact]
+    public void FocusWeighsTheEnemyLiftsToo()
+    {
+        var store = TestStore.Make();
+        TestStore.AddLifts(store);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("generic", Role.Enemy);
+        match.SetRole("low_hp", Role.Self);
+        match.SetFocus("generic", true);
+
+        // heavy_spirit's 1.5 at ×1/3 and generic's -0.25 at ×5/3; your own hero's 3.0 as it was.
+        var data = ItemScoring.DataScores(store, match, "spirit_resist_t1");
+        Assert.Equal(1.5 / 3 - 0.25 * 5 / 3, data["against"], 9);
+        Assert.Equal(3.0, data["as"]);
+    }
+
+    [Fact]
+    public void ATypicalFocusedTeamIsTheAverageOverEveryTeamAndWhoInItIsFocused()
+    {
+        double[][] rosters = [[5, 3, 0, -2, -6, 1], [2, 2, -1, 0, 2]]; // the second ties
+        foreach (var roster in rosters)
+        {
+            for (var count = 1; count <= roster.Length; count++)
+            for (var focused = 0; focused <= count; focused++)
+            {
+                var sums = Teams(Enumerable.Range(0, roster.Length).ToList(), count)
+                    .SelectMany(team => Teams(team, focused).Select(chosen => team
+                        .Select(hero => roster[hero] * (chosen.Contains(hero) ? FocusWeights.Ratio : 1))))
+                    .Select(BestTargets.Sum)
+                    .ToList();
+                Assert.Equal(sums.Average(), BestTargets.Expected(roster, count, focused, FocusWeights.Ratio), 9);
+            }
+        }
+    }
+
+    [Fact]
+    public void AFocusedSingleTargetItemIsMeasuredAgainstTeamsFocusedTheSameWay()
+    {
+        var store = TestStore.Make();
+        store.Items["spirit_resist_t1"] = store.Items["spirit_resist_t1"] with { CastOn = Relation.Against };
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var match = new MatchState();
+        match.SetRole("heavy_spirit", Role.Enemy);
+        match.SetRole("low_hp", Role.Enemy);
+        match.SetFocus("low_hp", true);
+
+        // heavy_spirit 6 × 1/3 = 2 is the best target, low_hp -4 × 5/3 the second: 2 - 10/3. A typical pair
+        // with one focused, over the six ways to pick them from 6, -2 and -4, is (29 + 28 + 1 - 9 - 4 - 12) / 6
+        // at ×5 against ×1, or 11/6 at these factors.
+        Assert.Equal(5.5, matrix.Typical("spirit_resist_t1", Relation.Against, 2, 1), 9);
+        var lineUp = ItemScoring.RelevantHeroes(match);
+        Assert.Equal(2 - 10.0 / 3 - 11.0 / 6, ItemScoring.Total(matrix, "spirit_resist_t1", lineUp), 9);
+
+        var explained = ItemScoring.ExplainItem(store, match, "spirit_resist_t1");
+        Assert.Equal([("heavy_spirit", 2.0, (int?)1), ("", Math.Round(-11.0 / 6, 9), null), ("low_hp", Math.Round(-10.0 / 3, 9), 2)],
+            explained.Select(c => (c.HeroId, Math.Round(c.Amount, 9), c.Rank)));
+        Assert.Equal(ItemScoring.Total(matrix, "spirit_resist_t1", lineUp), explained.Sum(c => c.Amount), 9);
+
+        // The blend scale is measured on line-ups focused the same way.
+        Assert.Equal(new LineUpShape(2, 0, false, 1), LineUpShape.Of(lineUp));
+        var drawn = new LineUpShape(2, 0, false, 1).Draw(new Random(1), ["heavy_spirit", "generic", "low_hp"]);
+        Assert.True(drawn.Focus.IsFocused(drawn.Enemies[0]));
+        Assert.False(drawn.Focus.IsFocused(drawn.Enemies[1]));
+    }
+
+    [Fact]
     public void TopHeroesForItemRanksByWeight()
     {
         var store = TestStore.Make();
@@ -255,7 +381,7 @@ public class ScoringTests
         Assert.Equal(3.5, BestTargets.Sum([0, -6, 5]));
     }
 
-    private static IEnumerable<List<double>> Teams(IReadOnlyList<double> roster, int count, int from = 0)
+    private static IEnumerable<List<T>> Teams<T>(IReadOnlyList<T> roster, int count, int from = 0)
     {
         if (count == 0)
         {

@@ -16,7 +16,8 @@ baseline     = average of hero_score[·, trait] over the profiled heroes
 score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) + you (as)
 ```
 
-`factor` is 1 unless the scores lean on net worth (see "Net worth" below). A
+`factor` is 1 unless the scores lean on net worth or enemies are focused (see
+"Net worth" and "Focus" below). A
 best-target line, which is every line of a single-target item on the team it's cast on
 (and, for an ally-cast item, the enemies too) or a line marked Best target, is
 counted on its best targets instead of summed over the team (see "Best-target
@@ -44,6 +45,7 @@ Where this lives in the code:
 | Best-target maths | `BestTargets` (`Sum`, `Expected`, `RankFactor`) |
 | The match data's verdict | `ItemScoring.DataStrength`: enemies lift ÷ `PickMinAgainst` + your lift ÷ `PickMinAs`, in "bars"; 1 or more is a standout |
 | Net worth factors | `NetWorthWeights.For(match)`; `NetWorthWeights.None` when the toggle is off |
+| Focus factors | `FocusWeights.For(enemies, focused)`, built into every `LineUp` by `RelevantHeroes`; `LineUp.Factor` multiplies both |
 | Per-hero, per-trait explanation | `ItemScoring.Contribution` → `HeroContribution` (with `NetWorth`, `Factor`) → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
 | Displayed arithmetic | `ExplainText.Arithmetic` / `ExplainText.Deviation` show "(80 − 61 avg) × 3"; `FormulaText.Arithmetic` reuses them |
 | User-facing explanation | `MainWindowViewModel.HowScoringWorks` (Help menu) |
@@ -430,6 +432,51 @@ A hero at 1.5× the average counts ×1.25; the effect stops at ±30%.
 - The explain panel shows "×1.18 · 25k vs 19k avg" on a hero whose factor isn't
   1 (`ExplainText.NetWorth`), and that hero's amount includes the factor. Their
   trait lines stay unweighted.
+
+## Focus
+
+A click on an enemy on the match bar focuses the recommendations on them
+(`MatchState.Focused`, any number of enemies, such as both lane opponents). Each
+enemy's whole term is multiplied by a factor (`FocusWeights`):
+
+```
+focused   = Ratio × n / (Ratio × f + n − f)        Ratio = 5
+unfocused =         n / (Ratio × f + n − f)        n enemies, f of them focused
+```
+
+One focused enemy in a full match counts ×3 and the others ×0.6, so it's half the
+enemy side; two count ×2.14 and the rest ×0.43. Focusing nobody or everybody
+changes nothing.
+
+- **Why the factors add up to n.** Focus moves weight between the enemies and adds
+  none, so the enemy side weighs what it did against you and your allies. Scoring
+  the focused enemy alone would shrink the enemy side to one hero and tilt the list
+  toward items for your own hero; a bare ×5 would lift every counter item. Like net
+  worth's factors, these average 1 over the enemies, so focus is no flat bonus.
+- **It multiplies with net worth**, before best-target ranking, as net worth does.
+  Because `BestTargets.Sum` is convex, weighting one enemy up raises a single-target
+  item's average a little: Decay gains a lot when the focused enemy is its best
+  target, and loses less when they're a poor one, since you'd cast it on someone
+  else. `ModelHealthTests` bounds that lift over random focused matches.
+- **The match data takes it too.** `DataScores` multiplies each enemy's lift by
+  the enemy's focus factor before `Relevance`, and the explain panel's data lines
+  show it. Net worth never weights the data, because it's an opinion about who
+  matters; focus changes the question, and the data has an answer for each enemy.
+  Without it, "Rank by match data" would ignore focus, and the default ranking
+  would follow it at half strength.
+- **The blend scale knows it.** `LineUpShape.Focused` counts the focused enemies,
+  and `Draw` focuses that many, so `ScoreScales` measures line-ups as concentrated
+  as the one being scored.
+- **Only a profiled enemy can be focused** (`MatchBoardViewModel.CanFocus`). An
+  unprofiled one adds nothing to the formula, so focusing them would only take
+  weight from the others.
+- **It belongs to the match.** A hero who stops being an enemy drops out of it, a
+  new line-up starts without it, a detection of the same twelve heroes keeps it
+  (as it keeps the net worth history, `VisionApply.ApplyToMatch`), and it's saved
+  with the match.
+- The explain panel notes "focused ×3.00" or "not focused ×0.60" on each enemy
+  (`ExplainText.Focus`), and the results header shows who's focused, with a ×
+  that stops focusing.
 
 ## Where coefficients come from
 

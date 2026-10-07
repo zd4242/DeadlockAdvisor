@@ -8,7 +8,8 @@ namespace DeadlockAdvisor.Scoring;
 /// Turns the trait-based formulas into item scores for the heroes in a match:
 /// <c>weight(item, hero, relation) = Σ over traits of (hero_score[hero, trait] − roster_average[trait]) × effective_coefficient[item, trait, relation]</c>,
 /// summed over everyone in the match, each hero's weight times their <see cref="NetWorthWeights"/> factor
-/// when scores lean on net worth. Measuring each hero against the roster average makes a score
+/// when scores lean on net worth, and their <see cref="FocusWeights"/> factor while enemies are focused.
+/// Measuring each hero against the roster average makes a score
 /// mean "this match wants the item more than a typical one does": a trait every hero has would
 /// otherwise give its items the same bonus in every match. <see cref="ExplainItem"/> walks the same
 /// arithmetic one item at a time; <see cref="DataScores"/> is the second opinion from real matches,
@@ -55,9 +56,15 @@ public static class ItemScoring
         return new WeightMatrix(summed, ranked, profiled);
     }
 
-    /// <summary>The match's line-up; without <paramref name="netWorth"/> every hero counts the same.</summary>
-    public static LineUp RelevantHeroes(MatchState match, NetWorthWeights? netWorth = null) =>
-        new(match.Allies, match.Enemies, match.SelfHero, netWorth ?? NetWorthWeights.None);
+    /// <summary>
+    /// The match's line-up, its focused enemies counting for more; without <paramref name="netWorth"/> net
+    /// worth leaves every hero as they are.
+    /// </summary>
+    public static LineUp RelevantHeroes(MatchState match, NetWorthWeights? netWorth = null)
+    {
+        var enemies = match.Enemies;
+        return new LineUp(match.Allies, enemies, match.SelfHero, netWorth ?? NetWorthWeights.None, FocusWeights.For(enemies, match.Focused));
+    }
 
     /// <summary>
     /// Everyone currently selected, every tier. Tiers map to that tier's items, highest score first;
@@ -103,27 +110,29 @@ public static class ItemScoring
 
     /// <summary>
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
-    /// you, each hero's weight times their net worth factor. The part of a weight from best-target lines
-    /// (<see cref="DataStore.OnBestTargets"/>) counts by <see cref="BestTargets"/> over its team instead of summing.
+    /// you, each hero's weight times their net worth and focus factors. The part of a weight from best-target lines
+    /// (<see cref="DataStore.OnBestTargets"/>) counts by <see cref="BestTargets"/> over its team instead of summing,
+    /// less what a typical team focused the same way comes to.
     /// </summary>
     public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
-        Dictionary<Relation, List<double>>? targets = null;
+        Dictionary<Relation, List<string>>? targets = null;
         foreach (var (heroId, relation) in lineUp.Members())
         {
-            var key = new MatrixKey(itemId, heroId, relation);
-            var factor = lineUp.NetWorth.Factor(heroId);
-            total += factor * matrix.Summed(key);
+            total += lineUp.Factor(heroId) * matrix.Summed(new MatrixKey(itemId, heroId, relation));
             if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
                 continue;
             targets ??= [];
             if (!targets.TryGetValue(relation, out var team))
                 targets[relation] = team = [];
-            team.Add(factor * matrix.Ranked(key));
+            team.Add(heroId);
         }
         foreach (var (relation, team) in targets ?? [])
-            total += BestTargets.Sum(team) - matrix.Typical(itemId, relation, team.Count);
+        {
+            total += BestTargets.Sum(team.Select(heroId => lineUp.Factor(heroId) * matrix.Ranked(new MatrixKey(itemId, heroId, relation))))
+                     - lineUp.Focus.Typical(relation, team, focused => matrix.Typical(itemId, relation, team.Count, focused));
+        }
         return total;
     }
 
@@ -144,11 +153,12 @@ public static class ItemScoring
         {
             var team = lineUp.Members().Where(member => member.Relation == relation).Select(member => member.HeroId).ToList();
             List<HeroContribution> Found(bool? ranked) => team
-                .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, lineUp.NetWorth.StandingOf(heroId), ranked))
+                .Select(heroId => Contribution(store, baselines, itemId, heroId, relation,
+                    lineUp.NetWorth.StandingOf(heroId), lineUp.Focus.Factor(heroId), lineUp.Focus.IsFocused(heroId), ranked))
                 .OfType<HeroContribution>()
                 .ToList();
             contributions.AddRange(store.HasBestTargetLines(itemId, relation)
-                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), Found(null), Found(true))
+                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), lineUp.Focus, Found(null), Found(true))
                 : Found(null));
         }
         return contributions.OrderBy(contribution => -contribution.Amount).ToList();
@@ -156,14 +166,14 @@ public static class ItemScoring
 
     /// <summary>
     /// Each hero on one relation with their best-target lines at the hero's <see cref="BestTargets"/> rank, then the
-    /// typical team's sum as a line of its own. Every profiled hero on the team takes a rank, even one
-    /// no rule touches, exactly as <see cref="Total"/> counts them.
+    /// typical team's sum, focused as this one is, as a line of its own. Every profiled hero on the team takes a
+    /// rank, even one no rule touches, exactly as <see cref="Total"/> counts them.
     /// </summary>
     /// <param name="found">Each hero's every line.</param>
     /// <param name="ranked">Each hero's best-target lines only: what ranks them.</param>
     private static IEnumerable<HeroContribution> OnBestTargets(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, Relation relation,
-        IReadOnlyList<string> team, IReadOnlyList<HeroContribution> found, IReadOnlyList<HeroContribution> ranked)
+        IReadOnlyList<string> team, FocusWeights focus, IReadOnlyList<HeroContribution> found, IReadOnlyList<HeroContribution> ranked)
     {
         if (team.Count == 0)
             yield break;
@@ -194,7 +204,8 @@ public static class ItemScoring
             .Where(store.IsProfiled)
             .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, ranked: true)?.Amount ?? 0.0)
             .ToList();
-        var typical = BestTargets.Expected(roster, Math.Min(team.Count, BestTargets.MaxTeam));
+        var count = Math.Min(team.Count, BestTargets.MaxTeam);
+        var typical = focus.Typical(relation, team, focused => BestTargets.Expected(roster, count, focused, FocusWeights.Ratio));
         if (typical != 0)
             yield return new HeroContribution("", relation == Relation.Against ? "Typical enemy team" : "Typical allies", relation, -typical, [], TypicalOf: team.Count);
     }
@@ -219,10 +230,11 @@ public static class ItemScoring
     /// One hero's share of one item's score, biggest increase first; null when no trait of the item
     /// touches the hero, or the hero isn't profiled yet.
     /// </summary>
+    /// <param name="focus">The hero's <see cref="FocusWeights"/> factor, and whether they're focused.</param>
     /// <param name="ranked">Only the best-target lines (true) or only the summed ones (false); every line when null.</param>
     private static HeroContribution? Contribution(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation,
-        NetWorthStanding? netWorth = null, bool? ranked = null)
+        NetWorthStanding? netWorth = null, double focus = 1.0, bool isFocused = false, bool? ranked = null)
     {
         if (!store.IsProfiled(heroId))
             return null;
@@ -252,7 +264,8 @@ public static class ItemScoring
         foreach (var part in parts)
             amount += part.Amount;
         var heroName = store.Heroes.TryGetValue(heroId, out var hero) ? hero.HeroName : heroId;
-        return new HeroContribution(heroId, heroName, relation, (netWorth?.Factor ?? 1.0) * amount, parts, netWorth);
+        return new HeroContribution(heroId, heroName, relation, (netWorth?.Factor ?? 1.0) * focus * amount, parts, netWorth,
+            Focus: focus, IsFocused: isFocused);
     }
 
     // -- the match-data second opinion ------------------------------------------
@@ -284,7 +297,9 @@ public static class ItemScoring
     /// <summary>
     /// Relation → summed lift_shrunk, only for relations with data. Kept apart rather than added up:
     /// "against" is a small counter effect, "as" a much bigger one that also reflects who plays the
-    /// hero, so one sum would drown the counters. The "against" sum is counted by <see cref="Relevance"/>.
+    /// hero, so one sum would drown the counters. The "against" sum is counted by <see cref="Relevance"/>,
+    /// each enemy's lift by their focus factor: focus asks which enemies the items should answer, which the
+    /// data knows as well as the formula. Net worth never weights it.
     /// </summary>
     public static OrderedDictionary<string, double> DataScores(DataStore store, MatchState match, string itemId) =>
         DataScores(store, RelevantHeroes(match), itemId);
@@ -294,7 +309,7 @@ public static class ItemScoring
     {
         var result = new OrderedDictionary<string, double>();
         foreach (var lift in DataParts(store, lineUp, itemId))
-            result[lift.Relation] = result.GetValueOrDefault(lift.Relation) + lift.LiftShrunk;
+            result[lift.Relation] = result.GetValueOrDefault(lift.Relation) + lineUp.Focus.Factor(lift.HeroId) * lift.LiftShrunk;
         if (result.TryGetValue(Relation.Against.Key(), out var against))
             result[Relation.Against.Key()] = against * Relevance(BuildRatio(store, itemId, lineUp.Self));
         return result;

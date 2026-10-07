@@ -92,18 +92,31 @@ public class BoardMouseTests
         Click(ui.Window, Slot(ui, "AllyRow", 0));
         Assert.Equal(Role.Self, board.RoleOf("wraith"));
 
-        // Clicking an enemy makes them you, and the teams trade sides with nobody dropped.
+        // Clicking an enemy focuses the recommendations on them, and saves it with the match; clicking again stops.
         board.SetRole("lash", Role.Enemy);
+        board.SetRole("abrams", Role.Enemy);
         await Task.Delay(TimeSpan.FromMilliseconds(700));
         Click(ui.Window, Slot(ui, "EnemyRow", 0));
-        Assert.Equal(Role.Self, board.RoleOf("lash"));
-        Assert.Equal(["wraith", "haze"], board.EnemySlots.Take(2).Select(slot => slot.HeroId));
-        await Task.Delay(TimeSpan.FromMilliseconds(700));
-        Click(ui.Window, Slot(ui, "EnemyRow", 0));
-        Assert.Equal(Role.Self, board.RoleOf("wraith"));
-        Assert.Equal(Role.Ally, board.RoleOf("haze"));
         Assert.Equal(Role.Enemy, board.RoleOf("lash"));
+        Assert.Equal("vs Lash", board.FocusLabel);
+        Assert.True(board.EnemySlots[1].IsDimmed);
+        Assert.Equal(["lash"], ui.Settings.Current.LastMatch!.Focused);
+        await Task.Delay(TimeSpan.FromMilliseconds(700));
+        Click(ui.Window, Slot(ui, "EnemyRow", 0));
+        Assert.False(board.HasFocus);
+
+        // The chip over the results stops focusing too.
+        await Task.Delay(TimeSpan.FromMilliseconds(700));
+        Click(ui.Window, Slot(ui, "EnemyRow", 1));
+        Assert.True(board.IsFocused("abrams"));
+        var chip = ui.Window.GetVisualDescendants().OfType<Border>().Single(border => border.Classes.Contains("focus"));
+        Assert.True(chip.IsEffectivelyVisible);
+        Click(ui.Window, Center(chip.GetVisualDescendants().OfType<Button>().Single(), ui.Window));
+        Assert.False(board.HasFocus);
+        Assert.False(chip.IsEffectivelyVisible);
+        board.SetRole("abrams", Role.None);
         Click(ui.Window, Slot(ui, "EnemyRow", 0, remove: true));
+        Assert.Equal(Role.None, board.RoleOf("lash"));
 
         Click(ui.Window, Slot(ui, "AllyRow", 1, remove: true));
         Assert.Equal(Role.None, board.RoleOf("haze"));

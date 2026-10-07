@@ -23,6 +23,15 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
     /// <summary>Whether the match has any net worth, so every slot makes room for it alike.</summary>
     [Reactive] public bool ShowsNetWorth { get; set; }
 
+    /// <summary>An enemy the recommendations are focused on.</summary>
+    [Reactive] public bool IsFocused { get; private set; }
+
+    /// <summary>An enemy counting for less because another is focused.</summary>
+    [Reactive] public bool IsDimmed { get; private set; }
+
+    /// <summary>An enemy rated on some trait, so focusing on them means something.</summary>
+    [Reactive] public bool CanFocus { get; private set; } = true;
+
     public void Fill(string heroId, string heroName, bool isSelf, int? netWorth, string? netWorthChange)
     {
         HeroId = heroId;
@@ -32,6 +41,14 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
         NetWorthChange = netWorthChange;
     }
 
+    /// <summary>Where the slot's hero stands with the focus: focused, dimmed while another is, and whether a click can focus them.</summary>
+    public void SetFocus(bool isFocused, bool isDimmed, bool canFocus)
+    {
+        IsFocused = isFocused;
+        IsDimmed = isDimmed;
+        CanFocus = canFocus;
+    }
+
     public void Clear()
     {
         HeroId = null;
@@ -39,5 +56,6 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
         IsSelf = false;
         NetWorth = null;
         NetWorthChange = null;
+        SetFocus(false, false, true);
     }
 }

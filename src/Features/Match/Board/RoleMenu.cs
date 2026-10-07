@@ -3,7 +3,10 @@ using DeadlockAdvisor.Enums;
 
 namespace DeadlockAdvisor.Features.Match.Board;
 
-/// <summary>The explicit role menu, from a right click on a palette tile or a click on a match bar slot, with the hero's wiki page.</summary>
+/// <summary>
+/// The explicit role menu, from a right click on a palette tile or a click on a match bar slot, with focusing on
+/// an enemy and the hero's wiki page.
+/// </summary>
 public static class RoleMenu
 {
     public static void Show(MatchBoardViewModel? vm, HeroEventArgs e)
@@ -17,6 +20,17 @@ public static class RoleMenu
         foreach (var role in MatchBoardViewModel.ModeOrder)
         {
             items.Add(MenuItem($"Set as {role.Label()}", current == role, () => vm.SetRole(heroId, role)));
+        }
+        if (current == Role.Enemy)
+        {
+            items.Add(new Separator());
+            var focus = MenuItem($"Focus on {vm.HeroName(heroId)}", vm.IsFocused(heroId), () => vm.ToggleFocus(heroId));
+            if (!vm.CanFocus(heroId) && !vm.IsFocused(heroId))
+            {
+                focus.IsEnabled = false;
+                focus.Header = $"Focus on {vm.HeroName(heroId)} (not rated on any trait yet)";
+            }
+            items.Add(focus);
         }
         if (current != Role.None)
         {

@@ -30,8 +30,8 @@ public static class VisionApply
     /// <summary>
     /// Write the roster in, in place of whatever was there, returning how many heroes were assigned.
     /// Heroes missing from heroes.csv are dropped rather than invented, as loading a saved match
-    /// drops them. The net worth history survives a detection of the same twelve heroes, so
-    /// detecting again mid-match adds to it rather than starting over.
+    /// drops them. The net worth history and the focus survive a detection of the same twelve heroes, so
+    /// detecting again mid-match adds to the one and keeps the other rather than starting over.
     /// </summary>
     /// <param name="netWorth">Souls per slot read off the same capture, and when it was taken.</param>
     public static int ApplyToMatch(MatchState match, IReadOnlyList<string?> slotHeroes, int? selfSlot,
@@ -44,6 +44,7 @@ public static class VisionApply
 
         var previous = match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => entry.Key).ToHashSet();
         var history = match.NetWorth.Snapshots.ToList();
+        var focused = match.Focused.ToList();
         match.Clear();
 
         var roles = RolesFor(heroes, selfSlot);
@@ -59,6 +60,8 @@ public static class VisionApply
         {
             foreach (var snapshot in history)
                 match.NetWorth.Add(snapshot);
+            foreach (var heroId in focused)
+                match.SetFocus(heroId, true);
         }
         if (netWorth is { } reading)
             match.NetWorth.Add(SnapshotFor(match, reading.Souls, reading.At));

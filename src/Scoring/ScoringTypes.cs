@@ -55,13 +55,15 @@ public sealed record TraitPart(
 }
 
 /// <summary>One hero's share of an item's score, trait by trait.</summary>
-/// <param name="Amount">The traits' <see cref="TraitPart.Share"/>s summed, times the hero's net worth factor.</param>
+/// <param name="Amount">The traits' <see cref="TraitPart.Share"/>s summed, times the hero's <see cref="Factor"/>.</param>
 /// <param name="NetWorth">Where the hero stood, when their net worth weighted the score.</param>
 /// <param name="Rank">When some of its lines count best targets: 1 for the best target on this relation, 2 for the next…; null when every line sums.</param>
 /// <param name="TypicalOf">
 /// Not a hero: what <see cref="BestTargets"/> gives a typical team of this many, taken off as one line
 /// (<see cref="Amount"/> is its negative, <see cref="Parts"/> empty).
 /// </param>
+/// <param name="Focus">The enemy's <see cref="FocusWeights"/> factor; 1 when no enemy is focused.</param>
+/// <param name="IsFocused">An enemy you focused on, rather than one counting for less because another is.</param>
 public sealed record HeroContribution(
     string HeroId,
     string HeroName,
@@ -70,9 +72,12 @@ public sealed record HeroContribution(
     IReadOnlyList<TraitPart> Parts,
     NetWorthStanding? NetWorth = null,
     int? Rank = null,
-    int? TypicalOf = null)
+    int? TypicalOf = null,
+    double Focus = 1.0,
+    bool IsFocused = false)
 {
-    public double Factor => NetWorth?.Factor ?? 1.0;
+    /// <summary>What the hero's summed lines are multiplied by: their net worth factor times their focus factor.</summary>
+    public double Factor => (NetWorth?.Factor ?? 1.0) * Focus;
 
     /// <summary>The part of <see cref="Amount"/> from best-target lines, at the hero's rank.</summary>
     public double RankedAmount => Factor * Parts.Where(part => part.Rank is not null).Sum(part => part.Share);
@@ -81,19 +86,22 @@ public sealed record HeroContribution(
     public bool PartlyRanked => Rank is not null && Parts.Any(part => part.Rank is null);
 }
 
-/// <summary>How many enemies and allies a line-up has, and whether you're in it: what the spread of its scores depends on.</summary>
-public readonly record struct LineUpShape(int Enemies, int Allies, bool Self)
+/// <summary>
+/// How many enemies and allies a line-up has, whether you're in it, and how many of the enemies are focused:
+/// what the spread of its scores depends on.
+/// </summary>
+public readonly record struct LineUpShape(int Enemies, int Allies, bool Self, int Focused = 0)
 {
     /// <summary>You, five allies and six enemies.</summary>
     public static readonly LineUpShape FullMatch = new(6, 5, true);
 
     public int Size => Enemies + Allies + (Self ? 1 : 0);
 
-    public static LineUpShape Of(LineUp lineUp) => new(lineUp.Enemies.Count, lineUp.Allies.Count, lineUp.Self is not null);
+    public static LineUpShape Of(LineUp lineUp) => new(lineUp.Enemies.Count, lineUp.Allies.Count, lineUp.Self is not null, lineUp.Focus.Count);
 
     /// <summary>
     /// A random line-up of this shape with no net worth, from distinct heroes of <paramref name="pool"/>, which it
-    /// shuffles in part (a partial Fisher-Yates): you first, then the allies, then the enemies.
+    /// shuffles in part (a partial Fisher-Yates): you first, then the allies, then the enemies, the first of whom are focused.
     /// </summary>
     public LineUp Draw(Random random, string[] pool)
     {
@@ -103,13 +111,18 @@ public readonly record struct LineUpShape(int Enemies, int Allies, bool Self)
             (pool[i], pool[j]) = (pool[j], pool[i]);
         }
         var first = Self ? 1 : 0;
-        return new LineUp(pool[first..(first + Allies)], pool[(first + Allies)..Size], Self ? pool[0] : null, NetWorthWeights.None);
+        var enemies = pool[(first + Allies)..Size];
+        return new LineUp(pool[first..(first + Allies)], enemies, Self ? pool[0] : null, NetWorthWeights.None,
+            FocusWeights.For(enemies, enemies.Take(Focused)));
     }
 }
 
-/// <summary>The heroes one score is summed over, each with the relation they're counted on and their net worth factor.</summary>
-public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> Enemies, string? Self, NetWorthWeights NetWorth)
+/// <summary>The heroes one score is summed over, each with the relation they're counted on and the factor their share is weighted by.</summary>
+public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> Enemies, string? Self, NetWorthWeights NetWorth, FocusWeights Focus)
 {
+    /// <summary>What a hero's share is multiplied by: their net worth factor times their focus factor.</summary>
+    public double Factor(string heroId) => NetWorth.Factor(heroId) * Focus.Factor(heroId);
+
     /// <summary>Enemies, then allies, then you.</summary>
     public IEnumerable<(string HeroId, Relation Relation)> Members()
     {

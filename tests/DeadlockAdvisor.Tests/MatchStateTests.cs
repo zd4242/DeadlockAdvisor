@@ -108,6 +108,73 @@ public class MatchStateTests
     }
 
     [Fact]
+    public void OnlyEnemiesCanBeFocusedAndLeavingTheEnemyTeamDropsIt()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, ["me", "a", "b", null, null, null, "x", "y", "z", null, null, null], 0);
+
+        Assert.False(match.ToggleFocus("a"));
+        Assert.False(match.SetFocus("nobody", true));
+        Assert.True(match.ToggleFocus("x"));
+        Assert.True(match.ToggleFocus("y"));
+        Assert.Equal(["x", "y"], match.Focused.Order());
+        Assert.False(match.ToggleFocus("y"));
+        Assert.Equal(["x"], match.Focused);
+
+        // Still an enemy: kept. Moved to your team, or removed: dropped.
+        match.SetRole("x", Role.Enemy);
+        Assert.Equal(["x"], match.Focused);
+        match.SetRole("x", Role.Ally);
+        Assert.Empty(match.Focused);
+        match.SetFocus("z", true);
+        match.SetRole("z", Role.None);
+        Assert.Empty(match.Focused);
+
+        // Playing as an enemy swaps the teams, so the focused enemies are allies now.
+        match.SetFocus("y", true);
+        match.SetRole("y", Role.Self);
+        Assert.Empty(match.Focused);
+
+        // And back: y is the enemy again.
+        match.SetRole("me", Role.Self);
+        Assert.True(match.SetFocus("y", true));
+        match.ClearFocus();
+        Assert.Empty(match.Focused);
+        match.SetFocus("y", true);
+        match.Clear();
+        Assert.Empty(match.Focused);
+    }
+
+    [Fact]
+    public void ADetectionOfTheSameHeroesKeepsTheFocusAndANewLineUpDropsIt()
+    {
+        string?[] heroes = ["me", "a", null, null, null, null, "x", "y", null, null, null, null];
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, heroes, 0);
+        match.SetFocus("y", true);
+
+        VisionApply.ApplyToMatch(match, heroes, 0);
+        Assert.Equal(["y"], match.Focused);
+
+        VisionApply.ApplyToMatch(match, ["me", "a", null, null, null, null, "x", "z", null, null, null, null], 0);
+        Assert.Empty(match.Focused);
+    }
+
+    [Fact]
+    public void TheFocusIsSavedWithTheMatch()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, ["me", "a", null, null, null, null, "x", "y", null, null, null, null], 0);
+        match.SetFocus("x", true);
+        match.SetFocus("y", true);
+
+        var restored = new MatchState();
+        restored.LoadSaved(match.ToSaved(), ["me", "a", "x"]); // "y" no longer exists
+
+        Assert.Equal(["x"], restored.Focused);
+    }
+
+    [Fact]
     public void NetWorthHistoryKeepsEachHerosLatestReading()
     {
         var start = new DateTimeOffset(2026, 9, 26, 20, 0, 0, TimeSpan.Zero);

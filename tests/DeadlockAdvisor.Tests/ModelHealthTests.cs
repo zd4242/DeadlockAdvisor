@@ -162,6 +162,46 @@ public class ModelHealthTests
         Assert.Contains("Only 3 hero(es) are profiled; simulating a match needs 12.", report.Lines());
     }
 
+    /// <summary>
+    /// Focus moves weight between the enemies and measures a single-target item against teams focused the same
+    /// way, so over random matches every item still averages about 0. Measuring it against unfocused teams
+    /// lifted the single-target items by about a tenth of their spread, and up to 0.15.
+    /// </summary>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    public void FocusLeavesEveryItemAveragingAbout0(int focused)
+    {
+        const int matches = 4000;
+        var store = Golden.LoadStore();
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var pool = store.Heroes.Keys.Where(store.IsProfiled).ToArray();
+        var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
+        var (sums, squares) = (new double[items.Count], new double[items.Count]);
+        var random = new Random(1);
+        var shape = LineUpShape.FullMatch with { Focused = focused };
+        for (var match = 0; match < matches; match++)
+        {
+            var lineUp = shape.Draw(random, pool);
+            for (var i = 0; i < items.Count; i++)
+            {
+                var score = ItemScoring.Total(matrix, items[i], lineUp);
+                sums[i] += score;
+                squares[i] += score * score;
+            }
+        }
+
+        // The mean in units of the item's spread; random noise alone keeps the largest under about 0.05.
+        var drift = Enumerable.Range(0, items.Count)
+            .Where(i => squares[i] > 0)
+            .Select(i => (Item: items[i], Mean: sums[i] / matches / Math.Sqrt(squares[i] / matches)))
+            .ToList();
+        Assert.All(drift, item => Assert.InRange(item.Mean, -0.06, 0.06));
+        var ranked = drift.Where(item => store.Items[item.Item].CastOn is not null).Select(item => item.Mean).ToList();
+        Assert.NotEmpty(ranked);
+        Assert.InRange(ranked.Average(), -0.02, 0.02);
+    }
+
     [Fact]
     public void TheRealDataProducesAFullReport()
     {

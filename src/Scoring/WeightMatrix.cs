@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
 using DeadlockAdvisor.Enums;
 
@@ -19,6 +20,10 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
     private readonly Dictionary<MatrixKey, double> _ranked;
     private readonly HashSet<string> _profiled;
     private readonly Dictionary<(string ItemId, Relation Relation), double[]> _typical = [];
+    private readonly Dictionary<(string ItemId, Relation Relation), List<double>> _rosters = [];
+
+    // Worked out when a focused line-up first asks, since most matches never focus.
+    private readonly ConcurrentDictionary<(string ItemId, Relation Relation, int Count, int Focused), double> _focusedTypical = [];
 
     /// <param name="summed">The weights from lines that sum over the team.</param>
     /// <param name="ranked">The weights from lines scored on their best targets (<see cref="Services.DataStore.OnBestTargets"/>).</param>
@@ -38,6 +43,7 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
             for (var count = 2; count < typical.Length; count++)
                 typical[count] = BestTargets.Expected(roster, count);
             _typical[(itemId, relation)] = typical;
+            _rosters[(itemId, relation)] = roster;
         }
     }
 
@@ -55,6 +61,20 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
     /// <summary><see cref="BestTargets.Sum"/> of the best-target parts on one relation for a team of this many profiled heroes on average; 0 for no heroes.</summary>
     public double Typical(string itemId, Relation relation, int count) =>
         _typical.TryGetValue((itemId, relation), out var typical) && count > 0 ? typical[Math.Min(count, typical.Length - 1)] : 0.0;
+
+    /// <summary>
+    /// <see cref="Typical(string, Relation, int)"/> when <paramref name="focused"/> of the team count
+    /// <see cref="FocusWeights.Ratio"/> times the rest, who count ×1.
+    /// </summary>
+    public double Typical(string itemId, Relation relation, int count, int focused)
+    {
+        if (focused <= 0 || !_typical.TryGetValue((itemId, relation), out var typical) || count <= 0)
+            return Typical(itemId, relation, count);
+        count = Math.Min(count, typical.Length - 1);
+        focused = Math.Min(focused, count);
+        return _focusedTypical.GetOrAdd((itemId, relation, count, focused),
+            key => BestTargets.Expected(_rosters[(key.ItemId, key.Relation)], key.Count, key.Focused, FocusWeights.Ratio));
+    }
 
     public double this[MatrixKey key] => _weights[key];
     public IEnumerable<MatrixKey> Keys => _weights.Keys;

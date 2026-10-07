@@ -1,6 +1,7 @@
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 
@@ -8,12 +9,12 @@ namespace DeadlockAdvisor.Tests;
 
 public class MatchBoardTests
 {
+    private readonly DataStore _store = Golden.LoadStore();
     private readonly MatchBoardViewModel _board;
 
     public MatchBoardTests()
     {
-        var store = Golden.LoadStore();
-        _board = new MatchBoardViewModel(new MatchState(), () => store, new FakeSettingsService());
+        _board = new MatchBoardViewModel(new MatchState(), () => _store, new FakeSettingsService());
     }
 
     [Fact]
@@ -64,5 +65,51 @@ public class MatchBoardTests
 
         _board.EmptySlotClicked(Role.Enemy);
         Assert.Equal(Role.Enemy, _board.Mode);
+    }
+
+    [Fact]
+    public void FocusingAnEnemyDimsTheOthersAndNamesThemOverTheList()
+    {
+        var changes = 0;
+        using var subscription = _board.MatchChanged.Subscribe(_ => changes++);
+        _board.SetRole("wraith", Role.Self);
+        _board.SetRole("lash", Role.Enemy);
+        _board.SetRole("haze", Role.Enemy);
+        _board.SetRole("abrams", Role.Enemy);
+        Assert.False(_board.HasFocus);
+        Assert.All(_board.EnemySlots, slot => Assert.False(slot.IsDimmed));
+
+        _board.ToggleFocus("haze");
+        Assert.Equal(5, changes);
+        Assert.True(_board.HasFocus);
+        Assert.Equal("vs Haze", _board.FocusLabel);
+        Assert.Contains("×2.14", _board.FocusTip); // 3 enemies: 15/7 against 3/7
+        Assert.Contains("×0.43", _board.FocusTip);
+        Assert.Equal([(false, true), (true, false), (false, true), (false, false)],
+            _board.EnemySlots.Take(4).Select(slot => (slot.IsFocused, slot.IsDimmed)));
+
+        _board.ToggleFocus("abrams");
+        Assert.Equal("vs Haze, Abrams", _board.FocusLabel);
+
+        // Allies can't be focused; the chip's × stops focusing on everyone.
+        _board.ToggleFocus("wraith");
+        Assert.False(_board.IsFocused("wraith"));
+        _board.ClearFocusCommand.Execute().Subscribe();
+        Assert.False(_board.HasFocus);
+        Assert.Equal("", _board.FocusLabel);
+        Assert.All(_board.EnemySlots, slot => Assert.False(slot.IsFocused || slot.IsDimmed));
+    }
+
+    [Fact]
+    public void AnEnemyRatedOnNoTraitCantBeFocused()
+    {
+        _store.Heroes["newcomer"] = new Hero("newcomer", "Newcomer");
+        _board.Rebind();
+        _board.SetRole("newcomer", Role.Enemy);
+
+        Assert.False(_board.CanFocus("newcomer"));
+        Assert.False(_board.EnemySlots[0].CanFocus);
+        _board.ToggleFocus("newcomer");
+        Assert.False(_board.HasFocus);
     }
 }
