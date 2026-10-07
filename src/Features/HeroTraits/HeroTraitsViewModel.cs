@@ -114,6 +114,18 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public void FocusSearch() => RequestViewAction(FocusSearchAction);
 
+    /// <summary>Select a cell from outside the grid, first clearing the filter if it's hiding the hero.</summary>
+    public void OpenCell(TraitCell cell)
+    {
+        var row = Heroes.ToList().FindIndex(hero => hero.HeroId == cell.HeroId);
+        var column = Categories.ToList().FindIndex(category => category.CategoryId == cell.CategoryId);
+        if (row < 0 || column < 0)
+            return;
+        if (Position(row) < 0)
+            FilterText = "";
+        MoveTo(row, column);
+    }
+
     private Hero? CurrentHero => CurrentRow >= 0 && CurrentRow < Heroes.Count ? Heroes[CurrentRow] : null;
     private Category? CurrentCategory => CurrentColumn >= 0 && CurrentColumn < Categories.Count ? Categories[CurrentColumn] : null;
     private bool HasPending => _pendingDigits.Length > 0 || _pendingNegative;

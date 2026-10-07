@@ -3,6 +3,7 @@ using System.Reactive.Subjects;
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
@@ -14,7 +15,9 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Explain;
 
 /// <param name="IsSole">The hero's only line, so without the math the card's amount stands for it.</param>
-public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share, bool IsSole = false)
+/// <param name="Cell">The Hero Traits cell the line was worked from; null for a line that isn't a hero's, such as the typical team.</param>
+public sealed record TraitLine(string TraitName, string? Source, string? SourceTip, string Arithmetic, DisplayAmount Share, bool IsSole = false,
+    TraitCell? Cell = null)
 {
     /// <summary>The arithmetic and where its coefficient came from, for hovering the line when the math is hidden.</summary>
     public string Working => $"{Arithmetic} = {Format.SignedFixed(Share.Value, 1)}" + (SourceTip is null ? "" : $"\n\n{SourceTip}");
@@ -111,7 +114,13 @@ public class ExplainViewModel : ViewModelBase
 
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
 
-    /// <summary>The model editors are shown, so the header offers Go to Item Formula on right-click.</summary>
+    /// <summary>A trait line's context menu asked to select the hero's trait on the Hero Traits page.</summary>
+    public IObservable<TraitCell> TraitRequested => _traitRequested;
+    private readonly Subject<TraitCell> _traitRequested = new();
+
+    public ReactiveCommand<TraitCell, Unit> OpenTraitCommand { get; }
+
+    /// <summary>The model editors are shown, so the header and the trait lines offer a way to their pages on right-click.</summary>
     [Reactive] public bool ShowsEditors { get; set; }
 
     /// <summary>
@@ -123,6 +132,7 @@ public class ExplainViewModel : ViewModelBase
     public ExplainViewModel()
     {
         OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
+        OpenTraitCommand = ReactiveCommand.Create<TraitCell>(_traitRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
     }
 
     /// <param name="rankBy">What the list is ranked by, which the headline shows.</param>
@@ -223,7 +233,8 @@ public class ExplainViewModel : ViewModelBase
                 ExplainText.CoefficientSource(part) is null ? null : ExplainText.CoefficientTooltip(part),
                 ExplainText.Arithmetic(part),
                 new DisplayAmount(part.Share),
-                IsSole: contribution.Parts.Count == 1)).ToList(),
+                IsSole: contribution.Parts.Count == 1,
+                Cell: contribution.TypicalOf is null ? new TraitCell(contribution.HeroId, part.CategoryId) : null)).ToList(),
             notes.Count > 0 ? string.Join(" · ", notes) : null,
             tips.Count > 0 ? string.Join("\n\n", tips) : null,
             info);

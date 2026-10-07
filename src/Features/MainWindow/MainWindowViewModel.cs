@@ -188,6 +188,7 @@ public class MainWindowViewModel : ViewModelBase
         AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Merge(heroItems.FormulaRequested).Subscribe(ShowFormula).DisposeWith(Disposables);
+        match.TraitRequested.Subscribe(ShowTrait).DisposeWith(Disposables);
 
         var zoom = settings.SettingsChanged.Select(s => ZoomLevels.Clamp(s.ZoomIndex));
         ZoomInCommand = ReactiveCommand.Create(() => SetZoom(_settings.Current.ZoomIndex + 1),
@@ -423,6 +424,14 @@ public class MainWindowViewModel : ViewModelBase
             return;
         ShowPage(_itemFormulasPage);
         ItemFormulas.OpenItem(itemId);
+    }
+
+    private void ShowTrait(TraitCell cell)
+    {
+        if (!ShowsEditors)
+            return;
+        ShowPage(_heroTraitsPage);
+        HeroTraits.OpenCell(cell);
     }
 
     /// <summary>The licenses of everything the app ships with: a long text, so it's written beside the settings and opened in the text editor.</summary>

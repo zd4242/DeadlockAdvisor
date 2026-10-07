@@ -7,6 +7,8 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.HeroTraits;
+using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -175,6 +177,65 @@ public class MenuTests
         Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(header));
         Assert.All(rows, row => Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(row)));
         Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
+    }
+
+    /// <summary>From a hero's line in the explanation, with the filter hiding the hero on the grid.</summary>
+    [AvaloniaFact]
+    public void ATraitLineOpensItsCellOnTheHeroTraitsPage()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
+        var traits = ui.ViewModel.HeroTraits;
+        traits.FilterText = "no hero is called this";
+        // The last heroes by name, so their rows sit well down the grid.
+        foreach (var hero in ui.Data.Store.HeroesSorted().TakeLast(3))
+            ui.ViewModel.Match.Board.SetRole(hero.HeroId, Role.Enemy);
+        ui.Show();
+        var results = ui.ViewModel.Match.Results;
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+        UiHarness.Settle();
+
+        var lines = ui.Window.GetVisualDescendants().OfType<Grid>().Where(grid => grid.Classes.Contains("traitLine")).ToList();
+        var line = lines.First(grid => ((TraitLine)grid.DataContext!).Cell is not null);
+        var cell = ((TraitLine)line.DataContext!).Cell!;
+        var at = line.TranslatePoint(new Point(line.Bounds.Width / 2, line.Bounds.Height / 2), ui.Window)!.Value;
+        ui.Window.MouseDown(at, MouseButton.Right);
+        ui.Window.MouseUp(at, MouseButton.Right);
+        UiHarness.Settle();
+        var goTo = TopLevel.GetTopLevel(line)!.GetVisualDescendants().OfType<MenuItem>().Single(item => Equals(item.Header, "Go to Hero Trait"));
+        Click(TopLevel.GetTopLevel(goTo)!, goTo);
+
+        Assert.True(ui.ViewModel.IsHeroTraitsPage);
+        Assert.Equal("", traits.FilterText);
+        Assert.Equal(cell.HeroId, traits.Heroes[traits.CurrentRow].HeroId);
+        Assert.Equal(cell.CategoryId, traits.Categories[traits.CurrentColumn].CategoryId);
+        var scroller = ui.Window.HeroTraitsPage.Scroller;
+        var grid = ui.Window.HeroTraitsPage.Grid;
+        var row = grid.TranslatePoint(new Point(0, TraitGrid.RowHeight * traits.VisibleRows.ToList().IndexOf(traits.CurrentRow)), scroller)!.Value;
+        Assert.InRange(row.Y, 0, scroller.Viewport.Height);
+    }
+
+    [AvaloniaFact]
+    public void OnlyTheEditorsBringTheTraitLineEntry()
+    {
+        using var ui = new UiHarness();
+        foreach (var hero in new[] { "haze", "infernus", "abrams" })
+            ui.ViewModel.Match.Board.SetRole(hero, Role.Enemy);
+        ui.Show();
+        var results = ui.ViewModel.Match.Results;
+        results.Select(results.Entries.OfType<ResultRowViewModel>().First());
+        UiHarness.Settle();
+        List<Grid> Lines() => ui.Window.GetVisualDescendants().OfType<Grid>()
+            .Where(grid => grid.Classes.Contains("traitLine") && grid.Classes.Contains("hasCell")).ToList();
+
+        Assert.NotEmpty(Lines());
+        Assert.All(Lines(), line => Assert.Null(line.ContextMenu));
+
+        ui.ViewModel.Settings.General.ShowModelEditors = true;
+        UiHarness.Settle();
+
+        var lines = Lines();
+        Assert.All(lines, line => Assert.Equal(["Go to Hero Trait"], RightClick(ui.Window, line).Select(item => (string)item.Header!)));
+        Assert.NotSame(lines[0].ContextMenu, lines[1].ContextMenu);
     }
 
     [AvaloniaFact]

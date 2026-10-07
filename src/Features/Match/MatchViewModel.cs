@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
@@ -210,6 +211,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>An item whose rules a recommendation's or the explanation's context menu asked to open.</summary>
     public IObservable<string> FormulaRequested => Results.FormulaRequested.Merge(Explain.FormulaRequested);
+
+    /// <summary>A hero's trait whose cell on the Hero Traits page the explanation's context menu asked to open.</summary>
+    public IObservable<TraitCell> TraitRequested => Explain.TraitRequested;
 
     [Reactive] public CutoffPreset SelectedCutoff { get; set; }
     [Reactive] public RankPreset SelectedRank { get; set; }
