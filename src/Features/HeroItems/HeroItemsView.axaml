@@ -91,6 +91,15 @@
         <Style Selector="TextBlock.change.fell">
             <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
         </Style>
+        <Style Selector="TextBlock.fit">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="TextBlock.fit.good">
+            <Setter Property="Foreground" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
+        <Style Selector="TextBlock.fit.bad">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <Border Classes="card" Margin="12">
@@ -297,7 +306,7 @@
                             CornerRadius="6"
                             Padding="8,0"
                             Margin="0,0,20,6">
-                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
+                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                             <Button Classes="header name" Classes.sorted="{Binding ItemHeader.IsSorted}" Content="{Binding ItemHeader.Text}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Item}"/>
                             <Button Grid.Column="1" Classes="header cost" Classes.sorted="{Binding CostHeader.IsSorted}" Content="{Binding CostHeader.Text}"
@@ -307,21 +316,25 @@
                                     Width="112"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRate}"
                                     ToolTip.Tip="The share of the hero's matches with the item that were won, and its distance from the hero's average"/>
-                            <Button Grid.Column="3" Classes="header" Classes.sorted="{Binding WinRateChangeHeader.IsSorted}" Content="{Binding WinRateChangeHeader.Text}"
+                            <Button Grid.Column="3" Classes="header" Classes.sorted="{Binding FitHeader.IsSorted}" Content="{Binding FitHeader.Text}"
+                                    Width="88"
+                                    Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Fit}"
+                                    ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.FitHeaderTip}"/>
+                            <Button Grid.Column="4" Classes="header" Classes.sorted="{Binding WinRateChangeHeader.IsSorted}" Content="{Binding WinRateChangeHeader.Text}"
                                     Width="88"
                                     IsVisible="{Binding ShowChanges}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRateChange}"
                                     ToolTip.Tip="{Binding ChangeTip}"/>
-                            <Button Grid.Column="4" Classes="header" Classes.sorted="{Binding UsageHeader.IsSorted}" Content="{Binding UsageHeader.Text}"
+                            <Button Grid.Column="5" Classes="header" Classes.sorted="{Binding UsageHeader.IsSorted}" Content="{Binding UsageHeader.Text}"
                                     Width="140"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Usage}"
                                     ToolTip.Tip="The share of this hero's matches the item was bought in"/>
-                            <Button Grid.Column="5" Classes="header" Classes.sorted="{Binding UsageChangeHeader.IsSorted}" Content="{Binding UsageChangeHeader.Text}"
+                            <Button Grid.Column="6" Classes="header" Classes.sorted="{Binding UsageChangeHeader.IsSorted}" Content="{Binding UsageChangeHeader.Text}"
                                     Width="96"
                                     IsVisible="{Binding ShowChanges}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.UsageChange}"
                                     ToolTip.Tip="{Binding ChangeTip}"/>
-                            <Button Grid.Column="6" Classes="header" Classes.sorted="{Binding MatchesHeader.IsSorted}" Content="{Binding MatchesHeader.Text}"
+                            <Button Grid.Column="7" Classes="header" Classes.sorted="{Binding MatchesHeader.IsSorted}" Content="{Binding MatchesHeader.Text}"
                                     Width="112"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Matches}"/>
                         </Grid>
@@ -346,7 +359,7 @@
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate x:DataType="heroItems:HeroItemRowViewModel">
                                     <Border Classes="row">
-                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto">
+                                        <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
                                             <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
                                                 <art:ArtImage Width="30"
                                                               Height="30"
@@ -380,6 +393,14 @@
                                                 </Border>
                                             </Panel>
                                             <TextBlock Grid.Column="3"
+                                                       Classes="cell fit"
+                                                       Classes.good="{Binding FitGood}"
+                                                       Classes.bad="{Binding FitBad}"
+                                                       Width="88"
+                                                       Background="Transparent"
+                                                       Text="{Binding FitText}"
+                                                       ToolTip.Tip="{Binding FitTip}"/>
+                                            <TextBlock Grid.Column="4"
                                                        Classes="cell change"
                                                        Classes.rose="{Binding WinRateRose}"
                                                        Classes.fell="{Binding WinRateFell}"
@@ -387,7 +408,7 @@
                                                        IsVisible="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).ShowChanges}"
                                                        Text="{Binding WinRateChangeText}"/>
                                             <!-- The share, with its bar beneath, so the header centres over both. -->
-                                            <StackPanel Grid.Column="4" Width="140" Spacing="4" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="5" Width="140" Spacing="4" VerticalAlignment="Center">
                                                 <TextBlock Classes="cell" Text="{Binding UsageText}"/>
                                                 <controls:ScoreBar Width="96"
                                                                    Height="4"
@@ -395,14 +416,14 @@
                                                                    Fraction="{Binding Usage}"
                                                                    Color="{x:Static theme:Palette.Data}"/>
                                             </StackPanel>
-                                            <TextBlock Grid.Column="5"
+                                            <TextBlock Grid.Column="6"
                                                        Classes="cell change"
                                                        Classes.rose="{Binding UsageRose}"
                                                        Classes.fell="{Binding UsageFell}"
                                                        Width="96"
                                                        IsVisible="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).ShowChanges}"
                                                        Text="{Binding UsageChangeText}"/>
-                                            <TextBlock Grid.Column="6"
+                                            <TextBlock Grid.Column="7"
                                                        Classes="cell dim"
                                                        Width="112"
                                                        Background="Transparent"

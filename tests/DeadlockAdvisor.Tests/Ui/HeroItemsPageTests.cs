@@ -58,7 +58,8 @@ public class HeroItemsPageTests
         List<string> HeaderTexts() => ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>()
             .Where(candidate => candidate.Classes.Contains("header") && candidate.IsEffectivelyVisible).Select(candidate => (string)candidate.Content!).ToList();
         // Off until asked for: the two change columns have no header either.
-        Assert.Equal(5, HeaderTexts().Count);
+        Assert.Equal(6, HeaderTexts().Count);
+        Assert.Contains("HERO FIT", HeaderTexts());
         Assert.DoesNotContain(HeaderTexts(), text => text.Contains('Δ'));
 
         button.Flyout!.ShowAt(button);
@@ -152,11 +153,11 @@ public class HeroItemsPageTests
         var page = ui.ViewModel.HeroItems;
         var row = Rows(ui).First();
         var headers = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Button>().Where(candidate => candidate.Classes.Contains("header")).ToList();
-        Assert.Equal(7, headers.Count);
+        Assert.Equal(8, headers.Count);
 
         double CentreOf(Visual visual) => visual.TranslatePoint(new Point(visual.Bounds.Width / 2, 0), ui.Window)!.Value.X;
         var cells = row.GetVisualDescendants().OfType<Control>().Where(control => control.Parent is Grid grid && grid == row.Child).ToList();
-        Assert.Equal(7, cells.Count);
+        Assert.Equal(8, cells.Count);
         // Cost is right-aligned and the item left-aligned, so their cells' edges line up with the header's instead of their middles.
         foreach (var (header, cell) in headers.Zip(cells).Skip(2))
             Assert.InRange(CentreOf(header) - CentreOf(cell), -1, 1);

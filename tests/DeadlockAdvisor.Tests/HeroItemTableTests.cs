@@ -30,6 +30,13 @@ public class HeroItemTableTests
             Ranked = ranked is null ? [] : new() { ["dynamo"] = ranked },
         };
 
+    /// <summary>Several heroes' counts over every match: Dynamo and Haze, as (hero, matches, items).</summary>
+    private static SliceCounts Heroes(params (string Hero, WinTotals Matches, Dictionary<long, WinTotals> Items)[] heroes) =>
+        new(Halves.Empty, new(heroes.Select(hero => KeyValuePair.Create(hero.Hero, new Halves(hero.Items, [])))), [])
+        {
+            HeroMatches = new(heroes.Select(hero => KeyValuePair.Create(hero.Hero, hero.Matches))),
+        };
+
     private static MatchSegment Segment(Patch patch, SliceCounts everyMatch, params SliceCounts[] byRank) =>
         new(patch, patch.Start, patch.Start + 86400, false, patch.Start + 86400, everyMatch, byRank.Length == 0 ? [] : [_low, _high], byRank);
 
@@ -129,6 +136,71 @@ public class HeroItemTableTests
         // Unranked matches have no rank, so a range has none of them.
         Assert.Empty(HeroItemTable.Build([segment], [segment], "dynamo", MatchMode.Unranked, new RankRange(1, 11), _items)!.Rows);
         Assert.Null(HeroItemTable.Build([], [Segment(_current, everyMatch)], "dynamo", MatchMode.All, new RankRange(1, 11), _items));
+    }
+
+    [Fact]
+    public void AFitIsWhatTheHeroGainsOverEveryoneWithTheItemNextToItsOtherItemsOfTheTier()
+    {
+        // Dynamo wins 60% with boots and Haze 50%, so everyone does 55%; both win 50% with the charge.
+        var segment = Segment(_current, Heroes(
+            ("dynamo", new WinTotals(100000, 200000), Items((1, 60000, 100000), (2, 50000, 100000))),
+            ("haze", new WinTotals(100000, 200000), Items((1, 50000, 100000), (2, 50000, 100000)))));
+
+        var table = HeroItemTable.Build([segment], [segment], "dynamo", MatchMode.All, null, _items)!;
+
+        // Boots gain 5 points over everyone's and the charge 0, so each is 2.5 from the tier's average of 2.5.
+        var boots = table.Rows.Single(row => row.Item == _boots).Fit!;
+        Assert.Equal(0.55, boots.EveryoneWinRate, 9);
+        Assert.Equal(2.5, boots.TierAverage, 9);
+        Assert.Equal(2.5, boots.Raw, 9);
+        var charge = table.Rows.Single(row => row.Item == _charge).Fit!;
+        Assert.Equal(0.5, charge.EveryoneWinRate, 9);
+        Assert.Equal(2.5, charge.TierAverage, 9);
+        Assert.Equal(-2.5, charge.Raw, 9);
+        // Shrunk toward 0, but only a little, with this many matches.
+        Assert.InRange(boots.Shown, 2.4, 2.5 - 0.001);
+        Assert.InRange(charge.Shown, -2.5 + 0.001, -2.4);
+    }
+
+    [Fact]
+    public void AnItemBoughtInTooFewMatchesHasNoFitButStillMovesItsTiersAverage()
+    {
+        var rubber = new Item("rubber", "Rubber", "vitality", 1, GameId: 4, Cost: 800);
+        var segment = Segment(_current, Heroes(
+            ("dynamo", new WinTotals(100000, 200000), Items((1, 60000, 100000), (2, 50000, 100000), (4, 400, 400))),
+            ("haze", new WinTotals(100000, 200000), Items((1, 50000, 100000), (2, 50000, 100000), (4, 0, 400)))));
+
+        var table = HeroItemTable.Build([segment], [segment], "dynamo", MatchMode.All, null, [.. _items, rubber])!;
+
+        Assert.Null(table.Rows.Single(row => row.Item == rubber).Fit);
+        // Its 50 points over everyone's, over 400 matches, lift the tier's 2.5 to (100000 × 5 + 400 × 50) / 200400.
+        Assert.Equal(520000.0 / 200400, table.Rows.Single(row => row.Item == _boots).Fit!.TierAverage, 9);
+    }
+
+    [Fact]
+    public void TheFitCountsTheMatchesTheTableDoesSoRankedMatchesAreCompared()
+    {
+        var everyMatch = Heroes(
+            ("dynamo", new WinTotals(100000, 200000), Items((1, 60000, 100000), (2, 50000, 100000))),
+            ("haze", new WinTotals(100000, 200000), Items((1, 50000, 100000), (2, 50000, 100000))));
+        // Among the ranked ones, everyone wins half of them with either item.
+        var segment = Segment(_current, everyMatch with
+        {
+            Ranked = new()
+            {
+                ["dynamo"] = new HeroCounts(new WinTotals(50000, 100000), Items((1, 50000, 100000), (2, 50000, 100000))),
+                ["haze"] = new HeroCounts(new WinTotals(50000, 100000), Items((1, 50000, 100000), (2, 50000, 100000))),
+            },
+        });
+
+        var all = HeroItemTable.Build([segment], [segment], "dynamo", MatchMode.All, null, _items)!;
+        var ranked = HeroItemTable.Build([segment], [segment], "dynamo", MatchMode.Ranked, null, _items)!;
+
+        Assert.Equal(2.5, all.Rows.Single(row => row.Item == _boots).Fit!.Raw, 9);
+        var fit = ranked.Rows.Single(row => row.Item == _boots).Fit!;
+        Assert.Equal(0.5, fit.EveryoneWinRate, 9);
+        Assert.Equal(0, fit.Raw, 9);
+        Assert.Equal(0, fit.Shown, 9);
     }
 
     [Fact]

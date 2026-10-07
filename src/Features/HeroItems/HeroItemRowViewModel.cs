@@ -9,10 +9,14 @@ namespace DeadlockAdvisor.Features.HeroItems;
 
 /// <summary>One item's row in a hero's item table, as printed.</summary>
 /// <param name="average">The hero's own win rate over the same matches, which each row's is read against.</param>
-public class HeroItemRowViewModel(HeroItemRow row, double average)
+/// <param name="heroName">The hero the table is for, named in the fit's tip.</param>
+public class HeroItemRowViewModel(HeroItemRow row, double average, string heroName = "The hero")
 {
     /// <summary>A win rate within this of the average, as a fraction, reads as average.</summary>
     public const double AverageMargin = 0.005;
+
+    /// <summary>A fit within this many points of 0 reads as typical.</summary>
+    public const double FitMargin = 0.5;
 
     /// <summary>The distance from the average, as a fraction, at which the win rate's tint is at its strongest.</summary>
     public const double FullTintAt = 0.05;
@@ -63,6 +67,28 @@ public class HeroItemRowViewModel(HeroItemRow row, double average)
     /// <summary>"+1.8 points on the hero's 50.06% average".</summary>
     public string WinRateTip =>
         $"{Format.SignedFixed((row.WinRate - average) * 100, 1)} points on the hero's {Percent(average)} average win rate with these filters";
+
+    /// <summary>"+1.8", "−2.0": how much more the hero wins with it than others who build it, next to its other items of the tier; "—" without one.</summary>
+    public string FitText => row.Fit is { } fit ? Format.SignedFixed(fit.Shown, 1) : "—";
+    public bool FitGood => row.Fit?.Shown >= FitMargin;
+    public bool FitBad => row.Fit?.Shown <= -FitMargin;
+
+    /// <summary>The fit's arithmetic with this row's own numbers, or why there's none.</summary>
+    public string FitTip
+    {
+        get
+        {
+            if (row.Fit is not { } fit)
+                return $"Bought in under {Format.Thousands(HeroFits.MinMatches)} of these matches, too few to measure.";
+            var tip = $"{heroName} won {Percent(row.WinRate)} with it, and everyone who built it {Percent(fit.EveryoneWinRate)} "
+                      + $"({Format.SignedFixed(fit.Raw + fit.TierAverage, 2)}).\n"
+                      + $"{heroName}'s tier {row.Item.Tier} items run {Format.SignedFixed(fit.TierAverage, 2)} on average, "
+                      + $"so it's {Format.SignedFixed(fit.Raw, 2)} next to them.";
+            return Format.SignedFixed(fit.Shown, 1) == Format.SignedFixed(fit.Raw, 1)
+                ? tip
+                : $"{tip}\nPulled toward 0 for how few matches it rests on: {Format.SignedFixed(fit.Shown, 1)}.";
+        }
+    }
 
     public string WinRateChangeText => Change(row.WinRateChange);
     public bool WinRateRose => SignOf(row.WinRateChange) > 0;

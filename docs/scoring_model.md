@@ -240,6 +240,27 @@ and the explain panel say how much the enemy lifts count. The Match tab's "Hide 
 your hero rarely builds" filter drops them from the list; it never changes a score. `DataStrength` and DATA ★
 use the reduced sum.
 
+### Hero fit on the Hero Items page
+
+The Hero Items page's **Hero fit** column is the "you" lift worked out over the
+matches the table counts (`HeroFits`, built in `HeroItemTable.Build`): the same
+`MatchStatsMath.RawLifts`, then `Shrink`, so it follows the table's patches,
+match mode and rank range instead of the Match tab's fixed download. Everyone's win rate with
+an item is every hero's own purchases added up, which is every match's however
+the table is filtered, so no per-mode baseline is needed. An item bought in
+under `HeroFits.MinMatches` (500) of the hero's matches has no fit but still counts
+toward its tier's average. The noise scale is the every-match halves' (ranked-only and rank-group counts have none).
+
+Why the page shows the lift beside the win rate, and why the Match tab ranks by
+the lift alone: a win rate mostly records *when* an item is bought. Tier 4 items
+are only bought in games already going well, so every one of them wins well above
+the hero's average, and the win rate can't tell the item from the game. The lift
+compares the hero with everyone who builds the same item, which cancels that. It
+doesn't say how strong an item is for everyone, only how much more this hero gets
+from it. The Match tab wants what *this match* changes about an item's value,
+so adding the raw win rate there would be a flat per-item bonus, the "always
+recommended" problem described above.
+
 ### The counts behind the lifts
 
 Download Match Data keeps the raw win and match totals per patch, in

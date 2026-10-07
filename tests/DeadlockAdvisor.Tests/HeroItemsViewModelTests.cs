@@ -79,6 +79,59 @@ public sealed class HeroItemsViewModelTests : IDisposable
     }
 
     [Fact]
+    public void AFitReadsInPointsAndIsMarkedOnlyBeyondHalfAPoint()
+    {
+        HeroItemRowViewModel Row(double? shown) => new(
+            new HeroItemRow(new DeadlockAdvisor.Models.Item("silencer", "Silencer", "weapon", 4, GameId: 1, Cost: 6400), 6089, 10000, 0.5, null, null,
+                shown is { } value ? new HeroFit(0.5857, 4.36, value, value) : null),
+            average: 0.5, "Graves");
+
+        Assert.Equal(("+1.8", "-2.0", "—"), (Row(1.8).FitText, Row(-2.0).FitText, Row(null).FitText));
+        Assert.Equal((true, false), (Row(0.5).FitGood, Row(0.5).FitBad));
+        Assert.Equal((false, true), (Row(-0.5).FitGood, Row(-0.5).FitBad));
+        Assert.Equal((false, false), (Row(0.4).FitGood, Row(0.4).FitBad));
+        Assert.Equal((false, false), (Row(null).FitGood, Row(null).FitBad));
+    }
+
+    [Fact]
+    public void AFitsTipWorksItsArithmeticThroughWithTheRowsOwnNumbers()
+    {
+        HeroItemRowViewModel Row(HeroFit? fit) => new(
+            new HeroItemRow(new DeadlockAdvisor.Models.Item("silencer", "Silencer", "weapon", 4, GameId: 1, Cost: 6400), 6089, 10000, 0.5, null, null, fit),
+            average: 0.5, "Graves");
+        const string worked = "Graves won 60.89% with it, and everyone who built it 58.57% (+2.32).\n"
+                              + "Graves's tier 4 items run +4.36 on average, so it's -2.04 next to them.";
+
+        Assert.Equal(worked, Row(new HeroFit(0.5857, 4.36, -2.04, -2.0)).FitTip);
+        Assert.Equal(worked + "\nPulled toward 0 for how few matches it rests on: -1.2.", Row(new HeroFit(0.5857, 4.36, -2.04, -1.2)).FitTip);
+        Assert.Equal("Bought in under 500 of these matches, too few to measure.", Row(null).FitTip);
+    }
+
+    [Fact]
+    public async Task SortingByFitPutsItemsWithoutOneLastWhicheverWayItRuns()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        await page.PickAllPatchesCommand.Execute();
+        Assert.Contains(page.Rows, row => row.FitText != "—");
+
+        await page.SortCommand.Execute(HeroItemSort.Fit);
+        Assert.Equal("HERO FIT ▾", page.FitHeader.Text);
+        var descending = page.Rows.Select(row => row.FitText).ToList();
+        await page.SortCommand.Execute(HeroItemSort.Fit);
+        var ascending = page.Rows.Select(row => row.FitText).ToList();
+
+        foreach (var texts in new[] { descending, ascending })
+        {
+            var measured = texts.TakeWhile(text => text != "—").ToList();
+            Assert.All(texts.Skip(measured.Count), text => Assert.Equal("—", text));
+        }
+        double[] Values(List<string> texts) => texts.Where(text => text != "—").Select(text => double.Parse(text, System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+        Assert.Equal(Values(descending).OrderByDescending(value => value), Values(descending));
+        Assert.Equal(Values(ascending).Order(), Values(ascending));
+    }
+
+    [Fact]
     public void ATintBehindTheWinRateGrowsWithItsDistanceFromTheAverageAndIsClearForAnAverageOne()
     {
         var item = new DeadlockAdvisor.Models.Item("boots", "Boots", "vitality", 1, GameId: 1, Cost: 800);

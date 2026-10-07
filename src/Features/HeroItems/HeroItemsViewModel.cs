@@ -17,6 +17,7 @@ public enum HeroItemSort
     Item,
     Cost,
     WinRate,
+    Fit,
     WinRateChange,
     Usage,
     UsageChange,
@@ -77,6 +78,12 @@ public class HeroItemsViewModel : ViewModelBase
 
     public const double MaxMinUsagePercent = 50;
 
+    public const string FitHeaderTip =
+        "How much more this hero wins with the item than everyone else who builds it, next to the hero's other items of the "
+        + "same tier, in win-rate points. 0 is typical, and above 0 suits this hero better than its usual picks.\n"
+        + "Unlike the win rate, it isn't raised by items being bought late in games already going well, but it says nothing "
+        + "about how strong the item is for everyone. The Match page's \"you\" match data is the same measure.";
+
     public const string FiltersTip = "Which matches count, and which columns show";
 
     public const string ShowChangesTip =
@@ -118,6 +125,7 @@ public class HeroItemsViewModel : ViewModelBase
             [HeroItemSort.Item] = new(HeroItemSort.Item, "ITEM"),
             [HeroItemSort.Cost] = new(HeroItemSort.Cost, "COST"),
             [HeroItemSort.WinRate] = new(HeroItemSort.WinRate, "WIN RATE"),
+            [HeroItemSort.Fit] = new(HeroItemSort.Fit, "HERO FIT"),
             [HeroItemSort.WinRateChange] = new(HeroItemSort.WinRateChange, "WIN Δ"),
             [HeroItemSort.Usage] = new(HeroItemSort.Usage, "USAGE"),
             [HeroItemSort.UsageChange] = new(HeroItemSort.UsageChange, "USAGE Δ"),
@@ -253,6 +261,7 @@ public class HeroItemsViewModel : ViewModelBase
     public ColumnHeader ItemHeader => Headers[HeroItemSort.Item];
     public ColumnHeader CostHeader => Headers[HeroItemSort.Cost];
     public ColumnHeader WinRateHeader => Headers[HeroItemSort.WinRate];
+    public ColumnHeader FitHeader => Headers[HeroItemSort.Fit];
     public ColumnHeader WinRateChangeHeader => Headers[HeroItemSort.WinRateChange];
     public ColumnHeader UsageHeader => Headers[HeroItemSort.Usage];
     public ColumnHeader UsageChangeHeader => Headers[HeroItemSort.UsageChange];
@@ -525,7 +534,7 @@ public class HeroItemsViewModel : ViewModelBase
         var shown = inTiers.Where(row => row.Usage >= minUsage).ToList();
         var (wins, matches) = table.Matches;
         var average = (double)wins / matches;
-        Rows = Sorted(shown).Select(row => new HeroItemRowViewModel(row, average)).ToList();
+        Rows = Sorted(shown).Select(row => new HeroItemRowViewModel(row, average, SelectedHero!.HeroName)).ToList();
 
         var mode = SelectedMode.Mode switch
         {
@@ -551,7 +560,8 @@ public class HeroItemsViewModel : ViewModelBase
         {
             HeroItemSort.Cost => row => row.Item.Cost,
             HeroItemSort.WinRate => row => row.WinRate,
-            // Without a change to show, last whichever way the column runs.
+            // Without a fit or a change to show, last whichever way the column runs.
+            HeroItemSort.Fit => row => row.Fit?.Shown ?? (SortDescending ? double.MinValue : double.MaxValue),
             HeroItemSort.WinRateChange => row => row.WinRateChange ?? (SortDescending ? double.MinValue : double.MaxValue),
             HeroItemSort.UsageChange => row => row.UsageChange ?? (SortDescending ? double.MinValue : double.MaxValue),
             HeroItemSort.Matches => row => row.Matches,

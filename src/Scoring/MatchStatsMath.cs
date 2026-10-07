@@ -769,7 +769,7 @@ public static partial class MatchStatsMath
     public static FetchResult Analyse(IReadOnlyList<MatchSegment> segments, RankRange? range, IEnumerable<Item> items)
     {
         var byGameId = GameItems(items);
-        var tiers = byGameId.Where(pair => ItemScoring.Tiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
+        var tiers = TiersOf(byGameId);
         var ranks = RanksOf(segments);
         if (ranks.Count == 0)
             range = null;
@@ -851,6 +851,13 @@ public static partial class MatchStatsMath
             shifts[key] = sigma2 <= 0 ? 0 : restShare * d * sigma2 / (sigma2 + se2);
         return new RankLean(sigma2, reliability, full.Count, shifts);
     }
+
+    /// <summary>Game item id → tier, for the items in <see cref="ItemScoring.Tiers"/>: the ones lifts are measured for.</summary>
+    public static Dictionary<long, int> Tiers(IEnumerable<Item> items) => TiersOf(GameItems(items));
+
+    private static Dictionary<long, int> TiersOf(Dictionary<long, Item> byGameId) =>
+        byGameId.Where(pair => ItemScoring.Tiers.Contains(pair.Value.Tier)).ToDictionary(pair => pair.Key, pair => pair.Value.Tier);
+
     private static Dictionary<long, Item> GameItems(IEnumerable<Item> items)
     {
         var byGameId = new Dictionary<long, Item>();
