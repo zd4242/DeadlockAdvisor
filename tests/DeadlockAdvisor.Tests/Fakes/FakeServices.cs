@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Http;
 using System.Reactive.Subjects;
 using System.Text.Json.Nodes;
@@ -29,6 +30,9 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     public Dictionary<string, byte[]> Bytes { get; } = [];
     public List<string> Asked { get; } = [];
 
+    /// <summary>URLs the site answers with an error status for, rather than not answering at all.</summary>
+    public Dictionary<string, HttpStatusCode> Statuses { get; } = [];
+
     public long BytesReceived => 0;
 
     /// <summary>The URLs a "not modified" came back for.</summary>
@@ -59,6 +63,8 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     public Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default)
     {
         Asked.Add(url);
+        if (Statuses.TryGetValue(url, out var status))
+            throw new HttpRequestException($"{(int)status} for {url}", null, status);
         return Bytes.TryGetValue(url, out var bytes)
             ? Task.FromResult(bytes)
             : throw new HttpRequestException($"offline (test): {url}");

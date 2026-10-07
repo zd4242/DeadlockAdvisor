@@ -1,3 +1,5 @@
+using System.Net;
+using System.Net.Http;
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.GameApi;
@@ -93,6 +95,53 @@ public sealed class ArtDownloadServiceTests : IDisposable
         Assert.Equal(4, report.Downloaded);
         Assert.Equal((0, 0), (report.Groups.Single(group => group.Label == "Rank badges").Wanted,
             report.Groups.Single(group => group.Label == "Rank badges").Downloaded));
+    }
+
+    /// <summary>A link that has gone down would otherwise have every remaining image wait its turn to fail, and then call that a finished download.</summary>
+    [Fact]
+    public async Task AConnectionThatKeepsFailingEndsTheDownloadKeepingWhatArrived()
+    {
+        _api.Bytes.Remove("https://cdn/srt.png");
+        _api.Bytes.Remove("https://cdn/hs_top.webp");
+
+        var failure = await Assert.ThrowsAsync<HttpRequestException>(
+            () => _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None));
+
+        Assert.Null(failure.StatusCode);
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
+        Assert.True(File.Exists(Path.Combine(_assets.Path, ArtManifest.FileName)));
+        // The portrait, then three failures in a row, and none of the images after them.
+        Assert.Equal(["https://cdn/hs_card.png", "https://cdn/pd.jpg", "https://cdn/srt.png", "https://cdn/hs_top.webp"],
+            _api.Asked.Where(url => url.StartsWith("https://cdn/")));
+    }
+
+    [Fact]
+    public async Task ImagesTheSiteAnswersWithAnErrorForDontEndTheDownload()
+    {
+        foreach (var url in new[] { "https://cdn/pd.jpg", "https://cdn/srt.png", "https://cdn/hs_top.webp" })
+            _api.Statuses[url] = HttpStatusCode.NotFound;
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(2, report.Downloaded);
+        Assert.Contains(report.Groups.Single(group => group.Label == "Item icons").Unmatched,
+            line => line.StartsWith("spirit_resist_t1 (Spirit Resist Trinket) -- download failed:"));
+        Assert.Contains(report.Groups.Single(group => group.Label == "Top-bar portraits").Unmatched,
+            line => line.StartsWith("heavy_spirit (Heavy Spirit) -- download failed:"));
+    }
+
+    [Fact]
+    public async Task AnImageThatFailsBetweenSuccessesDoesNotAddUpToAnEndedDownload()
+    {
+        // Three failures, but never three in a row.
+        _api.Bytes.Remove("https://cdn/srt.png");
+        _api.Bytes["https://cdn/pd.jpg"] = [9];
+        _api.Statuses["https://cdn/hs_top.webp"] = HttpStatusCode.ServiceUnavailable;
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(3, report.Downloaded);
+        Assert.Single(report.Groups.Single(group => group.Label == "Item icons").Unmatched, line => line.Contains("download failed"));
     }
 
     [Fact]

@@ -57,8 +57,8 @@ public interface IArtDownloadService
     /// Fetch hero portraits, item icons, rank badges, and the top-bar art and hero cards detection
     /// matches against into <paramref name="assetsDir"/>, named after our ids. What's there already is kept
     /// unless the API's copy has changed since it was downloaded, or <paramref name="force"/> asks
-    /// for everything again. Throws if the API's lists can't be fetched; a single failed image is
-    /// reported instead.
+    /// for everything again. Throws if the API's lists can't be fetched, or if the connection fails
+    /// several images in a row, keeping what arrived; a single failed image is reported instead.
     /// </summary>
     Task<ArtDownloadReport> DownloadAsync(DataStore store, string assetsDir, bool force, IProgress<FetchProgress>? progress,
         CancellationToken cancellationToken);
@@ -73,6 +73,12 @@ public interface IArtDownloadService
 public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api) : IArtDownloadService
 {
     public const string UserAgent = "deadlock-advisor/1.0 (asset downloader)";
+
+    /// <summary>
+    /// How many images in a row can fail to connect before the download gives up. Each is a connection that
+    /// went nowhere, so past a few the rest would only wait their turn to do the same.
+    /// </summary>
+    public const int MaxConnectionFailures = 3;
 
     // Hero cards are 280x380 character art, cropped square for the UI; item shop images are the
     // full-colour 200x200 tiles (the plain `image` is a white glyph). Top-bar art is what the game
@@ -91,6 +97,12 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
     /// </param>
     private sealed record Group(string Label, IReadOnlyDictionary<string, string> Wanted, JsonArray Records, string[] ImageKeys, string Directory,
         bool Owned);
+
+    /// <summary>How many images in a row the connection has failed for, across every group of a download.</summary>
+    private sealed class ConnectionStreak
+    {
+        public int Failures { get; set; }
+    }
 
     public async Task<ArtDownloadReport> DownloadAsync(DataStore store, string assetsDir, bool force, IProgress<FetchProgress>? progress,
         CancellationToken cancellationToken)
@@ -124,11 +136,12 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
         var total = groups.Sum(group => group.Wanted.Count);
         var done = 0;
         var reports = new List<ArtGroupReport>();
+        var streak = new ConnectionStreak();
         try
         {
             foreach (var group in groups)
             {
-                reports.Add(await RunGroupAsync(group, manifest, force, text =>
+                reports.Add(await RunGroupAsync(group, manifest, force, streak, text =>
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     progress?.Report(new FetchProgress(done++, total, text));
@@ -162,7 +175,7 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
         }
     }
 
-    private async Task<ArtGroupReport> RunGroupAsync(Group group, ArtManifest manifest, bool force, Action<string> step,
+    private async Task<ArtGroupReport> RunGroupAsync(Group group, ArtManifest manifest, bool force, ConnectionStreak streak, Action<string> step,
         CancellationToken cancellationToken)
     {
         var byKey = new Dictionary<string, JsonNode>();
@@ -203,6 +216,7 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
                 // A file downloaded before is only asked about: the answer is usually "not modified".
                 var etag = already is not null && !force && known?.Url == url ? known.ETag : null;
                 var fetched = await api.GetBytesIfChangedAsync(url, UserAgent, etag, cancellationToken);
+                streak.Failures = 0;
                 if (fetched.Bytes is not { } payload)
                 {
                     skipped++;
@@ -220,8 +234,19 @@ public sealed class ArtDownloadService(IGameApiService gameApi, IDeadlockApi api
                 await AtomicFile.WriteAsync(destination, stream => stream.WriteAsync(payload, cancellationToken).AsTask());
                 manifest.Set(destination, new ArtManifest.Entry(url, fetched.ETag, hash));
             }
-            catch (Exception ex) when (ex is HttpRequestException or TimeoutException or IOException)
+            catch (Exception ex) when (ex is HttpRequestException { StatusCode: null } or TimeoutException)
             {
+                // The connection itself failed, not just this image: past a few in a row the rest would fail the same way.
+                if (++streak.Failures >= MaxConnectionFailures)
+                    throw;
+                unmatched.Add($"{ourId} ({ourName}) -- download failed: {ex.Message}");
+                continue;
+            }
+            catch (Exception ex) when (ex is HttpRequestException or IOException)
+            {
+                // An answer, even an error status, or a problem writing the file: this image's alone.
+                if (ex is HttpRequestException)
+                    streak.Failures = 0;
                 unmatched.Add($"{ourId} ({ourName}) -- download failed: {ex.Message}");
                 continue;
             }
