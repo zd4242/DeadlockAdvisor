@@ -246,50 +246,56 @@ public sealed class HeroItemsViewModelTests : IDisposable
     }
 
     [Fact]
-    public async Task ARankRangeNarrowsTheMatchesAndUnrankedHasNoneToPick()
+    public async Task ARankRangeNarrowsRankedMatches()
     {
         await DownloadAsync();
         using var page = Page();
-        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.All);
         var every = page.Summary;
         Assert.True(page.CanPickRanks);
+        Assert.False(page.HasActiveFilters);
 
         page.From = page.Ranks[^1];
 
         Assert.NotEqual(every, page.Summary);
         Assert.Equal(page.Ranks[^1], page.To);
-
-        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.Unranked);
-        Assert.False(page.CanPickRanks);
-        Assert.Contains(" unranked matches · ", page.Summary);
-        Assert.Equal(MatchMode.Unranked, _fixture.Settings.Current.HeroItemsMode);
+        Assert.True(page.HasActiveFilters);
+        Assert.Contains($"Ranks {page.Ranks[^1].FirstName} to {page.Ranks[^1].LastName}", page.FiltersButtonTip);
     }
 
-    /// <summary>The rank groups hold ranked matches alone, so with a range picked the two modes count the same matches, and the page says so.</summary>
+    /// <summary>Only ranked matches have a rank, so the other modes count every rank: the range shows as every rank, greyed out, and comes back once Ranked does.</summary>
     [Fact]
-    public async Task ARankRangeCountsRankedMatchesInEitherModeAndTheFiltersSayWhatIsOn()
+    public async Task AnotherModeOverridesTheRankRangeAndRankedBringsItBack()
     {
         await DownloadAsync();
         using var page = Page();
-        var ranked = page.Summary;
-        Assert.False(page.HasActiveFilters);
-        Assert.Equal("", page.ModeNote);
-
-        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.All);
-        Assert.True(page.HasActiveFilters);
-        Assert.NotEqual(ranked, page.Summary);
-        Assert.DoesNotContain(" ranked matches", page.Summary);
-
+        var every = (From: page.Ranks[0], To: page.Ranks[^1]);
+        var rankedEverywhere = page.Summary;
         page.From = page.Ranks[1];
         page.To = page.Ranks[^2];
         var narrowed = page.Summary;
-        Assert.Contains(" ranked matches", narrowed);
-        Assert.NotEqual("", page.ModeNote);
-        Assert.Contains($"Ranks {page.Ranks[1].FirstName} to {page.Ranks[^2].LastName}", page.FiltersButtonTip);
+        Assert.Equal("", page.RanksNote);
+
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.All);
+
+        Assert.False(page.CanPickRanks);
+        Assert.Equal(every, (page.From, page.To));
+        Assert.NotEqual("", page.RanksNote);
+        Assert.True(page.HasActiveFilters);
+        var all = page.Summary;
+        Assert.DoesNotContain(" ranked matches", all);
+        Assert.NotEqual(rankedEverywhere, all);
+
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.Unranked);
+        Assert.False(page.CanPickRanks);
+        Assert.Equal(every, (page.From, page.To));
+        Assert.Contains(" unranked matches · ", page.Summary);
+        Assert.Equal(MatchMode.Unranked, _fixture.Settings.Current.HeroItemsMode);
 
         page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.Ranked);
+        Assert.True(page.CanPickRanks);
+        Assert.Equal((page.Ranks[1], page.Ranks[^2]), (page.From, page.To));
         Assert.Equal(narrowed, page.Summary);
-        Assert.Equal("", page.ModeNote);
+        Assert.Equal("", page.RanksNote);
     }
 
     [Fact]

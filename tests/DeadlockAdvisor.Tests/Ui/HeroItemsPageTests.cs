@@ -72,6 +72,18 @@ public class HeroItemsPageTests
         UiHarness.Settle();
         ui.Screenshot("hero_items_filters.png");
 
+        // Only ranked matches have a rank: the other modes grey the range out.
+        var rankBoxes = combos.Where(combo => combo.ItemsSource == page.Ranks).ToList();
+        Assert.Equal(2, rankBoxes.Count);
+        Assert.All(rankBoxes, combo => Assert.True(combo.IsEffectivelyEnabled));
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.All);
+        UiHarness.Settle();
+        Assert.All(rankBoxes, combo => Assert.False(combo.IsEffectivelyEnabled));
+        Assert.Equal([page.Ranks[0], page.Ranks[^1]], rankBoxes.Select(combo => combo.SelectedItem));
+        ui.Screenshot("hero_items_filters_all.png");
+        page.SelectedMode = HeroItemsViewModel.Modes.Single(mode => mode.Mode == MatchMode.Ranked);
+        UiHarness.Settle();
+
         Assert.True(page.ShowChanges);
         Assert.Contains(HeaderTexts(), text => text.StartsWith("WIN Δ"));
         Assert.Contains(HeaderTexts(), text => text.StartsWith("USAGE Δ"));
@@ -79,6 +91,50 @@ public class HeroItemsPageTests
         Assert.Contains(row.GetVisualDescendants().OfType<TextBlock>(), text => text.Classes.Contains("change") && text.IsEffectivelyVisible);
         ui.Screenshot("hero_items_changes.png");
         button.Flyout.Hide();
+    }
+
+    /// <summary>Fluent keeps a slider's track at the top of a box taller than its thumb, which sat it above its label.</summary>
+    [AvaloniaFact]
+    public async Task TheUsageSliderIsCentredWithItsLabelAndValue()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var page = ui.Window.HeroItemsPage;
+        double MiddleOf(Visual visual) => visual.TranslatePoint(new Point(0, visual.Bounds.Height / 2), ui.Window)!.Value.Y;
+        var slider = page.GetVisualDescendants().OfType<Slider>().Single();
+        var track = slider.GetVisualDescendants().OfType<Border>().First(border => border.Name == "TrackBackground");
+        var label = page.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == "Min usage");
+        var value = page.GetVisualDescendants().OfType<TextBlock>().Single(text => text.Text == ui.ViewModel.HeroItems.MinUsageText);
+
+        Assert.Equal(MiddleOf(label), MiddleOf(track), 1);
+        Assert.Equal(MiddleOf(value), MiddleOf(track), 1);
+        ui.Screenshot("hero_items_usage.png");
+    }
+
+    /// <summary>The box sizes to the hero it shows, so it's given the room the widest name needs: one width for every hero, none cut off.</summary>
+    [AvaloniaFact]
+    public async Task TheHeroBoxFitsEveryHeroAtOneWidth()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var page = ui.ViewModel.HeroItems;
+        var picker = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<SearchComboBox>().Single();
+        var widths = new List<double>();
+
+        foreach (var hero in page.Heroes)
+        {
+            page.SelectedHero = hero;
+            UiHarness.Settle();
+            var shown = picker.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.GetVisualDescendants().OfType<ArtImage>().Any() && panel.IsEffectivelyVisible);
+            Assert.True(shown.Bounds.Width >= shown.DesiredSize.Width - 0.5, $"{hero.HeroName} is cut off");
+            widths.Add(picker.Bounds.Width);
+        }
+
+        Assert.Single(widths.Distinct());
     }
 
     /// <summary>Each header is as wide as its column's cells, and sits at the same place, so it's centred over them.</summary>

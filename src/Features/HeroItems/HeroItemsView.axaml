@@ -141,15 +141,10 @@
                                               ItemsSource="{x:Static heroItems:HeroItemsViewModel.Modes}"
                                               SelectedItem="{Binding SelectedMode}"
                                               ToolTip.Tip="Which matches count: ranked, unranked (no rank, so no rank range), or both"/>
-                                    <TextBlock Classes="faint"
-                                               TextWrapping="Wrap"
-                                               Text="{Binding ModeNote}"
-                                               IsVisible="{Binding ModeNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-
                                     <StackPanel Spacing="8"
                                                 IsEnabled="{Binding CanPickRanks}"
                                                 ToolTip.ShowOnDisabled="True"
-                                                ToolTip.Tip="The ranks whose matches count, by both teams' average rank. Unranked matches have no rank, so a range counts ranked ones only.">
+                                                ToolTip.Tip="The ranks whose matches count, by both teams' average rank. Only Ranked matches have a rank to narrow by: the other two count every rank.">
                                         <TextBlock Classes="section" Text="RANKS"/>
                                         <!-- Each end shows the badge of the rank it sets: where the range starts, and where it stops. -->
                                         <Grid ColumnDefinitions="*,Auto,*">
@@ -183,6 +178,10 @@
                                                 </ComboBox.ItemTemplate>
                                             </ComboBox>
                                         </Grid>
+                                        <TextBlock Classes="faint"
+                                                   TextWrapping="Wrap"
+                                                   Text="{Binding RanksNote}"
+                                                   IsVisible="{Binding RanksNote, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
                                     </StackPanel>
 
                                     <Border Classes="hline" Margin="0,4"/>
@@ -205,8 +204,9 @@
                        Margin="0,0,0,12"
                        IsVisible="{Binding HasMatchData}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
+                    <!-- A box sizes to the hero it shows, so it keeps the room the widest name (Grey Talon) needs, rather than the page shifting with each pick. -->
                     <controls:SearchComboBox x:Name="HeroPicker"
-                                             MinWidth="170"
+                                             MinWidth="148"
                                              ItemsSource="{Binding Heroes}"
                                              SelectedItem="{Binding SelectedHero}"
                                              ToolTip.Tip="The hero whose players' items the table shows. Type to search.">
@@ -259,7 +259,7 @@
                             VerticalAlignment="Center"
                             Background="Transparent"
                             ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.MinUsageTip}">
-                    <TextBlock Classes="dim" VerticalAlignment="Center" Text="Usage at least"/>
+                    <TextBlock Classes="dim" VerticalAlignment="Center" Text="Min usage"/>
                     <Slider x:Name="MinUsage"
                             Width="160"
                             VerticalAlignment="Center"
@@ -273,9 +273,10 @@
                             <x:Double x:Key="SliderHorizontalThumbHeight">18</x:Double>
                             <CornerRadius x:Key="SliderThumbCornerRadius">3</CornerRadius>
                             <x:Double x:Key="SliderTrackThemeHeight">4</x:Double>
+                            <x:Double x:Key="SliderHorizontalHeight">18</x:Double>
                         </Slider.Resources>
                     </Slider>
-                    <TextBlock VerticalAlignment="Center" MinWidth="32" Text="{Binding MinUsageText}"/>
+                    <TextBlock VerticalAlignment="Center" MinWidth="32" FontWeight="SemiBold" Text="{Binding MinUsageText}"/>
                 </StackPanel>
             </WrapPanel>
 

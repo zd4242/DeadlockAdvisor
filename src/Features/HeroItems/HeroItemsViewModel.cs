@@ -104,6 +104,8 @@ public class HeroItemsViewModel : ViewModelBase
     private readonly SerialDisposable _patchChanges = new();
     private string? _offeredSelf;
     private bool _loading;
+    private int? _pickedFrom;
+    private int? _pickedTo;
 
     public HeroItemsViewModel(IDataService data, ISettingsService settings)
     {
@@ -183,7 +185,8 @@ public class HeroItemsViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.SelectedMode)
-            .Subscribe(_ => CanPickRanks = RanksApply)
+            .Skip(1)
+            .Subscribe(_ => ShowRanksForMode())
             .DisposeWith(Disposables);
         Tiers.Select(tier => tier.WhenAnyValue(t => t.IsChecked).Skip(1).Select(_ => tier))
             .Merge()
@@ -239,8 +242,8 @@ public class HeroItemsViewModel : ViewModelBase
     [Reactive] public bool HasActiveFilters { get; private set; }
     [Reactive] public string FiltersButtonTip { get; private set; } = FiltersTip;
 
-    /// <summary>Said under the match mode while a rank range makes "Ranked" and "Ranked and unranked" the same; empty otherwise.</summary>
-    [Reactive] public string ModeNote { get; private set; } = "";
+    /// <summary>Said by the greyed-out ranks, which every other mode than Ranked leaves at every rank; empty otherwise.</summary>
+    [Reactive] public string RanksNote { get; private set; } = "";
 
     [Reactive] public HeroItemSort SortColumn { get; private set; } = HeroItemSort.Usage;
     [Reactive] public bool SortDescending { get; private set; } = true;
@@ -422,7 +425,41 @@ public class HeroItemsViewModel : ViewModelBase
                 : $"{picked.Count} patches";
     }
 
-    private bool RanksApply => Ranks.Count > 0 && SelectedMode.Mode != MatchMode.Unranked;
+    /// <summary>Only ranked matches have ranks, so a range can only be picked for them.</summary>
+    private bool RanksApply => Ranks.Count > 0 && SelectedMode.Mode == MatchMode.Ranked;
+
+    /// <summary>
+    /// Another mode counts every rank, so its range shows as every rank, greyed out, and the one picked for
+    /// Ranked comes back when that's chosen again.
+    /// </summary>
+    private void ShowRanksForMode()
+    {
+        var wasLoading = _loading;
+        _loading = true;
+        try
+        {
+            if (Ranks.Count > 0 && SelectedMode.Mode == MatchMode.Ranked)
+            {
+                From = Ranks.FirstOrDefault(rank => rank.FirstTier == _pickedFrom) ?? From;
+                To = Ranks.FirstOrDefault(rank => rank.FirstTier == _pickedTo) ?? To;
+                (_pickedFrom, _pickedTo) = (null, null);
+            }
+            else if (Ranks.Count > 0)
+            {
+                _pickedFrom ??= From?.FirstTier;
+                _pickedTo ??= To?.FirstTier;
+                From = Ranks[0];
+                To = Ranks[^1];
+            }
+            CanPickRanks = RanksApply;
+        }
+        finally
+        {
+            _loading = wasLoading;
+        }
+        if (!_loading)
+            Refresh();
+    }
 
     /// <summary>Every rank group picked means every match, unranked ones too: a range only narrows.</summary>
     private RankRange? Range =>
@@ -454,9 +491,7 @@ public class HeroItemsViewModel : ViewModelBase
             active.Add($"Ranks {From!.FirstName} to {To!.LastName}");
         HasActiveFilters = active.Count > 0;
         FiltersButtonTip = HasActiveFilters ? $"{FiltersTip}\n\nOn now:\n• {string.Join("\n• ", active)}" : FiltersTip;
-        ModeNote = Range is not null && SelectedMode.Mode == MatchMode.All
-            ? "A rank range counts ranked matches only, since unranked ones have no rank. Pick every rank to count both."
-            : "";
+        RanksNote = Ranks.Count > 0 && !RanksApply ? "Unranked matches have no rank, so every rank counts." : "";
     }
 
     private void Refresh()
@@ -496,7 +531,7 @@ public class HeroItemsViewModel : ViewModelBase
         {
             MatchMode.Unranked => "unranked ",
             MatchMode.Ranked => "ranked ",
-            _ => Range is null ? "" : "ranked ",
+            _ => "",
         };
         var over = table.PatchCount > 1 ? $" over {table.PatchCount} patches" : "";
         Summary = $"{Format.Thousands(matches)} {mode}matches{over} · {HeroItemRowViewModel.Percent(average)} won";
