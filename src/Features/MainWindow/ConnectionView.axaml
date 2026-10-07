@@ -1,0 +1,32 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+             x:Class="DeadlockAdvisor.Features.MainWindow.ConnectionView"
+             x:DataType="mainWindow:ConnectionViewModel">
+
+    <!-- A chip in the status bar for while the app can't reach the internet. Clicking it checks again. -->
+    <UserControl.Styles>
+        <StyleInclude Source="avares://DeadlockAdvisor/src/Features/MainWindow/StatusChipStyles.axaml"/>
+        <Style Selector="Button.chip TextBlock.offline">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.offline">
+            <Setter Property="Fill" Value="{DynamicResource WarningBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
+    <!-- The left margin is the gap from the chip before it, so a hidden chip leaves none. -->
+    <Button x:Name="Retry"
+            Classes="chip"
+            Margin="6,-3,0,-3"
+            IsVisible="{Binding IsShown}"
+            Command="{Binding RetryCommand}"
+            ToolTip.Tip="{Binding ToolTipText}"
+            ToolTip.Placement="Top"
+            ToolTip.VerticalOffset="-6">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Classes="dot" Classes.offline="{Binding !IsChecking}"/>
+            <TextBlock VerticalAlignment="Center" Classes.offline="{Binding !IsChecking}" Text="{Binding Label}"/>
+        </StackPanel>
+    </Button>
+</UserControl>

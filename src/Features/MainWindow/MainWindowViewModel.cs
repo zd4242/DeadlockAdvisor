@@ -112,7 +112,8 @@ public class MainWindowViewModel : ViewModelBase
         IModalService modals,
         IArtService art,
         IGlobalHotkeyService hotkey,
-        IAppUpdateService appUpdates)
+        IAppUpdateService appUpdates,
+        IConnectivityService connectivity)
     {
         NotificationOverlay = notificationOverlay;
         Match = match;
@@ -190,6 +191,7 @@ public class MainWindowViewModel : ViewModelBase
             .DisposeWith(Disposables);
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
+        Connection = new ConnectionViewModel(connectivity, art).DisposeWith(Disposables);
         AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Merge(heroItems.FormulaRequested).Subscribe(ShowFormula).DisposeWith(Disposables);
@@ -299,6 +301,9 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>The status bar's chip while a newer version of the app is out.</summary>
     public AppUpdateViewModel AppUpdate { get; }
+
+    /// <summary>The status bar's chip while the app can't reach the internet.</summary>
+    public ConnectionViewModel Connection { get; }
 
     public ReactiveCommand<Unit, Unit> ZoomInCommand { get; }
     public ReactiveCommand<Unit, Unit> ZoomOutCommand { get; }

@@ -480,6 +480,64 @@ public class StatusBarTests
         Assert.Equal(0.85, ui.ViewModel.UiScale);
     }
 
+    [AvaloniaFact]
+    public void AnOfflineChipShowsOnlyWhileTheAppCannotReachTheInternet()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var view = ui.Window.StatusBar.GetVisualDescendants().OfType<ConnectionView>().Single();
+        var chip = OfflineChip(ui);
+        var barHeight = ui.Window.StatusBar.Bounds.Height;
+        Assert.False(chip.IsVisible);
+        Assert.Equal(0, view.Bounds.Width);
+
+        ui.Connectivity.GoOffline();
+        UiHarness.Settle();
+
+        Assert.True(chip.IsEffectivelyVisible);
+        Assert.Equal(["Offline"], chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        var tip = (string)ToolTip.GetTip(chip)!;
+        Assert.StartsWith("No internet connection.", tip);
+        Assert.Contains("Click to check now.", tip);
+        Assert.Contains("Hero art hasn't been downloaded yet", tip);
+        Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
+        ui.Screenshot("status_offline.png");
+
+        ui.Connectivity.Reconnect();
+        UiHarness.Settle();
+
+        Assert.False(chip.IsVisible);
+        Assert.Equal(0, view.Bounds.Width);
+        Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
+    }
+
+    [AvaloniaFact]
+    public void ClickingTheOfflineChipChecksAgainAndItReadsCheckingUntilTheAnswer()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.Connectivity.GoOffline();
+        UiHarness.Settle();
+        var chip = OfflineChip(ui);
+
+        Click(ui, Center(ui, chip));
+        Assert.Equal(1, ui.Connectivity.Retries);
+
+        ui.Connectivity.StartChecking();
+        UiHarness.Settle();
+        Assert.Equal(["Checking…"], chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        Assert.False(chip.IsEffectivelyEnabled);
+        ui.Screenshot("status_offline_checking.png");
+
+        ui.Connectivity.GoOffline();
+        UiHarness.Settle();
+        Assert.Equal(["Offline"], chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        Assert.True(chip.IsEffectivelyEnabled);
+    }
+
+    private static Button OfflineChip(UiHarness ui) =>
+        ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Retry");
+
     private static StackPanel ZoomStepper(UiHarness ui) =>
         ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper");
 

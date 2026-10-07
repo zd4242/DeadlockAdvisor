@@ -41,6 +41,7 @@ public sealed class UiHarness : IDisposable
         services.AddSingleton<ISettingsService>(Settings);
         services.AddSingleton<ILoggingService>(new FakeLoggingService());
         services.AddSingleton<IDeadlockApi>(Api);
+        services.AddSingleton<IConnectivityService>(Connectivity);
         services.AddSingleton<IScreenCaptureService>(Capture);
         services.AddSingleton<IGlobalHotkeyService>(Hotkey);
         services.AddSingleton<IForegroundService>(Foreground);
@@ -74,6 +75,9 @@ public sealed class UiHarness : IDisposable
 
     /// <summary>No network in tests: every call fails as if the site were down, unless a test says otherwise.</summary>
     public FakeDeadlockApi Api { get; } = new();
+
+    /// <summary>Online until a test says otherwise, so the machine's real network never shows.</summary>
+    public FakeConnectivity Connectivity { get; } = new();
 
     public FakeScreenCapture Capture { get; } = new();
     public FakeGlobalHotkey Hotkey { get; } = new();

@@ -1,4 +1,5 @@
 using System.IO;
+using System.Reactive.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 
@@ -13,6 +14,12 @@ public interface IDeadlockApi
 {
     /// <summary>Every answer's size as it came over the wire, compressed or not, since this was made.</summary>
     long BytesReceived { get; }
+
+    /// <summary>
+    /// Each request's outcome, by host: reached when the server answered at all, even with an error status, and not
+    /// reached when the connection failed or timed out. Never emits for an implementation that doesn't track it.
+    /// </summary>
+    IObservable<HostReach> Reachability => Observable.Never<HostReach>();
 
     /// <summary>Asks for the answer compressed, which shrinks JSON several times over.</summary>
     Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default);
@@ -32,6 +39,9 @@ public interface IDeadlockApi
     Task DownloadAsync(string url, string userAgent, Stream destination, IProgress<DownloadProgress>? progress = null,
         CancellationToken cancellationToken = default);
 }
+
+/// <param name="Reached">False when the connection failed or timed out; true when the server answered, however it answered.</param>
+public readonly record struct HostReach(string Host, bool Reached);
 
 /// <param name="Total">The size the server gave; 0 when it gave none.</param>
 public readonly record struct DownloadProgress(long Done, long Total);

@@ -294,17 +294,21 @@
 
                 <!-- Above the page, so the zoom corner can still be pressed where it's held larger than the bar. -->
                 <Border x:Name="StatusBar" DockPanel.Dock="Bottom" ZIndex="1">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto">
                         <mainWindow:DataStatusView x:Name="DataStatus" VerticalAlignment="Center" DataContext="{Binding DataStatus}"/>
+                        <mainWindow:ConnectionView x:Name="Connection"
+                                                   Grid.Column="2"
+                                                   VerticalAlignment="Center"
+                                                   DataContext="{Binding Connection}"/>
                         <!-- The negative margins keep a chip from making the bar taller. -->
                         <mainWindow:AppUpdateView x:Name="AppUpdate"
-                                                  Grid.Column="2"
+                                                  Grid.Column="3"
                                                   Margin="8,-3,0,-3"
                                                   VerticalAlignment="Center"
                                                   DataContext="{Binding AppUpdate}"/>
                         <!-- Background downloads -->
                         <ItemsControl x:Name="Jobs"
-                                      Grid.Column="3"
+                                      Grid.Column="4"
                                       Margin="8,-3,0,-3"
                                       VerticalAlignment="Center"
                                       ItemsSource="{Binding DataMenu.Jobs}">
@@ -314,7 +318,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
-                        <TextBlock Grid.Column="4"
+                        <TextBlock Grid.Column="5"
                                    Classes="saving"
                                    Margin="12,0,0,0"
                                    Text="{Binding SaveText}"
@@ -324,7 +328,7 @@
                              corner over the bar's padding, down to the window's edge, and the stepper's own
                              margins give back the height, so the bar is no taller than the stepper needs. -->
                         <Grid x:Name="ZoomCorner"
-                              Grid.Column="5"
+                              Grid.Column="6"
                               Margin="12,-4,0,-4"
                               ColumnDefinitions="Auto,Auto"
                               Background="Transparent">

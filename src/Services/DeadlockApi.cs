@@ -2,6 +2,8 @@ using System.IO;
 using System.IO.Compression;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using System.Text.Json.Nodes;
 using System.Threading;
 using DeadlockAdvisor.Services.Contracts;
@@ -14,11 +16,15 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
     public const string UserAgent = "deadlock-advisor/1.0";
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
+    /// <summary>How long a connection gets to open. A link that goes nowhere then fails in this, not in <see cref="Timeout"/>.</summary>
+    public static readonly TimeSpan ConnectTimeout = TimeSpan.FromSeconds(10);
+
     private readonly HttpClient _http;
+    private readonly ISubject<HostReach> _reachability = Subject.Synchronize(new Subject<HostReach>());
     private long _bytesReceived;
 
     public DeadlockApi()
-        : this(new HttpClientHandler())
+        : this(new SocketsHttpHandler { ConnectTimeout = ConnectTimeout })
     {
     }
 
@@ -28,6 +34,10 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
     }
 
     public long BytesReceived => Interlocked.Read(ref _bytesReceived);
+
+    public IObservable<HostReach> Reachability => _reachability.AsObservable();
+
+    private void Report(string url, bool reached) => _reachability.OnNext(new HostReach(new Uri(url).Host, reached));
 
     public async Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
     {
@@ -56,6 +66,7 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         try
         {
             using var response = await _http.SendAsync(request, cancellationToken);
+            Report(url, reached: true);
             if (etag is not null && response.StatusCode == System.Net.HttpStatusCode.NotModified)
                 return new ChangedFile(null, etag);
             response.EnsureSuccessStatusCode();
@@ -65,7 +76,13 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         }
         catch (TaskCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
+            Report(url, reached: false);
             throw new TimeoutException($"{new Uri(url).Host} didn't answer within {Timeout.TotalSeconds:0} seconds.", ex);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is null)
+        {
+            Report(url, reached: false);
+            throw;
         }
     }
 
@@ -79,6 +96,7 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         try
         {
             using var response = await _http.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+            Report(url, reached: true);
             response.EnsureSuccessStatusCode();
             var total = response.Content.Headers.ContentLength ?? 0;
             await using var body = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -98,7 +116,13 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         }
         catch (OperationCanceledException ex) when (!cancellationToken.IsCancellationRequested)
         {
+            Report(url, reached: false);
             throw new TimeoutException($"{new Uri(url).Host} stopped answering for {Timeout.TotalSeconds:0} seconds.", ex);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode is null)
+        {
+            Report(url, reached: false);
+            throw;
         }
     }
 
@@ -117,5 +141,9 @@ public sealed class DeadlockApi : IDeadlockApi, IDisposable
         return output.ToArray();
     }
 
-    public void Dispose() => _http.Dispose();
+    public void Dispose()
+    {
+        _reachability.OnCompleted();
+        _http.Dispose();
+    }
 }
