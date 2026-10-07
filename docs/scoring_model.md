@@ -242,7 +242,8 @@ use the reduced sum.
 
 ### Hero fit on the Hero Items page
 
-The Hero Items page's **Hero fit** column is the "you" lift worked out over the
+**Hero fit** is the "you" lift, called that wherever the app describes it. On the
+Hero Items page its column is the lift worked out over the
 matches the table counts (`HeroFits`, built in `HeroItemTable.Build`): the same
 `MatchStatsMath.RawLifts`, then `Shrink`, so it follows the table's patches,
 match mode and rank range instead of the Match tab's fixed download. Everyone's win rate with

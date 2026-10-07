@@ -315,7 +315,7 @@ public static class ItemScoring
 
     /// <summary>
     /// The data's net verdict on an item, in bars: the enemies lift over <see cref="PickMinAgainst"/>
-    /// plus the you lift over <see cref="PickMinAs"/>. 1 or more is a standout. Netted rather than
+    /// plus the hero fit (the "you" lift) over <see cref="PickMinAs"/>. 1 or more is a standout. Netted rather than
     /// taking the better relation, so a strong counter your own hero does badly with doesn't count.
     /// </summary>
     public static double DataStrength(OrderedDictionary<string, double> data) =>

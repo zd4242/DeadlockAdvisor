@@ -20,9 +20,9 @@ public readonly record struct Bars(double Fraction, double? Data = null, string?
 public class ResultRowViewModel : ViewModelBase
 {
     public static readonly string StandoutTip =
-        "Stands out in real matches: players win noticeably more often with it against these enemies, or on your hero.\n"
-        + $"Its win-rate gain against the enemies, plus a third of the gain on your hero, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
-        + "(gains on your own hero usually run about three times bigger).";
+        "Stands out in real matches: players win noticeably more often with it against these enemies, or your hero fits it well.\n"
+        + $"Its win-rate gain against the enemies, plus a third of its hero fit, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
+        + "(hero fit usually runs about three times bigger).";
 
     public const string HideRarelyBuiltHint =
         $"Filters → \"{MatchViewModel.HideRarelyBuiltLabel}\" leaves these items out of the list.";

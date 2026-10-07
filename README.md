@@ -120,7 +120,7 @@ point or more above or below the hero's own average is tinted green or red,
 the more strongly the further it is. **Hero fit** is how much more the hero
 wins with an item than everyone else who builds it, next to the hero's other
 items of the same tier: the same measure as the Match page's "you" match
-data. A win rate partly shows an item being bought late in games already
+data, which its tooltips call hero fit. A win rate partly shows an item being bought late in games already
 going well; the fit takes that out, so it shows what suits this hero in
 particular, not how strong the item is for everyone. Right-click an item for its Deadlock
 Wiki page, or its formula while the model editors are shown. **Usage at

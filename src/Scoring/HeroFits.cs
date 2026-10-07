@@ -6,11 +6,11 @@ namespace DeadlockAdvisor.Scoring;
 /// <param name="EveryoneWinRate">The share of every player's matches with the item that were won, as a fraction.</param>
 /// <param name="TierAverage">What the hero's items of the item's tier gain over everyone's, in win-rate points: the lift's zero.</param>
 /// <param name="Raw">The lift in win-rate points, before shrinking.</param>
-/// <param name="Shown">The lift with a small or noisy sample pulled toward 0, as the Match tab's "you" number is.</param>
+/// <param name="Shown">The lift with a small or noisy sample pulled toward 0, as the Match tab's hero fit (its "you" number) is.</param>
 public sealed record HeroFit(double EveryoneWinRate, double TierAverage, double Raw, double Shown);
 
 /// <summary>
-/// The Match tab's "you" lift (<see cref="MatchStatsMath.RawLifts"/>, then shrunk) over the matches a hero's
+/// The Match tab's hero fit, its "you" lift (<see cref="MatchStatsMath.RawLifts"/>, then shrunk), over the matches a hero's
 /// item table counts, so it follows the table's patches, match mode and ranks. Everyone's win rate with an item
 /// is every hero's own purchases added up, which is every match's whatever the mode or ranks.
 /// </summary>

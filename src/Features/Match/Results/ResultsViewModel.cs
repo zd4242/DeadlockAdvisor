@@ -329,8 +329,8 @@ public class ResultsViewModel : ViewModelBase
     }
 
     private const string DataStrengthNote =
-        "Win-rate gains in real matches: against these enemies, plus a third of the gain on your hero\n"
-        + "(those usually run about three times bigger).";
+        "Win-rate gains in real matches: against these enemies, plus a third of the item's hero fit\n"
+        + "(hero fit usually runs about three times bigger), where \"you\" is the hero fit on your hero.";
 
     /// <summary>"enemies 0.4 + you 1.0 ÷ 3".</summary>
     private static string DataWorking(ScoredItem item)

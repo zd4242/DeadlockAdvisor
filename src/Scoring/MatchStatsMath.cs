@@ -1075,7 +1075,7 @@ public static partial class MatchStatsMath
                       + "These gains are small: +1 is a standout.");
         var mine = FamilyMeta(meta, "as");
         if (IsTrue(mine["kept"]))
-            lines.Add($"You: the gain when your hero builds it, since patch {Text(mine["since_patch"]) ?? "?"}. "
+            lines.Add($"You (hero fit): how much more your hero wins with it than everyone who builds it, since patch {Text(mine["since_patch"]) ?? "?"}. "
                       + "Usually about three times bigger, and partly shows who builds it on this hero, not only what it does.");
         return string.Join("\n", lines);
     }
