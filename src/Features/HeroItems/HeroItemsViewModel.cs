@@ -109,6 +109,7 @@ public class HeroItemsViewModel : ViewModelBase
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
+    private readonly IConnectivityService _connectivity;
     private readonly Subject<string> _formulaRequested = new();
     private readonly SerialDisposable _patchChanges = new();
     private string? _offeredSelf;
@@ -116,10 +117,11 @@ public class HeroItemsViewModel : ViewModelBase
     private int? _pickedFrom;
     private int? _pickedTo;
 
-    public HeroItemsViewModel(IDataService data, ISettingsService settings)
+    public HeroItemsViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity)
     {
         _data = data;
         _settings = settings;
+        _connectivity = connectivity;
         _patchChanges.DisposeWith(Disposables);
         Tiers = Enumerable.Range(1, 4).Select(tier => new TierToggle(tier)).ToList();
         Headers = new Dictionary<HeroItemSort, ColumnHeader>
@@ -206,6 +208,15 @@ public class HeroItemsViewModel : ViewModelBase
             .Subscribe(OnTierToggled)
             .DisposeWith(Disposables);
         data.StoreReplaced.Subscribe(_ => Reload()).DisposeWith(Disposables);
+        // With no match counts, the hint says where to get them, which depends on whether there's a connection to get them over.
+        connectivity.States
+            .Select(state => state != ConnectivityState.Online)
+            .DistinctUntilChanged()
+            .Skip(1)
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Where(offline => !HasMatchData)
+            .Subscribe(offline => Refresh())
+            .DisposeWith(Disposables);
 
         Refresh();
     }
@@ -521,7 +532,10 @@ public class HeroItemsViewModel : ViewModelBase
             : HeroItemTable.Build(_data.Store.MatchSegments, picked, SelectedHero.HeroId, SelectedMode.Mode, Range, _data.Store.Items.Values);
         var theirs = picked.Count == 1 ? "this patch's" : "these patches'";
         EmptyHint = !HasMatchData
-            ? "No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy."
+            ? _connectivity.IsOffline
+                ? "No match counts to show yet, and you're offline. Data → Download Match Data brings them, with the items each hero's players buy, "
+                  + "once you're connected."
+                : "No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy."
             : table is null
                 ? $"{(picked.Count == 1 ? "This patch's" : "These patches'")} match data has no rank groups. "
                   + "Download the match data again with them to narrow it to ranks."

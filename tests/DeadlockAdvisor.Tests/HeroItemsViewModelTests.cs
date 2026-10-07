@@ -11,10 +11,11 @@ namespace DeadlockAdvisor.Tests;
 public sealed class HeroItemsViewModelTests : IDisposable
 {
     private readonly DataFixture _fixture = new();
+    private readonly FakeConnectivity _connectivity = new();
 
     public void Dispose() => _fixture.Dispose();
 
-    private HeroItemsViewModel Page() => new(_fixture.Data, _fixture.Settings);
+    private HeroItemsViewModel Page() => new(_fixture.Data, _fixture.Settings, _connectivity);
 
     private async Task DownloadAsync(bool includeRanks = true)
     {
@@ -43,6 +44,36 @@ public sealed class HeroItemsViewModelTests : IDisposable
         // Most used first, and every one with a change since 09-16.
         Assert.Equal(page.Rows.Select(row => row.Usage).OrderByDescending(usage => usage), page.Rows.Select(row => row.Usage));
         Assert.All(page.Rows, row => Assert.NotEqual("", row.UsageChangeText));
+    }
+
+    [Fact]
+    public void WithoutMatchDataOfflineItSaysSoAndFollowsTheConnection()
+    {
+        _connectivity.GoOffline();
+        using var page = Page();
+
+        Assert.Equal("No match counts to show yet, and you're offline. Data → Download Match Data brings them, with the items "
+                     + "each hero's players buy, once you're connected.", page.EmptyHint);
+
+        _connectivity.Reconnect();
+        Assert.Equal("No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy.",
+            page.EmptyHint);
+
+        _connectivity.GoOffline();
+        Assert.Contains("you're offline", page.EmptyHint);
+    }
+
+    [Fact]
+    public async Task ADropInConnectionLeavesATableThatHasMatchDataAlone()
+    {
+        await DownloadAsync();
+        using var page = Page();
+        var rows = page.Rows;
+
+        _connectivity.GoOffline();
+
+        Assert.Null(page.EmptyHint);
+        Assert.Same(rows, page.Rows);
     }
 
     [Fact]
