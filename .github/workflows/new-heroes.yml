@@ -1,0 +1,68 @@
+name: New heroes
+
+# Adds the heroes deadlock-api.com lists and the seed (src/Assets/SeedData) lacks, with every trait at 0, and
+# publishes them through CI like any other model change. A hero nobody has rated is left out of scoring, so
+# this changes no recommendation: it makes the hero pickable and detectable, and its art follows on each
+# install. Rating it is still done by hand, and the issue this opens is the reminder. Runs every six hours;
+# start one by hand with: gh workflow run new-heroes.yml
+on:
+  schedule:
+    - cron: '23 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+  issues: write
+
+concurrency:
+  group: new-heroes
+  cancel-in-progress: false
+
+jobs:
+  heroes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Add the new heroes to the seed
+        id: add
+        # Explicit bash, for pipefail: a failed tool must fail the step, not hide behind tee.
+        shell: bash
+        run: |
+          dotnet run --project tools/PublishModel -c Release -- --add-new-heroes | tee heroes.txt
+          if git diff --quiet -- src/Assets/SeedData; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish them
+        if: steps.add.outputs.changed == 'true'
+        run: |
+          names=$(sed -n 's/^Added: //p' heroes.txt)
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [ -n "$names" ]; then message="New heroes: $names"; else message="Hero names follow the game"; fi
+          git commit -m "$message" -- src/Assets/SeedData
+          git push
+          # A push made with the workflow's own token doesn't start CI; running it by hand does, and its
+          # publish-model job puts the seed on the model release once the tests pass.
+          gh workflow run ci.yml --ref main
+          if [ -n "$names" ]; then
+            gh issue create --title "Rate new hero: $names" --body "$(cat <<EOF
+          The New heroes workflow added $names to the seed with every trait at 0, and CI is publishing it. Until they are rated, recommendations leave them out.
+
+          - [ ] Data → Check for Formula Updates (or Sync from Game API), so your data folder has them
+          - [ ] Rate their traits in Hero Traits
+          - [ ] \`dotnet run --project tools/PublishModel -- --note "What changed" --push\`
+          EOF
+          )"
+          fi
