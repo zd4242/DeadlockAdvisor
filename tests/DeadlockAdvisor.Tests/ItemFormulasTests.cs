@@ -60,7 +60,7 @@ public sealed class ItemFormulasTests : IDisposable
     }
 
     [Fact]
-    public void AddRulePicksTheFirstTraitWithoutAnAgainstRuleAtTwo()
+    public void AddRuleStartsAtTheFirstTraitAndThenFollowsTheLastRuleAtTwo()
     {
         var itemId = Untagged();
         var page = Select(itemId);
@@ -75,6 +75,50 @@ public sealed class ItemFormulasTests : IDisposable
         Assert.Equal(2, page.Rules.Count);
         Assert.Null(page.RulesHint);
         Assert.Equal("2 rules", page.SelectedRow!.RulesText);
+    }
+
+    [Fact]
+    public void AddRuleJoinsTheEndOfTheListAndHighlightsTheNewCard()
+    {
+        var itemId = Untagged();
+        var categories = Store.CategoriesOrdered();
+        Store.SetCoefficient(itemId, categories[2].CategoryId, Relation.Against, 1.0);
+        var page = Select(itemId);
+
+        page.AddRuleCommand.Execute().Subscribe();
+
+        Assert.Equal(2.0, Store.Coefficient(itemId, categories[3].CategoryId, Relation.Against));
+        Assert.Equal(categories[3].CategoryId, page.Rules[^1].SelectedCategory!.CategoryId);
+        Assert.Equal([false, true], page.Rules.Select(card => card.IsHighlighted));
+    }
+
+    [Fact]
+    public void AddRuleWrapsToTheFirstFreeTraitWhenNothingLaterIsFree()
+    {
+        var itemId = Untagged();
+        var categories = Store.CategoriesOrdered();
+        Store.SetCoefficient(itemId, categories[^1].CategoryId, Relation.Against, 1.0);
+        var page = Select(itemId);
+
+        page.AddRuleCommand.Execute().Subscribe();
+
+        Assert.Equal(2.0, Store.Coefficient(itemId, categories[0].CategoryId, Relation.Against));
+        Assert.Equal(categories[0].CategoryId, page.Rules.Single(card => card.IsHighlighted).SelectedCategory!.CategoryId);
+    }
+
+    [Fact]
+    public void RetargetingACardHighlightsItWhereItLandsInTheList()
+    {
+        var itemId = Untagged();
+        var page = Select(itemId);
+        page.AddRuleCommand.Execute().Subscribe();
+        page.AddRuleCommand.Execute().Subscribe();
+        var categories = Store.CategoriesOrdered();
+
+        page.Rules[0].SelectedCategory = categories[^1];
+
+        Assert.Equal(categories[^1].CategoryId, page.Rules[^1].SelectedCategory!.CategoryId);
+        Assert.Equal([false, true], page.Rules.Select(card => card.IsHighlighted));
     }
 
     [Fact]

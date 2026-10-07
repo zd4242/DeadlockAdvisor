@@ -12,6 +12,16 @@
              x:Class="DeadlockAdvisor.Features.ItemFormulas.ByItem.ByItemView"
              x:DataType="byItem:ByItemViewModel">
 
+    <UserControl.Styles>
+        <Style Selector="Border.rule">
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+        </Style>
+        <Style Selector="Border.rule.highlighted">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
     <Grid ColumnDefinitions="2*,12,3*" Margin="12">
 
         <!-- Item list -->
@@ -139,7 +149,7 @@
                                                TextWrapping="Wrap"
                                                Text="{Binding RulesHint}"
                                                IsVisible="{Binding RulesHint, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                                    <ItemsControl ItemsSource="{Binding Rules}">
+                                    <ItemsControl x:Name="RuleCards" ItemsSource="{Binding Rules}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>
                                                 <StackPanel Spacing="8"/>
@@ -147,7 +157,7 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="byItem:RuleCardViewModel">
-                                                <Border Classes="inset" Padding="8,7">
+                                                <Border Classes="inset rule" Classes.highlighted="{Binding IsHighlighted}" Padding="8,7">
                                                     <StackPanel Spacing="6">
                                                         <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="8">
                                                             <Ellipse Width="8" Height="8" VerticalAlignment="Center">

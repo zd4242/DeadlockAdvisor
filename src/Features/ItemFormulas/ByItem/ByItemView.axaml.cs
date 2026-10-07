@@ -1,5 +1,6 @@
 using System.Reactive.Disposables;
 using Avalonia.ReactiveUI;
+using Avalonia.Threading;
 using DeadlockAdvisor.Features.Shared.ItemCard;
 using ReactiveUI;
 
@@ -27,6 +28,8 @@ public partial class ByItemView : ReactiveUserControl<ByItemViewModel>
                         SearchBox.Focus();
                         SearchBox.SelectAll();
                     }
+                    else if (action == ByItemViewModel.ScrollToRuleAction)
+                        ScrollToHighlightedRule();
                 })
                 .DisposeWith(disposables);
         });
@@ -41,6 +44,18 @@ public partial class ByItemView : ReactiveUserControl<ByItemViewModel>
             card.Width = ItemCardBuilder.Width;
         CardHost.Content = card;
         CardScroller.Offset = default;
+    }
+
+    /// <summary>After layout, since the rebuilt cards have no containers until then.</summary>
+    private void ScrollToHighlightedRule()
+    {
+        Dispatcher.UIThread.Post(() =>
+        {
+            var rules = ViewModel?.Rules;
+            var index = rules?.ToList().FindIndex(card => card.IsHighlighted) ?? -1;
+            if (index >= 0)
+                RuleCards.ContainerFromIndex(index)?.BringIntoView();
+        }, DispatcherPriority.Loaded);
     }
 
     private void RestoreSplit()

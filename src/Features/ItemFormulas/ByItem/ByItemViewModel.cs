@@ -41,6 +41,7 @@ public class TierPill(int tier) : ReactiveObject
 public class ByItemViewModel : ViewModelBase
 {
     public const string FocusSearchAction = "FocusSearch";
+    public const string ScrollToRuleAction = "ScrollToRule";
     private const int _previewHeroes = 6;
 
     private readonly IDataService _data;
@@ -50,6 +51,7 @@ public class ByItemViewModel : ViewModelBase
     private readonly ReadOnlyObservableCollection<ItemRowViewModel> _items;
     private Dictionary<string, Avalonia.Media.Color> _traitColors = [];
     private IReadOnlyList<DerivedRuleEntry> _derivedRules = [];
+    private (string CategoryId, Relation Relation)? _highlight;
 
     public ByItemViewModel(IDataService data, IModalService modals, ISettingsService settings)
     {
@@ -261,6 +263,7 @@ public class ByItemViewModel : ViewModelBase
             _traitColors[card.Key.CategoryId], OnRuleChanged, OnRuleRemoved)));
         foreach (var card in oldCards)
             card.Dispose();
+        HighlightPending();
 
         DerivedRules = derived.Select(rule => new DerivedRuleEntry(
                 store.Categories.TryGetValue(rule.CategoryId, out var category) ? category.CategoryName : rule.CategoryId,
@@ -272,6 +275,19 @@ public class ByItemViewModel : ViewModelBase
             .ToList();
 
         RenderPreview();
+    }
+
+    /// <summary>Outline the card the last add or edit landed on and ask the view to scroll to it; any later rebuild clears it.</summary>
+    private void HighlightPending()
+    {
+        if (_highlight is not var (categoryId, relation))
+            return;
+        _highlight = null;
+        var card = Rules.FirstOrDefault(card => card.Target.CategoryId == categoryId && card.Target.Relations.Contains(relation));
+        if (card is null)
+            return;
+        card.IsHighlighted = true;
+        RequestViewAction(ScrollToRuleAction);
     }
 
     /// <summary>
@@ -365,9 +381,12 @@ public class ByItemViewModel : ViewModelBase
         }
 
         if (retargeted || remarked)
+        {
             // Retargeting moves the card in the sorted list, and a new mark shows on the stat rules too, so
             // the detail is rebuilt: deferred, since we're inside a change coming from the card it replaces.
+            _highlight = (now.CategoryId, now.Relations[0]);
             RxApp.MainThreadScheduler.Schedule(() => AfterEdit(rerenderRules: true));
+        }
         else
             AfterEdit(rerenderRules: false);
     }
@@ -390,17 +409,25 @@ public class ByItemViewModel : ViewModelBase
         }
     }
 
-    /// <summary>"+ Add rule": the first trait without an against rule, at a mild 2.</summary>
+    /// <summary>
+    /// "+ Add rule": the first trait without an against rule after the last rule's (so the card joins the end
+    /// of the list, which is sorted by trait), wrapping round to the start when nothing later is free; at a mild 2.
+    /// </summary>
     private void AddRule()
     {
         if (CurrentItem is not { } item)
             return;
         var store = _data.Store;
-        var used = store.RulesForItem(item.ItemId).Select(rule => (rule.CategoryId, rule.Relation)).ToHashSet();
-        var category = store.CategoriesOrdered().FirstOrDefault(c => !used.Contains((c.CategoryId, Relation.Against)));
+        var rules = store.RulesForItem(item.ItemId);
+        var used = rules.Select(rule => (rule.CategoryId, rule.Relation)).ToHashSet();
+        var categories = store.CategoriesOrdered();
+        var after = rules.Count == 0 ? 0 : categories.FindIndex(c => c.CategoryId == rules[^1].CategoryId) + 1;
+        var category = categories.Skip(after).Concat(categories.Take(after))
+            .FirstOrDefault(c => !used.Contains((c.CategoryId, Relation.Against)));
         if (category is null)
             return;
         store.SetCoefficient(item.ItemId, category.CategoryId, Relation.Against, 2.0);
+        _highlight = (category.CategoryId, Relation.Against);
         AfterEdit(rerenderRules: true);
     }
 

@@ -78,6 +78,10 @@ public class RuleCardViewModel : ViewModelBase
 
     public IReadOnlyList<Category> Categories { get; }
     public Color TraitColor { get; }
+    public RuleTarget Target => _target;
+
+    /// <summary>The card the last add or retarget landed on, outlined so it's easy to find in a long list.</summary>
+    [Reactive] public bool IsHighlighted { get; set; }
     [Reactive] public Category? SelectedCategory { get; set; }
     [Reactive] public decimal? Coefficient { get; set; }
 
