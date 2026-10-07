@@ -48,7 +48,7 @@
             <Border Classes="card">
                 <DockPanel>
                     <!-- What ranks the list stays in view; the rest sits behind Filters. -->
-                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto" Margin="0,0,0,8">
+                    <Grid DockPanel.Dock="Top" ColumnDefinitions="*,Auto,Auto,Auto,Auto" Margin="0,0,0,8">
                         <StackPanel VerticalAlignment="Center" Spacing="3">
                             <Grid ColumnDefinitions="Auto,*">
                                 <TextBlock Classes="section" VerticalAlignment="Center" Text="RECOMMENDED ITEMS"/>
@@ -90,7 +90,12 @@
                                        ToolTip.Tip="{Binding Results.SummaryTip}"
                                        IsVisible="{Binding !Results.IsEmpty}"/>
                         </StackPanel>
-                        <ComboBox Grid.Column="1"
+                        <TextBlock Grid.Column="1"
+                                   Classes="faint"
+                                   Margin="0,0,6,0"
+                                   VerticalAlignment="Center"
+                                   Text="Items ranked by:"/>
+                        <ComboBox Grid.Column="2"
                                   VerticalAlignment="Center"
                                   ItemsSource="{Binding Ranks}"
                                   SelectedItem="{Binding SelectedRank}"
@@ -112,7 +117,7 @@
                         <!-- Shows or puts away the search box below. It keeps focus off itself, so a click on it while the box
                              has focus doesn't first close an empty box through its lost focus. -->
                         <Button x:Name="ItemSearchToggle"
-                                Grid.Column="2"
+                                Grid.Column="3"
                                 Focusable="False"
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
@@ -130,7 +135,7 @@
 
                         <!-- A funnel, filled while a filter changes the list out of sight. -->
                         <Button x:Name="FiltersButton"
-                                Grid.Column="3"
+                                Grid.Column="4"
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 Classes="glyph"

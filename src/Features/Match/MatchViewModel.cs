@@ -69,9 +69,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public static readonly IReadOnlyList<RankPreset> RankPresets =
     [
-        new("Formula + match data", RankBy.Both),
-        new("Rank by formula", RankBy.Formula),
-        new("Rank by match data", RankBy.MatchData),
+        new("Formula + match data (recommended)", RankBy.Both),
+        new("Formula", RankBy.Formula),
+        new("Match data", RankBy.MatchData),
     ];
 
     private readonly IDataService _data;

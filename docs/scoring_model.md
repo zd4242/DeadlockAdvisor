@@ -462,7 +462,7 @@ changes nothing.
   the enemy's focus factor before `Relevance`, and the explain panel's data lines
   show it. Net worth never weights the data, because it's an opinion about who
   matters; focus changes the question, and the data has an answer for each enemy.
-  Without it, "Rank by match data" would ignore focus, and the default ranking
+  Without it, ranking by "Match data" would ignore focus, and the default ranking
   would follow it at half strength.
 - **The blend scale knows it.** `LineUpShape.Focused` counts the focused enemies,
   and `Draw` focuses that many, so `ScoreScales` measures line-ups as concentrated
