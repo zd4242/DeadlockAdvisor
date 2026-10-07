@@ -26,6 +26,7 @@ public partial class MainWindow : Window
 
     private readonly ISettingsService? _settings;
     private readonly IForegroundService? _foreground;
+    private readonly ZoomCornerHold _zoomHold;
     private readonly List<KeyBinding> _shortcutBindings = [];
     private ModalWindow? _modalWindow;
     private ViewModelBase? _waitingModal;
@@ -50,6 +51,7 @@ public partial class MainWindow : Window
         TitleBar.PointerPressed += OnTitleBarPointerPressed;
         ResizeGrip.PointerPressed += OnResizeGripPressed;
         ZoomStepper.PointerWheelChanged += OnZoomStepperWheel;
+        _zoomHold = new ZoomCornerHold(ZoomCorner);
         PointerPressed += OnDismissLayerPressed;
         PointerPressed += OnNavigationButtonPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
@@ -91,6 +93,7 @@ public partial class MainWindow : Window
                         BringForward();
                 }),
                 vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()),
+                vm.WhenAnyValue(v => v.UiScale).Subscribe(_zoomHold.ZoomChanged),
                 vm.WhenAnyValue(v => v.ShortcutBindings).Subscribe(ApplyShortcuts));
         }
     }

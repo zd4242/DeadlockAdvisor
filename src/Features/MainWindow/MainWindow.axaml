@@ -288,7 +288,8 @@
                     </Panel>
                 </Border>
 
-                <Border x:Name="StatusBar" DockPanel.Dock="Bottom">
+                <!-- Above the page, so the zoom corner can still be pressed where it's held larger than the bar. -->
+                <Border x:Name="StatusBar" DockPanel.Dock="Bottom" ZIndex="1">
                     <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
                         <mainWindow:DataStatusView x:Name="DataStatus" VerticalAlignment="Center" DataContext="{Binding DataStatus}"/>
                         <!-- The negative margins keep a chip from making the bar taller. -->
@@ -314,55 +315,54 @@
                                    Margin="12,0,0,0"
                                    Text="{Binding SaveText}"
                                    IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>
-                        <!-- The zoom buttons and the resize grip cancel the window's zoom, so they stay the
-                             same size in the same place at every step and a button stays under the cursor
-                             through repeated clicks. The negative margins stretch the corner over the bar's
-                             padding, down to the window's edge, without making the bar taller. -->
-                        <LayoutTransformControl Grid.Column="5" Margin="12,-4,0,-4">
-                            <LayoutTransformControl.LayoutTransform>
-                                <ScaleTransform ScaleX="{Binding CounterScale}" ScaleY="{Binding CounterScale}"/>
-                            </LayoutTransformControl.LayoutTransform>
-                            <Grid ColumnDefinitions="Auto,Auto">
-                                <!-- Transparent so the wheel still lands here over a disabled button. -->
-                                <StackPanel x:Name="ZoomStepper"
-                                            Orientation="Horizontal"
-                                            VerticalAlignment="Bottom"
-                                            Margin="0,0,0,4"
-                                            Background="Transparent">
-                                    <Button Classes="zoom"
-                                            ToolTip.Tip="Zoom out (Ctrl+-)"
-                                            Command="{Binding ZoomOutCommand}">
-                                        <Path Data="M0,5 H10"/>
-                                    </Button>
-                                    <Button x:Name="ZoomLevel"
-                                            Classes="zoom level"
-                                            Content="{Binding ZoomText}"
-                                            ToolTip.Tip="Zoom: click for 100% (Ctrl+0), scroll to change"
-                                            Command="{Binding ResetZoomCommand}"/>
-                                    <Button Classes="zoom"
-                                            ToolTip.Tip="Zoom in (Ctrl+=)"
-                                            Command="{Binding ZoomInCommand}">
-                                        <Path Data="M0,5 H10 M5,0 V10"/>
-                                    </Button>
-                                </StackPanel>
-                                <!-- Gives the bottom-right corner something to see and grab. -->
-                                <Border x:Name="ResizeGrip"
-                                        Grid.Column="1"
-                                        Width="22"
-                                        Background="Transparent"
-                                        Cursor="BottomRightCorner"
-                                        ToolTip.Tip="Drag to resize">
-                                    <Path Data="M9,9 H11 V11 H9 Z M5,9 H7 V11 H5 Z M1,9 H3 V11 H1 Z M9,5 H11 V7 H9 Z M5,5 H7 V7 H5 Z M9,1 H11 V3 H9 Z"
-                                          Width="12"
-                                          Height="12"
-                                          Margin="0,0,5,5"
-                                          HorizontalAlignment="Right"
-                                          VerticalAlignment="Bottom"
-                                          Fill="{DynamicResource BorderStrongBrush}"
-                                          IsHitTestVisible="False"/>
-                                </Border>
-                            </Grid>
-                        </LayoutTransformControl>
+                        <!-- The zoom buttons and the resize grip. ZoomCornerHold draws them from the window's corner,
+                             at their old size while the pointer is on them. The negative margins stretch the
+                             corner over the bar's padding, down to the window's edge, and the stepper's own
+                             margins give back the height, so the bar is no taller than the stepper needs. -->
+                        <Grid x:Name="ZoomCorner"
+                              Grid.Column="5"
+                              Margin="12,-4,0,-4"
+                              ColumnDefinitions="Auto,Auto"
+                              Background="Transparent">
+                            <!-- Transparent so the wheel still lands here over a disabled button. -->
+                            <StackPanel x:Name="ZoomStepper"
+                                        Orientation="Horizontal"
+                                        VerticalAlignment="Center"
+                                        Margin="0,4"
+                                        Background="Transparent">
+                                <Button Classes="zoom"
+                                        ToolTip.Tip="Zoom out (Ctrl+-)"
+                                        Command="{Binding ZoomOutCommand}">
+                                    <Path Data="M0,5 H10"/>
+                                </Button>
+                                <Button x:Name="ZoomLevel"
+                                        Classes="zoom level"
+                                        Content="{Binding ZoomText}"
+                                        ToolTip.Tip="Zoom: click for 100% (Ctrl+0), scroll to change"
+                                        Command="{Binding ResetZoomCommand}"/>
+                                <Button Classes="zoom"
+                                        ToolTip.Tip="Zoom in (Ctrl+=)"
+                                        Command="{Binding ZoomInCommand}">
+                                    <Path Data="M0,5 H10 M5,0 V10"/>
+                                </Button>
+                            </StackPanel>
+                            <!-- Gives the bottom-right corner something to see and grab. -->
+                            <Border x:Name="ResizeGrip"
+                                    Grid.Column="1"
+                                    Width="22"
+                                    Background="Transparent"
+                                    Cursor="BottomRightCorner"
+                                    ToolTip.Tip="Drag to resize">
+                                <Path Data="M9,9 H11 V11 H9 Z M5,9 H7 V11 H5 Z M1,9 H3 V11 H1 Z M9,5 H11 V7 H9 Z M5,5 H7 V7 H5 Z M9,1 H11 V3 H9 Z"
+                                      Width="12"
+                                      Height="12"
+                                      Margin="0,0,5,5"
+                                      HorizontalAlignment="Right"
+                                      VerticalAlignment="Bottom"
+                                      Fill="{DynamicResource BorderStrongBrush}"
+                                      IsHitTestVisible="False"/>
+                            </Border>
+                        </Grid>
                     </Grid>
                 </Border>
 

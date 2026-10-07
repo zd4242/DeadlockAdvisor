@@ -7,6 +7,7 @@ using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
 using Avalonia.LogicalTree;
+using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
@@ -323,12 +324,13 @@ public class StatusBarTests
 
     /// <summary>Within the pixel or two that rounding the zoomed layout moves them: a button is 18 tall.</summary>
     [AvaloniaFact]
-    public void TheZoomButtonsStayWhereTheyAreWhileTheZoomChanges()
+    public void TheZoomButtonsKeepTheirPlaceWhileThePointerIsOnThem()
     {
         using var ui = new UiHarness();
         ui.Show();
         var buttons = ZoomButtons(ui);
-        var atHundred = buttons.Select(button => ScreenBounds(ui, button)).ToList();
+        var before = buttons.Select(button => ScreenBounds(ui, button)).ToList();
+        ui.Window.MouseMove(Center(ui, buttons[1]));
 
         for (var index = 0; index < ZoomLevels.Steps.Count; index++)
         {
@@ -337,21 +339,92 @@ public class StatusBarTests
             for (var button = 0; button < buttons.Count; button++)
             {
                 var bounds = ScreenBounds(ui, buttons[button]);
-                var shift = Math.Max(Math.Abs(bounds.X - atHundred[button].X), Math.Abs(bounds.Y - atHundred[button].Y));
-                var growth = Math.Max(Math.Abs(bounds.Width - atHundred[button].Width), Math.Abs(bounds.Height - atHundred[button].Height));
-                Assert.True(shift <= 2 && growth <= 0.5, $"Button {button} at {ZoomLevels.Steps[index]:P0} is {bounds}, not {atHundred[button]}");
+                var shift = Math.Max(Math.Abs(bounds.X - before[button].X), Math.Abs(bounds.Y - before[button].Y));
+                var growth = Math.Max(Math.Abs(bounds.Width - before[button].Width), Math.Abs(bounds.Height - before[button].Height));
+                Assert.True(shift <= 2 && growth <= 0.5, $"Button {button} at {ZoomLevels.Steps[index]:P0} is {bounds}, not {before[button]}");
             }
         }
     }
 
-    /// <summary>Clicking one spot again and again, as someone stepping the zoom does, never leaves the button.</summary>
+    [AvaloniaFact]
+    public async Task TheZoomButtonsEaseToTheirNewSizeOnceThePointerLeaves()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var stepper = ZoomStepper(ui);
+        var at = Center(ui, ZoomButtons(ui)[2]);
+
+        for (var step = 0; step < 3; step++)
+            Click(ui, at);
+        Assert.Equal(1.5, ui.ViewModel.UiScale);
+        Assert.Equal(88, ScreenBounds(ui, stepper).Width, 0.01);
+
+        var layoutPasses = 0;
+        ui.Window.LayoutUpdated += (_, _) => layoutPasses++;
+        ui.Window.MouseMove(new Point(100, 100));
+        UiHarness.Settle();
+        layoutPasses = 0;
+        Assert.True(await UiHarness.WaitUntilAsync(() => Math.Abs(ScreenBounds(ui, stepper).Width - 88 * 1.5) < 0.01));
+        Assert.Equal(18 * 1.5, ScreenBounds(ui, stepper).Height, 0.01);
+        Assert.Equal(0, layoutPasses);
+
+        ui.Settings.Update(settings => settings.ZoomIndex = 0);
+        UiHarness.Settle();
+        Assert.NotEqual(0, layoutPasses);
+    }
+
+    [AvaloniaFact]
+    public void TheZoomButtonsFollowAZoomAtOnceWhenThePointerIsElsewhere()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var stepper = ZoomStepper(ui);
+        ui.Window.MouseMove(new Point(100, 100));
+
+        ui.Settings.Update(settings => settings.ZoomIndex = 5);
+        UiHarness.Settle();
+
+        Assert.Equal(1.5, ui.ViewModel.UiScale);
+        Assert.Equal(88 * 1.5, ScreenBounds(ui, stepper).Width, 0.01);
+    }
+
+    [AvaloniaFact]
+    public async Task EnteringTheZoomButtonsAgainMidEaseHoldsTheSizeItReached()
+    {
+        var corner = new Border { Width = 100, Height = 20 };
+        var window = new Window { Content = corner };
+        window.Show();
+        var hold = new ZoomCornerHold(corner, TimeSpan.FromSeconds(1));
+        var drawing = (ScaleTransform)corner.RenderTransform!;
+
+        hold.ZoomChanged(1);
+        hold.Enter();
+        hold.ZoomChanged(2);
+        Assert.Equal(0.5, drawing.ScaleX);
+
+        hold.Leave();
+        Assert.True(await UiHarness.WaitUntilAsync(() => drawing.ScaleX > 0.7));
+        hold.Enter();
+        var reached = drawing.ScaleX;
+        Assert.InRange(reached, 0.7, 1);
+
+        await Task.Delay(300);
+        UiHarness.Settle();
+        Assert.Equal(reached, drawing.ScaleX);
+
+        hold.Leave();
+        Assert.True(await UiHarness.WaitUntilAsync(() => drawing.ScaleX == 1, TimeSpan.FromSeconds(5)));
+        window.Close();
+    }
+
+    /// <summary>Clicking one spot again and again, as someone stepping the zoom does, never leaves the button, even where it's held past the bar's top.</summary>
     [AvaloniaFact]
     public void ClickingAZoomButtonRepeatedlyKeepsSteppingTheZoom()
     {
         using var ui = new UiHarness();
         ui.Show();
         var buttons = ZoomButtons(ui);
-        var zoomOut = Center(ui, buttons[0]);
+        var zoomOut = new Point(Center(ui, buttons[0]).X, ScreenBounds(ui, buttons[0]).Top + 1);
         var zoomIn = Center(ui, buttons[2]);
 
         for (var index = ZoomLevels.DefaultIndex + 1; index < ZoomLevels.Steps.Count; index++)
@@ -384,9 +457,10 @@ public class StatusBarTests
         Assert.Equal(0.85, ui.ViewModel.UiScale);
     }
 
-    private static List<Button> ZoomButtons(UiHarness ui) =>
-        ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper")
-            .Children.OfType<Button>().ToList();
+    private static StackPanel ZoomStepper(UiHarness ui) =>
+        ui.Window.StatusBar.GetVisualDescendants().OfType<StackPanel>().Single(panel => panel.Name == "ZoomStepper");
+
+    private static List<Button> ZoomButtons(UiHarness ui) => ZoomStepper(ui).Children.OfType<Button>().ToList();
 
     private static Rect ScreenBounds(UiHarness ui, Control control) =>
         new(control.TranslatePoint(default, ui.Window)!.Value,
@@ -396,6 +470,7 @@ public class StatusBarTests
 
     private static void Click(UiHarness ui, Point at)
     {
+        ui.Window.MouseMove(at);
         ui.Window.MouseDown(at, MouseButton.Left);
         ui.Window.MouseUp(at, MouseButton.Left);
         UiHarness.Settle();

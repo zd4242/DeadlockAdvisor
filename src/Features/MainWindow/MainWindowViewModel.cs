@@ -169,7 +169,6 @@ public class MainWindowViewModel : ViewModelBase
             .Subscribe(index =>
             {
                 UiScale = ZoomLevels.Steps[index];
-                CounterScale = 1 / UiScale;
                 ZoomText = $"{Math.Round(UiScale * 100):0}%";
             })
             .DisposeWith(Disposables);
@@ -285,9 +284,6 @@ public class MainWindowViewModel : ViewModelBase
     public bool IsHeroTraitsPage => CurrentPage == _heroTraitsPage && !IsSettingsOpen;
     public bool IsItemFormulasPage => CurrentPage == _itemFormulasPage && !IsSettingsOpen;
     [Reactive] public double UiScale { get; private set; } = 1.0;
-
-    /// <summary>Undoes <see cref="UiScale"/> on something that keeps its size and place whatever the zoom.</summary>
-    [Reactive] public double CounterScale { get; private set; } = 1.0;
 
     [Reactive] public string ZoomText { get; private set; } = "";
     [Reactive] public string SaveText { get; private set; } = "";
