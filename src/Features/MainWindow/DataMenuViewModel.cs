@@ -164,6 +164,8 @@ public class DataMenuViewModel : ViewModelBase
     {
         if (_settings.Current.AutoUpdateModel)
             Launch(() => CheckModelAsync(manual: false));
+        else if (_settings.Current.CheckForNewHeroes)
+            Launch(OfferNewHeroesAsync);
         if (!_settings.Current.WelcomeOffered && _art.Count(ArtKind.Hero) == 0 && _art.Count(ArtKind.Item) == 0)
         {
             _settings.Update(s => s.WelcomeOffered = true);
@@ -565,6 +567,55 @@ public class DataMenuViewModel : ViewModelBase
         if (merged.Added.Count > 0 && HeroesMissingArt())
             Launch(() => DownloadArtAsync(force: false, quiet: true));
         return merged.Added;
+    }
+
+    /// <summary>
+    /// With model updates off: the heroes the published model has and this folder lacks, offered as a chip in the
+    /// status bar that adds them, and their art, with a click. A model that can't be reached says nothing, and a
+    /// chip that's closed is offered again at the next start.
+    /// </summary>
+    private async Task OfferNewHeroesAsync()
+    {
+        var published = await _models.PublishedAsync();
+        if (published is null)
+            return;
+        IReadOnlyDictionary<string, byte[]> files;
+        try
+        {
+            files = await _models.DownloadAsync(published, ModelUpdateService.HeroFiles);
+        }
+        catch (Exception ex) when (IsNetworkFailure(ex))
+        {
+            return;
+        }
+        var names = ModelUpdateService.NewHeroNames(_data.DataDir, files);
+        if (names.Count == 0)
+            return;
+        var job = new BackgroundJobViewModel("New heroes", _clock);
+        job.Succeed(string.Join(", ", names), () => AddNewHeroes(files), "Click to add them, and their art");
+        Show(job);
+    }
+
+    private void AddNewHeroes(IReadOnlyDictionary<string, byte[]> published)
+    {
+        if (!_data.FlushSaves())
+            return;
+        HeroMerge merged;
+        try
+        {
+            merged = ModelUpdateService.AddNewHeroes(_data.DataDir, ModelUpdateService.HeroFiles, published);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _notifications.ShowError($"Writing to {_data.DataDir} failed: {ex.Message}", ex);
+            return;
+        }
+        if (merged.Written.Count == 0)
+            return;
+        _data.Reload();
+        _notifications.ShowSuccess($"Added {string.Join(", ", merged.Added)} from the published heroes.", _toastTime);
+        if (HeroesMissingArt())
+            Launch(() => DownloadArtAsync(force: false, quiet: true));
     }
 
     /// <summary>Says heroes were added, when no install is about to say what the update changed.</summary>

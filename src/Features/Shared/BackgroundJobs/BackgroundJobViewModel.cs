@@ -136,7 +136,9 @@ public sealed class BackgroundJobViewModel : ViewModelBase, IProgress<FetchProgr
 
     /// <param name="status">How it ended, in a few words: "fetched", "12 downloaded".</param>
     /// <param name="open">Shows the full report.</param>
-    public void Succeed(string status, Action open) => Finish(BackgroundJobState.Succeeded, status, open, "Click for the full report.");
+    /// <param name="toolTip">What clicking does, where it isn't showing a report.</param>
+    public void Succeed(string status, Action open, string toolTip = "Click for the full report.") =>
+        Finish(BackgroundJobState.Succeeded, status, open, toolTip);
 
     /// <param name="open">Shows what went wrong.</param>
     public void Fail(Action open) => Finish(BackgroundJobState.Failed, "failed", open, "Click to see what went wrong.");

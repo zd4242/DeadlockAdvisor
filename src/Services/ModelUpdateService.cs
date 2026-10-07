@@ -395,13 +395,8 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
     public static HeroMerge AddNewHeroes(string dataDir, IReadOnlyCollection<string> files, IReadOnlyDictionary<string, byte[]> published)
     {
         var heroesPath = Path.Combine(dataDir, DataStore.HeroesFile);
-        var ours = File.Exists(heroesPath) ? CsvReader.ReadFile(heroesPath).Where(row => row.Has("hero_id")).ToList() : [];
-        var ids = ours.Select(row => row.Required("hero_id")).ToHashSet(StringComparer.Ordinal);
-        var gameIds = ours.Select(GameIdOf).Where(gameId => gameId != 0).ToHashSet();
-        var missing = Rows(published, DataStore.HeroesFile)
-            .Where(row => row.Has("hero_id") && row.Has("hero_name") && !ids.Contains(row.Required("hero_id"))
-                          && !(GameIdOf(row) is var gameId && gameId != 0 && gameIds.Contains(gameId)))
-            .ToList();
+        var ours = HeroRows(dataDir);
+        var missing = MissingHeroes(ours, published);
         var written = new HashSet<string>();
         if (missing.Count == 0)
             return new HeroMerge([], written);
@@ -417,6 +412,27 @@ public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
         if (files.Contains(DataStore.HeroScoresFile) && AddNewHeroRatings(dataDir, missing.Select(row => row.Required("hero_id")).ToHashSet(StringComparer.Ordinal), published))
             written.Add(DataStore.HeroScoresFile);
         return new HeroMerge(added, written);
+    }
+
+    /// <summary>The heroes of the published model this folder lacks, as it names them, to offer them to someone who isn't taking updates.</summary>
+    /// <param name="published">The published <see cref="DataStore.HeroesFile"/>, as downloaded.</param>
+    public static IReadOnlyList<string> NewHeroNames(string dataDir, IReadOnlyDictionary<string, byte[]> published) =>
+        MissingHeroes(HeroRows(dataDir), published).Select(row => row.Required("hero_name")).ToList();
+
+    private static List<CsvRow> HeroRows(string dataDir)
+    {
+        var path = Path.Combine(dataDir, DataStore.HeroesFile);
+        return File.Exists(path) ? CsvReader.ReadFile(path).Where(row => row.Has("hero_id")).ToList() : [];
+    }
+
+    private static List<CsvRow> MissingHeroes(IReadOnlyList<CsvRow> ours, IReadOnlyDictionary<string, byte[]> published)
+    {
+        var ids = ours.Select(row => row.Required("hero_id")).ToHashSet(StringComparer.Ordinal);
+        var gameIds = ours.Select(GameIdOf).Where(gameId => gameId != 0).ToHashSet();
+        return Rows(published, DataStore.HeroesFile)
+            .Where(row => row.Has("hero_id") && row.Has("hero_name") && !ids.Contains(row.Required("hero_id"))
+                          && !(GameIdOf(row) is var gameId && gameId != 0 && gameIds.Contains(gameId)))
+            .ToList();
     }
 
     /// <summary>The new heroes' published rows appended to this folder's ratings, for the traits it has. Whether any were.</summary>

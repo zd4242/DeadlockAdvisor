@@ -344,7 +344,7 @@ public sealed class DataMenuTests : IDisposable
     private DataMenuViewModel MenuWithData(DateTimeOffset fetched, DateTimeOffset now)
     {
         _fixture.Settings.Current.WelcomeOffered = true;
-        _fixture.Settings.Current.AutoUpdateModel = false;
+        WithoutModelChecks();
         _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "09-29-2026"}, {"title": "09-16-2026 Update"}]""");
         var store = _fixture.Data.Store;
         store.PutMatchSegment(new MatchSegment(_patches[0], _patches[0].Start, fetched.ToUnixTimeSeconds(), false, fetched.ToUnixTimeSeconds(),
@@ -621,8 +621,15 @@ public sealed class DataMenuTests : IDisposable
 
     private DataMenuViewModel SharedMenu(DateTimeOffset now)
     {
-        _fixture.Settings.Current.AutoUpdateModel = false;
+        WithoutModelChecks();
         return Menu(snapshots: new MatchSnapshotService(_api, () => now));
+    }
+
+    /// <summary>For the tests of what startup asks deadlock-api.com for: nothing about the published model.</summary>
+    private void WithoutModelChecks()
+    {
+        _fixture.Settings.Current.AutoUpdateModel = false;
+        _fixture.Settings.Current.CheckForNewHeroes = false;
     }
 
     [Fact]
@@ -810,6 +817,64 @@ public sealed class DataMenuTests : IDisposable
         var kept = Encoding.UTF8.GetString(DataBytes(DataStore.HeroScoresFile));
         Assert.StartsWith(Encoding.UTF8.GetString(mine).TrimEnd(), kept);
         Assert.Contains("\r\nnewcomer,", kept);
+    }
+
+    [Fact]
+    public async Task WithUpdatesOffAChipOffersTheNewHeroesAndAClickAddsThemWithTheirArt()
+    {
+        HaveTopbarArt(derivedByThisVersion: true);
+        HavePortraits();
+        _fixture.Settings.Current.ArtCheckedAt = _fixture.Clock.Now;
+        _fixture.Settings.Current.AutoUpdateModel = false;
+        var (heroes, scores) = WithANewcomer();
+        var mine = DataBytes(DataStore.HeroesFile);
+        PublishModel((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        menu.OnStartup();
+
+        var chip = Assert.Single(menu.Jobs);
+        Assert.Equal("New heroes", chip.Title);
+        Assert.Equal("Newcomer", chip.StatusText);
+        Assert.Equal(mine, DataBytes(DataStore.HeroesFile));
+        Assert.Equal(0, download.Started);
+
+        await chip.OpenCommand.Execute();
+
+        Assert.Equal("newcomer", _fixture.Data.Store.Heroes.Keys.Last());
+        Assert.Equal(3, _fixture.Data.Store.HeroScore("newcomer", _fixture.Data.Store.Categories.Keys.First()));
+        Assert.DoesNotContain(menu.Jobs, job => job.Title == "New heroes");
+        Assert.Equal("Added Newcomer from the published heroes.", Assert.Single(_toasts).Message);
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+    }
+
+    [Fact]
+    public void NoChipIsOfferedWithUpdatesOnTheCheckOffOrNothingNew()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var (heroes, scores) = WithANewcomer();
+        PublishModel((DataStore.HeroesFile, heroes), (DataStore.HeroScoresFile, scores));
+
+        // Updates on: the update takes them.
+        _menu.OnStartup();
+        Assert.Empty(_menu.Jobs);
+        Assert.Equal("newcomer", _fixture.Data.Store.Heroes.Keys.Last());
+
+        // Updates off, and nothing the published model has that the folder lacks.
+        _fixture.Settings.Current.AutoUpdateModel = false;
+        using var nothingNew = Menu();
+        nothingNew.OnStartup();
+        Assert.Empty(nothingNew.Jobs);
+
+        // Updates off with the check off: not even asked.
+        _api.Asked.Clear();
+        _fixture.Settings.Current.CheckForNewHeroes = false;
+        using var off = Menu();
+        off.OnStartup();
+        Assert.Empty(off.Jobs);
+        Assert.DoesNotContain(ModelManifest.ManifestUrl, _api.Asked);
     }
 
     [Fact]

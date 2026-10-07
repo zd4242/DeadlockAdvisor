@@ -73,6 +73,10 @@
                                      Description="On startup, take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks.">
                     <ToggleSwitch IsChecked="{Binding AutoUpdateModel}"/>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Say when new heroes are out"
+                                     Description="With updates off, ask GitHub whether the published ratings have heroes yours lack, and offer to add them from the status bar.">
+                    <ToggleSwitch IsChecked="{Binding CheckForNewHeroes}"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 

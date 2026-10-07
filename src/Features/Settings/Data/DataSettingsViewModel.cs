@@ -99,6 +99,12 @@ public class DataSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.AutoUpdateModel = value);
     }
 
+    public bool CheckForNewHeroes
+    {
+        get => Current.CheckForNewHeroes;
+        set => Change(s => s.CheckForNewHeroes = value);
+    }
+
     [Reactive] public string MatchDataSummary { get; private set; } = "";
 
     public ICommand DownloadMatchDataCommand { get; }
