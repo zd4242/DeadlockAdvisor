@@ -139,20 +139,16 @@ public class RosterSlot : Control
 
     // -- sizing ---------------------------------------------------------------
 
-    /// <summary>Fill the width, capped, and snapped to even sizes.</summary>
-    private static double PortraitFor(double width)
-    {
-        if (double.IsInfinity(width))
-            return _maxPortrait;
-        var fit = Math.Floor(width - _gap);
-        fit -= fit % 2;
-        return Math.Clamp(fit, _minPortrait, _maxPortrait);
-    }
+    /// <summary>Fill the width, capped, in whole pixels.</summary>
+    private static double PortraitFor(double width) => Math.Clamp(Math.Floor(width - _gap), _minPortrait, _maxPortrait);
+
+    /// <summary>The width a slot takes out of what it's offered: all of it between its smallest and largest.</summary>
+    internal static double WidthFor(double available) => Math.Clamp(available, _minPortrait + _gap, _maxPortrait + _gap);
 
     protected override Size MeasureOverride(Size availableSize)
     {
-        var portrait = PortraitFor(availableSize.Width);
-        return new Size(portrait + _gap, _top + portrait + 3 + PillBand + _nameHeight);
+        var width = WidthFor(availableSize.Width);
+        return new Size(width, _top + PortraitFor(width) + 3 + PillBand + _nameHeight);
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -163,7 +159,8 @@ public class RosterSlot : Control
 
     // -- geometry -------------------------------------------------------------
 
-    private Rect PortraitRect => new((Bounds.Width - _portrait) / 2, _top, _portrait, _portrait);
+    // Floored so the portrait sits on whole pixels whatever width its cell was rounded to.
+    internal Rect PortraitRect => new(Math.Floor((Bounds.Width - _portrait) / 2), _top, _portrait, _portrait);
 
     private double PillBand => ShowsNetWorth ? _pillHeight + 3 : 0;
 

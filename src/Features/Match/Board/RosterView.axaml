@@ -18,7 +18,7 @@
         <Style Selector="ItemsControl.roster">
             <Setter Property="ItemsPanel">
                 <ItemsPanelTemplate>
-                    <UniformGrid Rows="1"/>
+                    <controls:RosterRow/>
                 </ItemsPanelTemplate>
             </Setter>
         </Style>
