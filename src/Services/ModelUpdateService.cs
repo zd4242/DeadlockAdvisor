@@ -236,10 +236,18 @@ public sealed record ModelUpdatePlan(ModelManifest Published, ModelManifest? Ins
     }
 }
 
+/// <summary>What asking GitHub for the published model found.</summary>
+/// <param name="Manifest">The model; null when there's none to take.</param>
+/// <param name="NeedsNewerApp">GitHub answered, with a model of a newer format than this version of the app reads.</param>
+public sealed record PublishedModel(ModelManifest? Manifest, bool NeedsNewerApp = false);
+
 public interface IModelUpdateService
 {
-    /// <summary>The model the repo publishes now; null when it can't be reached or is of another format than this app reads.</summary>
-    Task<ModelManifest?> PublishedAsync(CancellationToken cancellationToken = default);
+    /// <summary>
+    /// The model the repo publishes now. It has no manifest when GitHub can't be reached or its model is of another
+    /// format than this app reads, which <see cref="PublishedModel.NeedsNewerApp"/> tells apart.
+    /// </summary>
+    Task<PublishedModel> PublishedAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Fetch <paramref name="files"/> of <paramref name="published"/>, each checked against its hash. Writes nothing.
@@ -251,17 +259,19 @@ public interface IModelUpdateService
 /// <summary>The model on GitHub (<see cref="ModelManifest"/>), and putting a downloaded one into a data folder.</summary>
 public sealed class ModelUpdateService(IDeadlockApi api) : IModelUpdateService
 {
-    public async Task<ModelManifest?> PublishedAsync(CancellationToken cancellationToken = default)
+    public async Task<PublishedModel> PublishedAsync(CancellationToken cancellationToken = default)
     {
         try
         {
             var published = ModelManifest.Parse(await api.GetBytesAsync(ModelManifest.ManifestUrl, DeadlockApi.UserAgent, cancellationToken));
-            return published.Format == ModelManifest.CurrentFormat ? published : null;
+            return published.Format == ModelManifest.CurrentFormat
+                ? new PublishedModel(published)
+                : new PublishedModel(null, NeedsNewerApp: published.Format > ModelManifest.CurrentFormat);
         }
         catch (Exception ex) when (ex is System.Net.Http.HttpRequestException or TimeoutException or JsonException or KeyNotFoundException
                                        or InvalidOperationException)
         {
-            return null;
+            return new PublishedModel(null);
         }
     }
 

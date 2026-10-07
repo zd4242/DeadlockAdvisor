@@ -814,6 +814,10 @@ public sealed class DataMenuTests : IDisposable
         return published;
     }
 
+    /// <summary>A published model that's the one installed, in the <paramref name="format"/> some other version of the app reads.</summary>
+    private void PublishModelOfFormat(int format) =>
+        _api.Bytes[ModelManifest.ManifestUrl] = (PublishModel() with { Format = format }).ToJsonBytes();
+
     private byte[] DataBytes(string file) => File.ReadAllBytes(Path.Combine(_fixture.Data.DataDir, file));
 
     [Fact]
@@ -1039,5 +1043,36 @@ public sealed class DataMenuTests : IDisposable
         await _menu.CheckModelCommand.Execute();
         Assert.Contains("up to date: the version published 2026-10-09", LastMessage().Body);
         Assert.Equal(0, _replaced);
+    }
+
+    /// <summary>GitHub answered, so "couldn't reach" would be wrong, and an old app is told what to do about it.</summary>
+    [Fact]
+    public async Task AModelOfANewerFormatSaysTheAppNeedsUpdatingRatherThanThatGitHubIsDown()
+    {
+        PublishModelOfFormat(ModelManifest.CurrentFormat + 1);
+
+        await _menu.CheckModelCommand.Execute();
+        Assert.DoesNotContain("Couldn't reach", LastMessage().Body);
+        Assert.Contains("need a newer version of this app", LastMessage().Body);
+        Assert.Equal("Formula update", LastMessage().Title);
+        _fixture.Modals.CloseModal();
+
+        await _menu.ResetModelCommand.Execute();
+        Assert.Equal("Reset formulas", LastMessage().Title);
+        Assert.Contains("need a newer version of this app", LastMessage().Body);
+        Assert.Equal(0, _replaced);
+    }
+
+    [Fact]
+    public void AModelOfANewerFormatSaysNothingAtStartup()
+    {
+        PublishModelOfFormat(ModelManifest.CurrentFormat + 1);
+        _fixture.Settings.Current.WelcomeOffered = true;
+
+        _menu.OnStartup();
+
+        Assert.Empty(_shown);
+        Assert.Empty(_toasts);
+        Assert.Null(_fixture.Settings.Current.ModelCheckedAt);
     }
 }

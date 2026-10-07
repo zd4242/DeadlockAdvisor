@@ -560,11 +560,11 @@ public class DataMenuViewModel : ViewModelBase
     /// <param name="manual">From the Data menu: says how it went, and asks again about files kept over this version.</param>
     internal async Task CheckModelAsync(bool manual)
     {
-        var published = await _models.PublishedAsync();
-        if (published is null)
+        var answer = await _models.PublishedAsync();
+        if (answer.Manifest is not { } published)
         {
             if (manual)
-                ShowMessage("Formula update", [Unreachable]);
+                ShowMessage("Formula update", [Unavailable(answer)]);
             return;
         }
         Checked(s => s.ModelCheckedAt = _clock.Now);
@@ -630,8 +630,7 @@ public class DataMenuViewModel : ViewModelBase
     /// </summary>
     private async Task OfferNewHeroesAsync()
     {
-        var published = await _models.PublishedAsync();
-        if (published is null)
+        if ((await _models.PublishedAsync()).Manifest is not { } published)
             return;
         IReadOnlyDictionary<string, byte[]> files;
         try
@@ -685,13 +684,19 @@ public class DataMenuViewModel : ViewModelBase
 
     private const string Unreachable = "Couldn't reach GitHub for the published hero ratings and item formulas. Try again later.";
 
+    private const string NeedsNewerApp =
+        "The hero ratings and item formulas published on GitHub need a newer version of this app than the one you have. "
+        + "Settings → Data checks for a new version; then check for formula updates again.";
+
+    private static string Unavailable(PublishedModel answer) => answer.NeedsNewerApp ? NeedsNewerApp : Unreachable;
+
     /// <summary>The files that differ from the published model, ticked, to put back to it.</summary>
     private async Task ResetModelAsync()
     {
-        var published = await _models.PublishedAsync();
-        if (published is null)
+        var answer = await _models.PublishedAsync();
+        if (answer.Manifest is not { } published)
         {
-            ShowMessage("Reset formulas", [Unreachable]);
+            ShowMessage("Reset formulas", [Unavailable(answer)]);
             return;
         }
         Checked(s => s.ModelCheckedAt = _clock.Now);

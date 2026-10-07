@@ -133,7 +133,7 @@ public sealed class ModelUpdateTests : IDisposable
     {
         var published = Publish();
 
-        var fetched = await _service.PublishedAsync();
+        var fetched = (await _service.PublishedAsync()).Manifest;
         Assert.Equal(published.ToJsonBytes(), fetched!.ToJsonBytes());
         var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: true);
 
@@ -245,12 +245,27 @@ public sealed class ModelUpdateTests : IDisposable
     [Fact]
     public async Task APublishedModelOfAnotherFormatOrNoneAtAllIsLeftAlone()
     {
-        Assert.Null(await _service.PublishedAsync());
+        Assert.Equal(new PublishedModel(null), await _service.PublishedAsync());
 
         var published = Publish();
         _api.Bytes[ModelManifest.ManifestUrl] = (published with { Format = ModelManifest.CurrentFormat + 1 }).ToJsonBytes();
 
-        Assert.Null(await _service.PublishedAsync());
+        Assert.Null((await _service.PublishedAsync()).Manifest);
+    }
+
+    [Fact]
+    public async Task ANewerFormatIsToldApartFromAModelThatCouldNotBeReached()
+    {
+        var published = Publish();
+
+        _api.Bytes[ModelManifest.ManifestUrl] = (published with { Format = ModelManifest.CurrentFormat + 1 }).ToJsonBytes();
+        Assert.Equal(new PublishedModel(null, NeedsNewerApp: true), await _service.PublishedAsync());
+
+        _api.Bytes[ModelManifest.ManifestUrl] = (published with { Format = ModelManifest.CurrentFormat - 1 }).ToJsonBytes();
+        Assert.Equal(new PublishedModel(null), await _service.PublishedAsync());
+
+        _api.Bytes.Remove(ModelManifest.ManifestUrl);
+        Assert.Equal(new PublishedModel(null), await _service.PublishedAsync());
     }
 
     [Fact]
@@ -258,7 +273,7 @@ public sealed class ModelUpdateTests : IDisposable
     {
         ModelNote first = new("2026-10-09", "Rated the new heroes."), second = new("2026-10-16", "Spirit items rate higher against Haze.");
         var published = PublishWithNotes([first], (DataStore.TraitWeightsFile, FirstRowEnding(Seed(DataStore.TraitWeightsFile), "1.3")));
-        Assert.Equal([first], ModelManifest.Parse((await _service.PublishedAsync())!.ToJsonBytes()).Notes);
+        Assert.Equal([first], ModelManifest.Parse((await _service.PublishedAsync()).Manifest!.ToJsonBytes()).Notes);
 
         var plan = ModelUpdatePlan.For(published, _data.Path, askAgain: false);
         Assert.Equal([first], plan.News);
