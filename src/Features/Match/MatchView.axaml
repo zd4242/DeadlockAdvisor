@@ -109,15 +109,16 @@
                             </ComboBox.ItemTemplate>
                         </ComboBox>
 
-                        <!-- Shows or puts away the search box below. It keeps focus off itself, so a click while the box has it
-                             reaches the toggle rather than first closing an empty box through its lost focus. -->
-                        <Button Grid.Column="2"
+                        <!-- Shows or puts away the search box below. It keeps focus off itself, so a click on it while the box
+                             has focus doesn't first close an empty box through its lost focus. -->
+                        <Button x:Name="ItemSearchToggle"
+                                Grid.Column="2"
+                                Focusable="False"
                                 Margin="8,0,0,0"
                                 VerticalAlignment="Center"
                                 Classes="glyph"
                                 Classes.open="{Binding Results.IsSearchOpen}"
                                 Command="{Binding ToggleItemSearchCommand}"
-                                Focusable="False"
                                 IsEnabled="{Binding !IsMatchEmpty}"
                                 ToolTip.Tip="Search the recommended items, or put the search away (Ctrl+F)">
                             <!-- Drawn at the glyph's own 16px size, about as wide as the funnel and centred on its box, with a stroke that matches the funnel's weight. -->

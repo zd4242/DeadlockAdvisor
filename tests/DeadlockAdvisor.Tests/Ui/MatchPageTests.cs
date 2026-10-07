@@ -129,6 +129,38 @@ public class MatchPageTests
     }
 
     [AvaloniaFact]
+    public void ClickingElsewherePutsAnEmptyItemSearchAwayButNotOneWithText()
+    {
+        using var ui = new UiHarness();
+        SetUpMatch(ui);
+        ui.Show();
+        var results = ui.ViewModel.Match.Results;
+        var box = ui.Window.MatchPage.GetVisualDescendants().OfType<SearchBox>().Single(search => search.Name == "ItemSearchBox");
+        var page = ui.Window.MatchPage;
+        var outside = page.TranslatePoint(new Point(page.Bounds.Width - 4, page.Bounds.Height - 4), ui.Window)!.Value;
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F, RawInputModifiers.Control);
+        UiHarness.Settle();
+        ui.Window.KeyTextInput("knock");
+        Click(ui, outside);
+        Assert.True(results.IsSearchOpen);
+        Assert.Equal("knock", results.SearchText);
+
+        results.SearchText = "";
+        Click(ui, outside);
+        Assert.False(results.IsSearchOpen);
+        Assert.False(box.IsEffectivelyVisible);
+    }
+
+    private static void Click(UiHarness ui, Point at)
+    {
+        ui.Window.MouseMove(at);
+        ui.Window.MouseDown(at, MouseButton.Left);
+        ui.Window.MouseUp(at, MouseButton.Left);
+        UiHarness.Settle();
+    }
+
+    [AvaloniaFact]
     public void TheMagnifierTogglesTheItemSearchAndClosingItClearsTheSearch()
     {
         using var ui = new UiHarness();

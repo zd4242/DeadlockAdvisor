@@ -2,6 +2,7 @@ using System.Reactive.Disposables;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
+using Avalonia.VisualTree;
 using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Match;
@@ -22,11 +23,7 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
                 e.Handled = true;
             }
         }, RoutingStrategies.Tunnel);
-        ItemSearchBox.LostFocus += (_, _) =>
-        {
-            if (string.IsNullOrEmpty(ItemSearchBox.Text))
-                CloseItemSearch();
-        };
+        ItemSearchBox.LostFocus += (_, _) => CloseEmptyItemSearch();
 
         // Escape that nothing inside the page used (a search box clearing itself, say) puts the hero picker away,
         // wherever focus sits in the page.
@@ -48,7 +45,21 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
                         FocusItemSearch();
                 })
                 .DisposeWith(disposables);
+
+            // Focus only moves when something focusable is clicked, so an empty box is also put away by a click anywhere
+            // else in the window (the toggle button handles its own). The window, because empty parts of the page don't hit-test.
+            if (TopLevel.GetTopLevel(this) is { } window)
+            {
+                window.AddHandler(PointerPressedEvent, OnWindowPointerPressed, RoutingStrategies.Tunnel);
+                Disposable.Create(() => window.RemoveHandler(PointerPressedEvent, OnWindowPointerPressed)).DisposeWith(disposables);
+            }
         });
+    }
+
+    private void OnWindowPointerPressed(object? sender, PointerPressedEventArgs e)
+    {
+        if (e.Source is Visual source && !IsWithin(source, ItemSearchBox) && !IsWithin(source, ItemSearchToggle))
+            CloseEmptyItemSearch();
     }
 
     private void FocusItemSearch()
@@ -57,6 +68,14 @@ public partial class MatchView : ReactiveUserControl<MatchViewModel>
         UpdateLayout();
         ItemSearchBox.Focus();
         ItemSearchBox.SelectAll();
+    }
+
+    private static bool IsWithin(Visual source, Visual container) => source == container || container.IsVisualAncestorOf(source);
+
+    private void CloseEmptyItemSearch()
+    {
+        if (string.IsNullOrEmpty(ItemSearchBox.Text))
+            CloseItemSearch();
     }
 
     private void CloseItemSearch()
