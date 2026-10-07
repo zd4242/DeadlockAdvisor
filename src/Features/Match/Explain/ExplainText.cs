@@ -89,12 +89,12 @@ public static class ExplainText
         return spans;
     }
 
-    /// <summary>A stat named for what the item does: its label and value stand out from the sentence around them.</summary>
+    /// <summary>A stat named for what the item does: its label and value stand out from the sentence around them by colour.</summary>
     private static IEnumerable<TextSpan> StatSpans(StatPart stat)
     {
-        yield return new TextSpan(stat.Label, Palette.TextDim, Bold: true);
+        yield return new TextSpan(stat.Label, Palette.TextDim);
         yield return new TextSpan(" ");
-        yield return new TextSpan(stat.ValueText, Palette.Text, Bold: true);
+        yield return new TextSpan(stat.ValueText, Palette.Text);
         if (stat.Conditional)
             yield return new TextSpan(" (conditional)");
     }

@@ -371,6 +371,31 @@ public class MatchPageTests
             Assert.EndsWith($"= {Format.SignedFixed(explain.Verdict!.Formula!.Value, 1)}", explain.FormulaConversion);
     }
 
+    /// <summary>The formula's total keeps its points-to-score conversion on its own row, beside the label, not in a line below it.</summary>
+    [AvaloniaFact]
+    public void TheFormulaTotalShowsItsConversionBesideItsLabel()
+    {
+        using var ui = new UiHarness(settings =>
+        {
+            settings.Current.ResultsRankBy = RankBy.Both;
+            settings.Current.ResultsMinPercent = CutoffPreset.EveryItem;
+        });
+        SetUpMatch(ui);
+        ui.Show();
+        var match = ui.ViewModel.Match;
+        match.Results.Select(match.Results.Entries.OfType<ResultRowViewModel>().First());
+        UiHarness.Settle();
+
+        var explain = ui.Window.MatchPage.GetVisualDescendants().OfType<ExplainView>().Single();
+        double MiddleOf(Control control) => control.TranslatePoint(new Point(0, control.Bounds.Height / 2), explain)!.Value.Y;
+
+        var conversion = explain.GetVisualDescendants().OfType<TextBlock>()
+            .Single(block => block.Text == match.Explain.FormulaConversion && block.IsEffectivelyVisible);
+        var label = ((Grid)conversion.Parent!).Children.OfType<TextBlock>().Single(block => block.Text == "Formula");
+        Assert.Equal(MiddleOf(label), MiddleOf(conversion), 1);
+        Assert.True(conversion.Bounds.Left > label.Bounds.Right);
+    }
+
     /// <summary>Without the math, the cards say who counts and how much, and each line's working moves to its tooltip.</summary>
     [AvaloniaFact]
     public void WithoutTheMathTheWorkingShowsOnHover()

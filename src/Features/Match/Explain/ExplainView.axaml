@@ -204,32 +204,32 @@
                            Text="No hero in this view triggers any of this item's rules."/>
 
                 <!-- Lined up with the cards' own amounts, which add up to it. -->
-                <Grid ColumnDefinitions="*,Auto"
-                      RowDefinitions="Auto,Auto"
+                <Grid ColumnDefinitions="Auto,*,Auto"
                       Margin="10,0,10,2"
                       Background="Transparent"
                       ToolTip.Tip="{Binding FormulaTotalTip}"
                       IsVisible="{Binding ShowsFormulaTotal}">
                     <TextBlock Text="Formula" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource FormulaBrush}"/>
-                    <controls:SignedAmount Grid.Column="1"
+                    <!-- The cards add up in points; the verdict above counts them in typical scores. -->
+                    <TextBlock Grid.Column="1"
+                               Classes="faintText"
+                               Margin="10,0,0,0"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding FormulaConversion}"
+                               IsVisible="{Binding FormulaConversion, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+                    <controls:SignedAmount Grid.Column="2"
                                            VerticalAlignment="Center"
                                            IsBold="True"
                                            Value="{Binding FormulaTotal.Shown}"
                                            Text="{Binding FormulaTotal.Text}"/>
-                    <!-- The cards add up in points; the verdict above counts them in typical scores. -->
-                    <TextBlock Grid.Row="1"
-                               Grid.ColumnSpan="2"
-                               Classes="faint"
-                               HorizontalAlignment="Right"
-                               Text="{Binding FormulaConversion}"
-                               IsVisible="{Binding FormulaConversion, Converter={x:Static ObjectConverters.IsNotNull}}"/>
                 </Grid>
 
                 <ItemsControl ItemsSource="{Binding Contributions}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="explain:ContributionCard">
                             <Border Classes="inset" Margin="0,0,0,4">
-                                <StackPanel Spacing="4">
+                                <StackPanel Spacing="6">
                                     <Grid Classes="cardTitle" ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto" Background="Transparent">
                                         <art:ArtImage Classes="heroIcon"
                                                       Kind="Hero"
@@ -267,11 +267,15 @@
                                          width instead of squeezing between the name and the numbers. Without the
                                          math, a hero's only line leaves its share to the card's amount. -->
                                     <ItemsControl ItemsSource="{Binding Traits}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Spacing="9"/>
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="explain:TraitLine">
                                                 <Grid Classes="traitLine"
                                                       Classes.hasCell="{Binding Cell, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                      Margin="0,0,0,4"
                                                       RowDefinitions="Auto,Auto"
                                                       Background="Transparent">
                                                     <Grid.ColumnDefinitions>
@@ -279,7 +283,7 @@
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Arithmetic"/>
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Share"/>
                                                     </Grid.ColumnDefinitions>
-                                                    <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding TraitName}"/>
+                                                    <TextBlock TextWrapping="Wrap" Text="{Binding TraitName}"/>
                                                     <TextBlock Grid.Column="1"
                                                                Classes="faintText math"
                                                                Margin="10,0,0,0"
@@ -295,7 +299,7 @@
                                                                            Color="{x:Static theme:Palette.Text}"/>
                                                     <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="math">
                                                         <controls:RichText Classes="faintText"
-                                                                   Margin="12,1,0,0"
+                                                                   Margin="12,2,0,0"
                                                                    FontSize="12"
                                                                    TextWrapping="Wrap"
                                                                    Spans="{Binding Source}"
