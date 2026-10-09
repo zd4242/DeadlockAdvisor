@@ -61,8 +61,8 @@ public class RosterSlot : Control
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(ShowsNetWorth));
 
     /// <summary>An enemy the recommendations are focused on.</summary>
-    public static readonly StyledProperty<bool> IsFocusedProperty =
-        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsFocused));
+    public static readonly StyledProperty<bool> IsFocusTargetProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsFocusTarget));
 
     /// <summary>An enemy counting for less because another is focused: drawn faded.</summary>
     public static readonly StyledProperty<bool> IsDimmedProperty =
@@ -93,7 +93,7 @@ public class RosterSlot : Control
     static RosterSlot()
     {
         AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, NetWorthProperty,
-            IsFocusedProperty, IsDimmedProperty, CanFocusProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
+            IsFocusTargetProperty, IsDimmedProperty, CanFocusProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
         AffectsMeasure<RosterSlot>(ShowsNetWorthProperty);
         CursorProperty.OverrideDefaultValue<RosterSlot>(new Cursor(StandardCursorType.Hand));
     }
@@ -145,10 +145,10 @@ public class RosterSlot : Control
         set => SetValue(ShowsNetWorthProperty, value);
     }
 
-    public bool IsFocused
+    public bool IsFocusTarget
     {
-        get => GetValue(IsFocusedProperty);
-        set => SetValue(IsFocusedProperty, value);
+        get => GetValue(IsFocusTargetProperty);
+        set => SetValue(IsFocusTargetProperty, value);
     }
 
     public bool IsDimmed
@@ -172,7 +172,7 @@ public class RosterSlot : Control
         base.OnPropertyChanged(change);
         if (change.Property == HeroIdProperty || change.Property == HeroNameProperty || change.Property == TeamProperty
             || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty
-            || change.Property == IsFocusedProperty || change.Property == CanFocusProperty)
+            || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty)
             UpdateToolTip();
     }
 
@@ -276,7 +276,7 @@ public class RosterSlot : Control
             tip = $"{HeroName} (you) -- click to change";
         else if (IsEnemy && !CanFocus)
             tip = $"{HeroName} -- not rated on any trait yet, so there's nothing to focus on; click to change";
-        else if (IsEnemy && IsFocused)
+        else if (IsEnemy && IsFocusTarget)
             tip = $"{HeroName} (focused) -- the recommendations lean toward items good against them.\nClick to stop focusing, right click to change";
         else if (IsEnemy)
             tip = $"{HeroName} -- click to focus the recommendations on items good against them, right click to change";
@@ -326,11 +326,11 @@ public class RosterSlot : Control
         var hovered = IsPointerOver;
 
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId!, HeroName, rect, _radius);
-        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || IsFocused || hovered ? 3 : 2);
+        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || IsFocusTarget || hovered ? 3 : 2);
         context.DrawRectangle(null, ring, new RoundedRect(rect, _radius));
         if (IsSelf)
             PaintYouTag(context, rect);
-        if (IsEnemy && (IsFocused || hovered && CanFocus))
+        if (IsEnemy && (IsFocusTarget || hovered && CanFocus))
             PaintFocusBadge(context);
 
         if (hovered)
@@ -345,8 +345,8 @@ public class RosterSlot : Control
         if (NetWorth is { } souls)
             PaintNetWorth(context, rect, souls);
 
-        var color = IsSelf || IsFocused || hovered ? Palette.Text : Palette.TextDim;
-        var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf || IsFocused);
+        var color = IsSelf || IsFocusTarget || hovered ? Palette.Text : Palette.TextDim;
+        var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf || IsFocusTarget);
         context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + (_nameHeight - name.Height) / 2));
     }
 
@@ -354,7 +354,7 @@ public class RosterSlot : Control
     private void PaintFocusBadge(DrawingContext context)
     {
         var badge = FocusBounds;
-        var back = IsFocused ? Palette.Enemy : Palette.WithAlpha(Palette.Bg, 200);
+        var back = IsFocusTarget ? Palette.Enemy : Palette.WithAlpha(Palette.Bg, 200);
         context.DrawEllipse(new SolidColorBrush(back), null, badge);
         var pen = new Pen(new SolidColorBrush(Palette.Text), 1.4, lineCap: PenLineCap.Round);
         var center = badge.Center;
