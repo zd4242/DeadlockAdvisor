@@ -112,6 +112,12 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   recommendation list), `ExplainViewModel` ("Why this item?"), `DataRanksViewModel` (rank filters), and the `DetectAction` and
   `ImportMatchAction`. `MatchState` is who is in the match (roles, top-bar slots, net-worth history, focused enemies); it is
   saved in `AppSettings.LastMatch`.
+- **Match lookup:** `MatchLookupService.LookUpAsync` reads a finished match's `/v1/matches/{id}/metadata` into a
+  `LookedUpMatch`: when it started, how long it ran, who won, and per player the account, hero, team and slot plus
+  `Items` (`PurchasedItem`: the game's item id, when bought, when sold or null; ability upgrades that have no shop item are
+  in there too and simply match no `Item.GameId`), `Worth` (the net-worth curve, one `NetWorthPoint` per `stats[]` entry) and
+  the final `NetWorth`. Malformed entries are skipped. The import dialog uses only the roster; the rest is for a post-match
+  review (roadmap WP21).
 - **Scoring:** `ItemScoring.ScoreAll` scores every item for a `LineUp` (the match's heroes with their `NetWorthWeights` and
   `FocusWeights`) from the weight matrix; `ExplainItem` walks the same arithmetic; `DataScores` is the match-data second
   opinion; `BlendScale` puts the two on one scale. Details and rules: scoring_model.md.

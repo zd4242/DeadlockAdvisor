@@ -1,6 +1,6 @@
 # WP20 Import parses each player's items and net-worth curve
 
-Status: todo
+Status: done
 Effort: M · Risk: low (additive; the import dialog keeps working as is) · Depends on: none · Wave: A
 Touches: `src/Services/MatchLookupService.cs` (the records and `LookUpAsync`), `src/Services/GameApi/JsonRecord.cs` (only if a helper is missing), `tests/DeadlockAdvisor.Tests/MatchImportTests.cs`, `Fakes/FakeServices.cs` if the fake API needs a richer answer
 Docs to update: `docs/architecture.md` (section 4: what the lookup returns), `README.md` (only if the Import description changes)

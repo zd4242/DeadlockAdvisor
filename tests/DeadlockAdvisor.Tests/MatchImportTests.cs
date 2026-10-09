@@ -148,7 +148,78 @@ public sealed class MatchImportTests : IDisposable
         Assert.Equal(TimeSpan.FromSeconds(2541), match.Duration);
         Assert.Equal(0, match.WinningTeam);
         Assert.Equal(Enumerable.Range(1, 12), match.Players.Select(player => player.PlayerSlot));
-        Assert.Equal(new MatchPlayer(1003, 13, 0, 3), match.Players[2]);
+        var haze = match.Players[2];
+        Assert.Equal(new MatchPlayer(1003, 13, 0, 3), haze with { Items = [], Worth = [] });
+        Assert.Empty(haze.Items);
+        Assert.Empty(haze.Worth);
+    }
+
+    private static JsonObject Purchase(JsonNode? itemId, JsonNode? at, JsonNode? soldAt = null) => new()
+    {
+        ["item_id"] = itemId,
+        ["game_time_s"] = at,
+        ["sold_time_s"] = soldAt ?? 0,
+        ["upgrade_id"] = 0,
+    };
+
+    private static JsonObject Step(JsonNode? seconds, JsonNode? worth) => new()
+    {
+        ["time_stamp_s"] = seconds,
+        ["net_worth"] = worth,
+        ["kills"] = 1,
+    };
+
+    private async Task<MatchPlayer> LookUpPlayerAsync(JsonNode? items, JsonNode? stats)
+    {
+        _api.Json[MetadataUrl] = () => new JsonObject
+        {
+            ["match_info"] = new JsonObject
+            {
+                ["players"] = new JsonArray(new JsonObject
+                {
+                    ["account_id"] = 1001, ["hero_id"] = 6, ["team"] = 0, ["player_slot"] = 1, ["items"] = items?.DeepClone(), ["stats"] = stats?.DeepClone(),
+                }),
+            },
+        };
+        return Assert.Single((await new MatchLookupService(_api).LookUpAsync(MatchId)).Players);
+    }
+
+    [Fact]
+    public async Task EachPlayersPurchasesAreKeptInTheOrderTheyWereBought()
+    {
+        var player = await LookUpPlayerAsync(new JsonArray(Purchase(300, 900), Purchase(100, 60, 1500), Purchase(200, 300)), null);
+
+        Assert.Equal(new PurchasedItem[] { new(100, 60, 1500), new(200, 300, null), new(300, 900, null) }, player.Items);
+    }
+
+    [Fact]
+    public async Task TheNetWorthCurveIsKeptStepByStepAndEndsAtTheLastStep()
+    {
+        var player = await LookUpPlayerAsync(null, new JsonArray(Step(360, 5200), Step(180, 1433), Step(540, 9100)));
+
+        Assert.Equal(new NetWorthPoint[] { new(180, 1433), new(360, 5200), new(540, 9100) }, player.Worth);
+        Assert.Equal(9100, player.NetWorth);
+    }
+
+    [Fact]
+    public async Task APlayerWithoutItemsOrStatsHasEmptyLists()
+    {
+        var player = await LookUpPlayerAsync(null, "none");
+
+        Assert.Empty(player.Items);
+        Assert.Empty(player.Worth);
+        Assert.Equal(0, player.NetWorth);
+    }
+
+    [Fact]
+    public async Task MalformedPurchasesAndStepsAreSkippedWithoutFailingTheLookup()
+    {
+        var player = await LookUpPlayerAsync(
+            new JsonArray(Purchase("many", 10), Purchase(0, 20), Purchase(500, "soon"), Purchase(600, 30, "never"), Purchase(700, 40), "junk", null),
+            new JsonArray(Step("late", 100), Step(120, "rich"), new JsonObject { ["net_worth"] = 400 }, new JsonObject { ["time_stamp_s"] = 150 }, Step(0, 0), 7));
+
+        Assert.Equal(new PurchasedItem[] { new(700, 40, null) }, player.Items);
+        Assert.Equal(new NetWorthPoint[] { new(0, 0) }, player.Worth);
     }
 
     [Theory]

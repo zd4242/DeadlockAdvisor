@@ -74,6 +74,21 @@ internal static class JsonRecord
         return long.Parse(SyncText.Strip(Str(node)), NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture);
     }
 
+    /// <summary>Like <see cref="Int"/>, but false for a field that isn't a number, instead of throwing.</summary>
+    public static bool TryInt(JsonNode? record, string key, out long value)
+    {
+        try
+        {
+            value = Int(record, key);
+            return true;
+        }
+        catch (Exception ex) when (ex is FormatException or OverflowException)
+        {
+            value = 0;
+            return false;
+        }
+    }
+
     /// <summary>A list field's items; anything else gives nothing.</summary>
     public static IEnumerable<JsonNode?> Items(JsonNode? record, string key) =>
         Get(record, key) as JsonArray ?? [];
