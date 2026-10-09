@@ -602,7 +602,8 @@ public class StatusBarTests
         using var ui = new UiHarness();
         ui.Show();
         var buttons = ZoomButtons(ui);
-        var zoomOut = new Point(Center(ui, buttons[0]).X, ScreenBounds(ui, buttons[0]).Top + 1);
+        // Near the top edge, but not on it: layout rounding moves the held button's edge by a pixel or so as the zoom steps.
+        var zoomOut = new Point(Center(ui, buttons[0]).X, ScreenBounds(ui, buttons[0]).Top + 3);
         var zoomIn = Center(ui, buttons[2]);
 
         for (var index = ZoomLevels.DefaultIndex + 1; index < ZoomLevels.Steps.Count; index++)

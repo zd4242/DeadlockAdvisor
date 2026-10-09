@@ -233,7 +233,8 @@ public class ShortcutTests
 
         ui.Hotkey.Press();
 
-        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Capture.Captures == 1 && !detecting));
+        // Real vision work: a slow or busy machine takes several seconds, and the wait ends as soon as it's done.
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Capture.Captures == 1 && !detecting, TimeSpan.FromSeconds(30)));
     }
 
     private static ScreenCapture NoScoreboard() => new(new RgbImage(2560, 316), 2560, 1440);
