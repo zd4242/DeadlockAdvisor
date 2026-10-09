@@ -1,6 +1,6 @@
 # WP05 Time-spaced backups for CSV and JSON
 
-Status: todo
+Status: done
 Effort: S · Risk: low · Depends on: none · Wave: A
 Touches: `src/Services/BackedUpFile.cs`, `tests/DeadlockAdvisor.Tests/FileFormatTests.cs`
 Docs to update: `README.md` ("Data folder": "last 12"), `docs/architecture.md` (section 1)

@@ -143,4 +143,76 @@ public class FileFormatTests
         Assert.True(File.Exists(Path.Combine(backups, "item_stats.20000101-000000.csv")));
         Assert.False(File.Exists(data.File(DataStore.TraitWeightsFile + ".tmp")));
     }
+
+    [Fact]
+    public void BackupsFromEarlierHoursAndDaysSurviveABurst()
+    {
+        using var data = new TempDirectory();
+        var now = new DateTime(2026, 10, 9, 15, 30, 0);
+        // A burst of 20 saves in the last 20 minutes, then one copy every 40 minutes back 3 weeks.
+        var stamps = Enumerable.Range(0, 20).Select(i => now.AddMinutes(-i))
+            .Concat(Enumerable.Range(1, 21 * 36).Select(i => now.AddMinutes(-20 - i * 40))).ToList();
+        foreach (var stamp in stamps)
+            File.WriteAllText(data.File($"trait_weights.{stamp:yyyyMMdd-HHmmss}.csv"), "old");
+
+        BackedUpFile.TrimBackups(data.Path, "trait_weights", ".csv", now);
+
+        var kept = Directory.GetFiles(data.Path).Select(Path.GetFileName).Order(StringComparer.Ordinal).ToList();
+        var times = kept.Select(name => DateTime.ParseExact(name!.Substring(14, 15), "yyyyMMdd-HHmmss", null)).ToList();
+        // The newest 12 are kept whole.
+        Assert.All(stamps.Take(12), stamp => Assert.Contains(stamp, times));
+        // Every one of the last 24 hours that has a copy still has its newest.
+        var lastDay = stamps.Where(stamp => now - stamp <= BackedUpFile.HourlyWindow).GroupBy(stamp => (stamp.Date, stamp.Hour));
+        Assert.All(lastDay, hour => Assert.Contains(hour.Max(), times));
+        // Every day of the last 14 has its newest.
+        var lastFortnight = stamps.Where(stamp => now - stamp <= BackedUpFile.DailyWindow).GroupBy(stamp => stamp.Date);
+        Assert.All(lastFortnight, day => Assert.Contains(day.Max(), times));
+        // Nothing else stays: the three-week-old copies and the burst's middle are gone.
+        Assert.DoesNotContain(times, time => now - time > BackedUpFile.DailyWindow);
+        Assert.InRange(kept.Count, 13, 12 + 24 + 14);
+    }
+
+    [Fact]
+    public void BackupsOfAnyExtensionAreTrimmedAndOnlyThatFilesOwn()
+    {
+        using var data = new TempDirectory();
+        var now = new DateTime(2026, 10, 9, 12, 0, 0);
+        for (var day = 1; day <= 15; day++)
+        {
+            File.WriteAllText(data.File($"items.200001{day:00}-000000.json"), "old");
+            File.WriteAllText(data.File($"item_stats.200001{day:00}-000000.json"), "another file");
+        }
+        File.WriteAllText(data.File("items.notes.json"), "not a backup");
+        File.WriteAllText(data.File("items.20000101-000000.csv"), "another extension");
+
+        BackedUpFile.TrimBackups(data.Path, "items", ".json", now);
+
+        Assert.Equal(12, Directory.GetFiles(data.Path, "items.2*.json").Length);
+        Assert.False(File.Exists(data.File("items.20000101-000000.json")));
+        Assert.True(File.Exists(data.File("items.20000115-000000.json")));
+        Assert.Equal(15, Directory.GetFiles(data.Path, "item_stats.*").Length);
+        Assert.True(File.Exists(data.File("items.notes.json")));
+        Assert.True(File.Exists(data.File("items.20000101-000000.csv")));
+    }
+
+    [Fact]
+    public void JsonSavesKeepTheFirstCopyOfASecondAndTrimLikeCsv()
+    {
+        using var data = new TempDirectory();
+        var path = data.File("item_tooltips.json");
+        File.WriteAllText(path, "first");
+        var backups = Path.Combine(data.Path, BackedUpFile.BackupFolderName);
+        Directory.CreateDirectory(backups);
+        for (var day = 10; day < 25; day++)
+            File.WriteAllText(Path.Combine(backups, $"item_tooltips.200001{day:00}-000000.json"), "old");
+
+        BackedUpFile.Write(path, "second"u8);
+        BackedUpFile.Write(path, "third"u8);
+
+        Assert.Equal("third", File.ReadAllText(path));
+        var kept = Directory.GetFiles(backups, "item_tooltips.*").ToList();
+        Assert.Equal(BackedUpFile.Keep, kept.Count);
+        // Both writes fell in one second (or the second one's copy is the newer): the first copy holds the original.
+        Assert.Contains(kept, file => File.ReadAllText(file) == "first");
+    }
 }

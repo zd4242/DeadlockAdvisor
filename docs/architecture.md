@@ -50,7 +50,9 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 - **Windows-only code** (the F9 hotkey, screen capture, foreground window, self-install) stays behind
   `OperatingSystem.IsWindows()`.
 - **Files are written safely**: `AtomicFile` (temp file, then swap) and `BackedUpFile` (a timestamped copy of the old file
-  under `.backups/`, the newest 12 kept, then an atomic write).
+  under `.backups/`, then an atomic write). Per file it keeps the newest 12 copies, the newest of each hour for 24 hours and
+  the newest of each day for 14 days (`BackedUpFile.Keep`, `HourlyWindow`, `DailyWindow`; CSV and JSON alike, timed by the
+  stamp in the name).
 
 ## 2. Folder map
 

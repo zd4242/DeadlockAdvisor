@@ -198,8 +198,9 @@ Nothing locks the files, so don't edit them from two places at once.
 
 The CSVs are the source of truth and stay hand-editable. Every write
 keeps a timestamped copy of the previous file under `data/.backups/`
-(last 12) and goes through a temp file, so an interrupted save can't leave
-a truncated CSV. An unchanged table saves byte for byte, so the files only
+(per file: the newest 12, the newest of each hour for a day, and the newest
+of each day for two weeks) and goes through a temp file, so an interrupted
+save can't leave a truncated CSV. An unchanged table saves byte for byte, so the files only
 change when the data does.
 
 ## Data menu
