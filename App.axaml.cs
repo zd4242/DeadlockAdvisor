@@ -132,5 +132,15 @@ public partial class App : Application
             loggingService.Error("Unobserved task exception", e.Exception);
             e.SetObserved();
         };
+
+        // Whatever escapes every handler above; the line is written at once, so it survives the process dying.
+        AppDomain.CurrentDomain.UnhandledException += (_, e) =>
+        {
+            var message = "Unhandled exception" + (e.IsTerminating ? " (the app is closing)" : "");
+            if (e.ExceptionObject is Exception exception)
+                loggingService.Error(message, exception);
+            else
+                loggingService.Error($"{message}: {e.ExceptionObject}");
+        };
     }
 }

@@ -77,8 +77,11 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
    otherwise it starts Avalonia. After shutdown it installs a downloaded update (`AppUpdateService.InstallIfDownloaded`).
 2. `App.Initialize` loads the XAML, builds the container (`App.RegisterServices`: services as singletons;
    `DetectAction`, `ImportMatchAction` and the page view models as transients; `NotificationOverlayViewModel` singleton) and
-   installs the global exception handlers (Rx default handler, dispatcher, unobserved tasks).
-3. `App.OnFrameworkInitializationCompleted`: load settings (blocking), `DataService.Initialize()` (seed the default folder on a
+   installs the global exception handlers (Rx default handler, dispatcher, unobserved tasks, and
+   `AppDomain.UnhandledException`, which only logs: the log line is written at once, so it survives the process dying).
+3. `App.OnFrameworkInitializationCompleted`: load settings (blocking; a `settings.json` that can't be read is copied to
+   `settings.bad-<yyyyMMdd-HHmmss>.json`, the newest 3 kept, and the user is told, before the defaults take over),
+   `DataService.Initialize()` (seed the default folder on a
    first run, `DataStore.Load`, build the weight matrix), point the art service at the assets folder, create `MainWindow` with
    a `MainWindowViewModel`, attach the hotkey service. A startup failure writes `startup-error.log` and rethrows.
 4. `MainWindow.OnOpened` calls `MainWindowViewModel.OnOpened`: `DataMenuViewModel.OnStartup()` (formula check, first-run
@@ -128,7 +131,9 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   whichever is open). `MainWindow` shows each in a borderless `ModalWindow` laid over the main window and kept in step with its
   bounds; if another app is in front (`IForegroundService`) it waits until you switch back. `Confirm`, `ShowMessage` and a
   progress dialog are helpers in `Features/Shared/Modals`. Content is found by `ViewLocator`.
-- `INotificationService` raises toasts (`NotificationOverlayViewModel`), 3 seconds by default.
+- `INotificationService` raises toasts (`NotificationOverlayViewModel`), 3 seconds by default. Startup runs before the
+  overlay exists, so `NotificationService` holds what is sent while nobody listens (the newest 8 from the last minute) and
+  hands it to the first subscriber only; later subscribers get new messages alone.
 
 ## 7. Updates and downloads
 

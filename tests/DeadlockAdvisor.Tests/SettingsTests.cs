@@ -2,6 +2,7 @@ using System.Text.Json.Nodes;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 
@@ -82,6 +83,76 @@ public class SettingsTests
         Assert.True(settings.MinimizeToDetect);
         Assert.True(settings.KeepUnreadCaptures);
         Assert.True(settings.RememberCorrections);
+    }
+
+    [Fact]
+    public async Task AnUnreadableSettingsFileIsKeptAndTheUserIsTold()
+    {
+        using var folder = new TempDirectory();
+        await File.WriteAllTextAsync(folder.File("settings.json"), """{ "DataRoot": "D:\\Games", """);
+        var notes = new List<Notification>();
+        var notifications = new NotificationService(new FakeLoggingService());
+        using var _ = notifications.Notifications.Subscribe(notes.Add);
+
+        var service = new JsonSettingsService(new FakeLoggingService(), folder.Path, notifications);
+        await service.LoadAsync();
+
+        Assert.Equal(new AppSettings().ZoomIndex, service.Current.ZoomIndex);
+        var kept = Assert.Single(Directory.GetFiles(folder.Path, "settings.bad-*.json"));
+        Assert.Equal("""{ "DataRoot": "D:\\Games", """, await File.ReadAllTextAsync(kept));
+        var note = Assert.Single(notes);
+        Assert.Equal(NotificationSeverity.Warning, note.Severity);
+        Assert.Contains(Path.GetFileName(kept), note.Message);
+
+        service.Update(s => s.ZoomIndex = 3);
+        await WaitForText(folder.File("settings.json"), "\"ZoomIndex\": 3");
+        Assert.Equal("""{ "DataRoot": "D:\\Games", """, await File.ReadAllTextAsync(kept));
+    }
+
+    [Fact]
+    public async Task OnlyTheNewestThreeUnreadableCopiesAreKept()
+    {
+        using var folder = new TempDirectory();
+        for (var day = 1; day <= 4; day++)
+            await File.WriteAllTextAsync(folder.File($"settings.bad-2026010{day}-120000.json"), "old");
+        await File.WriteAllTextAsync(folder.File("settings.json"), "not json");
+
+        await new JsonSettingsService(new FakeLoggingService(), folder.Path).LoadAsync();
+
+        var names = Directory.GetFiles(folder.Path, "settings.bad-*.json").Select(Path.GetFileName).Order().ToList();
+        Assert.Equal(3, names.Count);
+        Assert.DoesNotContain("settings.bad-20260101-120000.json", names);
+        Assert.DoesNotContain("settings.bad-20260102-120000.json", names);
+    }
+
+    [Fact]
+    public async Task ASettingsFileThatReadsFineLeavesNoCopy()
+    {
+        using var folder = new TempDirectory();
+        await File.WriteAllTextAsync(folder.File("settings.json"), """{ "ZoomIndex": 4 }""");
+
+        await new JsonSettingsService(new FakeLoggingService(), folder.Path).LoadAsync();
+
+        Assert.Empty(Directory.GetFiles(folder.Path, "settings.bad-*.json"));
+    }
+
+    private static async Task WaitForText(string path, string text)
+    {
+        for (var attempt = 0; attempt < 100 && !(File.Exists(path) && (await ReadShared(path)).Contains(text)); attempt++)
+            await Task.Delay(20);
+        Assert.Contains(text, await ReadShared(path));
+    }
+
+    private static async Task<string> ReadShared(string path)
+    {
+        try
+        {
+            return await File.ReadAllTextAsync(path);
+        }
+        catch (IOException)
+        {
+            return "";
+        }
     }
 
     private static async Task WaitForFile(string path)

@@ -10,8 +10,11 @@ public class JsonSettingsService : ISettingsService
 {
     public const string AppDataFolderName = "DeadlockAdvisor";
     private const string _saveFileName = "settings.json";
+    private const string _badFilePrefix = "settings.bad-";
+    private const int _badFilesKept = 3;
 
     private readonly string _filePath;
+    private readonly INotificationService? _notificationService;
     private readonly JsonSerializerOptions _jsonOptions;
     private readonly BehaviorSubject<AppSettings> _settingsSubject;
     private readonly ILoggingService _loggingService;
@@ -29,13 +32,15 @@ public class JsonSettingsService : ISettingsService
             ? Path.GetFullPath(home)
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), AppDataFolderName);
 
-    public JsonSettingsService(ILoggingService loggingService) : this(loggingService, AppDataPath)
+    public JsonSettingsService(ILoggingService loggingService, INotificationService notificationService)
+        : this(loggingService, AppDataPath, notificationService)
     {
     }
 
-    internal JsonSettingsService(ILoggingService loggingService, string folder)
+    internal JsonSettingsService(ILoggingService loggingService, string folder, INotificationService? notificationService = null)
     {
         _loggingService = loggingService;
+        _notificationService = notificationService;
 
         Directory.CreateDirectory(folder);
 
@@ -64,7 +69,36 @@ public class JsonSettingsService : ISettingsService
         catch (Exception ex)
         {
             _loggingService.Error($"Failed to load settings from {_filePath}; using defaults", ex);
+            KeepUnreadableFile();
         }
+    }
+
+    /// <summary>The next <see cref="Update"/> writes the defaults over the file, so keep a copy of what couldn't be read.</summary>
+    private void KeepUnreadableFile()
+    {
+        string? copy = null;
+        try
+        {
+            var folder = Path.GetDirectoryName(_filePath)!;
+            copy = Path.Combine(folder, $"{_badFilePrefix}{DateTime.Now:yyyyMMdd-HHmmss}.json");
+            File.Copy(_filePath, copy, overwrite: true);
+
+            var older = Directory.GetFiles(folder, $"{_badFilePrefix}*.json")
+                .OrderByDescending(Path.GetFileName, StringComparer.Ordinal)
+                .Skip(_badFilesKept);
+            foreach (var path in older)
+                File.Delete(path);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            _loggingService.Warning($"Couldn't keep a copy of the unreadable {_saveFileName}: {ex.Message}");
+            copy = null;
+        }
+
+        _notificationService?.ShowWarning(copy is null
+            ? $"{_saveFileName} couldn't be read, so the default settings are in use."
+            : $"{_saveFileName} couldn't be read, so the default settings are in use. The old file is kept as {Path.GetFileName(copy)}.",
+            TimeSpan.FromSeconds(10));
     }
 
     public void Update(Action<AppSettings> mutate)

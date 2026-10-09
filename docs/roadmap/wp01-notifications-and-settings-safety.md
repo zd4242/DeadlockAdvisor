@@ -1,6 +1,6 @@
 # WP01 Startup messages are kept; an unreadable settings.json is kept; unhandled exceptions are logged
 
-Status: todo
+Status: done
 Effort: S · Risk: low · Depends on: none · Wave: A
 Touches: `src/Services/NotificationService.cs`, `src/Services/JsonSettingsService.cs`, **`App.axaml.cs`** (`InstallGlobalExceptionHandlers`), `src/Services/Contracts/INotificationService.cs` (only if the interface changes)
 Docs to update: `docs/architecture.md` (sections 3 and 6)
