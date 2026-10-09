@@ -1,9 +1,15 @@
 {
   "format": 1,
-  "published": "2026-10-02",
+  "published": "2026-10-09",
+  "notes": [
+    {
+      "published": "2026-10-09",
+      "text": "Heroes now have a Durability rating, measured from how much damage they take per match in Phantom\u002B games. No item uses it yet, so recommendations don\u0027t change."
+    }
+  ],
   "files": {
-    "categories.csv": "aef80c3bc7e4bbceaed46d5d5a48a6dca3914e2378409aba114ca14e5ae7a455",
-    "hero_category_scores.csv": "8adefe4b40df376c6fd3046046fdc6ce32e0080beabfdb44c4c96db14ab2780a",
+    "categories.csv": "abfa23015e723a2387d0eff1ae56c9e4814e0f2a6bc07b653c411f2142d266e2",
+    "hero_category_scores.csv": "0940bfeae810df877605788aaa9a84042d94c0066d955e8f9f4a120886a866af",
     "item_formula_coefficients.csv": "09909de29e51c6c6ea16bf6d300200e3426af42a5512bd8cf5572cd64acf531d",
     "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
     "stat_rules.csv": "8f2159dc6eca2483e381ad4794f9b1f2c4f4d820f008f88b92bd16ff4247b36e",
