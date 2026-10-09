@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using System.Text.Json.Nodes;
@@ -193,6 +194,10 @@ public class StatusBarTests
         Assert.Equal(["Match data", "Art"], chips.Select(chip => ((BackgroundJobViewModel)chip.DataContext!).Title));
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
         ui.Screenshot("status_downloads.png");
+        OpenFlyout(ui);
+        Assert.Contains(FlyoutTexts(ui), text => text is not null && text.StartsWith("Downloading · 31%"));
+        Assert.Equal("Updating match data 31%", ChipText(ui));
+        ui.Screenshot("status_updates_downloads.png");
 
         ui.Window.Close();
         Assert.False(closed);
@@ -201,6 +206,50 @@ public class StatusBarTests
         ask.ConfirmCommand!.Execute(null);
         UiHarness.Settle();
         Assert.True(closed);
+    }
+
+    private sealed class FailingArtDownload : IArtDownloadService
+    {
+        public Task<ArtDownloadReport> DownloadAsync(DataStore store, string assetsDir, bool force, IProgress<FetchProgress>? progress,
+            CancellationToken cancellationToken) => throw new HttpRequestException("The site is down.");
+    }
+
+    [AvaloniaFact]
+    public async Task AFailedDownloadReadsFailedOnTheChipAndOffersAnotherTry()
+    {
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
+            services => services.AddSingleton<IArtDownloadService>(new FailingArtDownload()));
+        ui.Show();
+
+        await ui.ViewModel.DataMenu.DownloadArtAsync(force: false);
+        UiHarness.Settle();
+
+        Assert.Equal("Art download failed", ChipText(ui));
+        OpenFlyout(ui);
+        Assert.Contains("Try again", FlyoutButtons(ui).Select(button => button.Content as string));
+        Assert.Contains("What went wrong", FlyoutTexts(ui));
+        Assert.Contains("A download didn't finish.", FlyoutTexts(ui));
+        ui.Screenshot("status_updates_failed.png");
+    }
+
+    [AvaloniaFact]
+    public void WithoutAConnectionTheChipSaysUpdatesArePausedBesideTheOfflineChip()
+    {
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
+        ui.Show();
+
+        ui.Connectivity.GoOffline();
+        UiHarness.Settle();
+
+        Assert.Equal("Updates paused", ChipText(ui));
+        Assert.True(OfflineChip(ui).IsEffectivelyVisible);
+        OpenFlyout(ui);
+        Assert.Contains("No internet connection: everything works from what's saved.", FlyoutTexts(ui));
+        ui.Screenshot("status_updates_offline.png");
+
+        ui.Connectivity.Reconnect();
+        UiHarness.Settle();
+        Assert.NotEqual("Updates paused", ChipText(ui));
     }
 
     [AvaloniaFact]

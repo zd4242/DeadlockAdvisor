@@ -11,7 +11,7 @@ A screen reader can name what's on screen, text is readable, and every page lays
 
 ## Why / premise check
 
-1. Accessibility metadata is nearly absent ✔: only 4 `AutomationProperties` in the whole app (all in `AppUpdateView.axaml`) and a handful of `Focusable`/`IsTabStop`
+1. Accessibility metadata is nearly absent ✔: only a few `AutomationProperties` in the whole app (the Updates chip has one; they were in `AppUpdateView.axaml` until WP13 replaced it) and a handful of `Focusable`/`IsTabStop`
    settings; icon-only buttons (settings gear, caption buttons, zoom buttons, search and filter, info badges, close ×) rely on tooltips; the painted controls have
    no automation peers (search the source for `AutomationProperties` and `OnCreateAutomationPeer`).
 2. `TextFaint #6d6b77` has a contrast of 3.5:1 on `Bg #131317` and 3.0:1 on `Surface2 #22222a` ✔ (WCAG relative luminance; AA wants 4.5:1 for small text) and is used

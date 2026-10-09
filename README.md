@@ -21,12 +21,23 @@ put it anywhere and run it; nothing else needs installing. Windows
 SmartScreen may warn the first time, as it does for any download it hasn't
 seen often: **More info → Run anyway**.
 Settings → Data shows which version you have. When a new one is out, the
-status bar says so: **Update** downloads it in the background, and it's
+**Updates** chip at the left of the status bar says so; rest the pointer on it (or click it)
+and the **App** row's **Update** downloads it in the background, and it's
 installed in place of the old exe when you close the app; **Restart now**
 does that straight away. The formulas and match data keep themselves up to date without a
 new version. The app looks for all three at startup and again about every six hours while it
 stays open, so a session left running for days still hears about a new patch or version.
 Only one copy runs at a time: starting it again brings the open window to the front.
+
+The **Updates** chip is the one place to ask whether everything is current. It reads
+*Up to date*, *Updating match data 40%*, *Patch 10-07 is out*, *2 updates*, *Updates paused*
+(offline) or what failed. Its flyout has a row each for the app, the formulas, the match data
+and the art, saying what state each is in and when it was last checked, with that row's
+action (Update, Restart now, Apply, Download, Check), **What's new** for the app and the
+formulas, **Skip this version** for the app, and **Details…** for the match data (which
+patch, how many matches, how old). **Check all** looks for all of them now, and the
+flyout's last line says how much the app has downloaded this session. Downloads under way
+keep their own progress and cancel chips beside it.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,
@@ -39,7 +50,8 @@ old. Settings live beside it in `settings.json`.
 
 Offline, it all still works from what's saved: the starter data recommends
 items, and until the art has been downloaded heroes show as their initials
-(Detect from screen needs that art). A status bar chip says **Offline**;
+(Detect from screen needs that art). A status bar chip says **Offline** (and the
+Updates chip, *Updates paused*);
 clicking it checks again, and it checks by itself every half minute. When the
 connection returns, the startup checks that couldn't be made are made then. A
 first run that starts offline offers its downloads, as a status bar chip, once
@@ -272,10 +284,10 @@ Data Folder…** is not repaired: it is refused, and left as it was.
   every match (under a minute a patch), or with the rank groups too
   (about 3 minutes a patch), with each phase behind its chip in the status
   bar. Either way a finished patch is never fetched again, each patch's
-  numbers are in use as soon as they arrive. The status bar chip says
-  *up to date* while a check in the last three days found no newer patch
-  (otherwise how old the data is), and turns red when a newer patch is out
-  than the data covers.
+  numbers are in use as soon as they arrive. The Match data row of the
+  Updates flyout says *up to date* while a check in the last three days found
+  no newer patch (otherwise how old the data is), and the chip says
+  *Patch 10-07 is out* when a newer patch is out than the data covers.
 - **Check for Formula Updates**: takes the newest published hero ratings
   and item formulas ([formula updates](#formula-updates)), asking again
   about files you kept your own changes in.

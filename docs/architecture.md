@@ -64,7 +64,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
 | `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, image ops and PNG codec |
-| `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
+| `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
 | `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls, behaviours (middle-click autoscroll), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
 | `Themes/` | XAML resource dictionaries (brushes, shared styles) |
@@ -93,7 +93,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 4. `MainWindow.OnOpened` calls `MainWindowViewModel.OnOpened`: `DataMenuViewModel.OnStartup()` (formula check, first-run
    offer, match-data and art checks) and `AppUpdateViewModel.OnStartupAsync()`, then starts the `UpdateScheduler` (section 7).
    A reconnect repeats the startup checks (`OnReconnected`). `MainWindowViewModel` builds the page view models through DI and a few children with `new`
-   (`DataStatusViewModel`, `AppUpdateViewModel`, `ConnectionViewModel`, `SettingsViewModel` and its pages).
+   (`DataStatusViewModel`, `AppUpdateViewModel`, `ConnectionViewModel`, `UpdatesViewModel`, `SettingsViewModel` and its pages).
 
 Where the user's files live: `%AppData%\DeadlockAdvisor` (or the folder in `DEADLOCK_ADVISOR_HOME`) holds `settings.json` and
 the logs (`deadlock-advisor.log`, `.previous.log`, `startup-error.log`); the **data root** (the same folder by default, or
@@ -210,9 +210,22 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   reports stay on the UI thread (not `Parallel.ForEachAsync`). A URL fetched or confirmed current earlier in the run is copied
   to the next group's folder (the hero card is in `heroes` and `topbar/_cards/normal`); a 5xx or 429 is retried twice through an
   injectable delay; `ArtManifest` locks its dictionary. `WelcomeViewModel.ArtSize` is the size of a first download.
-- The match data chip (`DataStatusViewModel`) reads "up to date" while no newer patch is known and
-  `AppSettings.MatchDataCheckedAt` is under 3 days old (`UpToDateWindow`); otherwise it shows how old the data is, so an
-  install that never checked doesn't claim it.
+- **The Updates chip** (`Features/MainWindow/Updates`; `MainWindowViewModel.Updates`) is the one answer to "is everything up
+  to date?", at the left of the status bar, with a hover/click flyout. `UpdatesViewModel` holds no state of its own: whenever
+  a service's state changes (settings, `AppUpdateViewModel`, `DataMenuViewModel`'s `NewerPatch`, `IsDownloading*`,
+  `IsChecking*` and `Jobs`, connectivity, the store, new art) it works every row out again from them
+  (`UpdateRowViewModel.Apply`, one per `UpdateSource`: App, Formulas, Match data, Art). A row has an `UpdateState`
+  (`UpToDate`, `NotChecked`, `Checking`, `Updating`, `Available`, `Offline`, `Off`, `Failed`), a one-line summary with
+  when it was last checked (`MatchStatsMath.Age`), a chip headline, one action and a few links. The whole takes the most
+  pressing state (failed, updating, available, offline, checking, not checked, up to date; `Off` ranks last and doesn't
+  count against up to date), and the chip says that row's headline or "2 updates". The Formulas, New heroes and first-run
+  ("Downloads") chips the Data menu puts in the status bar stay there for the click and count as offers: their
+  `OpenCommand` is the action. The Match data row's Details is `DataStatusView`, the old card: it reads "up to date" while no
+  newer patch is known and `AppSettings.MatchDataCheckedAt` is under 3 days old (`DataStatusViewModel.UpToDateWindow`),
+  otherwise how old the data is, so an install that never checked doesn't claim it. **Check all** runs
+  `DataMenuViewModel.CheckAllAsync(manual: true)` and `AppUpdateViewModel.CheckAsync(manual: true)`; the footer's bytes come
+  from `IDeadlockApi.BytesReceived`, read when the flyout opens or anything changes. Running downloads keep their own
+  progress and cancel chips on the right, and the offline chip (with Retry) stays beside them.
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the

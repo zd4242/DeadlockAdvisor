@@ -1,6 +1,6 @@
 # WP13 One Updates chip and flyout
 
-Status: todo
+Status: done
 Effort: L (three stages) · Risk: medium (a visible redesign of the status bar) · Depends on: WP09, WP10 · Wave: D
 Touches: new `src/Features/MainWindow/Updates/*` (`UpdatesViewModel`, row view models, `UpdatesView.axaml`), **`src/Features/MainWindow/MainWindow.axaml`** (status bar), `MainWindowViewModel.cs`, **`DataMenuViewModel.cs`** (state exposed, not logic moved), `DataStatusViewModel.cs` / `DataStatusView.axaml` (the match-data card moves), `tests/DeadlockAdvisor.Tests/Ui/StatusBarTests.cs` and new tests
 Docs to update: `README.md` (Install, Data menu, status bar), `docs/architecture.md` (sections 2 and 7), the mockup list in this package's report

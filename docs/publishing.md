@@ -139,7 +139,8 @@ download link) is always the newest. It takes about 10 minutes. Pushing a tag yo
 **How installs get it** (`AppUpdateService`, `AppUpdateViewModel`): at startup, and again about every six
 hours while it stays open (`UpdateScheduler`), an install asks GitHub's
 API for the newest release (the `match-data` and `model` pre-releases don't count) and, if it's newer,
-shows "Version x.y.z is out · Update · What's new" in the status bar. **Update** downloads the release's
+says "Version x.y.z is out" on the status bar's Updates chip, whose flyout offers **Update**, **What's new**
+and **Skip this version** on its App row. **Update** downloads the release's
 `DeadlockAdvisor.exe` beside the running one as `DeadlockAdvisor.update.exe`, and checks it against the
 size and SHA-256 GitHub gives for it. A single-file app reads its own exe while it runs, so the swap waits
 for the app to close: then a copy of the old exe (`DeadlockAdvisor.installer.exe`, started with
