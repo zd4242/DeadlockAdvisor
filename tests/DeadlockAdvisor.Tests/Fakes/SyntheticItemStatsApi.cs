@@ -47,6 +47,9 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
     /// <summary>Throws what it returns for a URL instead of answering.</summary>
     public Func<string, Exception?>? FailWith { get; set; }
 
+    /// <summary>Answers an empty list, as a half-working endpoint does, for the URLs this returns true for.</summary>
+    public Func<string, bool>? AnswerEmpty { get; set; }
+
     public long BytesReceived { get; private set; }
 
     public Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
@@ -56,6 +59,7 @@ public sealed class SyntheticItemStatsApi : IDeadlockApi
             throw failure;
         JsonNode answer = url switch
         {
+            _ when AnswerEmpty?.Invoke(url) == true => new JsonArray(),
             _ when Also.TryGetValue(url, out var also) => also(),
             MatchStatsService.Patches => new JsonArray(PatchTitles.Select(title => (JsonNode)new JsonObject { ["title"] = title }).ToArray()),
             MatchStatsService.Ranks => new JsonArray(

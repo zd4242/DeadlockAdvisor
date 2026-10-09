@@ -302,7 +302,18 @@ hero's own purchases in ranked matches. That's 83 calls per patch with 38 heroes
 (`MatchFetchPlan.EveryMatchCalls`). Each rank group repeats them but the two ranked
 ones: unranked matches have no badge, so a rank group holds only ranked matches. The calls
 start at most one per 0.4 s, two at a time (`RequestPacer`), and a 429 holds every
-start back for 30 s.
+start back for 30 s. A failed call is retried by what went wrong: a 429 up to three
+times after 30 s, a 5xx once after 5 s, and a dropped connection or a timeout twice,
+after 5 s and then 10 s (`MatchStatsService.GetAnalyticsAsync`); the progress view
+says why it paused. Anything else ends the download.
+
+Two answers are refused rather than stored, because a segment with no counts would
+look finished and the patch would never be fetched again. An "every match" answer
+with no rows over a window longer than 6 hours (`MatchStatsService.EmptyBaselineWindow`)
+throws `InvalidDataException`, so nothing of that patch is saved (and the CI job fails
+instead of publishing it); a quiet first few hours of a patch are fine. And
+`GameApiService.SyncAsync` throws the same before touching the store when the API lists
+no heroes or no shop items, since the item stats and tooltips have no backup.
 
 #### The shared download
 

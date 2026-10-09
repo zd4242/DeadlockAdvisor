@@ -483,7 +483,7 @@ public class GameApiTests
         var now = new DateTimeOffset(2026, 10, 8, 12, 0, 0, TimeSpan.Zero);
         var url = HeroDurability.Url(now);
         api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => JsonNode.Parse(HeroesJson);
-        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray();
+        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray(FakeItem("Spirit Ward", 101, 1, "vitality", 800));
         api.Json[url] = () => HeroStats();
         using var dir = new TempDirectory();
         var store = StoreWithDurability(dir.Path);
@@ -503,7 +503,7 @@ public class GameApiTests
     {
         var api = new FakeDeadlockApi();
         api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => JsonNode.Parse(HeroesJson);
-        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray();
+        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray(FakeItem("Spirit Ward", 101, 1, "vitality", 800));
         using var dir = new TempDirectory();
         var store = StoreWithDurability(dir.Path);
 
@@ -516,6 +516,27 @@ public class GameApiTests
         api.Asked.Clear();
         await new GameApiService(api).SyncAsync(store, measureHeroes: false);
         Assert.DoesNotContain(api.Asked, asked => asked.Contains("hero-stats", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData(true, "no heroes")]
+    [InlineData(false, "no shop items")]
+    public async Task ASyncWithNoHeroesOrNoShopItemsChangesNothing(bool emptyHeroes, string said)
+    {
+        var api = new FakeDeadlockApi();
+        api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => emptyHeroes ? new JsonArray() : JsonNode.Parse(HeroesJson);
+        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => emptyHeroes
+            ? new JsonArray(FakeItem("Spirit Ward", 101, 1, "vitality", 800))
+            : new JsonArray();
+        using var dir = new TempDirectory();
+        var store = StoreWithDurability(dir.Path);
+        var (heroes, items, tooltips) = (store.Heroes.Count, store.Items.Count, store.ItemTooltips.Count);
+
+        var failure = await Assert.ThrowsAsync<InvalidDataException>(() => new GameApiService(api).SyncAsync(store));
+
+        Assert.Contains(said, failure.Message, StringComparison.Ordinal);
+        Assert.Equal((heroes, items, tooltips), (store.Heroes.Count, store.Items.Count, store.ItemTooltips.Count));
+        Assert.Empty(Directory.GetFileSystemEntries(dir.Path));
     }
 
     [Fact]

@@ -1,3 +1,4 @@
+using System.IO;
 using System.Net.Http;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -20,7 +21,8 @@ public interface IGameApiService
 
     /// <summary>
     /// Fetch, fold into <paramref name="store"/> and write only the files that changed. The store is
-    /// only touched once the heroes and the shop are in, so a failed fetch changes nothing.
+    /// only touched once the heroes and the shop are in, so a failed fetch, or an answer with no heroes or
+    /// no shop items (<see cref="InvalidDataException"/>), changes nothing.
     /// </summary>
     /// <param name="measureHeroes">
     /// Also fetch how much damage each hero takes, for the durability trait (<see cref="HeroDurability"/>). One
@@ -74,6 +76,11 @@ public sealed class GameApiService : IGameApiService
     {
         var heroes = await FetchHeroesAsync(cancellationToken);
         var items = await FetchShopItemsAsync(cancellationToken);
+        // Applying an empty list would replace the item stats and tooltips, which have no backup, with nothing.
+        if (heroes.Count == 0)
+            throw new InvalidDataException("deadlock-api.com listed no heroes.");
+        if (items.Count == 0)
+            throw new InvalidDataException("deadlock-api.com listed no shop items.");
         JsonArray? heroStats = null;
         string? unmeasured = null;
         if (measureHeroes)

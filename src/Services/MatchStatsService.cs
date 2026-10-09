@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Globalization;
+using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
@@ -91,6 +92,15 @@ public sealed class MatchStatsService : IMatchStatsService
     public const int RateLimitRetries = 3;
     public static readonly TimeSpan ServerErrorWait = TimeSpan.FromSeconds(5);
     public const int ServerErrorRetries = 1;
+    /// <summary>A dropped connection or a timeout: waits this long, then twice as long.</summary>
+    public static readonly TimeSpan ConnectionErrorWait = TimeSpan.FromSeconds(5);
+    public const int ConnectionRetries = 2;
+
+    /// <summary>
+    /// A window longer than this has had matches: a patch's first hours can be quiet, but an "every match"
+    /// answer with no rows after this long is the API failing, and storing it would end the patch's fetches.
+    /// </summary>
+    public static readonly TimeSpan EmptyBaselineWindow = TimeSpan.FromHours(6);
 
     private readonly IDeadlockApi _api;
     private readonly Func<DateTimeOffset> _utcNow;
@@ -225,6 +235,8 @@ public sealed class MatchStatsService : IMatchStatsService
             Add(ItemStatsUrl(MatchStatsMath.RankedParams(MatchStatsMath.AsParams()), phase.From, phase.Until), "Ranked: your hero");
         }
         var answers = await pacer.RunAsync(requests, cancellationToken);
+        if (rank is null && answers[0].Count == 0 && answers[1].Count == 0 && TimeSpan.FromSeconds(phase.Until - phase.From) > EmptyBaselineWindow)
+            throw new InvalidDataException($"deadlock-api.com listed no purchases in any match of patch {phase.Patch.Label}. Nothing was saved.");
 
         static Dictionary<long, WinTotals> Totals(JsonArray rows) =>
             MatchStatsMath.Totals(rows.Select(row => (JsonRecord.Int(row, "item_id"), JsonRecord.Int(row, "wins"), JsonRecord.Int(row, "matches"))));
@@ -288,11 +300,15 @@ public sealed class MatchStatsService : IMatchStatsService
             $"{Uri.EscapeDataString(pair.Key)}={Uri.EscapeDataString(pair.Value)}"));
     }
 
-    /// <summary>One analytics call in its turn. Waits out a rate limit and retries a server error once; anything else throws.</summary>
+    /// <summary>
+    /// One analytics call in its turn. Waits out a rate limit, retries a server error once and a dropped
+    /// connection or a timeout twice, each wait longer than the last; anything else throws.
+    /// </summary>
     private async Task<JsonArray> GetAnalyticsAsync(RequestPacer pacer, Run run, string url, string text, CancellationToken cancellationToken)
     {
         var rateLimited = 0;
         var serverErrors = 0;
+        var connectionErrors = 0;
         while (true)
         {
             FetchWait wait;
@@ -312,6 +328,11 @@ public sealed class MatchStatsService : IMatchStatsService
             {
                 serverErrors++;
                 wait = new FetchWait($"deadlock-api.com had an error ({(int)ex.StatusCode!}), trying again", ServerErrorWait);
+            }
+            catch (Exception ex) when ((ex is HttpRequestException { StatusCode: null } or TimeoutException) && connectionErrors < ConnectionRetries)
+            {
+                wait = new FetchWait("deadlock-api.com didn't answer, trying again", ConnectionErrorWait * Math.Pow(2, connectionErrors));
+                connectionErrors++;
             }
             run.Report(text, finishedCall: false, wait);
             await _delay(wait.Length, cancellationToken);

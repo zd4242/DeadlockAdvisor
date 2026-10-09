@@ -1,6 +1,6 @@
 # WP06 Sanity guards and retries for the API paths
 
-Status: todo
+Status: done
 Effort: S-M · Risk: medium (shared with the CI job that publishes the match data) · Depends on: none · Wave: A
 Touches: `src/Services/GameApiService.cs`, `src/Services/MatchStatsService.cs` (`GetAnalyticsAsync`, the baseline phase), `src/Services/MatchSnapshotJob.cs` (read only), tests (`GameApiTests`, `MatchStatsServiceTests`, `MatchDownloadTests`)
 Docs to update: `docs/scoring_model.md` ("The counts behind the lifts": retries), `docs/architecture.md` (section 7)

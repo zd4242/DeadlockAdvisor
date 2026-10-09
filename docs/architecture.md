@@ -153,6 +153,10 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   `BytesReceived`, and `Reachability`, which `ConnectivityService` watches for the offline chip (it probes every 30 s while
   offline). `DataMenuViewModel.OnStartup`/`OnReconnected` run the checks; nothing re-checks while the app stays open
   (roadmap WP10).
+- Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes
+  or no shop items, and `MatchStatsService` throws it for an empty "every match" baseline over a window longer than 6 hours.
+  Both reach the user as a failure ("Nothing was changed"), and in CI as a failed job, so nothing is published. Analytics
+  calls retry a 429, a 5xx once, and a dropped connection or timeout twice (scoring_model.md, "The counts behind the lifts").
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the

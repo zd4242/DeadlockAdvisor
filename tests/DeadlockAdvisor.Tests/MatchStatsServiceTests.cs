@@ -286,6 +286,105 @@ public class MatchStatsServiceTests
         Assert.Single(ItemStats(api.Asked));
     }
 
+    /// <summary>Fails the first item-stats call asked, <paramref name="drops"/> times, and nothing else.</summary>
+    private static Func<string, Exception?> DropTheFirstCall(int drops, Func<Exception> failure, Action<int>? attempts = null)
+    {
+        string? target = null;
+        var failed = 0;
+        return url =>
+        {
+            if (!url.Contains("item-stats", StringComparison.Ordinal))
+                return null;
+            target ??= url;
+            if (url != target)
+                return null;
+            failed++;
+            attempts?.Invoke(failed);
+            return failed <= drops ? failure() : null;
+        };
+    }
+
+    [Theory]
+    [InlineData(1, false)]
+    [InlineData(2, false)]
+    [InlineData(1, true)]
+    [InlineData(2, true)]
+    public async Task ADroppedConnectionOrATimeoutIsRetriedWithLongerWaitsAndTheDownloadCompletes(int drops, bool timeout)
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var waits = new List<TimeSpan>();
+        var service = api.Service(waits);
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        var progress = new Collect<MatchFetchProgress>();
+        api.FailWith = DropTheFirstCall(drops, () => timeout ? new TimeoutException("slow") : new HttpRequestException("reset"));
+
+        await service.FetchAsync(store, plan, progress, _ => { }, CancellationToken.None);
+
+        Assert.Equal(Enumerable.Range(0, drops).Select(i => MatchStatsService.ConnectionErrorWait * Math.Pow(2, i)), waits.Where(wait => wait >= MatchStatsService.ConnectionErrorWait));
+        Assert.Equal(drops, progress.Seen.Count(step => step.Wait?.Reason == "deadlock-api.com didn't answer, trying again"));
+        Assert.Null(progress.Seen[^1].Wait);
+        Assert.Equal(plan.Calls, progress.Seen[^1].Done);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ADroppedConnectionIsGivenUpOnAfterTwoRetries(bool timeout)
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        var attempts = 0;
+        api.FailWith = DropTheFirstCall(drops: 3, () => timeout ? new TimeoutException("slow") : new HttpRequestException("reset"), n => attempts = n);
+
+        if (timeout)
+            await Assert.ThrowsAsync<TimeoutException>(() => service.FetchAsync(store, plan, null, _ => { }, CancellationToken.None));
+        else
+            await Assert.ThrowsAsync<HttpRequestException>(() => service.FetchAsync(store, plan, null, _ => { }, CancellationToken.None));
+
+        Assert.Equal(1 + MatchStatsService.ConnectionRetries, attempts);
+    }
+
+    [Fact]
+    public async Task AnEveryMatchBaselineWithNoRowsOverALongWindowIsRejectedAndNothingIsKept()
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var service = api.Service();
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        Assert.True(TimeSpan.FromSeconds(plan.Phases[0].Until - plan.Phases[0].From) > MatchStatsService.EmptyBaselineWindow);
+        api.AnswerEmpty = IsBaseline;
+        var finished = new List<MatchSegment>();
+
+        var failure = await Assert.ThrowsAsync<InvalidDataException>(() => service.FetchAsync(store, plan, null, finished.Add, CancellationToken.None));
+
+        Assert.Contains("09-29", failure.Message, StringComparison.Ordinal);
+        Assert.Empty(finished);
+        Assert.Empty(store.MatchSegments);
+    }
+
+    [Fact]
+    public async Task AnEmptyBaselineIsFineWhenOnlyAFewHoursOfThePatchHavePassed()
+    {
+        var store = LoadStore();
+        var api = new SyntheticItemStatsApi(store);
+        var patchStart = (await api.Service().PlanAsync(store, includeRanks: false)).Phases[0].From;
+        var service = new MatchStatsService(api, () => DateTimeOffset.FromUnixTimeSeconds(patchStart).AddHours(3), (_, _) => Task.CompletedTask);
+        var plan = await service.PlanAsync(store, includeRanks: false);
+        api.AnswerEmpty = url => IsBaseline(url) && long.Parse(SyntheticItemStatsApi.Query(url)["min_unix_timestamp"]) >= patchStart;
+        var finished = new List<MatchSegment>();
+
+        await service.FetchAsync(store, plan, null, finished.Add, CancellationToken.None);
+
+        Assert.Equal(plan.Phases.Count, finished.Count);
+        Assert.Empty(finished[0].EveryMatch.Baseline.First);
+    }
+
+    private static bool IsBaseline(string url) =>
+        url.Contains("/item-stats?", StringComparison.Ordinal) && SyntheticItemStatsApi.Query(url).Count == 3;
+
     [Fact]
     public async Task CancellingKeepsTheFinishedPhasesAndStopsBeforeTheNextCall()
     {
