@@ -119,7 +119,10 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
 - **Match page:** `MatchViewModel` composes `MatchBoardViewModel` (the roster, picker, roles, focus), `ResultsViewModel` (the
   recommendation list), `ExplainViewModel` ("Why this item?"), `DataRanksViewModel` (rank filters), and the `DetectAction` and
   `ImportMatchAction`. `MatchState` is who is in the match (roles, top-bar slots, net-worth history, focused enemies); it is
-  saved in `AppSettings.LastMatch`.
+  saved in `AppSettings.LastMatch`. Every page stays alive, so `MainWindowViewModel` tells `MatchViewModel.SetShown` when
+  the Match tab is on screen (Settings covers it, which counts as hidden): while hidden, `ScoresChanged` (a formula edit)
+  only marks the list stale and the page rescores once when it shows again. A changed match or `StoreReplaced` still
+  refreshes at once.
 - **Match lookup:** `MatchLookupService.LookUpAsync` reads a finished match's `/v1/matches/{id}/metadata` into a
   `LookedUpMatch`: when it started, how long it ran, who won, and per player the account, hero, team and slot plus
   `Items` (`PurchasedItem`: the game's item id, when bought, when sold or null; ability upgrades that have no shop item are
@@ -130,17 +133,27 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   `FocusWeights`) from the weight matrix; `ExplainItem` walks the same arithmetic; `DataScores` is the match-data second
   opinion; `BlendScale` puts the two on one scale. Details and rules: scoring_model.md.
 - **Match data:** downloads bring segments (`data/match_counts/<patch>.json`); `MatchStatsMath.Analyse` turns them into lifts
-  (`match_item_lift.csv` + `.meta.json`); `Hero Items` builds its table from the segments (`HeroItemTable`, `HeroFits`).
+  (`match_item_lift.csv` + `.meta.json`); `Hero Items` builds its table from the segments (`HeroItemTable`, `HeroFits`). `HeroItemsViewModel` keeps the last table
+  it built, keyed by hero, mode, rank range and the picked patches, so sorting, tier toggles and the usage slider only
+  reshape its rows; a different pick, or `StoreReplaced` (every download ends in one), builds it again.
 - **Game data:** `Data → Sync from Game API` (`GameApiService` → `GameSync`; the menu item shows only with the model editors on)
   rewrites heroes, items, item stats and tooltips and
   measures the max-HP and durability traits (scoring_model.md). Everyone else gets those files through the model update.
 
 ## 5. Threading and background jobs
 
-- Services' `async` methods resume on the UI thread (there is no `ConfigureAwait(false)` outside `JsonSettingsService`), and
-  `Task.Run` is used only for Model Health and Detect's capture, vision and archiving steps. CPU-heavy steps in a download
-  therefore run on the UI thread today (roadmap WP11). Model Health saves pending edits, then loads its own copy of the
+- Services' `async` methods resume on the UI thread (there is no `ConfigureAwait(false)` outside `JsonSettingsService`), so
+  CPU-heavy steps are handed to `Task.Run` by name: Model Health, Detect's capture, vision and archiving steps, and a
+  download's unpacking of each snapshot file (`MatchSnapshotService.FetchAsync`), `MatchStatsService.ApplyAsync` (writing the
+  patch's counts, `MatchStatsMath.Analyse`, formatting the lift files with `DataStore.FormatMatchLift`) and the top-bar cut
+  (`TopbarDerivation.Run`). Model Health saves pending edits, then loads its own copy of the
   data folder inside `Task.Run`, so editing while it runs can't change what it reads (and it won't start if the save fails).
+- `DataStore` is not thread-safe, so a background step reads only what it was handed (the segment list, which is replaced
+  and never edited, and a copy of the items) and the calling thread changes the store: it puts and prunes the segments,
+  assigns the lifts and writes the lift files. `FetchAsync`'s `finished` callback is a `Func<MatchSegment, Task>` that is
+  awaited before the next file or phase is asked for, so applies never overlap; `ApplyAsync` takes no token and always
+  finishes, so a cancel lands between patches. If the rank filter changes while the lifts are being worked out, they are
+  worked out again for the new range. The filter's own `Reanalyse` still runs on the UI thread.
 - **Closing:** `MainWindow.OnClosing` first lets `MainWindowViewModel.HoldCloseForJobs` ask about running downloads, then
   `MainWindowViewModel.OnClosing` flushes pending saves. If that fails (the error toast has the reason) the window stays
   open and asks "Close anyway" / "Keep the app open"; an OS shutdown is never held up. Each question has its own
@@ -238,7 +251,7 @@ off Windows): a `Done` chime for an applied match, a `NeedsLook` chime and a tas
   and read the PNG; don't launch the app.**
 - `Fakes/` (`FakeDeadlockApi` and the other fake services in `FakeServices.cs`, `FakeConnectivity`, `FakeScreenCapture`,
   `FakeGlobalHotkey`, `FakeForeground`, `HeldDownloads`, `SyntheticItemStatsApi`), `Support/` (`DataFixture`, `TestStore`,
-  `Golden`, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
+  `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md).
 
