@@ -1,3 +1,4 @@
+using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Shared.Modals.Document;
@@ -13,5 +14,12 @@ public partial class DocumentModalView : ReactiveUserControl<DocumentModalViewMo
             await Task.Delay(50);
             CloseButton.Focus();
         };
+    }
+
+    private async void CopyAll(object? sender, RoutedEventArgs e)
+    {
+        if (ViewModel is null || TopLevel.GetTopLevel(this)?.Clipboard is not { } clipboard)
+            return;
+        await clipboard.SetTextAsync(ViewModel.Text);
     }
 }

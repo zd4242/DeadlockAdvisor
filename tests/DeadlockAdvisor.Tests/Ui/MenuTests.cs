@@ -71,8 +71,43 @@ public class MenuTests
         var list = modal.GetVisualDescendants().OfType<ListBox>().Single();
         var realized = list.GetVisualDescendants().OfType<ListBoxItem>().Count();
 
-        Assert.True(list.ItemCount > 500, $"{list.ItemCount} paragraphs");
+        Assert.True(list.ItemCount > 200, $"{list.ItemCount} blocks");
         Assert.InRange(realized, 1, 60);
+    }
+
+    /// <summary>With uneven block heights the scroll bar's estimate keeps changing and the thumb jumps about.</summary>
+    [AvaloniaFact]
+    public void TheNoticesBlocksAreAllTheSameHeightExceptTheLast()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.ViewModel.NoticesCommand.Execute().Subscribe();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var heights = modal.GetVisualDescendants().OfType<ListBoxItem>().Select(item => item.Bounds.Height).Distinct().ToList();
+
+        Assert.Single(heights);
+        var notices = Assert.IsType<DocumentModalViewModel>(((ModalViewModel)modal.DataContext!).Content);
+        Assert.All(notices.Blocks.SkipLast(1), block => Assert.Equal(DocumentModalViewModel.LinesPerBlock, block.Count(c => c == '\n') + 1));
+        Assert.All(notices.Blocks, block => Assert.All(block.Split('\n'), line => Assert.True(line.Length <= DocumentModalViewModel.Columns)));
+    }
+
+    [AvaloniaFact]
+    public void CopyAllPutsTheWholeNoticesOnTheClipboard()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.ViewModel.NoticesCommand.Execute().Subscribe();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var copy = modal.GetVisualDescendants().OfType<Button>().Single(button => Equals(button.Content, "Copy all"));
+        copy.RaiseEvent(new Avalonia.Interactivity.RoutedEventArgs(Button.ClickEvent));
+        UiHarness.Settle();
+
+        var copied = modal.Clipboard!.TryGetDataAsync().GetAwaiter().GetResult()!.TryGetTextAsync().GetAwaiter().GetResult();
+        Assert.Equal(Core.ThirdPartyNotices.Text(), copied);
     }
 
     [AvaloniaFact]

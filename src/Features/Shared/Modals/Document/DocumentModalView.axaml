@@ -5,7 +5,7 @@
              x:DataType="document:DocumentModalViewModel">
     <UserControl.Styles>
         <Style Selector="ListBox.document ListBoxItem">
-            <Setter Property="Padding" Value="0,0,0,10"/>
+            <Setter Property="Padding" Value="0"/>
             <Setter Property="Background" Value="Transparent"/>
         </Style>
         <Style Selector="ListBox.document ListBoxItem:pointerover /template/ ContentPresenter">
@@ -17,9 +17,9 @@
     </UserControl.Styles>
     <StackPanel Margin="20" Spacing="12">
         <TextBlock Classes="h2" Text="{Binding Title}"/>
-        <ListBox x:Name="Paragraphs"
+        <ListBox x:Name="Blocks"
                  Classes="document"
-                 ItemsSource="{Binding Paragraphs}"
+                 ItemsSource="{Binding Blocks}"
                  Width="720"
                  Height="480"
                  Padding="0,0,12,0"
@@ -27,18 +27,30 @@
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
             <ListBox.ItemTemplate>
                 <DataTemplate x:DataType="x:String">
-                    <SelectableTextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+                    <SelectableTextBlock Text="{Binding}"
+                                         FontFamily="Cascadia Mono, Consolas, Menlo, DejaVu Sans Mono, monospace"
+                                         FontSize="12"
+                                         LineHeight="16"
+                                         TextWrapping="NoWrap"
+                                         Foreground="{DynamicResource TextDimBrush}"/>
                 </DataTemplate>
             </ListBox.ItemTemplate>
         </ListBox>
-        <Button x:Name="CloseButton"
-                Classes="primary"
-                Content="Close"
-                MinWidth="80"
-                HorizontalAlignment="Right"
-                HorizontalContentAlignment="Center"
-                IsDefault="True"
-                IsCancel="True"
-                Command="{Binding CloseCommand}"/>
+        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <Button Grid.Column="1"
+                    Content="Copy all"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    Click="CopyAll"/>
+            <Button x:Name="CloseButton"
+                    Grid.Column="2"
+                    Classes="primary"
+                    Content="Close"
+                    MinWidth="80"
+                    HorizontalContentAlignment="Center"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Command="{Binding CloseCommand}"/>
+        </Grid>
     </StackPanel>
 </UserControl>
