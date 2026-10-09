@@ -445,12 +445,14 @@ detecting on a timer.
 
 ## Code signing policy
 
-Free code signing provided by [SignPath.io](https://about.signpath.io),
-certificate by [SignPath Foundation](https://signpath.org).
+Releases aren't signed yet. Free code signing is being set up through
+[SignPath.io](https://about.signpath.io), with a certificate from
+[SignPath Foundation](https://signpath.org), and this is its policy.
 
-Only `DeadlockAdvisor.exe` on this repo's releases is signed. It's built
-from this repository by the Release workflow on GitHub's own runners, and
-each signing request is approved by hand.
+Once it's in place, only `DeadlockAdvisor.exe` on this repo's releases will be
+signed. It's built from this repository by the Release workflow on GitHub's
+own runners, and each signing request is approved by hand. Until then,
+SmartScreen warns about the download as described under Install.
 
 - Committers and reviewers: [Zach Davis (zd4242)](https://github.com/zd4242)
 - Approvers: [Zach Davis (zd4242)](https://github.com/zd4242)
