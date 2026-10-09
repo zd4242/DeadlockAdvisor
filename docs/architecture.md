@@ -181,6 +181,11 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   or no shop items, and `MatchStatsService` throws it for an empty "every match" baseline over a window longer than 6 hours.
   Both reach the user as a failure ("Nothing was changed"), and in CI as a failed job, so nothing is published. Analytics
   calls retry a 429, a 5xx once, and a dropped connection or timeout twice (scoring_model.md, "The counts behind the lifts").
+- `ArtDownloadService` runs its groups one after another (a later group may copy a file an earlier one wrote), and within a group
+  up to 4 images at once, bounded by a `SemaphoreSlim` and started from the calling context so continuations and progress
+  reports stay on the UI thread (not `Parallel.ForEachAsync`). A URL fetched or confirmed current earlier in the run is copied
+  to the next group's folder (the hero card is in `heroes` and `topbar/_cards/normal`); a 5xx or 429 is retried twice through an
+  injectable delay; `ArtManifest` locks its dictionary. `WelcomeViewModel.ArtSize` is the size of a first download.
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the

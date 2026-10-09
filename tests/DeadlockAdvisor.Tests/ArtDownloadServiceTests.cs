@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.GameApi;
 using DeadlockAdvisor.Tests.Fakes;
@@ -12,11 +13,17 @@ public sealed class ArtDownloadServiceTests : IDisposable
 {
     private readonly TempDirectory _assets = new();
     private readonly FakeDeadlockApi _api = new();
+    private readonly List<TimeSpan> _delays = [];
     private readonly ArtDownloadService _service;
 
     public ArtDownloadServiceTests()
     {
-        _service = new ArtDownloadService(new GameApiService(_api), _api);
+        _service = new ArtDownloadService(new GameApiService(_api), _api, (wait, _) =>
+        {
+            lock (_delays)
+                _delays.Add(wait);
+            return Task.CompletedTask;
+        });
         _api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => JsonNode.Parse("""
             [
               {"name": "Heavy Spirit", "images": {"icon_hero_card": "https://cdn/hs_card.png", "top_bar_vertical_image": "https://cdn/hs_top.webp"}},
@@ -222,6 +229,128 @@ public sealed class ArtDownloadServiceTests : IDisposable
 
         Assert.Contains("https://cdn/hs_top.webp", _api.NotModified);
         Assert.Equal([9], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
+    }
+
+    private int Requests(string url) => _api.Asked.Count(asked => asked == url);
+
+    [Fact]
+    public async Task AnImageTwoGroupsWantIsAskedForOnceAndTheSecondFolderGetsACopy()
+    {
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(1, Requests("https://cdn/hs_card.png"));
+        var copy = Asset(Path.Combine("topbar", "_cards", "normal"), "heavy_spirit.png");
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(copy));
+        var manifest = ArtManifest.Load(_assets.Path);
+        Assert.Equal(manifest.Get(Asset("heroes", "heavy_spirit.png")), manifest.Get(copy));
+        Assert.Equal("https://cdn/hs_card.png", manifest.Get(copy)?.Url);
+        // Counted as a download: the file wasn't there before.
+        var cards = report.Groups.Single(group => group.Label == "Hero cards");
+        Assert.Equal((1, 0, 0), (cards.Downloaded, cards.Updated.Count, cards.Skipped));
+    }
+
+    [Fact]
+    public async Task ACheckAsksOnceForEachDistinctImage()
+    {
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+        _api.Asked.Clear();
+        _api.NotModified.Clear();
+
+        var again = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        var images = _api.Asked.Where(url => url.StartsWith("https://cdn/")).ToList();
+        Assert.Equal(images.Distinct().Count(), images.Count);
+        Assert.Contains("https://cdn/hs_card.png", images);
+        Assert.Equal(1, _api.NotModified.Count(url => url == "https://cdn/hs_card.png"));
+        Assert.Equal((0, 0), (again.Downloaded, again.Updated));
+        Assert.Equal(1, again.Groups.Single(group => group.Label == "Hero cards").Skipped);
+    }
+
+    [Fact]
+    public async Task ACardTheApiChangedIsReplacedInBothFoldersFromOneRequest()
+    {
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+        _api.Asked.Clear();
+        _api.Bytes["https://cdn/hs_card.png"] = [7, 7, 7];
+
+        var again = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(1, Requests("https://cdn/hs_card.png"));
+        Assert.Equal([7, 7, 7], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
+        Assert.Equal([7, 7, 7], File.ReadAllBytes(Asset(Path.Combine("topbar", "_cards", "normal"), "heavy_spirit.png")));
+        Assert.Equal(["heavy_spirit"], again.Groups.Single(group => group.Label == "Hero cards").Updated);
+    }
+
+    [Fact]
+    public async Task ArtPutThereByHandIsNeitherReplacedNorCopiedFrom()
+    {
+        Directory.CreateDirectory(Path.Combine(_assets.Path, "heroes"));
+        File.WriteAllBytes(Asset("heroes", "heavy_spirit.png"), [9]);
+
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal([9], File.ReadAllBytes(Asset("heroes", "heavy_spirit.png")));
+        Assert.Equal([1, 2, 3], File.ReadAllBytes(Asset(Path.Combine("topbar", "_cards", "normal"), "heavy_spirit.png")));
+        Assert.Equal(1, Requests("https://cdn/hs_card.png"));
+    }
+
+    [Fact]
+    public async Task NoMoreThanFourImagesOfAGroupAreAskedForAtOnce()
+    {
+        var store = TestStore.Make();
+        var records = new JsonArray();
+        for (var i = 0; i < 12; i++)
+        {
+            store.Items[$"extra_{i:00}"] = new Item($"extra_{i:00}", $"Extra {i:00}", "weapon", 1);
+            records.Add(new JsonObject { ["name"] = $"Extra {i:00}", ["type"] = "upgrade", ["shop_image"] = $"https://cdn/extra_{i:00}.png" });
+            _api.Bytes[$"https://cdn/extra_{i:00}.png"] = [(byte)i];
+        }
+        _api.Json[$"{GameSync.Api}/items"] = () => records.DeepClone();
+        _api.Hold = () => Task.Delay(20);
+
+        var report = await _service.DownloadAsync(store, _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(12, report.Groups.Single(group => group.Label == "Item icons").Downloaded);
+        Assert.InRange(_api.MostInFlight, 2, ArtDownloadService.MaxInFlight);
+    }
+
+    [Theory]
+    [InlineData(HttpStatusCode.ServiceUnavailable)]
+    [InlineData(HttpStatusCode.TooManyRequests)]
+    public async Task AnImageTheSiteHiccupsOnIsAskedForAgain(HttpStatusCode status)
+    {
+        _api.Flaky["https://cdn/srt.png"] = (status, 2);
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal([5, 6], File.ReadAllBytes(Asset("items", "spirit_resist_t1.png")));
+        Assert.Equal(3, Requests("https://cdn/srt.png"));
+        Assert.Equal(ArtDownloadService.RetryDelays, _delays);
+        Assert.DoesNotContain(report.Groups.Single(group => group.Label == "Item icons").Unmatched, line => line.StartsWith("spirit_resist_t1"));
+    }
+
+    [Fact]
+    public async Task AnImageThatKeepsFailingIsListedAfterTwoRetries()
+    {
+        _api.Flaky["https://cdn/srt.png"] = (HttpStatusCode.BadGateway, 10);
+
+        var report = await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(1 + ArtDownloadService.RetryDelays.Length, Requests("https://cdn/srt.png"));
+        Assert.Contains(report.Groups.Single(group => group.Label == "Item icons").Unmatched,
+            line => line.StartsWith("spirit_resist_t1 (Spirit Resist Trinket) -- download failed:"));
+        Assert.False(File.Exists(Asset("items", "spirit_resist_t1.png")));
+    }
+
+    [Fact]
+    public async Task AnImageTheSiteDoesNotHaveIsNotAskedForAgain()
+    {
+        _api.Statuses["https://cdn/srt.png"] = HttpStatusCode.NotFound;
+
+        await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);
+
+        Assert.Equal(1, Requests("https://cdn/srt.png"));
+        Assert.Empty(_delays);
     }
 
     private sealed class SyncProgress(Action<FetchProgress> report) : IProgress<FetchProgress>

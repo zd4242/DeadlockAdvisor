@@ -2,6 +2,7 @@ using System.IO;
 using System.Security.Cryptography;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using System.Threading;
 
 namespace DeadlockAdvisor.Services;
 
@@ -19,6 +20,7 @@ public sealed class ArtManifest
 
     private readonly string _assetsDir;
     private readonly Dictionary<string, Entry> _entries;
+    private readonly Lock _lock = new();
 
     /// <param name="ETag">The server's tag for the version downloaded, if it gave one.</param>
     public sealed record Entry(string Url, string? ETag, string Sha256);
@@ -51,16 +53,31 @@ public sealed class ArtManifest
         return new ArtManifest(assetsDir, entries);
     }
 
-    public Entry? Get(string path) => _entries.GetValueOrDefault(Key(path));
+    public Entry? Get(string path)
+    {
+        lock (_lock)
+            return _entries.GetValueOrDefault(Key(path));
+    }
 
-    public void Set(string path, Entry entry) => _entries[Key(path)] = entry;
+    public void Set(string path, Entry entry)
+    {
+        lock (_lock)
+            _entries[Key(path)] = entry;
+    }
 
-    public void Remove(string path) => _entries.Remove(Key(path));
+    public void Remove(string path)
+    {
+        lock (_lock)
+            _entries.Remove(Key(path));
+    }
 
     public void Save()
     {
+        KeyValuePair<string, Entry>[] entries;
+        lock (_lock)
+            entries = [.. _entries];
         var json = new JsonObject();
-        foreach (var (path, entry) in _entries.OrderBy(pair => pair.Key, StringComparer.Ordinal))
+        foreach (var (path, entry) in entries.OrderBy(pair => pair.Key, StringComparer.Ordinal))
             json[path] = new JsonObject { ["url"] = entry.Url, ["etag"] = entry.ETag, ["sha256"] = entry.Sha256 };
         Directory.CreateDirectory(_assetsDir);
         AtomicFile.Write(Path.Combine(_assetsDir, FileName), System.Text.Encoding.UTF8.GetBytes(json.ToJsonString(_indented) + "\n"));

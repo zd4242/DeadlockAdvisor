@@ -70,7 +70,8 @@ it for a hero with no cut portraits.
   ignores. They're for skins, and for Silver's wolf form, which no card shows.
 
 **Keeping art current**: `assets/art_manifest.json` records each download's URL, ETag and hash.
-- Download Art only asks whether a file changed (If-None-Match, answered with 304).
+- Download Art only asks whether a file changed (If-None-Match, answered with 304), once per distinct URL: the normal hero card is both the hero portrait and the card the top-bar portraits are cut from, so the later group copies the file (and its manifest entry) instead of asking again. Hand-placed art (no manifest entry) is never a copy source.
+- Up to four images of a group are in flight at once; a 5xx or 429 answer is retried twice (2 s, then 6 s), and a connection failure is not (see the next point).
 - The app checks quietly at startup about weekly, and at once when `_derived.json` is out of date.
 - A download whose connection fails for three images in a row stops and keeps what arrived. It isn't recorded as a check, so the next startup, or the connection returning, tries again. An image the site answers with an error status is skipped alone.
 - Nothing hero-specific ships with the app, so offline, a first run has no art to match against until the connection returns.

@@ -1,6 +1,6 @@
 # WP08 Art: fetch once, in parallel, retry, honest size
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium · Depends on: none · Wave: B
 Touches: `src/Services/ArtDownloadService.cs`, `src/Services/ArtManifest.cs`, `src/Features/MainWindow/Welcome/WelcomeViewModel.cs` (`ArtSize`), `tests/DeadlockAdvisor.Tests/ArtDownloadServiceTests.cs`, `tests/DeadlockAdvisor.Tests/Fakes/FakeServices.cs` (`FakeDeadlockApi`)
 Docs to update: `README.md` ("Art"), `docs/detection_model.md` ("Keeping art current"), `docs/architecture.md` (section 7)

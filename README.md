@@ -372,8 +372,10 @@ that dress the rank pickers, and the art detection matches against, into
 `assets/heroes`, `assets/items`, `assets/ranks` and `assets/topbar`. It matches
 by name, lists anything it couldn't match, and keeps what's already there,
 except art it downloaded that the API has changed since. Only a "not
-modified" is asked for each file, so checking is cheap, and the app does it
-quietly about once a week. Anything without art shows as a coloured initials
+modified" is asked for each image (once, even when two folders keep it), so
+checking is cheap, and the app does it quietly about once a week. A first
+download is about 23 MB. An image the site fails to serve for a moment is asked
+for again twice before it is reported. Anything without art shows as a coloured initials
 tile (a rank without a badge just shows none). To add art by hand, name the
 file after the id (`grey_talon.png`; a rank's is its tier to two digits,
 `01.png`) and use **View → Reload Art**; art put there by hand is never

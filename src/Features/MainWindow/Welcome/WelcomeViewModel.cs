@@ -20,7 +20,7 @@ public sealed record WelcomeChoice(bool Art, MatchDownloadPlan? MatchData, bool 
 /// </summary>
 public sealed class WelcomeViewModel : ViewModelBase
 {
-    public const string ArtSize = "about 22 MB";
+    public const string ArtSize = "about 23 MB";
 
     private readonly MatchDownloadPlan? _everyMatch;
     private readonly MatchDownloadPlan? _withRanks;

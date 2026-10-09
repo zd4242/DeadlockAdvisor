@@ -38,18 +38,46 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     /// <summary>The URLs a "not modified" came back for.</summary>
     public List<string> NotModified { get; } = [];
 
+    /// <summary>URLs whose next answers are an error status, as many times as the count says, before the site recovers.</summary>
+    public Dictionary<string, (HttpStatusCode Status, int Times)> Flaky { get; } = [];
+
+    /// <summary>If set, every image request waits for this before the site answers, so requests can overlap.</summary>
+    public Func<Task>? Hold { get; set; }
+
+    /// <summary>The most image requests that were waiting for an answer at once.</summary>
+    public int MostInFlight { get; private set; }
+
+    private readonly object _lock = new();
+    private int _inFlight;
+
     /// <summary>A file's tag is its contents, so changing the bytes changes it, as a real server's would.</summary>
     public static string ETagOf(byte[] bytes) => $"\"{Convert.ToHexString(bytes)}\"";
 
     public async Task<ChangedFile> GetBytesIfChangedAsync(string url, string userAgent, string? etag, CancellationToken cancellationToken = default)
     {
-        var bytes = await GetBytesAsync(url, userAgent, cancellationToken);
-        if (etag == ETagOf(bytes))
+        lock (_lock)
         {
-            NotModified.Add(url);
-            return new ChangedFile(null, etag);
+            _inFlight++;
+            MostInFlight = Math.Max(MostInFlight, _inFlight);
         }
-        return new ChangedFile(bytes, ETagOf(bytes));
+        try
+        {
+            if (Hold is { } hold)
+                await hold();
+            var bytes = await GetBytesAsync(url, userAgent, cancellationToken);
+            if (etag == ETagOf(bytes))
+            {
+                lock (_lock)
+                    NotModified.Add(url);
+                return new ChangedFile(null, etag);
+            }
+            return new ChangedFile(bytes, ETagOf(bytes));
+        }
+        finally
+        {
+            lock (_lock)
+                _inFlight--;
+        }
     }
 
     public Task<JsonNode?> GetJsonAsync(string url, CancellationToken cancellationToken = default)
@@ -62,7 +90,15 @@ public sealed class FakeDeadlockApi : IDeadlockApi
 
     public Task<byte[]> GetBytesAsync(string url, string userAgent, CancellationToken cancellationToken = default)
     {
-        Asked.Add(url);
+        lock (_lock)
+        {
+            Asked.Add(url);
+            if (Flaky.TryGetValue(url, out var flaky) && flaky.Times > 0)
+            {
+                Flaky[url] = flaky with { Times = flaky.Times - 1 };
+                throw new HttpRequestException($"{(int)flaky.Status} for {url}", null, flaky.Status);
+            }
+        }
         if (Statuses.TryGetValue(url, out var status))
             throw new HttpRequestException($"{(int)status} for {url}", null, status);
         return Bytes.TryGetValue(url, out var bytes)
