@@ -96,6 +96,7 @@ public sealed class UpdateRowViewModel : UpdateStatusViewModel
         ToggleDetailsCommand = ReactiveCommand.Create(() =>
         {
             IsExpanded = !IsExpanded;
+            this.RaisePropertyChanged(nameof(DetailsText));
         });
     }
 
@@ -109,6 +110,8 @@ public sealed class UpdateRowViewModel : UpdateStatusViewModel
 
     [Reactive] public bool IsExpanded { get; private set; }
 
+    public string DetailsText => IsExpanded ? "Hide details" : "Details…";
+
     /// <summary>"patch 10-07 · up to date · checked 2h ago".</summary>
     [Reactive] public string Summary { get; private set; } = "";
 
@@ -120,8 +123,11 @@ public sealed class UpdateRowViewModel : UpdateStatusViewModel
     [Reactive] public string? ActionTip { get; private set; }
     [Reactive] public IReadOnlyList<UpdateLink> Links { get; private set; } = [];
 
-    /// <summary>How far a download has got, 0–100; null while it's under way with nothing to count yet.</summary>
-    [Reactive] public double? Percent { get; private set; }
+    /// <summary>How far a download has got, 0–100.</summary>
+    [Reactive] public double Percent { get; private set; }
+
+    /// <summary>A download is under way with nothing to count yet.</summary>
+    [Reactive] public bool IsIndeterminate { get; private set; }
 
     public ReactiveCommand<Unit, Unit> ToggleDetailsCommand { get; }
 
@@ -133,7 +139,8 @@ public sealed class UpdateRowViewModel : UpdateStatusViewModel
         ActionText = info.ActionText;
         Action = info.Action;
         ActionTip = info.ActionTip;
-        Percent = info.Percent;
+        Percent = info.Percent ?? 0;
+        IsIndeterminate = info.State == UpdateState.Updating && info.Percent is null;
         var links = info.Links ?? [];
         // A new list on every progress report would rebuild the links under the pointer.
         if (!Links.SequenceEqual(links))

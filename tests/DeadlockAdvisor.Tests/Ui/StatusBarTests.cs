@@ -12,6 +12,7 @@ using Avalonia.Media;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.MainWindow.Updates;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
@@ -35,14 +36,16 @@ public class StatusBarTests
 
         var status = ui.ViewModel.DataStatus;
         Assert.True(status.IsOutdated);
-        Assert.EndsWith("· 10-01 is out", status.Label);
+        Assert.EndsWith("· 10-01 is out", status.Summary);
         Assert.StartsWith("Patch 10-01 is out since these were fetched.", status.Warning);
-        OpenCard(ui);
-        ui.Screenshot("status_newer_patch.png");
+        Assert.Equal("Patch 10-01 is out", ui.ViewModel.Updates.Headline);
+        Assert.Equal("Patch 10-01 is out", ChipText(ui));
+        OpenFlyout(ui, showMatchDataDetails: true);
+        ui.Screenshot("status_updates_newer_patch.png");
     }
 
     [AvaloniaFact]
-    public async Task ANewerVersionShowsAsAChipThatDismissingRemoves()
+    public async Task ANewerVersionShowsOnTheChipAndSkippingItPutsTheChipRight()
     {
         var github = new FakeDeadlockApi();
         github.Bytes[AppUpdateService.LatestUrl] =
@@ -51,16 +54,18 @@ public class StatusBarTests
             services => services.AddSingleton<IAppUpdateService>(new AppUpdateService(github, new Version(0, 1, 1))));
         ui.Show();
 
-        var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<AppUpdateView>().Single();
-        Assert.True(await UiHarness.WaitUntilAsync(() => chip.GetVisualDescendants().OfType<Border>().First().IsVisible));
+        Assert.True(await UiHarness.WaitUntilAsync(() => ChipText(ui) == "Version 0.2.0 is out"));
         var barHeight = ui.Window.StatusBar.Bounds.Height;
-        Assert.Contains("Version 0.2.0 is out", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
-        ui.Screenshot("status_app_update.png");
+        OpenFlyout(ui);
+        Assert.Contains("Version 0.2.0 is out · you have 0.1.1", FlyoutTexts(ui));
+        Assert.Contains("Update", FlyoutButtons(ui).Select(button => button.Content as string));
+        Assert.Contains("What's new", FlyoutTexts(ui));
+        ui.Screenshot("status_updates_app.png");
 
-        chip.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Dismiss").Command!.Execute(null);
+        FlyoutLink(ui, "Skip this version").Command!.Execute(null);
         UiHarness.Settle();
 
-        Assert.False(chip.GetVisualDescendants().OfType<Border>().First().IsVisible);
+        Assert.NotEqual("Version 0.2.0 is out", ChipText(ui));
         Assert.Equal("0.2.0", ui.Settings.Current.SkippedAppVersion);
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
     }
@@ -92,24 +97,28 @@ public class StatusBarTests
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true,
             services => services.AddSingleton<IAppUpdateService>(update));
         ui.Show();
-        var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<AppUpdateView>().Single();
         Assert.True(await UiHarness.WaitUntilAsync(() => ui.ViewModel.AppUpdate.IsAvailable));
+        OpenFlyout(ui);
 
         var installing = ui.ViewModel.AppUpdate.UpdateCommand.Execute().ToTask();
         Assert.True(await UiHarness.WaitUntilAsync(() => ui.ViewModel.AppUpdate.PercentText == "42%"));
-        Assert.Contains("Updating to 0.2.0", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
-        ui.Screenshot("status_app_update_downloading.png");
+        Assert.Equal("Updating app 42%", ChipText(ui));
+        Assert.Contains("Downloading version 0.2.0 · 42%", FlyoutTexts(ui));
+        Assert.Contains("Stop", FlyoutButtons(ui).Select(button => button.Content as string));
+        ui.Screenshot("status_updates_app_downloading.png");
 
         update.Finish.SetResult();
         await installing;
         UiHarness.Settle();
-        Assert.Contains("Restart now", chip.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text));
-        ui.Screenshot("status_app_update_ready.png");
+        Assert.Equal("Version 0.2.0 is ready", ChipText(ui));
+        Assert.Contains("Restart now", FlyoutButtons(ui).Select(button => button.Content as string));
+        Assert.Contains("Hide", FlyoutTexts(ui));
+        ui.Screenshot("status_updates_app_ready.png");
     }
 
-    /// <summary>The chip opens its card when the pointer rests on it, not as it passes over.</summary>
+    /// <summary>The chip opens its flyout when the pointer rests on it, not as it passes over.</summary>
     [AvaloniaFact]
-    public async Task RestingOnTheMatchDataChipOpensItsCard()
+    public async Task RestingOnTheUpdatesChipOpensItsFlyout()
     {
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Show();
@@ -121,11 +130,38 @@ public class StatusBarTests
         Assert.False(chip.Flyout!.IsOpen);
 
         Assert.True(await UiHarness.WaitUntilAsync(() => chip.Flyout.IsOpen));
-        var card = (Control)((Flyout)chip.Flyout).Content!;
-        var facts = card.GetLogicalDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
-        Assert.Contains("Every match, ranked or not", facts);
-        Assert.Contains("Download again…", card.GetLogicalDescendants().OfType<Button>().Select(button => button.Content as string));
-        ui.Screenshot("status_card.png");
+        var texts = FlyoutTexts(ui);
+        Assert.Contains("UPDATES", texts);
+        Assert.Equal(["App", "Formulas", "Match data", "Art"], texts.Where(text => text is "App" or "Formulas" or "Match data" or "Art"));
+        Assert.Contains("Check all", FlyoutButtons(ui).Select(button => button.Content as string));
+        Assert.Contains("Nothing downloaded this session", texts);
+        ui.Screenshot("status_updates.png");
+    }
+
+    [AvaloniaFact]
+    public async Task AFreshCurrentInstallReadsUpToDateAndTheFlyoutSaysWhatWasCheckedAndWhen()
+    {
+        var checkedAt = DateTimeOffset.Now.AddHours(-3);
+        var github = new FakeDeadlockApi();
+        github.Bytes[AppUpdateService.LatestUrl] =
+            """{"tag_name": "v0.1.1", "html_url": "https://github.com/zd4242/DeadlockAdvisor/releases/tag/v0.1.1"}"""u8.ToArray();
+        using var ui = new UiHarness(settings =>
+            {
+                settings.Current.WelcomeOffered = true;
+                settings.Current.ModelCheckedAt = settings.Current.MatchDataCheckedAt = settings.Current.ArtCheckedAt = checkedAt;
+                settings.Current.AppUpdateCheckedAt = checkedAt;
+            },
+            services => services.AddSingleton<IAppUpdateService>(new AppUpdateService(github, new Version(0, 1, 1))));
+        ui.Show();
+        Assert.True(await UiHarness.WaitUntilAsync(() => ChipText(ui) == "Up to date"));
+
+        OpenFlyout(ui);
+
+        var texts = FlyoutTexts(ui);
+        Assert.Contains("Everything is up to date.", texts);
+        Assert.Contains("patch 09-16 · up to date · checked 3h ago", texts);
+        Assert.Contains("Version 0.1.1 · checked just now", texts);
+        ui.Screenshot("status_updates_current.png");
     }
 
     [AvaloniaFact]
@@ -255,7 +291,7 @@ public class StatusBarTests
 
         Assert.False(ui.ViewModel.DataStatus.IsOutdated);
         Assert.Null(ui.ViewModel.DataStatus.Warning);
-        Assert.StartsWith("Match data · patch 09-16 · ", ui.ViewModel.DataStatus.Label);
+        Assert.StartsWith("patch 09-16 · ", ui.ViewModel.DataStatus.Summary);
     }
 
     /// <summary>A finished patch is never fetched again, so the data's age says nothing once a recent check found nothing newer.</summary>
@@ -272,7 +308,7 @@ public class StatusBarTests
 
         var status = ui.ViewModel.DataStatus;
         Assert.False(status.IsOutdated);
-        Assert.Equal("Match data · patch 09-16 · up to date", status.Label);
+        Assert.Equal("patch 09-16 · up to date", status.Summary);
         Assert.Contains(status.Facts, fact => fact.Label == "Fetched");
     }
 
@@ -286,18 +322,18 @@ public class StatusBarTests
         });
         ui.Show();
         var status = ui.ViewModel.DataStatus;
-        Assert.StartsWith("Match data · patch 09-16 · ", status.Label);
-        Assert.DoesNotContain("up to date", status.Label);
+        Assert.StartsWith("patch 09-16 · ", status.Summary);
+        Assert.DoesNotContain("up to date", status.Summary);
 
         ui.Settings.Update(settings => settings.MatchDataCheckedAt = DateTimeOffset.UtcNow);
-        Assert.Equal("Match data · patch 09-16 · up to date", status.Label);
+        Assert.Equal("patch 09-16 · up to date", status.Summary);
 
         ui.Settings.Update(settings => settings.MatchDataCheckedAt = null);
-        Assert.DoesNotContain("up to date", status.Label);
+        Assert.DoesNotContain("up to date", status.Summary);
     }
 
     [AvaloniaFact]
-    public void WithoutMatchDataTheCardOffersToFetchIt()
+    public void WithoutMatchDataTheRowOffersToFetchIt()
     {
         using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
         ui.Data.Store.MatchMeta.Clear();
@@ -306,12 +342,15 @@ public class StatusBarTests
 
         var status = ui.ViewModel.DataStatus;
         Assert.False(status.HasData);
-        Assert.Equal("No match data", status.Label);
+        Assert.Equal("none yet", status.Summary);
         Assert.Empty(status.Facts);
-        Assert.Equal("Download Match Data…", status.FetchText);
-        Assert.Same(ui.ViewModel.DataMenu.DownloadMatchDataCommand, status.FetchCommand);
-        OpenCard(ui);
-        ui.Screenshot("status_card_no_data.png");
+        var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match data");
+        Assert.Equal(UpdateState.Off, row.State);
+        Assert.Equal("Download…", row.ActionText);
+        Assert.Same(ui.ViewModel.DataMenu.DownloadMatchDataCommand, row.Action);
+        OpenFlyout(ui, showMatchDataDetails: true);
+        Assert.Contains(DataStatusViewModel.NoDataText, FlyoutTexts(ui));
+        ui.Screenshot("status_updates_no_match_data.png");
     }
 
     /// <summary>How much of the model is filled in, and how reliable each kind of lift is, which only someone filling it in needs.</summary>
@@ -329,8 +368,9 @@ public class StatusBarTests
         Assert.True(ui.ViewModel.DataStatus.ShowsCoverage);
         Assert.NotEmpty(ui.ViewModel.DataStatus.Families);
         Assert.Equal(["Hero traits rated", "Items tagged", "Formula rules"], ui.ViewModel.DataStatus.Coverage.Select(fact => fact.Label));
-        OpenCard(ui);
-        ui.Screenshot("status_card_editors.png");
+        OpenFlyout(ui, showMatchDataDetails: true);
+        Assert.Contains("SCORING MODEL", FlyoutTexts(ui));
+        ui.Screenshot("status_updates_editors.png");
     }
 
     /// <summary>A save that couldn't reach the disk reads as an error, not in the accent colour of one in progress.</summary>
@@ -678,12 +718,34 @@ public class StatusBarTests
     }
 
     private static Button Chip(UiHarness ui) =>
-        ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "Chip");
+        ui.Window.StatusBar.GetVisualDescendants().OfType<Button>().Single(button => button.Name == "UpdatesChip");
 
-    private static void OpenCard(UiHarness ui)
+    private static string? ChipText(UiHarness ui) =>
+        Chip(ui).GetVisualDescendants().OfType<TextBlock>().Single().Text;
+
+    /// <summary>Opens the Updates flyout, with the Match data row's details when asked.</summary>
+    private static void OpenFlyout(UiHarness ui, bool showMatchDataDetails = false)
     {
         var chip = Chip(ui);
         chip.Flyout!.ShowAt(chip);
         UiHarness.Settle();
+        if (showMatchDataDetails)
+        {
+            var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match data");
+            row.ToggleDetailsCommand.Execute().Subscribe();
+            UiHarness.Settle();
+        }
     }
+
+    private static Control FlyoutCard(UiHarness ui) => (Control)((Flyout)Chip(ui).Flyout!).Content!;
+
+    private static List<string?> FlyoutTexts(UiHarness ui) =>
+        FlyoutCard(ui).GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToList();
+
+    private static List<Button> FlyoutButtons(UiHarness ui) =>
+        FlyoutCard(ui).GetVisualDescendants().OfType<Button>().Where(button => button.IsEffectivelyVisible).ToList();
+
+    /// <summary>The small action under a row's summary, found by its words.</summary>
+    private static Button FlyoutLink(UiHarness ui, string text) =>
+        FlyoutButtons(ui).Single(button => button.GetVisualDescendants().OfType<TextBlock>().Any(block => block.Text == text));
 }

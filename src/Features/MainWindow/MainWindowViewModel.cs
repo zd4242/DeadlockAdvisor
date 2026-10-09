@@ -332,10 +332,10 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>The last save didn't reach the disk: the status text shows as an error, not as progress.</summary>
     [Reactive] public bool SaveFailed { get; private set; }
 
-    /// <summary>The status bar's match data chip and its card.</summary>
+    /// <summary>What the Updates flyout shows under its Match data row.</summary>
     public DataStatusViewModel DataStatus { get; }
 
-    /// <summary>The status bar's chip while a newer version of the app is out.</summary>
+    /// <summary>The app's own update: the App row's state and actions, and Settings → Data's check.</summary>
     public AppUpdateViewModel AppUpdate { get; }
 
     /// <summary>The status bar's chip while the app can't reach the internet.</summary>

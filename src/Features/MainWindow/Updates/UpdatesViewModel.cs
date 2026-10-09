@@ -68,9 +68,9 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
                 data.StoreReplaced,
                 dataMenu.ViewInteraction.Where(action => action == DataMenuViewModel.ArtChangedAction).Select(_ => Unit.Default),
                 JobChanges(dataMenu.Jobs))
-            .Subscribe(_ => Refresh())
+            .Subscribe(_ => Recompute())
             .DisposeWith(Disposables);
-        Refresh();
+        Recompute();
     }
 
     public IReadOnlyList<UpdateRowViewModel> Rows { get; }
@@ -90,8 +90,17 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     /// <summary>Every check the app makes, now, with the messages a manual one gives.</summary>
     public ReactiveCommand<Unit, Unit> CheckAllCommand { get; }
 
+    /// <summary>"Check all", or "Checking…" while it runs.</summary>
+    public string CheckAllText => IsCheckingAll ? "Checking…" : "Check all";
+
     /// <summary>Works everything out again, as the flyout does on opening so the ages are current.</summary>
     public void Refresh()
+    {
+        _matchData.Refresh();
+        Recompute();
+    }
+
+    private void Recompute()
     {
         Rows[0].Apply(AppRow());
         Rows[1].Apply(FormulasRow());
@@ -113,6 +122,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     private async Task CheckAllAsync()
     {
         IsCheckingAll = true;
+        this.RaisePropertyChanged(nameof(CheckAllText));
         try
         {
             await Task.WhenAll(_dataMenu.CheckAllAsync(manual: true), _app.CheckAsync(manual: true));
@@ -120,6 +130,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         finally
         {
             IsCheckingAll = false;
+            this.RaisePropertyChanged(nameof(CheckAllText));
         }
     }
 
@@ -155,7 +166,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
 
         var checkedAt = settings.AppUpdateCheckedAt;
         var (state, summary, headline) = !settings.CheckForAppUpdates ? (UpdateState.Off, $"{version} · automatic checks are off", "")
-            : _connectivity.IsOffline ? (UpdateState.Offline, $"{version} · {CheckedText(checkedAt)}", "Offline")
+            : _connectivity.IsOffline ? (UpdateState.Offline, $"{version} · {CheckedText(checkedAt)}", "")
             : _app.IsChecking ? (UpdateState.Checking, $"{version} · checking GitHub…", "")
             : checkedAt is null ? (UpdateState.NotChecked, $"{version} · not checked yet", "")
             : (UpdateState.UpToDate, $"{version} · {CheckedText(checkedAt)}", "");
@@ -181,7 +192,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             : _dataMenu.IsCheckingModel ? (UpdateState.Checking, $"{published} · checking GitHub…")
             : checkedAt is null ? (UpdateState.NotChecked, $"{published} · not checked yet")
             : (UpdateState.UpToDate, $"{published} · {CheckedText(checkedAt)}");
-        return new(state, summary, state == UpdateState.Offline ? "Offline" : "", "Check", _dataMenu.CheckModelCommand, check, links);
+        return new(state, summary, "", "Check", _dataMenu.CheckModelCommand, check, links);
     }
 
     private UpdateRowInfo MatchDataRow()
@@ -214,7 +225,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             : _dataMenu.IsCheckingMatchData ? (UpdateState.Checking, $"{summary} · checking for a new patch…")
             : checkedAt is null ? (UpdateState.NotChecked, $"{summary} · not checked yet")
             : (UpdateState.UpToDate, $"{summary} · {CheckedText(checkedAt)}");
-        return new(state, text, state == UpdateState.Offline ? "Offline" : "", "Download again…", _dataMenu.DownloadMatchDataCommand, download);
+        return new(state, text, "", "Download again…", _dataMenu.DownloadMatchDataCommand, download);
     }
 
     private UpdateRowInfo ArtRow()
@@ -239,8 +250,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
 
         var checkedAt = _settings.Current.ArtCheckedAt;
         var summary = $"{heroes} portraits, {items} icons" + (checkedAt is null ? "" : $" · {CheckedText(checkedAt)}");
-        return new(_connectivity.IsOffline ? UpdateState.Offline : UpdateState.UpToDate, summary, _connectivity.IsOffline ? "Offline" : "",
-            "Download…", _dataMenu.DownloadArtCommand, download);
+        return new(_connectivity.IsOffline ? UpdateState.Offline : UpdateState.UpToDate, summary, "", "Download…", _dataMenu.DownloadArtCommand, download);
     }
 
     /// <summary>A download under way, as far as its chip says.</summary>
@@ -280,7 +290,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
                 var waiting = rows.Count + (offer ? 1 : 0);
                 return waiting > 1 ? $"{waiting} updates" : rows is [var one] ? one.Headline : "Downloads available";
             case UpdateState.Offline:
-                return "Offline";
+                return "Updates paused";
             case UpdateState.Checking:
                 return "Checking for updates…";
             case UpdateState.NotChecked:

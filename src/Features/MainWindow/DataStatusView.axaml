@@ -1,40 +1,11 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
-             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.MainWindow.DataStatusView"
              x:DataType="mainWindow:DataStatusViewModel">
 
-    <!-- A chip in the status bar: a dot for how current the match data is and a few words on it.
-         Hovering or clicking opens the card with the rest. -->
-    <UserControl.Styles>
-        <StyleInclude Source="avares://DeadlockAdvisor/src/Features/MainWindow/StatusChipStyles.axaml"/>
-        <Style Selector="Button.chip TextBlock.outdated">
-            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
-        </Style>
-
-        <Style Selector="Ellipse.dot.current">
-            <Setter Property="Fill" Value="{DynamicResource DataBrush}"/>
-        </Style>
-        <Style Selector="Ellipse.dot.outdated">
-            <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
-        </Style>
-
-        <!-- The card hangs off the status bar, whose dim text style would otherwise reach into it. -->
-        <Style Selector="StackPanel.card TextBlock">
-            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
-        </Style>
-        <Style Selector="StackPanel.card TextBlock.dim, StackPanel.card TextBlock.section">
-            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
-        </Style>
-        <Style Selector="StackPanel.card TextBlock.faint">
-            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
-        </Style>
-        <Style Selector="StackPanel.card TextBlock.warning">
-            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
-        </Style>
-    </UserControl.Styles>
-
+    <!-- What the Updates flyout shows under the Match data row: where the data comes from, a newer patch, and
+         while the model editors are shown, how much of the model is filled in. -->
     <UserControl.DataTemplates>
         <DataTemplate x:DataType="mainWindow:StatusFact">
             <Grid Margin="0,0,0,3">
@@ -48,43 +19,28 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <Button x:Name="Chip" Classes="chip" controls:HoverFlyout.IsEnabled="True">
-        <StackPanel Orientation="Horizontal" Spacing="7">
-            <Ellipse Classes="dot" Classes.current="{Binding HasData}" Classes.outdated="{Binding IsOutdated}"/>
-            <TextBlock VerticalAlignment="Center" Classes.outdated="{Binding IsOutdated}" Text="{Binding Label}"/>
-        </StackPanel>
-        <Button.Flyout>
-            <Flyout Placement="TopEdgeAlignedLeft" ShowMode="TransientWithDismissOnPointerMoveAway">
-                <StackPanel Classes="card" Width="300" Spacing="8" Grid.IsSharedSizeScope="True">
-                    <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="MATCH DATA"/>
-                    <TextBlock Classes="warning"
-                               TextWrapping="Wrap"
-                               Text="{Binding Warning}"
-                               IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}"/>
-                    <TextBlock Classes="dim"
-                               TextWrapping="Wrap"
-                               Text="{x:Static mainWindow:DataStatusViewModel.NoDataText}"
-                               IsVisible="{Binding !HasData}"/>
-                    <ItemsControl ItemsSource="{Binding Facts}" IsVisible="{Binding HasData}"/>
-                    <ItemsControl ItemsSource="{Binding Families}" IsVisible="{Binding HasData}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate x:DataType="x:String">
-                                <TextBlock Classes="faint" TextWrapping="Wrap" Margin="0,0,0,2" Text="{Binding}"/>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                    <Button HorizontalAlignment="Left"
-                            Content="{Binding FetchText}"
-                            Command="{Binding FetchCommand}"
-                            ToolTip.Tip="Pull item win rates from real matches (seconds from the shared download, a few minutes from deadlock-api.com; in the background)"/>
+    <StackPanel Spacing="8" Grid.IsSharedSizeScope="True">
+        <TextBlock Classes="warning"
+                   TextWrapping="Wrap"
+                   Text="{Binding Warning}"
+                   IsVisible="{Binding Warning, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+        <TextBlock Classes="dim"
+                   TextWrapping="Wrap"
+                   Text="{x:Static mainWindow:DataStatusViewModel.NoDataText}"
+                   IsVisible="{Binding !HasData}"/>
+        <ItemsControl ItemsSource="{Binding Facts}" IsVisible="{Binding HasData}"/>
+        <ItemsControl ItemsSource="{Binding Families}" IsVisible="{Binding HasData}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <TextBlock Classes="faint" TextWrapping="Wrap" Margin="0,0,0,2" Text="{Binding}"/>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
 
-                    <StackPanel Spacing="8" IsVisible="{Binding ShowsCoverage}">
-                        <Border Classes="hline" Margin="0,4"/>
-                        <TextBlock Classes="section" Text="SCORING MODEL"/>
-                        <ItemsControl ItemsSource="{Binding Coverage}"/>
-                    </StackPanel>
-                </StackPanel>
-            </Flyout>
-        </Button.Flyout>
-    </Button>
+        <StackPanel Spacing="8" IsVisible="{Binding ShowsCoverage}">
+            <Border Classes="hline" Margin="0,4"/>
+            <TextBlock Classes="section" Text="SCORING MODEL"/>
+            <ItemsControl ItemsSource="{Binding Coverage}"/>
+        </StackPanel>
+    </StackPanel>
 </UserControl>

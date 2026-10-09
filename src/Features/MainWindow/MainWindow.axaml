@@ -3,6 +3,7 @@
         xmlns="https://github.com/avaloniaui"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:mainWindow="using:DeadlockAdvisor.Features.MainWindow"
+        xmlns:updates="using:DeadlockAdvisor.Features.MainWindow.Updates"
         xmlns:match="using:DeadlockAdvisor.Features.Match"
         xmlns:heroItems="using:DeadlockAdvisor.Features.HeroItems"
         xmlns:heroTraits="using:DeadlockAdvisor.Features.HeroTraits"
@@ -301,21 +302,15 @@
 
                 <!-- Above the page, so the zoom corner can still be pressed where it's held larger than the bar. -->
                 <Border x:Name="StatusBar" DockPanel.Dock="Bottom" ZIndex="1">
-                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto,Auto">
-                        <mainWindow:DataStatusView x:Name="DataStatus" VerticalAlignment="Center" DataContext="{Binding DataStatus}"/>
+                    <Grid ColumnDefinitions="Auto,*,Auto,Auto,Auto,Auto">
+                        <updates:UpdatesView x:Name="Updates" VerticalAlignment="Center" DataContext="{Binding Updates}"/>
                         <mainWindow:ConnectionView x:Name="Connection"
                                                    Grid.Column="2"
                                                    VerticalAlignment="Center"
                                                    DataContext="{Binding Connection}"/>
-                        <!-- The negative margins keep a chip from making the bar taller. -->
-                        <mainWindow:AppUpdateView x:Name="AppUpdate"
-                                                  Grid.Column="3"
-                                                  Margin="8,-3,0,-3"
-                                                  VerticalAlignment="Center"
-                                                  DataContext="{Binding AppUpdate}"/>
-                        <!-- Background downloads -->
+                        <!-- Background downloads. The negative margins keep a chip from making the bar taller. -->
                         <ItemsControl x:Name="Jobs"
-                                      Grid.Column="4"
+                                      Grid.Column="3"
                                       Margin="8,-3,0,-3"
                                       VerticalAlignment="Center"
                                       ItemsSource="{Binding DataMenu.Jobs}">
@@ -325,7 +320,7 @@
                                 </ItemsPanelTemplate>
                             </ItemsControl.ItemsPanel>
                         </ItemsControl>
-                        <TextBlock Grid.Column="5"
+                        <TextBlock Grid.Column="4"
                                    Classes="saving"
                                    Classes.failed="{Binding SaveFailed}"
                                    Margin="12,0,0,0"
@@ -336,7 +331,7 @@
                              corner over the bar's padding, down to the window's edge, and the stepper's own
                              margins give back the height, so the bar is no taller than the stepper needs. -->
                         <Grid x:Name="ZoomCorner"
-                              Grid.Column="6"
+                              Grid.Column="5"
                               Margin="12,-4,0,-4"
                               ColumnDefinitions="Auto,Auto"
                               Background="Transparent">

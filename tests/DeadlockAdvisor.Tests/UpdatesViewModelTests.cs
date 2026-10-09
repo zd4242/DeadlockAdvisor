@@ -197,7 +197,7 @@ public sealed class UpdatesViewModelTests : IDisposable
         _connectivity.GoOffline();
 
         Assert.Equal(UpdateState.Offline, updates.State);
-        Assert.Equal("Offline", updates.Headline);
+        Assert.Equal("Updates paused", updates.Headline);
         Assert.Equal("No internet connection: everything works from what's saved.", updates.Status);
         Assert.All(updates.Rows, row => Assert.Equal(UpdateState.Offline, row.State));
         Assert.Equal("Version 0.1.1 · checked 2h ago", Row(UpdateSource.App).Summary);
@@ -282,7 +282,7 @@ public sealed class UpdatesViewModelTests : IDisposable
 
         var row = Row(UpdateSource.MatchData);
         Assert.Equal(UpdateState.Updating, row.State);
-        Assert.Equal(31, row.Percent);
+        Assert.Equal(31.0, row.Percent);
         Assert.Equal("Stop", row.ActionText);
         Assert.Equal(UpdateState.Updating, updates.State);
         Assert.Equal("Updating match data 31%", updates.Headline);

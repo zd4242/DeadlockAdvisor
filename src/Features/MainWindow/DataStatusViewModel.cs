@@ -1,4 +1,3 @@
-using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
@@ -13,9 +12,9 @@ namespace DeadlockAdvisor.Features.MainWindow;
 public sealed record StatusFact(string Label, string Value);
 
 /// <summary>
-/// The status bar's match data chip, and the card it opens: which patch and matches the data comes
-/// from and how old it is, what each kind of lift kept, a newer patch if one is out, and while the
-/// model editors are shown, how much of the model is filled in.
+/// What the Updates flyout shows about the match data: which patch and matches it comes from and how
+/// old it is, what each kind of lift kept, a newer patch if one is out, and while the model editors
+/// are shown, how much of the model is filled in.
 /// </summary>
 public class DataStatusViewModel : ViewModelBase
 {
@@ -35,7 +34,6 @@ public class DataStatusViewModel : ViewModelBase
         _data = data;
         _dataMenu = dataMenu;
         _settings = settings;
-        FetchCommand = dataMenu.DownloadMatchDataCommand;
 
         data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => Refresh()).DisposeWith(Disposables);
         dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => Refresh()).DisposeWith(Disposables);
@@ -55,10 +53,7 @@ public class DataStatusViewModel : ViewModelBase
             .DisposeWith(Disposables);
     }
 
-    /// <summary>The chip's text: the patch of the match data and that it's current or how old it is, or that there's none.</summary>
-    [Reactive] public string Label { get; private set; } = "";
-
-    /// <summary>The label without its "Match data · ": "patch 10-07 · up to date", "none yet".</summary>
+    /// <summary>The patch of the match data and that it's current or how old it is, or that there's none: "patch 10-07 · up to date", "none yet".</summary>
     [Reactive] public string Summary { get; private set; } = "";
 
     [Reactive] public bool HasData { get; private set; }
@@ -74,14 +69,10 @@ public class DataStatusViewModel : ViewModelBase
     /// <summary>What each kind of lift kept from the matches, or why it was left out: for the editors only, like <see cref="Coverage"/>.</summary>
     [Reactive] public IReadOnlyList<string> Families { get; private set; } = [];
 
-    [Reactive] public string FetchText { get; private set; } = "";
-
     /// <summary>How much of the model is filled in, which only matters to someone filling it in.</summary>
     [Reactive] public bool ShowsCoverage { get; private set; }
 
     [Reactive] public IReadOnlyList<StatusFact> Coverage { get; private set; } = [];
-
-    public ReactiveCommand<Unit, Unit> FetchCommand { get; }
 
     /// <summary>A recent check found no newer patch. A finished patch is never fetched again, so the data's own age says nothing then.</summary>
     private bool IsCurrent() =>
@@ -89,7 +80,7 @@ public class DataStatusViewModel : ViewModelBase
         && _settings.Current.MatchDataCheckedAt is { } checkedAt
         && DateTimeOffset.UtcNow - checkedAt < UpToDateWindow;
 
-    /// <summary>Recompute everything, as the card does on opening so the age is current.</summary>
+    /// <summary>Recompute everything, as the flyout does on opening so the age is current.</summary>
     public void Refresh()
     {
         var meta = _data.Store.MatchMeta;
@@ -103,7 +94,6 @@ public class DataStatusViewModel : ViewModelBase
             var age = MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0 - at);
             var current = IsCurrent() ? "up to date" : age;
             Summary = IsOutdated ? $"patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"patch {patch} · {current}";
-            Label = $"Match data · {Summary}";
             Warning = IsOutdated
                 ? $"Patch {_dataMenu.NewerPatch!.Label} is out since these were fetched. Download again for numbers that match the game."
                 : null;
@@ -117,16 +107,13 @@ public class DataStatusViewModel : ViewModelBase
             if (MatchStatsMath.DriftLine(meta) is { } drift)
                 families.Add(drift);
             Families = ShowsCoverage ? families : [];
-            FetchText = "Download again…";
         }
         else
         {
             Summary = "none yet";
-            Label = "No match data";
             Warning = null;
             Facts = [];
             Families = [];
-            FetchText = "Download Match Data…";
         }
 
         var coverage = _data.Store.Coverage();

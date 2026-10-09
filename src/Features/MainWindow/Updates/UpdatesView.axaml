@@ -1,0 +1,184 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:updates="using:DeadlockAdvisor.Features.MainWindow.Updates"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
+             x:Class="DeadlockAdvisor.Features.MainWindow.Updates.UpdatesView"
+             x:DataType="updates:UpdatesViewModel">
+
+    <!-- A chip in the status bar: a dot for how things stand and a few words on the most pressing of them. Hovering
+         or clicking opens the flyout, with a row each for the app, the formulas, the match data and the art. -->
+    <UserControl.Styles>
+        <StyleInclude Source="avares://DeadlockAdvisor/src/Features/MainWindow/StatusChipStyles.axaml"/>
+
+        <Style Selector="Ellipse.dot.good">
+            <Setter Property="Fill" Value="{DynamicResource PositiveBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.working">
+            <Setter Property="Fill" Value="{DynamicResource DataBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.attention, Ellipse.dot.warning">
+            <Setter Property="Fill" Value="{DynamicResource WarningBrush}"/>
+        </Style>
+        <Style Selector="Ellipse.dot.problem">
+            <Setter Property="Fill" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+
+        <Style Selector="Button.chip TextBlock.attention">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="Button.chip TextBlock.warning">
+            <Setter Property="Foreground" Value="{DynamicResource WarningBrush}"/>
+        </Style>
+        <Style Selector="Button.chip TextBlock.problem">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+
+        <!-- The flyout hangs off the status bar, whose dim text style would otherwise reach into it. -->
+        <Style Selector="StackPanel.card TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.dim, StackPanel.card TextBlock.section">
+            <Setter Property="Foreground" Value="{DynamicResource TextDimBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.faint">
+            <Setter Property="Foreground" Value="{DynamicResource TextFaintBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.warning">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card TextBlock.title">
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+
+        <!-- A smaller action under a row's summary: text that reads as a link. -->
+        <Style Selector="Button.flat">
+            <Setter Property="Background" Value="Transparent"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="0"/>
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="FontWeight" Value="Normal"/>
+        </Style>
+        <Style Selector="Button.flat:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="StackPanel.card Button.flat TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="StackPanel.card Button.flat:pointerover TextBlock">
+            <Setter Property="Foreground" Value="{DynamicResource TextBrush}"/>
+            <Setter Property="TextDecorations" Value="Underline"/>
+        </Style>
+
+        <Style Selector="Button.act">
+            <Setter Property="MinHeight" Value="0"/>
+            <Setter Property="MinWidth" Value="0"/>
+            <Setter Property="Padding" Value="10,3"/>
+        </Style>
+    </UserControl.Styles>
+
+    <UserControl.DataTemplates>
+        <DataTemplate x:DataType="updates:UpdateLink">
+            <Button Classes="flat" Margin="0,0,12,0" Command="{Binding Command}" ToolTip.Tip="{Binding Tip}">
+                <TextBlock Text="{Binding Text}"/>
+            </Button>
+        </DataTemplate>
+
+        <DataTemplate x:DataType="updates:UpdateRowViewModel">
+            <StackPanel Spacing="6">
+                <Grid ColumnDefinitions="Auto,*,Auto">
+                    <Ellipse Classes="dot"
+                             Margin="0,6,10,0"
+                             VerticalAlignment="Top"
+                             Classes.good="{Binding IsGood}"
+                             Classes.working="{Binding IsWorking}"
+                             Classes.attention="{Binding IsAttention}"
+                             Classes.warning="{Binding IsWarning}"
+                             Classes.problem="{Binding IsProblem}"/>
+                    <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Classes="title" Text="{Binding Title}"/>
+                        <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Summary}"/>
+                        <ProgressBar Margin="0,4,0,2"
+                                     MinWidth="0"
+                                     Height="4"
+                                     MinHeight="4"
+                                     CornerRadius="2"
+                                     Minimum="0"
+                                     Maximum="100"
+                                     Value="{Binding Percent}"
+                                     IsIndeterminate="{Binding IsIndeterminate}"
+                                     IsVisible="{Binding IsUpdating}"
+                                     Foreground="{DynamicResource AccentBrush}"
+                                     Background="{DynamicResource Surface4Brush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <ItemsControl ItemsSource="{Binding Links}">
+                                <ItemsControl.ItemsPanel>
+                                    <ItemsPanelTemplate>
+                                        <StackPanel Orientation="Horizontal"/>
+                                    </ItemsPanelTemplate>
+                                </ItemsControl.ItemsPanel>
+                            </ItemsControl>
+                            <Button Classes="flat" Command="{Binding ToggleDetailsCommand}" IsVisible="{Binding HasDetails}">
+                                <TextBlock Text="{Binding DetailsText}"/>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                    <Button Grid.Column="2"
+                            Classes="act"
+                            Margin="12,0,0,0"
+                            VerticalAlignment="Top"
+                            Content="{Binding ActionText}"
+                            Command="{Binding Action}"
+                            IsVisible="{Binding ActionText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"
+                            ToolTip.Tip="{Binding ActionTip}"/>
+                </Grid>
+                <ContentControl Margin="17,0,0,0" Content="{Binding Details}" IsVisible="{Binding IsExpanded}"/>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.DataTemplates>
+
+    <Button x:Name="UpdatesChip"
+            Classes="chip"
+            controls:HoverFlyout.IsEnabled="True"
+            AutomationProperties.Name="{Binding Headline, StringFormat='Updates: {0}'}">
+        <StackPanel Orientation="Horizontal" Spacing="7">
+            <Ellipse Classes="dot"
+                     Classes.good="{Binding IsGood}"
+                     Classes.working="{Binding IsWorking}"
+                     Classes.attention="{Binding IsAttention}"
+                     Classes.warning="{Binding IsWarning}"
+                     Classes.problem="{Binding IsProblem}"/>
+            <TextBlock VerticalAlignment="Center"
+                       Classes.attention="{Binding IsAttention}"
+                       Classes.warning="{Binding IsWarning}"
+                       Classes.problem="{Binding IsProblem}"
+                       Text="{Binding Headline}"/>
+        </StackPanel>
+        <Button.Flyout>
+            <Flyout Placement="TopEdgeAlignedLeft" ShowMode="TransientWithDismissOnPointerMoveAway">
+                <StackPanel Classes="card" Width="420" Spacing="12">
+                    <StackPanel Spacing="2">
+                        <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="UPDATES"/>
+                        <TextBlock Classes="dim" TextWrapping="Wrap" Text="{Binding Status}"/>
+                    </StackPanel>
+                    <ItemsControl x:Name="Rows" ItemsSource="{Binding Rows}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Spacing="12"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                    </ItemsControl>
+                    <Border Classes="hline"/>
+                    <Grid ColumnDefinitions="*,Auto">
+                        <TextBlock Classes="faint" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding Downloaded}"/>
+                        <Button x:Name="CheckAll"
+                                Grid.Column="1"
+                                Classes="act"
+                                Content="{Binding CheckAllText}"
+                                Command="{Binding CheckAllCommand}"
+                                ToolTip.Tip="Look for a newer app, formulas and patch now, and fetch the art if it is due"/>
+                    </Grid>
+                </StackPanel>
+            </Flyout>
+        </Button.Flyout>
+    </Button>
+</UserControl>
