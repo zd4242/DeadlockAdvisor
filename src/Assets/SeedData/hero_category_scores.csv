@@ -14,6 +14,7 @@ abrams,scales_with_spirit_power,65
 abrams,scales_with_ability_range,15
 abrams,scales_with_ability_duration,80
 abrams,max_hp,75
+abrams,durability,79
 abrams,has_healing_sustain,85
 abrams,has_utility_item_slots,5
 abrams,applies_debuffs,70
@@ -26,7 +27,6 @@ abrams,countered_by_knockdown,25
 abrams,countered_by_counterspell,75
 abrams,countered_by_dispel_magic,5
 abrams,countered_by_divine_barrier,0
-abrams,durability,79
 apollo,deals_bullet_damage_general,10
 apollo,deals_bullet_damage_burst,0
 apollo,deals_spirit_damage_general,84
@@ -42,6 +42,7 @@ apollo,scales_with_spirit_power,100
 apollo,scales_with_ability_range,15
 apollo,scales_with_ability_duration,15
 apollo,max_hp,9
+apollo,durability,64
 apollo,has_healing_sustain,45
 apollo,has_utility_item_slots,0
 apollo,applies_debuffs,10
@@ -54,7 +55,6 @@ apollo,countered_by_knockdown,15
 apollo,countered_by_counterspell,60
 apollo,countered_by_dispel_magic,5
 apollo,countered_by_divine_barrier,0
-apollo,durability,64
 bebop,deals_bullet_damage_general,27
 bebop,deals_bullet_damage_burst,15
 bebop,deals_spirit_damage_general,53
@@ -70,6 +70,7 @@ bebop,scales_with_spirit_power,75
 bebop,scales_with_ability_range,25
 bebop,scales_with_ability_duration,5
 bebop,max_hp,61
+bebop,durability,76
 bebop,has_healing_sustain,55
 bebop,has_utility_item_slots,40
 bebop,applies_debuffs,10
@@ -82,7 +83,6 @@ bebop,countered_by_knockdown,20
 bebop,countered_by_counterspell,50
 bebop,countered_by_dispel_magic,60
 bebop,countered_by_divine_barrier,65
-bebop,durability,76
 billy,deals_bullet_damage_general,21
 billy,deals_bullet_damage_burst,35
 billy,deals_spirit_damage_general,46
@@ -98,6 +98,7 @@ billy,scales_with_spirit_power,55
 billy,scales_with_ability_range,20
 billy,scales_with_ability_duration,30
 billy,max_hp,51
+billy,durability,73
 billy,has_healing_sustain,20
 billy,has_utility_item_slots,0
 billy,applies_debuffs,20
@@ -110,7 +111,6 @@ billy,countered_by_knockdown,0
 billy,countered_by_counterspell,25
 billy,countered_by_dispel_magic,35
 billy,countered_by_divine_barrier,25
-billy,durability,73
 calico,deals_bullet_damage_general,14
 calico,deals_bullet_damage_burst,10
 calico,deals_spirit_damage_general,65
@@ -126,6 +126,7 @@ calico,scales_with_spirit_power,65
 calico,scales_with_ability_range,25
 calico,scales_with_ability_duration,10
 calico,max_hp,-30
+calico,durability,51
 calico,has_healing_sustain,10
 calico,has_utility_item_slots,15
 calico,applies_debuffs,20
@@ -138,7 +139,6 @@ calico,countered_by_knockdown,0
 calico,countered_by_counterspell,25
 calico,countered_by_dispel_magic,15
 calico,countered_by_divine_barrier,0
-calico,durability,51
 celeste,deals_bullet_damage_general,25
 celeste,deals_bullet_damage_burst,0
 celeste,deals_spirit_damage_general,81
@@ -154,6 +154,7 @@ celeste,scales_with_spirit_power,70
 celeste,scales_with_ability_range,70
 celeste,scales_with_ability_duration,20
 celeste,max_hp,-54
+celeste,durability,50
 celeste,has_healing_sustain,40
 celeste,has_utility_item_slots,5
 celeste,applies_debuffs,40
@@ -166,7 +167,6 @@ celeste,countered_by_knockdown,75
 celeste,countered_by_counterspell,15
 celeste,countered_by_dispel_magic,25
 celeste,countered_by_divine_barrier,15
-celeste,durability,50
 drifter,deals_bullet_damage_general,54
 drifter,deals_bullet_damage_burst,15
 drifter,deals_spirit_damage_general,37
@@ -182,6 +182,7 @@ drifter,scales_with_spirit_power,55
 drifter,scales_with_ability_range,20
 drifter,scales_with_ability_duration,45
 drifter,max_hp,-9
+drifter,durability,58
 drifter,has_healing_sustain,15
 drifter,has_utility_item_slots,10
 drifter,applies_debuffs,60
@@ -194,7 +195,6 @@ drifter,countered_by_knockdown,0
 drifter,countered_by_counterspell,40
 drifter,countered_by_dispel_magic,40
 drifter,countered_by_divine_barrier,60
-drifter,durability,58
 dynamo,deals_bullet_damage_general,23
 dynamo,deals_bullet_damage_burst,0
 dynamo,deals_spirit_damage_general,55
@@ -210,6 +210,7 @@ dynamo,scales_with_spirit_power,70
 dynamo,scales_with_ability_range,70
 dynamo,scales_with_ability_duration,85
 dynamo,max_hp,95
+dynamo,durability,70
 dynamo,has_healing_sustain,65
 dynamo,has_utility_item_slots,40
 dynamo,applies_debuffs,10
@@ -222,7 +223,6 @@ dynamo,countered_by_knockdown,0
 dynamo,countered_by_counterspell,15
 dynamo,countered_by_dispel_magic,5
 dynamo,countered_by_divine_barrier,0
-dynamo,durability,70
 graves,deals_bullet_damage_general,19
 graves,deals_bullet_damage_burst,5
 graves,deals_spirit_damage_general,78
@@ -238,6 +238,7 @@ graves,scales_with_spirit_power,55
 graves,scales_with_ability_range,10
 graves,scales_with_ability_duration,80
 graves,max_hp,-38
+graves,durability,31
 graves,has_healing_sustain,5
 graves,has_utility_item_slots,20
 graves,applies_debuffs,40
@@ -250,7 +251,6 @@ graves,countered_by_knockdown,0
 graves,countered_by_counterspell,0
 graves,countered_by_dispel_magic,15
 graves,countered_by_divine_barrier,0
-graves,durability,31
 grey_talon,deals_bullet_damage_general,43
 grey_talon,deals_bullet_damage_burst,10
 grey_talon,deals_spirit_damage_general,64
@@ -266,6 +266,7 @@ grey_talon,scales_with_spirit_power,80
 grey_talon,scales_with_ability_range,5
 grey_talon,scales_with_ability_duration,5
 grey_talon,max_hp,-15
+grey_talon,durability,20
 grey_talon,has_healing_sustain,0
 grey_talon,has_utility_item_slots,0
 grey_talon,applies_debuffs,20
@@ -278,7 +279,6 @@ grey_talon,countered_by_knockdown,70
 grey_talon,countered_by_counterspell,20
 grey_talon,countered_by_dispel_magic,5
 grey_talon,countered_by_divine_barrier,0
-grey_talon,durability,20
 haze,deals_bullet_damage_general,74
 haze,deals_bullet_damage_burst,90
 haze,deals_spirit_damage_general,27
@@ -294,6 +294,7 @@ haze,scales_with_spirit_power,20
 haze,scales_with_ability_range,5
 haze,scales_with_ability_duration,25
 haze,max_hp,-46
+haze,durability,40
 haze,has_healing_sustain,15
 haze,has_utility_item_slots,15
 haze,applies_debuffs,60
@@ -306,7 +307,6 @@ haze,countered_by_knockdown,0
 haze,countered_by_counterspell,0
 haze,countered_by_dispel_magic,15
 haze,countered_by_divine_barrier,25
-haze,durability,40
 holliday,deals_bullet_damage_general,22
 holliday,deals_bullet_damage_burst,35
 holliday,deals_spirit_damage_general,75
@@ -322,6 +322,7 @@ holliday,scales_with_spirit_power,75
 holliday,scales_with_ability_range,25
 holliday,scales_with_ability_duration,60
 holliday,max_hp,4
+holliday,durability,44
 holliday,has_healing_sustain,0
 holliday,has_utility_item_slots,30
 holliday,applies_debuffs,80
@@ -334,7 +335,6 @@ holliday,countered_by_knockdown,60
 holliday,countered_by_counterspell,30
 holliday,countered_by_dispel_magic,25
 holliday,countered_by_divine_barrier,15
-holliday,durability,44
 infernus,deals_bullet_damage_general,24
 infernus,deals_bullet_damage_burst,0
 infernus,deals_spirit_damage_general,73
@@ -350,6 +350,7 @@ infernus,scales_with_spirit_power,80
 infernus,scales_with_ability_range,15
 infernus,scales_with_ability_duration,75
 infernus,max_hp,-1
+infernus,durability,51
 infernus,has_healing_sustain,30
 infernus,has_utility_item_slots,0
 infernus,applies_debuffs,100
@@ -362,7 +363,6 @@ infernus,countered_by_knockdown,0
 infernus,countered_by_counterspell,15
 infernus,countered_by_dispel_magic,95
 infernus,countered_by_divine_barrier,80
-infernus,durability,51
 ivy,deals_bullet_damage_general,30
 ivy,deals_bullet_damage_burst,5
 ivy,deals_spirit_damage_general,55
@@ -378,6 +378,7 @@ ivy,scales_with_spirit_power,75
 ivy,scales_with_ability_range,70
 ivy,scales_with_ability_duration,80
 ivy,max_hp,6
+ivy,durability,45
 ivy,has_healing_sustain,70
 ivy,has_utility_item_slots,75
 ivy,applies_debuffs,40
@@ -390,7 +391,6 @@ ivy,countered_by_knockdown,50
 ivy,countered_by_counterspell,30
 ivy,countered_by_dispel_magic,5
 ivy,countered_by_divine_barrier,0
-ivy,durability,45
 kelvin,deals_bullet_damage_general,11
 kelvin,deals_bullet_damage_burst,0
 kelvin,deals_spirit_damage_general,78
@@ -406,6 +406,7 @@ kelvin,scales_with_spirit_power,75
 kelvin,scales_with_ability_range,70
 kelvin,scales_with_ability_duration,60
 kelvin,max_hp,91
+kelvin,durability,69
 kelvin,has_healing_sustain,75
 kelvin,has_utility_item_slots,70
 kelvin,applies_debuffs,10
@@ -418,7 +419,6 @@ kelvin,countered_by_knockdown,75
 kelvin,countered_by_counterspell,0
 kelvin,countered_by_dispel_magic,5
 kelvin,countered_by_divine_barrier,0
-kelvin,durability,69
 lady_geist,deals_bullet_damage_general,47
 lady_geist,deals_bullet_damage_burst,0
 lady_geist,deals_spirit_damage_general,59
@@ -434,6 +434,7 @@ lady_geist,scales_with_spirit_power,50
 lady_geist,scales_with_ability_range,35
 lady_geist,scales_with_ability_duration,15
 lady_geist,max_hp,57
+lady_geist,durability,68
 lady_geist,has_healing_sustain,85
 lady_geist,has_utility_item_slots,10
 lady_geist,applies_debuffs,10
@@ -446,7 +447,6 @@ lady_geist,countered_by_knockdown,0
 lady_geist,countered_by_counterspell,50
 lady_geist,countered_by_dispel_magic,15
 lady_geist,countered_by_divine_barrier,0
-lady_geist,durability,68
 lash,deals_bullet_damage_general,23
 lash,deals_bullet_damage_burst,0
 lash,deals_spirit_damage_general,76
@@ -462,6 +462,7 @@ lash,scales_with_spirit_power,85
 lash,scales_with_ability_range,25
 lash,scales_with_ability_duration,10
 lash,max_hp,31
+lash,durability,52
 lash,has_healing_sustain,35
 lash,has_utility_item_slots,15
 lash,applies_debuffs,10
@@ -474,7 +475,6 @@ lash,countered_by_knockdown,100
 lash,countered_by_counterspell,90
 lash,countered_by_dispel_magic,5
 lash,countered_by_divine_barrier,0
-lash,durability,52
 mcginnis,deals_bullet_damage_general,20
 mcginnis,deals_bullet_damage_burst,10
 mcginnis,deals_spirit_damage_general,80
@@ -490,6 +490,7 @@ mcginnis,scales_with_spirit_power,70
 mcginnis,scales_with_ability_range,20
 mcginnis,scales_with_ability_duration,35
 mcginnis,max_hp,39
+mcginnis,durability,40
 mcginnis,has_healing_sustain,55
 mcginnis,has_utility_item_slots,25
 mcginnis,applies_debuffs,10
@@ -502,7 +503,6 @@ mcginnis,countered_by_knockdown,0
 mcginnis,countered_by_counterspell,5
 mcginnis,countered_by_dispel_magic,0
 mcginnis,countered_by_divine_barrier,0
-mcginnis,durability,40
 mina,deals_bullet_damage_general,12
 mina,deals_bullet_damage_burst,0
 mina,deals_spirit_damage_general,88
@@ -518,6 +518,7 @@ mina,scales_with_spirit_power,90
 mina,scales_with_ability_range,20
 mina,scales_with_ability_duration,10
 mina,max_hp,-84
+mina,durability,33
 mina,has_healing_sustain,15
 mina,has_utility_item_slots,5
 mina,applies_debuffs,30
@@ -530,7 +531,6 @@ mina,countered_by_knockdown,5
 mina,countered_by_counterspell,10
 mina,countered_by_dispel_magic,5
 mina,countered_by_divine_barrier,0
-mina,durability,33
 mirage,deals_bullet_damage_general,29
 mirage,deals_bullet_damage_burst,0
 mirage,deals_spirit_damage_general,65
@@ -546,6 +546,7 @@ mirage,scales_with_spirit_power,65
 mirage,scales_with_ability_range,15
 mirage,scales_with_ability_duration,30
 mirage,max_hp,1
+mirage,durability,45
 mirage,has_healing_sustain,35
 mirage,has_utility_item_slots,10
 mirage,applies_debuffs,80
@@ -558,7 +559,6 @@ mirage,countered_by_knockdown,0
 mirage,countered_by_counterspell,5
 mirage,countered_by_dispel_magic,50
 mirage,countered_by_divine_barrier,30
-mirage,durability,45
 mo_and_krill,deals_bullet_damage_general,10
 mo_and_krill,deals_bullet_damage_burst,0
 mo_and_krill,deals_spirit_damage_general,85
@@ -574,6 +574,7 @@ mo_and_krill,scales_with_spirit_power,75
 mo_and_krill,scales_with_ability_range,40
 mo_and_krill,scales_with_ability_duration,65
 mo_and_krill,max_hp,100
+mo_and_krill,durability,94
 mo_and_krill,has_healing_sustain,80
 mo_and_krill,has_utility_item_slots,5
 mo_and_krill,applies_debuffs,70
@@ -586,7 +587,6 @@ mo_and_krill,countered_by_knockdown,0
 mo_and_krill,countered_by_counterspell,15
 mo_and_krill,countered_by_dispel_magic,15
 mo_and_krill,countered_by_divine_barrier,0
-mo_and_krill,durability,94
 paige,deals_bullet_damage_general,29
 paige,deals_bullet_damage_burst,0
 paige,deals_spirit_damage_general,58
@@ -602,6 +602,7 @@ paige,scales_with_spirit_power,80
 paige,scales_with_ability_range,80
 paige,scales_with_ability_duration,70
 paige,max_hp,-64
+paige,durability,13
 paige,has_healing_sustain,65
 paige,has_utility_item_slots,100
 paige,applies_debuffs,40
@@ -614,7 +615,6 @@ paige,countered_by_knockdown,0
 paige,countered_by_counterspell,35
 paige,countered_by_dispel_magic,20
 paige,countered_by_divine_barrier,10
-paige,durability,13
 paradox,deals_bullet_damage_general,36
 paradox,deals_bullet_damage_burst,20
 paradox,deals_spirit_damage_general,67
@@ -630,6 +630,7 @@ paradox,scales_with_spirit_power,35
 paradox,scales_with_ability_range,40
 paradox,scales_with_ability_duration,25
 paradox,max_hp,4
+paradox,durability,38
 paradox,has_healing_sustain,0
 paradox,has_utility_item_slots,30
 paradox,applies_debuffs,10
@@ -642,7 +643,6 @@ paradox,countered_by_knockdown,0
 paradox,countered_by_counterspell,10
 paradox,countered_by_dispel_magic,10
 paradox,countered_by_divine_barrier,0
-paradox,durability,38
 pocket,deals_bullet_damage_general,15
 pocket,deals_bullet_damage_burst,10
 pocket,deals_spirit_damage_general,93
@@ -658,6 +658,7 @@ pocket,scales_with_spirit_power,90
 pocket,scales_with_ability_range,75
 pocket,scales_with_ability_duration,65
 pocket,max_hp,-23
+pocket,durability,34
 pocket,has_healing_sustain,5
 pocket,has_utility_item_slots,0
 pocket,applies_debuffs,90
@@ -670,7 +671,6 @@ pocket,countered_by_knockdown,0
 pocket,countered_by_counterspell,80
 pocket,countered_by_dispel_magic,5
 pocket,countered_by_divine_barrier,100
-pocket,durability,34
 rem,deals_bullet_damage_general,16
 rem,deals_bullet_damage_burst,0
 rem,deals_spirit_damage_general,55
@@ -686,6 +686,7 @@ rem,scales_with_spirit_power,45
 rem,scales_with_ability_range,35
 rem,scales_with_ability_duration,45
 rem,max_hp,-76
+rem,durability,21
 rem,has_healing_sustain,95
 rem,has_utility_item_slots,70
 rem,applies_debuffs,40
@@ -698,7 +699,6 @@ rem,countered_by_knockdown,0
 rem,countered_by_counterspell,65
 rem,countered_by_dispel_magic,5
 rem,countered_by_divine_barrier,0
-rem,durability,21
 seven,deals_bullet_damage_general,20
 seven,deals_bullet_damage_burst,0
 seven,deals_spirit_damage_general,83
@@ -714,6 +714,7 @@ seven,scales_with_spirit_power,65
 seven,scales_with_ability_range,60
 seven,scales_with_ability_duration,55
 seven,max_hp,-15
+seven,durability,36
 seven,has_healing_sustain,30
 seven,has_utility_item_slots,20
 seven,applies_debuffs,60
@@ -726,7 +727,6 @@ seven,countered_by_knockdown,80
 seven,countered_by_counterspell,30
 seven,countered_by_dispel_magic,35
 seven,countered_by_divine_barrier,40
-seven,durability,36
 shiv,deals_bullet_damage_general,18
 shiv,deals_bullet_damage_burst,0
 shiv,deals_spirit_damage_general,72
@@ -742,6 +742,7 @@ shiv,scales_with_spirit_power,70
 shiv,scales_with_ability_range,20
 shiv,scales_with_ability_duration,35
 shiv,max_hp,26
+shiv,durability,67
 shiv,has_healing_sustain,15
 shiv,has_utility_item_slots,10
 shiv,applies_debuffs,80
@@ -754,7 +755,6 @@ shiv,countered_by_knockdown,0
 shiv,countered_by_counterspell,10
 shiv,countered_by_dispel_magic,60
 shiv,countered_by_divine_barrier,40
-shiv,durability,67
 silver,deals_bullet_damage_general,51
 silver,deals_bullet_damage_burst,65
 silver,deals_spirit_damage_general,22
@@ -770,6 +770,7 @@ silver,scales_with_spirit_power,35
 silver,scales_with_ability_range,20
 silver,scales_with_ability_duration,40
 silver,max_hp,-31
+silver,durability,62
 silver,has_healing_sustain,20
 silver,has_utility_item_slots,5
 silver,applies_debuffs,40
@@ -782,7 +783,6 @@ silver,countered_by_knockdown,0
 silver,countered_by_counterspell,10
 silver,countered_by_dispel_magic,20
 silver,countered_by_divine_barrier,25
-silver,durability,62
 doorman,deals_bullet_damage_general,24
 doorman,deals_bullet_damage_burst,0
 doorman,deals_spirit_damage_general,70
@@ -798,6 +798,7 @@ doorman,scales_with_spirit_power,65
 doorman,scales_with_ability_range,30
 doorman,scales_with_ability_duration,15
 doorman,max_hp,-6
+doorman,durability,42
 doorman,has_healing_sustain,0
 doorman,has_utility_item_slots,45
 doorman,applies_debuffs,20
@@ -810,7 +811,6 @@ doorman,countered_by_knockdown,0
 doorman,countered_by_counterspell,30
 doorman,countered_by_dispel_magic,15
 doorman,countered_by_divine_barrier,0
-doorman,durability,42
 sinclair,deals_bullet_damage_general,19
 sinclair,deals_bullet_damage_burst,0
 sinclair,deals_spirit_damage_general,71
@@ -826,6 +826,7 @@ sinclair,scales_with_spirit_power,60
 sinclair,scales_with_ability_range,80
 sinclair,scales_with_ability_duration,70
 sinclair,max_hp,-26
+sinclair,durability,32
 sinclair,has_healing_sustain,0
 sinclair,has_utility_item_slots,60
 sinclair,applies_debuffs,50
@@ -838,7 +839,6 @@ sinclair,countered_by_knockdown,20
 sinclair,countered_by_counterspell,45
 sinclair,countered_by_dispel_magic,0
 sinclair,countered_by_divine_barrier,0
-sinclair,durability,32
 venator,deals_bullet_damage_general,94
 venator,deals_bullet_damage_burst,80
 venator,deals_spirit_damage_general,4
@@ -854,6 +854,7 @@ venator,scales_with_spirit_power,10
 venator,scales_with_ability_range,25
 venator,scales_with_ability_duration,25
 venator,max_hp,13
+venator,durability,50
 venator,has_healing_sustain,20
 venator,has_utility_item_slots,0
 venator,applies_debuffs,20
@@ -866,7 +867,6 @@ venator,countered_by_knockdown,0
 venator,countered_by_counterspell,10
 venator,countered_by_dispel_magic,20
 venator,countered_by_divine_barrier,0
-venator,durability,50
 victor,deals_bullet_damage_general,23
 victor,deals_bullet_damage_burst,20
 victor,deals_spirit_damage_general,79
@@ -882,6 +882,7 @@ victor,scales_with_spirit_power,75
 victor,scales_with_ability_range,50
 victor,scales_with_ability_duration,20
 victor,max_hp,-26
+victor,durability,80
 victor,has_healing_sustain,100
 victor,has_utility_item_slots,0
 victor,applies_debuffs,10
@@ -894,7 +895,6 @@ victor,countered_by_knockdown,0
 victor,countered_by_counterspell,10
 victor,countered_by_dispel_magic,0
 victor,countered_by_divine_barrier,0
-victor,durability,80
 vindicta,deals_bullet_damage_general,47
 vindicta,deals_bullet_damage_burst,40
 vindicta,deals_spirit_damage_general,61
@@ -910,6 +910,7 @@ vindicta,scales_with_spirit_power,55
 vindicta,scales_with_ability_range,30
 vindicta,scales_with_ability_duration,50
 vindicta,max_hp,-59
+vindicta,durability,18
 vindicta,has_healing_sustain,0
 vindicta,has_utility_item_slots,25
 vindicta,applies_debuffs,50
@@ -922,7 +923,6 @@ vindicta,countered_by_knockdown,100
 vindicta,countered_by_counterspell,10
 vindicta,countered_by_dispel_magic,35
 vindicta,countered_by_divine_barrier,35
-vindicta,durability,18
 viscous,deals_bullet_damage_general,16
 viscous,deals_bullet_damage_burst,25
 viscous,deals_spirit_damage_general,81
@@ -938,6 +938,7 @@ viscous,scales_with_spirit_power,70
 viscous,scales_with_ability_range,25
 viscous,scales_with_ability_duration,30
 viscous,max_hp,12
+viscous,durability,50
 viscous,has_healing_sustain,20
 viscous,has_utility_item_slots,45
 viscous,applies_debuffs,10
@@ -950,7 +951,6 @@ viscous,countered_by_knockdown,25
 viscous,countered_by_counterspell,10
 viscous,countered_by_dispel_magic,5
 viscous,countered_by_divine_barrier,0
-viscous,durability,50
 vyper,deals_bullet_damage_general,62
 vyper,deals_bullet_damage_burst,80
 vyper,deals_spirit_damage_general,38
@@ -966,6 +966,7 @@ vyper,scales_with_spirit_power,60
 vyper,scales_with_ability_range,15
 vyper,scales_with_ability_duration,25
 vyper,max_hp,-27
+vyper,durability,34
 vyper,has_healing_sustain,0
 vyper,has_utility_item_slots,0
 vyper,applies_debuffs,10
@@ -978,7 +979,6 @@ vyper,countered_by_knockdown,0
 vyper,countered_by_counterspell,5
 vyper,countered_by_dispel_magic,25
 vyper,countered_by_divine_barrier,0
-vyper,durability,34
 warden,deals_bullet_damage_general,49
 warden,deals_bullet_damage_burst,45
 warden,deals_spirit_damage_general,54
@@ -994,6 +994,7 @@ warden,scales_with_spirit_power,35
 warden,scales_with_ability_range,20
 warden,scales_with_ability_duration,25
 warden,max_hp,75
+warden,durability,58
 warden,has_healing_sustain,0
 warden,has_utility_item_slots,10
 warden,applies_debuffs,40
@@ -1006,7 +1007,6 @@ warden,countered_by_knockdown,0
 warden,countered_by_counterspell,30
 warden,countered_by_dispel_magic,35
 warden,countered_by_divine_barrier,20
-warden,durability,58
 wraith,deals_bullet_damage_general,41
 wraith,deals_bullet_damage_burst,35
 wraith,deals_spirit_damage_general,61
@@ -1022,6 +1022,7 @@ wraith,scales_with_spirit_power,50
 wraith,scales_with_ability_range,10
 wraith,scales_with_ability_duration,35
 wraith,max_hp,-38
+wraith,durability,36
 wraith,has_healing_sustain,35
 wraith,has_utility_item_slots,5
 wraith,applies_debuffs,40
@@ -1034,7 +1035,6 @@ wraith,countered_by_knockdown,10
 wraith,countered_by_counterspell,25
 wraith,countered_by_dispel_magic,5
 wraith,countered_by_divine_barrier,0
-wraith,durability,36
 yamato,deals_bullet_damage_general,17
 yamato,deals_bullet_damage_burst,5
 yamato,deals_spirit_damage_general,69
@@ -1050,6 +1050,7 @@ yamato,scales_with_spirit_power,80
 yamato,scales_with_ability_range,35
 yamato,scales_with_ability_duration,40
 yamato,max_hp,1
+yamato,durability,76
 yamato,has_healing_sustain,45
 yamato,has_utility_item_slots,5
 yamato,applies_debuffs,20
@@ -1062,4 +1063,3 @@ yamato,countered_by_knockdown,15
 yamato,countered_by_counterspell,70
 yamato,countered_by_dispel_magic,45
 yamato,countered_by_divine_barrier,0
-yamato,durability,76

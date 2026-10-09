@@ -529,7 +529,20 @@ order (Spearman 0.98), and per match was steadier than per death (0.92), so it s
 The same profiled-only rule applies. A sync whose hero-stats call fails still goes ahead with
 the roster and the shop and says durability wasn't measured; `GameApiService.SyncAsync` with
 `measureHeroes: false` skips the call, as the match-data job does, since it throws its store
-away. No item rule uses durability yet, so measuring it changes no recommendation until one does.
+away.
+
+Which rules key off durability and which off max HP: a rule follows durability when the stat
+protects against damage in general, and max HP when it is a share of, or damages a share of, the
+health pool itself.
+
+- **Durability:** the `Barrier` rule (a flat amount of protection, a bigger share of a low-durability
+  hero's pool, so it is negative) and the `TechResist` and `BulletResist` rules (resist multiplies
+  health, barriers and healing alike), and Berserker, whose weapon damage stacks on damage taken.
+- **Max HP:** `BonusBaseHealth` and `ShopBaseHealth` (% of base health), flat `BonusHealth`, and the
+  items that take a % of the target's health (Tankbuster, Toxic Bullets, Decay, Siphon Bullets, Scourge).
+
+Durability's scores spread about 2.5 times less than max HP's (standard deviation 19 against 47), so
+a rule moved from one to the other gets its rate multiplied by that to keep its pull on the ranking.
 
 ## How item stats are extracted (`Services/GameApi/GameSync.cs`)
 

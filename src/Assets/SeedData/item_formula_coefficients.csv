@@ -1,7 +1,7 @@
 item_id,category_id,relation,coefficient,best_target
 alchemical_fire,deals_bullet_damage_general,with,2,
 alchemical_fire,has_utility_item_slots,as,3,
-berserker,max_hp,as,2,
+berserker,durability,as,5,
 bullet_resist_shredder,deals_bullet_damage_general,with,1.5,
 bullet_resist_shredder,applies_spirit_damage_easily,as,2,
 close_quarters,combat_range,against,-1,

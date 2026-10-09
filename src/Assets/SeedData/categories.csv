@@ -14,6 +14,7 @@ scales_with_spirit_power,Scales With Spirit Power,0,100,How much this hero's own
 scales_with_ability_range,Scales With Ability Range,0,100,How much this hero's abilities get stronger with extra ability range
 scales_with_ability_duration,Scales With Ability Duration,0,100,How much this hero's abilities get stronger with longer ability durations
 max_hp,Has High Max HP,-100,100,"Mid-game max HP against the roster median: 0 = typical, +/-100 = 30% more/less; negative values flag low-HP heroes"
+durability,Durability,0,100,"Damage this hero takes per match, against the median over the last 30 days of Phantom+ matches: 50 = typical, 0 and 100 = 55% less or more. It counts health, shields, damage reduction, barriers and healing together; measured on every Sync from Game API"
 has_healing_sustain,Has Healing / Sustain,0,100,How much this hero relies on healing or sustain (self or team) to stay in fights
 has_utility_item_slots,Has Utility Item Slots,0,100,"How much of this hero's build can go to team utility items (heals, saves, auras) instead of its own damage and survival, as a support's does"
 applies_debuffs,Applies Debuffs,0,100,How often/impactfully this hero applies debuffs to enemies
@@ -26,4 +27,3 @@ countered_by_knockdown,Countered by Knockdown,0,100,How much this hero relies on
 countered_by_counterspell,Countered by Counterspell,0,100,How much this hero's power depends on a single interruptible cast
 countered_by_dispel_magic,Countered by Dispel Magic,0,100,How reliant this hero is on buffs/debuffs that Dispel Magic would strip
 countered_by_divine_barrier,Countered by Divine Barrier,0,100,How reliant this hero is on a single burst window Divine Barrier could block
-durability,Durability,0,100,"Damage this hero takes per match, against the median over the last 30 days of Phantom+ matches: 50 = typical, 0 and 100 = 55% less or more. It counts health, shields, damage reduction, barriers and healing together; measured on every Sync from Game API"
