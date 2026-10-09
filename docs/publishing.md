@@ -104,8 +104,8 @@ doesn't match.
 
 ## Match data
 
-Nothing to do. The **Match data** workflow (`.github/workflows/match-data.yml`) runs daily at 06:17 UTC
-and keeps the `match-data` pre-release up to date: a new or ended patch at the next run, the current
+Nothing to do. The **Match data** workflow (`.github/workflows/match-data.yml`) is scheduled daily for 06:17
+UTC (GitHub starts scheduled runs late under load: in practice between about 12:00 and 15:00 UTC) and keeps the `match-data` pre-release up to date: a new or ended patch at the next run, the current
 patch every other day, a finished one never. A run with nothing due makes one call to deadlock-api.com.
 Installs download what's newer than theirs at startup, in seconds, and fall back to asking
 deadlock-api.com themselves only if the shared download hasn't been updated for four days. Details:
@@ -128,8 +128,10 @@ Or from the command line: `gh workflow run release.yml -f release=patch`.
 
 The **Release** workflow (`.github/workflows/release.yml`) then runs the tests, tags the next version
 up from the last tag (only from `main`, and only once the tests pass), builds every platform with that
-version, and publishes a GitHub Release with notes made from the commits since the last one and
-`DeadlockAdvisor.exe` attached. It keeps that name in every release, so
+version, and publishes a GitHub Release with `DeadlockAdvisor.exe` attached and GitHub's generated notes
+(`--generate-notes`): the pull requests merged since the last release, which with commits made straight
+to `main` is only the "Full Changelog" link to the compare view. Edit the release's notes on GitHub if
+players should read more; the app's "What's new" link opens that page. It keeps that name in every release, so
 <https://github.com/zd4242/DeadlockAdvisor/releases/latest/download/DeadlockAdvisor.exe> (the README's
 download link) is always the newest. It takes about 10 minutes. Pushing a tag yourself
 (`git tag v1.2.0 && git push origin v1.2.0`) does the same with the version you chose.

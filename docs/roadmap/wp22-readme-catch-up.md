@@ -1,6 +1,6 @@
 # WP22 README and docs catch-up
 
-Status: todo
+Status: partly done (existing features and corrections landed with wave A; the final sweep waits for the other packages)
 Effort: S · Risk: low (words only) · Depends on: none (run its last sweep after the other packages) · Wave: A, then last
 Touches: `README.md`, `docs/publishing.md`, `docs/scoring_model.md`, `docs/detection_model.md`, `docs/architecture.md`
 Docs to update: those
@@ -63,6 +63,18 @@ None; run `dotnet test … --filter "FullyQualifiedName~ThirdPartyNotices"` only
 ## Conflicts
 
 Other packages edit README lines too: run this package's first part (existing features) any time, and its final sweep after the others.
+
+## Progress
+
+First part (after WP01, WP02, WP05, WP06, WP15 and WP20): the README now describes focus, net worth, Import a match, the Steam
+account, Street Brawl, the rebindable shortcuts and the missing keys (F6-F8, Ctrl+, / Ctrl+Q, mouse back/forward, Ctrl+Z/Y in Hero
+Traits, B in By Trait); "Min usage" and the duplicated Sync sentence are fixed; `docs/publishing.md` no longer promises commit-based
+release notes or a 06:17 UTC run time. Already true after WP02 and WP05: the Detect wording (`project8.exe`, review off by default)
+and the backup rule.
+
+Left for the final sweep: the Data menu / update sentences (WP09, WP10, WP13, WP14), art download wording (WP08), Ctrl+F on Hero Items
+(WP03), the copy button (WP16), Match page keyboard (WP18), the post-match review (WP20/WP21), and the README's "Code signing policy"
+wording, which needs the user's decision (no SignPath variable or secret is set; the section reads as if signing were active).
 
 ## Notes
 

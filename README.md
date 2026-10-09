@@ -88,6 +88,14 @@ everything but Detect should work. What's missing:
 Press <kbd>F9</kbd> and let it read the whole match off the screen:
 see **Detecting the match from the screen** below.
 
+To look at a finished match instead, choose **Import a match…** on the empty
+page (or **Import match by ID…** under the **⋯** menu beside Edit heroes) and
+enter its ID or paste a link with the ID in it. The heroes come from
+[deadlock-api.com](https://deadlock-api.com), and you're picked out by the
+Steam account saved under **Settings → General → Steam account** (an account
+ID, a SteamID64 or a steamcommunity.com/profiles link), or by pressing **You**
+on your row; tick *Remember* there to save it for the next match.
+
 To set or correct heroes by hand, open the hero picker with **Edit heroes**
 (or <kbd>Ctrl</kbd>+<kbd>F</kbd>, Alt+1/2/3, or a click on an empty slot in
 the match bar). Pick what you're assigning with the You / Enemy / Ally
@@ -98,7 +106,14 @@ the current side and clears the field for the next name
 (<kbd>Up</kbd>/<kbd>Down</kbd> move the highlight). <kbd>Esc</kbd> clears
 the search, then closes the picker.
 
-Click a portrait in the roster to change its role or remove it.
+In the roster, right-click a portrait to change its role or remove it (so does
+a click on yours, or on an enemy not rated on any trait yet); the × on a
+portrait removes it. Clicking an ally plays as them. Clicking an enemy
+**focuses** the recommendations on them: a focused enemy counts 5× as much as
+each of the others, and the enemies together still count as much as before, so
+the list leans toward items good against whoever you focused, and the match
+data's enemy numbers lean the same way. Focus both your lane opponents if you
+like; click again to stop, or use the × beside the "vs …" label to stop focusing on everyone.
 Recommendations score everyone in the match across all four tiers. The
 dropdown beside them picks what ranks the list: the formula, the match
 data, or both. The rest sits behind **Filters**: the cutoff hides items
@@ -110,6 +125,13 @@ detectably differently. That's worked out on the spot from the downloaded
 rank groups, and stays set until changed. The button fills in while a
 filter the list doesn't show is on (hiding rarely built items, or leaning
 toward ranks), and its tooltip says which.
+
+When Detect reads the match it also reads each hero's **net worth** (their
+souls) off the top bar: it shows on the portraits and as each team's total.
+With **Lean toward heroes ahead on net worth** ticked under Filters, a hero's
+share of every score is scaled by how far ahead or behind the match's average
+they are, by at most 30%, so counters to a fed enemy and items for a fed ally
+(or a fed you) count for more. It's greyed out until a reading exists.
 
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
@@ -133,8 +155,8 @@ data, which its tooltips call hero fit. A win rate partly shows an item being bo
 going well; the fit takes that out, so it shows what suits this hero in
 particular, not how strong the item is for everyone, so a low fit doesn't make
 an item a bad buy: it only means the hero gains less from it than from its usual picks. Right-click an item for its Deadlock
-Wiki page, or its formula while the model editors are shown. **Usage at
-least** hides the items bought in only a few of the hero's matches, whose
+Wiki page, or its formula while the model editors are shown. **Min
+usage** hides the items bought in only a few of the hero's matches, whose
 win rates rest on too few matches, and on who buys them, to mean much. It
 reads the downloaded match data, so it needs **Data → Download Match Data**.
 
@@ -147,6 +169,7 @@ reads the downloaded match data, so it needs **Data → Download Match Data**.
 | <kbd>Backspace</kbd> | clears the cell |
 | <kbd>Enter</kbd> | next hero, same trait |
 | double-click / <kbd>F2</kbd> | a numeric editor, for decimals |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | undo / redo |
 
 **Copy from…** clones another hero's profile; **Clear hero** resets one.
 The footer explains whichever trait you're on.
@@ -157,7 +180,8 @@ The footer explains whichever trait you're on.
   preview show which heroes they fire against, with the arithmetic in the
   tooltips. The item's in-game card sits alongside.
 - *By Trait*: pick one trait and relation, then run down every item typing
-  coefficients, one keystroke each. **Weight ×** scales the whole trait and
+  coefficients, one keystroke each (<kbd>B</kbd>, or a click in its column,
+  toggles *Best target*). **Weight ×** scales the whole trait and
   relation at once, and the **stat rules** strip fills coefficients from
   each item's real stats (see *Coefficients from item stats* below).
 
@@ -172,8 +196,14 @@ the Match page rescores as you go.
 | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | next / previous page |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search |
 | <kbd>Ctrl</kbd>+<kbd>R</kbd> | reload the data from disk |
+| <kbd>Ctrl</kbd>+<kbd>,</kbd> / <kbd>Ctrl</kbd>+<kbd>Q</kbd> | open Settings / quit |
 | <kbd>F9</kbd> | detect the match from the screen, from the game too (see below) |
+| <kbd>F6</kbd> / <kbd>F7</kbd> / <kbd>F8</kbd> | random match / keeping your hero / random enemies, keeping your team (with **Settings → General → Show the Random buttons** on) |
+| mouse back / forward buttons | step back and forward through the pages (Settings closes on back) |
 | middle click | autoscroll |
+
+F9 and F6–F8 can be moved or taken away under **Settings → Shortcuts**: click
+a key, press the new one.
 
 ## Data folder
 
@@ -215,10 +245,9 @@ change when the data does.
   Max HP and Durability traits from the game's numbers. Only changed files are written.
   Run it after each patch: the report lists each item stat that moved,
   items with hand-typed rules whose tooltip changed, stats it doesn't know
-  how to map, and per-item overrides that no longer match the game. It
-  also re-measures each hero's *Has High Max HP* from the game's health
-  numbers. New heroes don't need it: a workflow adds them to the published
-  model, rated at 0 until they're rated ([formula updates](#formula-updates)).
+  how to map, and per-item overrides that no longer match the game. New
+  heroes don't need it: a workflow adds them to the published model, rated
+  at 0 until they're rated ([formula updates](#formula-updates)).
 - **Download Match Data…**: item win rates against, with and as each hero,
   shown beside each recommendation as "data": a second opinion, not part
   of the score. A dialog first shows the patches stored, what the download
@@ -347,7 +376,10 @@ Press <kbd>F9</kbd> (or **Detect from screen**) while Deadlock is in a
 match, on any monitor and in any window mode. The advisor finds the game's
 window, minimises itself if it's covering it, captures the top of the
 game, and reads the scoreboard strip: all twelve heroes, and which one is
-you (off the coloured backplate behind your slot).
+you (off the coloured backplate behind your slot), and each hero's net worth
+(their souls). In Street Brawl (4v4) the four empty slots are recognised as
+such and count as read, so the eight heroes can still be applied without
+asking.
 
 F9 works from inside the game as well, without switching windows first:
 the advisor holds it system-wide (no admin needed) and captures the game's
