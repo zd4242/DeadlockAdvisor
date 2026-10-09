@@ -611,7 +611,9 @@ public static partial class GameSync
     /// Fold API records into the store in memory. Existing ids are kept, since every other file keys on
     /// them; names, game ids, tiers, shop categories and costs follow the game.
     /// </summary>
-    public static SyncReport Apply(DataStore store, IEnumerable<JsonNode?> heroRecords, IEnumerable<JsonNode?> itemRecords)
+    /// <param name="heroStats">The /hero-stats rows <see cref="HeroDurability"/> reads; null leaves the trait as it is.</param>
+    public static SyncReport Apply(DataStore store, IEnumerable<JsonNode?> heroRecords, IEnumerable<JsonNode?> itemRecords,
+        IEnumerable<JsonNode?>? heroStats = null)
     {
         var report = new SyncReport();
         var knownItems = store.Items.Values.ToDictionary(item => item.ItemId);
@@ -624,6 +626,8 @@ public static partial class GameSync
         report.UnmappedStats.AddRange(UnmappedStats(records));
         report.StaleOverrides.AddRange(StaleOverrides(records));
         ApplyMeasuredMaxHp(store, heroes, report);
+        if (heroStats is not null)
+            WriteMeasured(store, HeroDurability.Trait, HeroDurability.Measure(store, heroStats.OfType<JsonNode>().ToList()), report.DurabilityChanges);
         return report;
     }
 
@@ -693,8 +697,7 @@ public static partial class GameSync
             .ToList();
         if (health.Count == 0)
             return [];
-        var sorted = health.Select(entry => entry.Health!.Value).Order().ToList();
-        var median = sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2;
+        var median = Median(health.Select(entry => entry.Health!.Value));
         return health
             .Where(entry => byGameId.ContainsKey(entry.GameId))
             .ToDictionary(
@@ -704,23 +707,34 @@ public static partial class GameSync
                     MidpointRounding.AwayFromZero));
     }
 
-    /// <summary>
-    /// Writes <see cref="MeasuredMaxHp"/> over the hand-rated scores, on profiled heroes only: one rated on
-    /// nothing else would count as below average at everything else (<see cref="DataStore.IsProfiled"/>).
-    /// </summary>
+    internal static double Median(IEnumerable<double> values)
+    {
+        var sorted = values.Order().ToList();
+        return sorted.Count % 2 == 1 ? sorted[sorted.Count / 2] : (sorted[sorted.Count / 2 - 1] + sorted[sorted.Count / 2]) / 2;
+    }
+
     private static void ApplyMeasuredMaxHp(DataStore store, IReadOnlyList<JsonNode> records, SyncReport report)
     {
         var measured = records.Where(record => MidGameHealth(record) is not null).Select(NameOf).OfType<string>().ToHashSet(StringComparer.Ordinal);
         if (measured.Count > 0)
             report.StaleOverrides.AddRange(_kitHealth.Keys.Where(name => !measured.Contains(name)).Select(name => $"_kitHealth: {name} isn't among the game's heroes"));
-        foreach (var (heroId, score) in MeasuredMaxHp(store, records))
+        WriteMeasured(store, MaxHpTrait, MeasuredMaxHp(store, records), report.MeasuredChanges);
+    }
+
+    /// <summary>
+    /// Writes measured scores over the hand-rated ones, on profiled heroes only: one rated on nothing else
+    /// would count as below average at everything else (<see cref="DataStore.IsProfiled"/>).
+    /// </summary>
+    private static void WriteMeasured(DataStore store, string trait, Dictionary<string, double> scores, List<string> changes)
+    {
+        foreach (var (heroId, score) in scores)
         {
-            var key = new ScoreKey(heroId, MaxHpTrait);
+            var key = new ScoreKey(heroId, trait);
             var old = store.HeroScores.GetValueOrDefault(key);
             if (old == score || !store.IsProfiled(heroId))
                 continue;
             store.HeroScores[key] = score;
-            report.MeasuredChanges.Add($"{store.Heroes[heroId].HeroName}: {Format.Num(old)} -> {Format.Num(score)}");
+            changes.Add($"{store.Heroes[heroId].HeroName}: {Format.Num(old)} -> {Format.Num(score)}");
         }
     }
 

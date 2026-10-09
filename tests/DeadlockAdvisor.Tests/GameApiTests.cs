@@ -4,6 +4,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.GameApi;
+using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using static DeadlockAdvisor.Tests.Support.Golden;
 
@@ -418,6 +419,103 @@ public class GameApiTests
         Assert.Contains("Has High Max HP, measured from each hero's health, changed on 2 hero(es):", report.Lines());
         Assert.Empty(GameSync.Apply(store, heroes, []).MeasuredChanges);
         Assert.Null(GameSync.MidGameHealth(JsonNode.Parse("""{"id": 5, "name": "Bare"}""")!));
+    }
+
+    private const string HeroesJson = """
+        [{"id": 13, "name": "Heavy Spirit"}, {"id": 2, "name": "Low HP"}, {"id": 3, "name": "Generic"}, {"id": 4, "name": "Unrated"}]
+        """;
+
+    private static JsonObject HeroStatsRow(int id, long matches, long taken) => new()
+    {
+        ["hero_id"] = id, ["matches"] = matches, ["total_player_damage_taken"] = taken,
+    };
+
+    /// <summary>The heroes take 30,000, 15,000, 36,000 and 30,000 a match: a median of 30,000.</summary>
+    private static JsonArray HeroStats() => new(
+        HeroStatsRow(13, 2000, 60_000_000), HeroStatsRow(2, 2000, 30_000_000), HeroStatsRow(3, 1000, 36_000_000),
+        HeroStatsRow(4, 5000, 150_000_000), HeroStatsRow(5, 999, 90_000_000));
+
+    private static DataStore StoreWithDurability(string dataDir = ".")
+    {
+        var store = TestStore.Make();
+        store.DataDir = dataDir;
+        store.Categories["durability"] = new Category("durability", "Durability", 0, 100, "");
+        return store;
+    }
+
+    /// <summary>
+    /// The median hero is 50 on the 0..100 scale, and 55% more or less damage is the ends: a hero taking half
+    /// the median rounds to 5, one taking 20% more to 68. A hero under 1,000 matches is left out of the median.
+    /// </summary>
+    [Fact]
+    public void DurabilityIsMeasuredFromDamageTakenPerMatchOnTheProfiledHeroes()
+    {
+        var store = StoreWithDurability();
+        var heroes = JsonNode.Parse(HeroesJson)!.AsArray();
+
+        var report = GameSync.Apply(store, heroes, [], HeroStats());
+
+        Assert.Equal(["Heavy Spirit: 0 -> 50", "Low HP: 0 -> 5", "Generic: 0 -> 68"], report.DurabilityChanges);
+        Assert.Equal(68, store.HeroScore("generic", "durability"));
+        // A new hero rated on nothing else stays unprofiled rather than counting as below average at everything.
+        Assert.Equal(0, store.HeroScore("unrated", "durability"));
+        Assert.Contains("Durability, measured from the damage each hero takes, changed on 3 hero(es):", report.Lines());
+        Assert.Empty(GameSync.Apply(store, heroes, [], HeroStats()).DurabilityChanges);
+        Assert.Empty(report.MeasuredChanges);
+    }
+
+    [Fact]
+    public void DurabilityStaysAsItIsWithoutHeroStatsOrTheTrait()
+    {
+        var store = StoreWithDurability();
+        var heroes = JsonNode.Parse(HeroesJson)!.AsArray();
+
+        Assert.Empty(GameSync.Apply(store, heroes, []).DurabilityChanges);
+        Assert.Empty(GameSync.Apply(store, heroes, [], new JsonArray(HeroStatsRow(13, 10, 300_000))).DurabilityChanges);
+        Assert.Equal(0, store.HeroScore("heavy_spirit", "durability"));
+        Assert.Empty(GameSync.Apply(TestStore.Make(), heroes, [], HeroStats()).DurabilityChanges);
+    }
+
+    [Fact]
+    public async Task ASyncAsksForTheLastThirtyDaysOfPhantomMatchesInOneCall()
+    {
+        var api = new FakeDeadlockApi();
+        var now = new DateTimeOffset(2026, 10, 8, 12, 0, 0, TimeSpan.Zero);
+        var url = HeroDurability.Url(now);
+        api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => JsonNode.Parse(HeroesJson);
+        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray();
+        api.Json[url] = () => HeroStats();
+        using var dir = new TempDirectory();
+        var store = StoreWithDurability(dir.Path);
+
+        var report = await new GameApiService(api, () => now).SyncAsync(store);
+
+        Assert.Single(api.Asked, asked => asked.Contains("hero-stats", StringComparison.Ordinal));
+        Assert.Equal("91", SyntheticItemStatsApi.Query(url)["min_average_badge"]);
+        Assert.Equal(now.AddDays(-30).ToUnixTimeSeconds().ToString(), SyntheticItemStatsApi.Query(url)["min_unix_timestamp"]);
+        Assert.Equal(now.ToUnixTimeSeconds().ToString(), SyntheticItemStatsApi.Query(url)["max_unix_timestamp"]);
+        Assert.Equal(3, report.DurabilityChanges.Count);
+        Assert.Null(report.DurabilityNote);
+    }
+
+    [Fact]
+    public async Task ASyncGoesAheadWhenTheHeroStatsCantBeHadAndSaysDurabilityWasntMeasured()
+    {
+        var api = new FakeDeadlockApi();
+        api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () => JsonNode.Parse(HeroesJson);
+        api.Json[$"{GameSync.Api}/items/by-type/upgrade"] = () => new JsonArray();
+        using var dir = new TempDirectory();
+        var store = StoreWithDurability(dir.Path);
+
+        var report = await new GameApiService(api).SyncAsync(store);
+
+        Assert.Empty(report.DurabilityChanges);
+        Assert.StartsWith("Durability wasn't measured", report.DurabilityNote);
+        Assert.Contains(report.DurabilityNote, report.Lines());
+
+        api.Asked.Clear();
+        await new GameApiService(api).SyncAsync(store, measureHeroes: false);
+        Assert.DoesNotContain(api.Asked, asked => asked.Contains("hero-stats", StringComparison.Ordinal));
     }
 
     [Fact]

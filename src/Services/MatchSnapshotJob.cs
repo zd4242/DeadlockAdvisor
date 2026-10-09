@@ -53,7 +53,7 @@ public sealed class MatchSnapshotJob
         if (plan.IsDue(store.MatchSegments, MatchSnapshot.RefreshAfter))
         {
             // A hero added since the seed was published is asked about too.
-            var sync = await new GameApiService(_api).SyncAsync(store, cancellationToken);
+            var sync = await new GameApiService(_api).SyncAsync(store, cancellationToken, measureHeroes: false);
             _log.WriteLine($"Heroes: {MatchStatsService.Heroes(store).Count}. " + string.Join(" ", sync.Lines().Take(3)));
             plan = stats.Plan(store, patches, includeRanks: true);
             foreach (var step in plan.Describe())

@@ -389,7 +389,7 @@ public class DataMenuViewModel : ViewModelBase
     private async Task SyncGameApiAsync()
     {
         _data.FlushSaves();
-        var progress = new ProgressModalViewModel("Sync from Game API", "Fetching heroes and shop items from deadlock-api.com…");
+        var progress = new ProgressModalViewModel("Sync from Game API", "Fetching heroes, shop items and hero stats from deadlock-api.com…");
         var report = await RunBehindModalAsync(progress, () => _gameApi.SyncAsync(_data.Store, progress.Token), failure =>
         {
             if (IsNetworkFailure(failure))

@@ -209,7 +209,8 @@ change when the data does.
   deleted ids, and lists unrated heroes and items with no rules.
 - **Sync from Game API**: pulls heroes and the shop from
   `deadlock-api.com`, following patches (costs, tiers, new items), and
-  rewrites the item stats and tooltips. Only changed files are written.
+  rewrites the item stats and tooltips. It also re-measures the Has High
+  Max HP and Durability traits from the game's numbers. Only changed files are written.
   Run it after each patch: the report lists each item stat that moved,
   items with hand-typed rules whose tooltip changed, stats it doesn't know
   how to map, and per-item overrides that no longer match the game. It

@@ -36,13 +36,19 @@ public sealed class SyncReport
     /// <summary>"Abrams: 75 -> 77": hero scores measured from the game's numbers that moved (<see cref="GameSync.MeasuredMaxHp"/>).</summary>
     public List<string> MeasuredChanges { get; } = [];
 
+    /// <summary>The same for the durability trait (<see cref="HeroDurability"/>).</summary>
+    public List<string> DurabilityChanges { get; } = [];
+
+    /// <summary>Why the durability trait wasn't measured, when the hero stats couldn't be had; null otherwise.</summary>
+    public string? DurabilityNote { get; set; }
+
     public bool HeroesChanged { get; set; }
     public bool ItemsChanged { get; set; }
     public bool StatsChanged { get; set; }
     public int StatRows { get; set; }
     public bool TooltipsChanged { get; set; }
     public int TooltipCount { get; set; }
-    public bool HeroScoresChanged => MeasuredChanges.Count > 0;
+    public bool HeroScoresChanged => MeasuredChanges.Count > 0 || DurabilityChanges.Count > 0;
 
     public bool AnythingChanged => HeroesChanged || ItemsChanged || StatsChanged || TooltipsChanged || HeroScoresChanged;
 
@@ -69,11 +75,10 @@ public sealed class SyncReport
             lines.Add($"{StatChanges.Count} item stat(s) changed:");
             lines.AddRange(StatChanges.Select(line => $"  {line}"));
         }
-        if (MeasuredChanges.Count > 0)
-        {
-            lines.Add($"Has High Max HP, measured from each hero's health, changed on {MeasuredChanges.Count} hero(es):");
-            lines.AddRange(MeasuredChanges.Select(line => $"  {line}"));
-        }
+        Measured(lines, "Has High Max HP, measured from each hero's health", MeasuredChanges);
+        Measured(lines, "Durability, measured from the damage each hero takes", DurabilityChanges);
+        if (DurabilityNote is not null)
+            lines.Add(DurabilityNote);
         if (ShopBonusChanges.Count > 0)
         {
             lines.Add("Shop investment bonus changed -- every item in the shop carries its cost's share:");
@@ -93,6 +98,14 @@ public sealed class SyncReport
         Section(lines, "Shown under a scored stat's label but not mapped -- add each to GameSync.Stats or GameSync.Unscored:", UnmappedStats);
         Section(lines, "Overrides in GameSync that no longer match the game:", StaleOverrides);
         return lines;
+    }
+
+    private static void Measured(List<string> lines, string heading, IReadOnlyList<string> changes)
+    {
+        if (changes.Count == 0)
+            return;
+        lines.Add($"{heading}, changed on {changes.Count} hero(es):");
+        lines.AddRange(changes.Select(line => $"  {line}"));
     }
 
     private static void Section(List<string> lines, string heading, IReadOnlyList<string> entries)

@@ -517,6 +517,20 @@ that sits from the median over every hero the API lists, with ±`scale_max` at �
 hero rated on nothing else would count as below average at everything. A `_kitHealth`
 entry whose hero the API no longer lists shows under the report's stale overrides.
 
+`durability` is measured the same way, from how much damage each hero takes
+(`HeroDurability`). Every Sync makes one more call, `/v1/analytics/hero-stats` over the last
+30 days of Phantom+ matches (average badge 91 and up), and reads each hero's
+`total_player_damage_taken ÷ matches`. That is damage after resists, barriers and healing, so
+it carries what base health misses, and it also records how much a hero's role draws fire.
+Heroes with under `MinMatches` (1,000) are left alone. The score is linear against the median
+of the heroes the answer lists: the median is 50 on the 0–100 scale, and ±`Spread` (55%) is
+the two ends, as the trait's description says. Phantom+ and every rank give nearly the same
+order (Spearman 0.98), and per match was steadier than per death (0.92), so it stays per match.
+The same profiled-only rule applies. A sync whose hero-stats call fails still goes ahead with
+the roster and the shop and says durability wasn't measured; `GameApiService.SyncAsync` with
+`measureHeroes: false` skips the call, as the match-data job does, since it throws its store
+away. No item rule uses durability yet, so measuring it changes no recommendation until one does.
+
 ## How item stats are extracted (`Services/GameApi/GameSync.cs`)
 
 `item_stats.csv` and `item_tooltips.json` are **generated** by Data → Sync from
@@ -573,6 +587,8 @@ afterwards (see "Tests and goldens" below).
    - **Item stat changes**: every stat that moved, e.g. "Long Range: Weapon
      Damage (conditional) none -> 40%". These need no action; stat rules pick
      them up.
+   - **Measured hero scores**: the heroes whose max HP or durability score moved.
+     Publish them like any model change.
    - **Single-target changes**: items now scored on their best targets, or no
      longer (see "Best-target items"). Check that each one really is cast on one hero.
    - **Tooltip changed on items with hand-typed rules**: recheck those typed
