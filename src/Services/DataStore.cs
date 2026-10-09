@@ -137,22 +137,52 @@ public sealed class DataStore
         DataDir = dataDir;
     }
 
+    /// <exception cref="DataLoadException">A file can't be used; it names the file. Files that are missing, or that can't be opened, throw as they are.</exception>
     public static DataStore Load(string dataDir)
     {
         var store = new DataStore(dataDir);
-        store.LoadHeroes();
-        store.LoadItems();
-        store.LoadCategories();
-        store.LoadHeroScores();
-        store.LoadItemCoefficients();
-        store.LoadTraitWeights();
-        store.LoadStatRules();
-        store.LoadItemStats();
-        store.LoadItemTooltips();
-        store.LoadMatchLift();
+        store.Read(HeroesFile, store.LoadHeroes, () => store.Heroes.Count);
+        store.Read(ItemsFile, store.LoadItems, () => store.Items.Count);
+        store.Read(CategoriesFile, store.LoadCategories, () => store.Categories.Count);
+        store.Read(HeroScoresFile, store.LoadHeroScores);
+        store.Read(ItemCoefficientsFile, store.LoadItemCoefficients);
+        store.Read(TraitWeightsFile, store.LoadTraitWeights);
+        store.Read(StatRulesFile, store.LoadStatRules);
+        store.Read(ItemStatsFile, store.LoadItemStats);
+        store.Read(ItemTooltipsFile, store.LoadItemTooltips);
+        store.Read(MatchLiftFile, store.LoadMatchLift);
         store.LoadMatchSegments();
         store.RebuildDerived();
         return store;
+    }
+
+    /// <summary>Runs one loader. <paramref name="rowCount"/>, for the tables everything else hangs off, turns an empty result into an error.</summary>
+    private void Read(string fileName, Action load, Func<int>? rowCount = null)
+    {
+        try
+        {
+            load();
+        }
+        catch (Exception ex) when (ex is FormatException or System.Text.Json.JsonException or KeyNotFoundException
+                                       or InvalidOperationException or ArgumentException or InvalidCastException or OverflowException)
+        {
+            throw new DataLoadException(fileName, ex.Message, ex);
+        }
+        if (rowCount?.Invoke() == 0)
+            throw new DataLoadException(fileName, "it has no rows");
+    }
+
+    /// <summary>The base tables (heroes, items, categories) that hold no rows: a damaged or half-synced file, not a real roster.</summary>
+    public List<string> EmptyBaseTables()
+    {
+        var empty = new List<string>();
+        if (Heroes.Count == 0)
+            empty.Add(HeroesFile);
+        if (Items.Count == 0)
+            empty.Add(ItemsFile);
+        if (Categories.Count == 0)
+            empty.Add(CategoriesFile);
+        return empty;
     }
 
     // -- loaders ----------------------------------------------------------------
@@ -337,8 +367,17 @@ public sealed class DataStore
         }
 
         var meta = PathOf(MatchMetaFile);
-        if (File.Exists(meta) && DataJson.Parse(File.ReadAllText(meta, Encoding.UTF8)) is JsonObject metaObject)
-            MatchMeta = metaObject;
+        if (!File.Exists(meta))
+            return;
+        try
+        {
+            if (DataJson.Parse(File.ReadAllText(meta, Encoding.UTF8)) is JsonObject metaObject)
+                MatchMeta = metaObject;
+        }
+        catch (System.Text.Json.JsonException ex)
+        {
+            throw new DataLoadException(MatchMetaFile, ex.Message, ex);
+        }
     }
 
     /// <summary>A counts file that can't be read is left out like a missing one: the lifts work without it, and the next download rewrites it.</summary>
@@ -924,9 +963,15 @@ public sealed class DataStore
         return added;
     }
 
-    /// <summary>Drop score, coefficient and weight rows pointing at ids that no longer exist.</summary>
+    /// <summary>
+    /// Drop score, coefficient and weight rows pointing at ids that no longer exist. Does nothing while a base table
+    /// is empty: every id would look gone.
+    /// </summary>
     public int PruneOrphans()
     {
+        if (EmptyBaseTables().Count > 0)
+            return 0;
+
         var removed = 0;
         foreach (var key in HeroScores.Keys.Where(k => !Heroes.ContainsKey(k.HeroId) || !Categories.ContainsKey(k.CategoryId)).ToList())
         {

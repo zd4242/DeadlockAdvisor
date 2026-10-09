@@ -312,6 +312,20 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public async Task SyncNewDataKeepsEveryRuleWhenABaseTableIsEmpty()
+    {
+        var store = _fixture.Data.Store;
+        var rules = store.ItemCoefficients.Count;
+        store.Items.Clear();
+
+        await _menu.SyncNewDataCommand.Execute();
+
+        Assert.Equal(rules, store.ItemCoefficients.Count);
+        Assert.Contains("Nothing was dropped: items.csv has no rows", LastMessage().Body);
+        Assert.DoesNotContain("Dropped", LastMessage().Body);
+    }
+
+    [Fact]
     public async Task AFirstRunWithoutArtOffersArtAndMatchDataOnce()
     {
         var art = new HeldArtDownload();

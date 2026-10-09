@@ -44,7 +44,18 @@ public static class BackedUpFile
         TrimBackups(backupDir, stem, extension, now);
     }
 
-    internal static void TrimBackups(string backupDir, string stem, string extension, DateTime now)
+    /// <summary>The backups of one file, newest first.</summary>
+    internal static IReadOnlyList<(string File, DateTime Time)> BackupsOf(string path)
+    {
+        var backupDir = Path.Combine(Path.GetDirectoryName(path)!, BackupFolderName);
+        if (!Directory.Exists(backupDir))
+            return [];
+        return Listed(backupDir, Path.GetFileNameWithoutExtension(path), Path.GetExtension(path))
+            .OrderByDescending(backup => backup.Time)
+            .ToList();
+    }
+
+    private static List<(string File, DateTime Time)> Listed(string backupDir, string stem, string extension)
     {
         var backups = new List<(string File, DateTime Time)>();
         foreach (var file in Directory.EnumerateFiles(backupDir))
@@ -52,8 +63,12 @@ public static class BackedUpFile
             if (TryParseTime(Path.GetFileName(file), stem, extension, out var time))
                 backups.Add((file, time));
         }
+        return backups;
+    }
 
-        foreach (var old in Expired(backups, now))
+    internal static void TrimBackups(string backupDir, string stem, string extension, DateTime now)
+    {
+        foreach (var old in Expired(Listed(backupDir, stem, extension), now))
         {
             try
             {

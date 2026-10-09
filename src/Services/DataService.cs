@@ -85,9 +85,22 @@ public class DataService : IDataService, IDisposable
             SeedIfEmpty(Path.Combine(root, "data"));
         EnsureArtFolders(Path.Combine(root, "assets"));
 
-        Store = DataStore.Load(Path.Combine(root, "data"));
+        Store = LoadRepaired(Path.Combine(root, "data"));
         DataRoot = root;
         RebuildMatrix();
+    }
+
+    /// <summary>Loads the folder the app is using; a file that can't be read is replaced (<see cref="DataRecovery"/>) and the user told.</summary>
+    private DataStore LoadRepaired(string dataDir)
+    {
+        var (store, repairs) = DataRecovery.Load(dataDir);
+        if (repairs.Count > 0)
+        {
+            var message = string.Join(" ", repairs);
+            _loggingService.Warning(message);
+            _notificationService.ShowWarning(message, TimeSpan.FromSeconds(20));
+        }
+        return store;
     }
 
     private static bool IsDefault(string root) =>
@@ -111,6 +124,17 @@ public class DataService : IDataService, IDisposable
             using var file = File.Create(target);
             source.CopyTo(file);
         }
+    }
+
+    /// <summary>The bundled copy of one data file, or null where the app doesn't ship one.</summary>
+    internal static byte[]? BundledCopy(string fileName)
+    {
+        using var source = typeof(DataService).Assembly.GetManifestResourceStream(_seedPrefix + fileName);
+        if (source is null)
+            return null;
+        using var memory = new MemoryStream();
+        source.CopyTo(memory);
+        return memory.ToArray();
     }
 
     private static void EnsureArtFolders(string assetsDir)
@@ -178,7 +202,7 @@ public class DataService : IDataService, IDisposable
     public void Reload()
     {
         FlushSaves();
-        Store = DataStore.Load(DataDir);
+        Store = LoadRepaired(DataDir);
         NotifyReplaced();
     }
 

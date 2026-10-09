@@ -91,6 +91,67 @@ public class DataStoreTests
         Assert.Empty(store.TraitWeights);
     }
 
+    [Theory]
+    [InlineData("heroes.csv", "hero_id,hero_name\r\n")]
+    [InlineData("items.csv", "")]
+    [InlineData("categories.csv", "category_id,category_name,scale_min,scale_max,description\r\n")]
+    public void LoadNamesAnEmptyBaseTable(string file, string contents)
+    {
+        using var folder = CopyOfGolden();
+        File.WriteAllText(folder.File(file), contents);
+
+        var failure = Assert.Throws<DataLoadException>(() => DataStore.Load(folder.Path));
+
+        Assert.Equal(file, failure.File);
+        Assert.Equal("it has no rows", failure.Reason);
+    }
+
+    [Fact]
+    public void LoadNamesTheFileThatHoldsABadRow()
+    {
+        using var folder = CopyOfGolden();
+        File.WriteAllText(folder.File("categories.csv"), "category_id,category_name,scale_min,scale_max,description\r\nx,X,low,high,\r\n");
+
+        var failure = Assert.Throws<DataLoadException>(() => DataStore.Load(folder.Path));
+
+        Assert.Equal("categories.csv", failure.File);
+        Assert.Contains("could not convert string to float", failure.Reason);
+        Assert.IsType<FormatException>(failure.InnerException);
+    }
+
+    [Fact]
+    public void LoadNamesTheMatchMetaFileWhenItIsTheOneThatFails()
+    {
+        using var folder = CopyOfGolden();
+        File.WriteAllText(folder.File(DataStore.MatchMetaFile), "{ not json");
+
+        Assert.Equal(DataStore.MatchMetaFile, Assert.Throws<DataLoadException>(() => DataStore.Load(folder.Path)).File);
+    }
+
+    [Fact]
+    public void PruneOrphansDoesNothingWhileABaseTableIsEmpty()
+    {
+        foreach (var emptied in new Action<DataStore>[] { s => s.Heroes.Clear(), s => s.Items.Clear(), s => s.Categories.Clear() })
+        {
+            var store = TestStore.Make();
+            var scores = store.HeroScores.Count;
+            var coefficients = store.ItemCoefficients.Count;
+            emptied(store);
+
+            Assert.Equal(0, store.PruneOrphans());
+            Assert.Equal(scores, store.HeroScores.Count);
+            Assert.Equal(coefficients, store.ItemCoefficients.Count);
+        }
+    }
+
+    private static TempDirectory CopyOfGolden()
+    {
+        var folder = new TempDirectory();
+        foreach (var file in Directory.GetFiles(Golden.DataDir))
+            File.Copy(file, folder.File(Path.GetFileName(file)));
+        return folder;
+    }
+
     /// <summary>Saving and reloading must give back exactly what was in memory: the app autosaves on every keystroke.</summary>
     [Fact]
     public void CsvRoundTripPreservesValues()

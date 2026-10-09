@@ -363,6 +363,9 @@ public class DataMenuViewModel : ViewModelBase
         var lines = new List<string> { $"Added {added} missing hero × trait row(s), defaulted to 0." };
         if (removed > 0)
             lines.Add($"Dropped {removed} row(s) pointing at ids that no longer exist.");
+        var empty = store.EmptyBaseTables();
+        if (empty.Count > 0)
+            lines.Add($"Nothing was dropped: {string.Join(" and ", empty)} has no rows, which looks like a damaged file; Reload from Disk restores it.");
         var unprofiled = store.UnprofiledHeroes();
         if (unprofiled.Count > 0)
             lines.AddRange(Listed($"\n{unprofiled.Count} hero(es) still have every trait at 0:", unprofiled.Select(id => store.Heroes[id].HeroName)));

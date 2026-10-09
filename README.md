@@ -234,11 +234,20 @@ of each day for two weeks) and goes through a temp file, so an interrupted
 save can't leave a truncated CSV. An unchanged table saves byte for byte, so the files only
 change when the data does.
 
+A file that can't be read when the app starts (a typo in a row, a half-synced
+copy, an empty `heroes.csv`, `items.csv` or `categories.csv`) doesn't stop it.
+The app keeps the damaged file next to the others as `<file>.bad-<date>-<time>`,
+puts the newest backup that loads in its place (or the copy bundled with the
+app), and tells you which file it replaced and from what. **Data → Reload from
+Disk** does the same for the folder in use. A folder you pick with **Change
+Data Folder…** is not repaired: it is refused, and left as it was.
+
 ## Data menu
 
 - **Sync New Heroes / Items / Categories**: after adding rows to the CSVs
   by hand. Backfills missing hero × trait rows at 0, drops rows for
-  deleted ids, and lists unrated heroes and items with no rules.
+  deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
+  no rows), and lists unrated heroes and items with no rules.
 - **Sync from Game API**: pulls heroes and the shop from
   `deadlock-api.com`, following patches (costs, tiers, new items), and
   rewrites the item stats and tooltips. It also re-measures the Has High

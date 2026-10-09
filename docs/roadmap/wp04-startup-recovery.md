@@ -1,6 +1,6 @@
 # WP04 Recover from a bad CSV at startup; no pruning on empty tables
 
-Status: todo
+Status: done
 Effort: M · Risk: medium (touches the first thing the app does; test well) · Depends on: WP01 · Wave: B
 Touches: `src/Services/DataStore.cs` (`Load`, `PruneOrphans`), `src/Services/DataService.cs` (`Initialize`, `Open`, `SeedIfEmpty`), `src/Features/MainWindow/DataMenuViewModel.cs` (`SyncNewData` message only), `src/Services/Formats/Csv.cs` (only if errors need the file name)
 Docs to update: `README.md` ("Data folder": what happens to a damaged file), `docs/architecture.md` (sections 3 and 4)
