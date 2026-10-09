@@ -1,6 +1,6 @@
 # WP07 Confirm on a failed save at close; Model Health on a snapshot
 
-Status: todo
+Status: done
 Effort: S · Risk: low · Depends on: none · Wave: B
 Touches: `src/Features/MainWindow/MainWindow.axaml.cs` (`OnClosing`), `src/Features/MainWindow/MainWindowViewModel.cs` (`OnClosing`, `HoldCloseForJobs`), **`src/Features/MainWindow/DataMenuViewModel.cs`** (`ShowModelHealthAsync`)
 Docs to update: `docs/architecture.md` (section 5)

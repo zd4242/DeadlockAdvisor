@@ -99,6 +99,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IForegroundService _foreground;
     private readonly IAttentionService _attention;
     private bool _closeConfirmed;
+    private bool _discardEditsConfirmed;
     /// <summary>The pages opened in order, for the mouse's back and forward buttons, with the one showing at <see cref="_historyIndex"/>.</summary>
     private readonly List<int> _history = [];
     private int _historyIndex;
@@ -368,8 +369,31 @@ public class MainWindowViewModel : ViewModelBase
         _ = AppUpdate.OnStartupAsync();
     }
 
-    /// <summary>Write pending edits before the window closes.</summary>
-    public void OnClosing() => _data.FlushSaves();
+    /// <summary>
+    /// Write pending edits before the window closes. False to keep it open and ask first, because they couldn't be
+    /// written (the error is already shown) and closing would lose them. An OS shutdown can't wait for an answer.
+    /// </summary>
+    public bool OnClosing(bool osShutdown = false)
+    {
+        if (_data.FlushSaves() || osShutdown || _discardEditsConfirmed)
+            return true;
+        // A dialog already up can't be stacked on; the window stays open and the next close asks.
+        if (_modals.IsModalOpen)
+            return false;
+        _appUpdates.RestartAfterExit(false);
+        _modals.Confirm(
+            $"Your latest edits couldn't be saved to {_data.DataDir}. The error is under Help → Recent Messages."
+            + "\n\nClose anyway? These edits will be lost.",
+            "Close anyway",
+            () =>
+            {
+                _discardEditsConfirmed = true;
+                RequestViewAction(CloseAction);
+            },
+            cancelText: "Keep the app open",
+            destructive: true);
+        return false;
+    }
 
     /// <summary>
     /// True to keep the window open and ask first, because closing would stop a download part-way.

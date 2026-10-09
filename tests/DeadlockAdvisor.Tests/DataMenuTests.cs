@@ -105,6 +105,56 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public async Task ModelHealthReadsACopyOfTheSavedDataSoAnEditWhileItRunsDoesntReachIt()
+    {
+        var store = _fixture.Data.Store;
+        var expected = Report(store);
+
+        var running = _menu.ModelHealthCommand.Execute().ToTask();
+        Rate(store, 10);
+        _fixture.Data.MarkEdited(DataFiles.HeroScores);
+        await running;
+
+        Assert.Equal(expected, LastMessage().Body);
+        Assert.NotEqual(expected, Report(store));
+    }
+
+    [Fact]
+    public async Task ModelHealthIncludesEditsStillWaitingToBeSaved()
+    {
+        var store = _fixture.Data.Store;
+        Rate(store, 10);
+        _fixture.Data.MarkEdited(DataFiles.HeroScores);
+
+        await _menu.ModelHealthCommand.Execute();
+
+        Assert.Equal(Report(store), LastMessage().Body);
+    }
+
+    private static void Rate(DataStore store, int score)
+    {
+        foreach (var heroId in store.Heroes.Keys)
+            foreach (var categoryId in store.Categories.Keys)
+                store.SetHeroScore(heroId, categoryId, score);
+    }
+
+    private static string Report(DataStore store) =>
+        string.Join("\n", ModelHealth.Build(store, ItemScoring.BuildWeightMatrix(store)).Lines());
+
+    [Fact]
+    public async Task ModelHealthSaysSoWhenTheDataCantBeRead()
+    {
+        File.WriteAllText(Path.Combine(_fixture.Data.DataDir, DataStore.HeroesFile), "hero_id,hero_name,game_id\n");
+
+        await _menu.ModelHealthCommand.Execute();
+
+        var message = LastMessage();
+        Assert.Equal("Model health", message.Title);
+        Assert.StartsWith("Couldn't read the data to check it:", message.Body);
+        Assert.False(_menu.IsBusy);
+    }
+
+    [Fact]
     public async Task AFailedSyncSaysSoAndChangesNothing()
     {
         await _menu.SyncGameApiCommand.Execute();

@@ -835,21 +835,34 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- model health ---------------------------------------------------------------
 
-    /// <summary>The simulation takes a moment, so it runs off the UI thread; busy meanwhile so no sync swaps the data under it.</summary>
+    /// <summary>
+    /// The simulation takes a moment, so it runs off the UI thread, over a copy read from disk: the editors stay
+    /// usable meanwhile and can't change what it reads.
+    /// </summary>
     private async Task ShowModelHealthAsync()
     {
+        if (!_data.FlushSaves())
+            return;
+        var dataDir = _data.DataDir;
         IsBusy = true;
-        ModelHealthReport report;
         try
         {
-            var (store, matrix) = (_data.Store, _data.Matrix);
-            report = await Task.Run(() => ModelHealth.Build(store, matrix));
+            var report = await Task.Run(() =>
+            {
+                var store = DataStore.Load(dataDir);
+                return ModelHealth.Build(store, ItemScoring.BuildWeightMatrix(store));
+            });
+            ShowMessage("Model health", report.Lines());
+        }
+        catch (Exception ex) when (ex is DataLoadException or IOException or UnauthorizedAccessException)
+        {
+            _log.Warning($"Model health: couldn't read the data\n{ex}");
+            ShowMessage("Model health", [$"Couldn't read the data to check it: {ex.Message}"]);
         }
         finally
         {
             IsBusy = false;
         }
-        ShowMessage("Model health", report.Lines());
     }
 
     // -- running jobs ---------------------------------------------------------------

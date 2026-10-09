@@ -182,12 +182,12 @@ public partial class MainWindow : Window
     {
         base.OnClosing(e);
         var vm = DataContext as MainWindowViewModel;
-        if (e.CloseReason != WindowCloseReason.OSShutdown && vm?.HoldCloseForJobs() == true)
+        var osShutdown = e.CloseReason == WindowCloseReason.OSShutdown;
+        if (vm is not null && ((!osShutdown && vm.HoldCloseForJobs()) || !vm.OnClosing(osShutdown)))
         {
             e.Cancel = true;
             return;
         }
-        vm?.OnClosing();
         _settings?.Update(s => s.WindowGeometry = new WindowGeometry
         {
             X = _normalPosition.X,

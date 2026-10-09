@@ -138,7 +138,12 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
 
 - Services' `async` methods resume on the UI thread (there is no `ConfigureAwait(false)` outside `JsonSettingsService`), and
   `Task.Run` is used only for Model Health and Detect's capture, vision and archiving steps. CPU-heavy steps in a download
-  therefore run on the UI thread today (roadmap WP11).
+  therefore run on the UI thread today (roadmap WP11). Model Health saves pending edits, then loads its own copy of the
+  data folder inside `Task.Run`, so editing while it runs can't change what it reads (and it won't start if the save fails).
+- **Closing:** `MainWindow.OnClosing` first lets `MainWindowViewModel.HoldCloseForJobs` ask about running downloads, then
+  `MainWindowViewModel.OnClosing` flushes pending saves. If that fails (the error toast has the reason) the window stays
+  open and asks "Close anyway" / "Keep the app open"; an OS shutdown is never held up. Each question has its own
+  "confirmed" flag, so an answer to one doesn't skip the other.
 - `DataMenuViewModel` is the hub for long data work. A **background job** is a `BackgroundJobViewModel` shown as a status-bar
   chip with progress, a cancel, and a result to open (`RunInBackgroundAsync`); a **modal job** shows a `ProgressModalViewModel`
   (`RunBehindModalAsync`); `Launch` runs a fire-and-forget task and reports an unexpected exception as a toast. One download
