@@ -27,3 +27,4 @@ countered_by_knockdown,Countered by Knockdown,0,100,How much this hero relies on
 countered_by_counterspell,Countered by Counterspell,0,100,How much this hero's power depends on a single interruptible cast
 countered_by_dispel_magic,Countered by Dispel Magic,0,100,How reliant this hero is on buffs/debuffs that Dispel Magic would strip
 countered_by_divine_barrier,Countered by Divine Barrier,0,100,How reliant this hero is on a single burst window Divine Barrier could block
+consistent_heavy_spirit_hits,Consistent Heavy Spirit Hits,0,100,"How consistently this hero lands individual spirit damage hits of 75 or more over a fight, from repeated nukes, strong ticks or fast ability rotations; hits below 75 don't count. For items like Witchmail that react to each such hit"
