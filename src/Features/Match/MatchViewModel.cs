@@ -84,6 +84,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>The rank option the list was last laid out for, so picking another can start on its best item.</summary>
     private RankPreset? _appliedRank;
 
+    private bool _shown = true;
+    private bool _stale;
+
     public MatchViewModel(IDataService data, ISettingsService settings, DetectAction detect, ImportMatchAction import, DataRanksViewModel dataRanks)
         : this(data, settings, detect, import, dataRanks, () => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0)
     {
@@ -207,7 +210,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             .Subscribe(_ => ShowsQuickStart = IsMatchEmpty && !Board.IsPickerOpen)
             .DisposeWith(Disposables);
 
-        _data.ScoresChanged.Subscribe(_ => Refresh()).DisposeWith(Disposables);
+        _data.ScoresChanged.Subscribe(_ => RefreshWhenShown()).DisposeWith(Disposables);
         _data.StoreReplaced.Subscribe(_ => Rebind()).DisposeWith(Disposables);
 
         Refresh();
@@ -302,9 +305,29 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         RequestViewAction(FocusItemSearchAction);
     }
 
+    /// <summary>
+    /// Whether the page is on screen. While it isn't, a rescore of the formulas only notes that the list is stale
+    /// and the next time it shows it is rescored once; a changed match or store still refreshes at once.
+    /// </summary>
+    public void SetShown(bool shown)
+    {
+        _shown = shown;
+        if (shown && _stale)
+            Refresh();
+    }
+
+    private void RefreshWhenShown()
+    {
+        if (_shown)
+            Refresh();
+        else
+            _stale = true;
+    }
+
     /// <summary>Rescore the recommendations and the explanation from the current data and match.</summary>
     public void Refresh()
     {
+        _stale = false;
         var store = _data.Store;
         var note = MatchStatsMath.DataNote(store.MatchMeta, _now());
         var netWorth = NetWorth();

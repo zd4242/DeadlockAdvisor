@@ -161,6 +161,9 @@ public class MainWindowViewModel : ViewModelBase
                 this.RaisePropertyChanged(nameof(IsItemFormulasPage));
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.IsMatchPage)
+            .Subscribe(Match.SetShown)
+            .DisposeWith(Disposables);
         // Opened on your hero from the Match page, once it has one.
         this.WhenAnyValue(vm => vm.IsHeroItemsPage)
             .Where(shown => shown)

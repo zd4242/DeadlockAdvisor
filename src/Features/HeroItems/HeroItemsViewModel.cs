@@ -114,13 +114,28 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
     private readonly IConnectivityService _connectivity;
     private readonly Subject<string> _formulaRequested = new();
     private readonly SerialDisposable _patchChanges = new();
+    private readonly TableBuilder _buildTable;
+
+    /// <summary>The table last built and what it was built for: sorting, tiers and the usage cut-off only reshape its rows.</summary>
+    private (TableKey Key, HeroItemTable? Table)? _built;
     private string? _offeredSelf;
     private bool _loading;
     private int? _pickedFrom;
     private int? _pickedTo;
 
+    internal delegate HeroItemTable? TableBuilder(IReadOnlyList<MatchSegment> segments, IReadOnlyList<MatchSegment> patches, string heroId,
+        MatchMode mode, RankRange? range, IEnumerable<Item> items);
+
+    private readonly record struct TableKey(string HeroId, MatchMode Mode, RankRange? Range, string Patches);
+
     public HeroItemsViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity)
+        : this(data, settings, connectivity, HeroItemTable.Build)
     {
+    }
+
+    internal HeroItemsViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity, TableBuilder buildTable)
+    {
+        _buildTable = buildTable;
         _data = data;
         _settings = settings;
         _connectivity = connectivity;
@@ -332,10 +347,11 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
     {
         var wasLoading = _loading;
         _loading = true;
+        _built = null;
         try
         {
             var store = _data.Store;
-            Heroes = store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
+            Heroes =store.HeroesSorted().Where(hero => hero.GameId != 0).ToList();
             this.RaisePropertyChanged(nameof(Heroes));
             SelectedHero = Heroes.FirstOrDefault(hero => hero.HeroId == heroId) ?? Heroes.FirstOrDefault();
 
@@ -532,9 +548,7 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
         this.RaisePropertyChanged(nameof(MinUsageText));
         ShowFilters();
         var picked = PickedSegments;
-        var table = SelectedHero is null || picked.Count == 0
-            ? null
-            : HeroItemTable.Build(_data.Store.MatchSegments, picked, SelectedHero.HeroId, SelectedMode.Mode, Range, _data.Store.Items.Values);
+        var table = SelectedHero is null || picked.Count == 0 ? null : TableFor(SelectedHero.HeroId, picked);
         var theirs = picked.Count == 1 ? "this patch's" : "these patches'";
         EmptyHint = !HasMatchData
             ? _connectivity.IsOffline
@@ -579,6 +593,18 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
         HiddenText = hidden == 0
             ? ""
             : $"{hidden} item{(hidden == 1 ? "" : "s")} bought in under {MinUsageText} of matches {(hidden == 1 ? "is" : "are")} hidden.";
+    }
+
+    private HeroItemTable? TableFor(string heroId, List<MatchSegment> picked)
+    {
+        var range = Range;
+        var key = new TableKey(heroId, SelectedMode.Mode, range, string.Join(',', picked.Select(segment => segment.Patch.Start)));
+        if (_built is { } built && built.Key == key)
+            return built.Table;
+        var store = _data.Store;
+        var table = _buildTable(store.MatchSegments, picked, heroId, key.Mode, range, store.Items.Values);
+        _built = (key, table);
+        return table;
     }
 
     private IEnumerable<HeroItemRow> Sorted(IEnumerable<HeroItemRow> rows)

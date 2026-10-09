@@ -1,6 +1,6 @@
 # WP12 Match rescoring only when shown; Hero Items table cache
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium · Depends on: WP03 (both edit `HeroItemsViewModel`) · Wave: C
 Touches: `src/Features/Match/MatchViewModel.cs`, `src/Features/HeroItems/HeroItemsViewModel.cs`, **`src/Features/MainWindow/MainWindowViewModel.cs`**, tests (`MatchPageTests`, `MatchBoardTests`, `HeroItemsViewModelTests`)
 Docs to update: `docs/architecture.md` (section 4)

@@ -235,6 +235,83 @@ public sealed class HeroItemsViewModelTests : IDisposable
         Assert.Equal([true, true], page.Patches.Select(patch => patch.IsChecked));
     }
 
+    private HeroItemsViewModel CountingPage(out Func<int> builds)
+    {
+        var count = 0;
+        builds = () => count;
+        return new HeroItemsViewModel(_fixture.Data, _fixture.Settings, _connectivity, (segments, patches, hero, mode, range, items) =>
+        {
+            count++;
+            return HeroItemTable.Build(segments, patches, hero, mode, range, items);
+        });
+    }
+
+    [Fact]
+    public async Task SortingTiersAndTheUsageSliderReuseTheTableTheyShow()
+    {
+        await DownloadAsync();
+        using var page = CountingPage(out var builds);
+        Assert.Equal(1, builds());
+        var rows = page.Rows.Count;
+
+        await page.SortCommand.Execute(HeroItemSort.WinRate);
+        await page.SortCommand.Execute(HeroItemSort.WinRate);
+        await page.SortCommand.Execute(HeroItemSort.Item);
+        page.Tiers[0].IsChecked = false;
+        page.Tiers[0].IsChecked = true;
+        page.ShowOnlyTier(page.Tiers[1]);
+        page.ShowOnlyTier(page.Tiers[1]);
+        page.MinUsagePercent = 50;
+        page.MinUsagePercent = 5;
+        page.ShowChanges = true;
+        _connectivity.GoOffline();
+
+        Assert.Equal(1, builds());
+        Assert.Equal(rows, page.Rows.Count);
+    }
+
+    [Fact]
+    public async Task AChangedHeroModeRankRangeOrPatchBuildsTheTableAgain()
+    {
+        await DownloadAsync();
+        using var page = CountingPage(out var builds);
+        var built = builds();
+
+        page.SelectedHero = page.Heroes[1];
+        Assert.Equal(++built, builds());
+
+        page.SelectedMode = HeroItemsViewModel.Modes[1];
+        Assert.Equal(++built, builds());
+
+        page.SelectedMode = HeroItemsViewModel.Modes[0];
+        Assert.Equal(++built, builds());
+
+        page.To = page.Ranks[^2];
+        Assert.True(builds() > built);
+        built = builds();
+
+        page.Patches[1].IsChecked = true;
+        Assert.Equal(++built, builds());
+
+        page.Patches[1].IsChecked = false;
+        Assert.Equal(++built, builds());
+
+        await page.SortCommand.Execute(HeroItemSort.Cost);
+        Assert.Equal(built, builds());
+    }
+
+    [Fact]
+    public async Task ANewStoreBuildsTheTableAgainEvenForTheSamePicks()
+    {
+        await DownloadAsync();
+        using var page = CountingPage(out var builds);
+        var before = builds();
+
+        await DownloadAsync();
+
+        Assert.Equal(before + 1, builds());
+    }
+
     [Fact]
     public async Task TheFormulaCanBeAskedForOnlyWhileTheEditorsAreShown()
     {
