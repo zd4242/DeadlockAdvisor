@@ -3,15 +3,34 @@
              xmlns:document="using:DeadlockAdvisor.Features.Shared.Modals.Document"
              x:Class="DeadlockAdvisor.Features.Shared.Modals.Document.DocumentModalView"
              x:DataType="document:DocumentModalViewModel">
+    <UserControl.Styles>
+        <Style Selector="ListBox.document ListBoxItem">
+            <Setter Property="Padding" Value="0,0,0,10"/>
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox.document ListBoxItem:pointerover /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+        <Style Selector="ListBox.document ListBoxItem:selected /template/ ContentPresenter">
+            <Setter Property="Background" Value="Transparent"/>
+        </Style>
+    </UserControl.Styles>
     <StackPanel Margin="20" Spacing="12">
         <TextBlock Classes="h2" Text="{Binding Title}"/>
-        <TextBox x:Name="TextBox"
-                 Text="{Binding Text, Mode=OneWay}"
-                 IsReadOnly="True"
-                 TextWrapping="Wrap"
-                 AcceptsReturn="True"
+        <ListBox x:Name="Paragraphs"
+                 Classes="document"
+                 ItemsSource="{Binding Paragraphs}"
                  Width="720"
-                 Height="480"/>
+                 Height="480"
+                 Padding="0,0,12,0"
+                 Background="Transparent"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+            <ListBox.ItemTemplate>
+                <DataTemplate x:DataType="x:String">
+                    <SelectableTextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{DynamicResource TextDimBrush}"/>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
         <Button x:Name="CloseButton"
                 Classes="primary"
                 Content="Close"

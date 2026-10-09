@@ -58,6 +58,23 @@ public class MenuTests
         Assert.Contains("Avalonia", notices.Text);
     }
 
+    /// <summary>One text control holding all of it freezes the window on every selection change.</summary>
+    [AvaloniaFact]
+    public void TheNoticesAreVirtualizedSoOnlyWhatIsOnScreenIsLaidOut()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        ui.ViewModel.NoticesCommand.Execute().Subscribe();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var list = modal.GetVisualDescendants().OfType<ListBox>().Single();
+        var realized = list.GetVisualDescendants().OfType<ListBoxItem>().Count();
+
+        Assert.True(list.ItemCount > 500, $"{list.ItemCount} paragraphs");
+        Assert.InRange(realized, 1, 60);
+    }
+
     [AvaloniaFact]
     public void TheDataMenusModelToolsAndCtrlRComeWithTheEditors()
     {
