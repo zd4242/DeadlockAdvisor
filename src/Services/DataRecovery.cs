@@ -10,6 +10,7 @@ namespace DeadlockAdvisor.Services;
 internal static class DataRecovery
 {
     private const int _backupsTried = 10;
+    private const int _damagedCopiesKept = 3;
 
     /// <returns>The store, and one sentence per replaced file for the user.</returns>
     public static (DataStore Store, List<string> Repairs) Load(string dataDir)
@@ -34,6 +35,7 @@ internal static class DataRecovery
         var path = Path.Combine(dataDir, failure.File);
         var kept = $"{failure.File}.bad-{DateTime.Now:yyyyMMdd-HHmmss}";
         File.Move(path, Path.Combine(dataDir, kept), overwrite: true);
+        DropOldCopies(dataDir, failure.File);
 
         var problem = $"{failure.File} couldn't be read ({failure.Reason}).";
         foreach (var (contents, source) in Replacements(path))
@@ -45,6 +47,24 @@ internal static class DataRecovery
 
         File.Delete(path);
         return $"{problem} It was set aside as {kept}, and the app carries on without it.";
+    }
+
+    /// <summary>Keeps the newest few damaged copies of a file, so a folder that keeps breaking one doesn't fill up.</summary>
+    private static void DropOldCopies(string dataDir, string file)
+    {
+        var older = Directory.GetFiles(dataDir, file + ".bad-*")
+            .OrderByDescending(Path.GetFileName, StringComparer.Ordinal)
+            .Skip(_damagedCopiesKept);
+        foreach (var path in older)
+        {
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+            }
+        }
     }
 
     /// <summary>The newest backups first, then the bundled copy (which is taken on trust: it's the last resort).</summary>

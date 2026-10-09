@@ -236,8 +236,8 @@ change when the data does.
 
 A file that can't be read when the app starts (a typo in a row, a half-synced
 copy, an empty `heroes.csv`, `items.csv` or `categories.csv`) doesn't stop it.
-The app keeps the damaged file next to the others as `<file>.bad-<date>-<time>`,
-puts the newest backup that loads in its place (or the copy bundled with the
+The app keeps the damaged file next to the others as `<file>.bad-<date>-<time>`
+(the newest 3 per file), puts the newest backup that loads in its place (or the copy bundled with the
 app), and tells you which file it replaced and from what. **Data → Reload from
 Disk** does the same for the folder in use. A folder you pick with **Change
 Data Folder…** is not repaired: it is refused, and left as it was.

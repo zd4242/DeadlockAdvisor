@@ -111,7 +111,7 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
 - **A damaged file:** `DataStore.Load` throws `DataLoadException` (the file's name and the reason) for a row that doesn't
   parse, a malformed JSON file, or a base table (`heroes.csv`, `items.csv`, `categories.csv`) with no rows; a missing or
   locked file throws as it is. `DataService.Open` (startup) and `Reload` load through `DataRecovery`: the file is kept as
-  `<file>.bad-<yyyyMMdd-HHmmss>`, replaced by the newest of its last 10 backups that gets the load past it, else by the
+  `<file>.bad-<yyyyMMdd-HHmmss>` (the newest 3 per file stay), replaced by the newest of its last 10 backups that gets the load past it, else by the
   bundled copy (`DataService.BundledCopy`), and one warning names each file, why, and what it was restored from. Each file
   is repaired once per load, and a file with no bundled copy is just set aside. `ChangeDataRoot` loads strictly, so a
   folder the user picks is refused and left alone. `PruneOrphans` does nothing while a base table is empty

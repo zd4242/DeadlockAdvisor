@@ -210,6 +210,22 @@ public sealed class DataServiceTests : IDisposable
     }
 
     [Fact]
+    public void OnlyTheNewestThreeDamagedCopiesOfAFileAreKept()
+    {
+        foreach (var stamp in new[] { "20200101-000000", "20200102-000000", "20200103-000000" })
+            File.WriteAllText(Path.Combine(_service.DataDir, $"items.csv.bad-{stamp}"), "old");
+        File.WriteAllText(Path.Combine(_service.DataDir, DataStore.ItemsFile), _brokenItems);
+
+        var (service, _) = Start();
+        using var owner = service;
+
+        var kept = BadCopies(DataStore.ItemsFile).Select(Path.GetFileName).Order().ToList();
+        Assert.Equal(3, kept.Count);
+        Assert.DoesNotContain("items.csv.bad-20200101-000000", kept);
+        Assert.Contains(kept, name => File.ReadAllText(Path.Combine(_service.DataDir, name!)) == _brokenItems);
+    }
+
+    [Fact]
     public void AHealthyFolderSaysNothingAndLeavesNoCopies()
     {
         var (service, messages) = Start();
