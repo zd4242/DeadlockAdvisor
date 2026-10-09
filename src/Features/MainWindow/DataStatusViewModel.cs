@@ -20,19 +20,30 @@ public sealed record StatusFact(string Label, string Value);
 public class DataStatusViewModel : ViewModelBase
 {
     public const string NoDataText =
-        "Real-match win rates add a second opinion to the recommendations. Fetching them takes a few minutes, in the background.";
+        "Real-match win rates add a second opinion to the recommendations. Fetching them takes seconds from the shared download, "
+        + "or a few minutes from deadlock-api.com, in the background.";
+
+    /// <summary>How recently a check must have found no newer patch for the chip to say the data is up to date.</summary>
+    internal static readonly TimeSpan UpToDateWindow = TimeSpan.FromDays(3);
 
     private readonly IDataService _data;
     private readonly DataMenuViewModel _dataMenu;
+    private readonly ISettingsService _settings;
 
     public DataStatusViewModel(IDataService data, DataMenuViewModel dataMenu, ISettingsService settings)
     {
         _data = data;
         _dataMenu = dataMenu;
+        _settings = settings;
         FetchCommand = dataMenu.DownloadMatchDataCommand;
 
         data.StoreReplaced.Merge(data.ScoresChanged).Subscribe(_ => Refresh()).DisposeWith(Disposables);
         dataMenu.WhenAnyValue(menu => menu.NewerPatch).Skip(1).Subscribe(_ => Refresh()).DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.MatchDataCheckedAt)
+            .DistinctUntilChanged()
+            .Subscribe(_ => Refresh())
+            .DisposeWith(Disposables);
         settings.SettingsChanged
             .Select(s => s.ShowModelEditors)
             .DistinctUntilChanged()
@@ -44,7 +55,7 @@ public class DataStatusViewModel : ViewModelBase
             .DisposeWith(Disposables);
     }
 
-    /// <summary>The chip's text: the patch and age of the match data, or that there's none.</summary>
+    /// <summary>The chip's text: the patch of the match data and that it's current or how old it is, or that there's none.</summary>
     [Reactive] public string Label { get; private set; } = "";
 
     [Reactive] public bool HasData { get; private set; }
@@ -69,6 +80,12 @@ public class DataStatusViewModel : ViewModelBase
 
     public ReactiveCommand<Unit, Unit> FetchCommand { get; }
 
+    /// <summary>A recent check found no newer patch. A finished patch is never fetched again, so the data's own age says nothing then.</summary>
+    private bool IsCurrent() =>
+        _dataMenu.NewerPatch is null
+        && _settings.Current.MatchDataCheckedAt is { } checkedAt
+        && DateTimeOffset.UtcNow - checkedAt < UpToDateWindow;
+
     /// <summary>Recompute everything, as the card does on opening so the age is current.</summary>
     public void Refresh()
     {
@@ -81,7 +98,8 @@ public class DataStatusViewModel : ViewModelBase
         {
             var patch = MatchStatsMath.PatchLabel(meta);
             var age = MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0 - at);
-            Label = IsOutdated ? $"Match data · patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"Match data · patch {patch} · {age}";
+            var current = IsCurrent() ? "up to date" : age;
+            Label = IsOutdated ? $"Match data · patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"Match data · patch {patch} · {current}";
             Warning = IsOutdated
                 ? $"Patch {_dataMenu.NewerPatch!.Label} is out since these were fetched. Download again for numbers that match the game."
                 : null;

@@ -75,7 +75,7 @@ public interface IArtDownloadService
 /// </summary>
 public sealed class ArtDownloadService : IArtDownloadService
 {
-    public const string UserAgent = "deadlock-advisor/1.0 (asset downloader)";
+    public static readonly string UserAgent = $"{DeadlockApi.UserAgent} (asset downloader)";
 
     /// <summary>
     /// How many images in a row can fail to connect before the download gives up. Each is a connection that

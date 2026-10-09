@@ -258,6 +258,44 @@ public class StatusBarTests
         Assert.StartsWith("Match data · patch 09-16 · ", ui.ViewModel.DataStatus.Label);
     }
 
+    /// <summary>A finished patch is never fetched again, so the data's age says nothing once a recent check found nothing newer.</summary>
+    [AvaloniaFact]
+    public void ARecentCheckThatFoundNoNewerPatchReadsUpToDate()
+    {
+        using var ui = new UiHarness(settings =>
+        {
+            settings.Current.WelcomeOffered = true;
+            settings.Current.MatchDataCheckedAt = DateTimeOffset.UtcNow.AddDays(-2);
+        });
+
+        ui.Show();
+
+        var status = ui.ViewModel.DataStatus;
+        Assert.False(status.IsOutdated);
+        Assert.Equal("Match data · patch 09-16 · up to date", status.Label);
+        Assert.Contains(status.Facts, fact => fact.Label == "Fetched");
+    }
+
+    [AvaloniaFact]
+    public void ACheckThatIsOldOrWasNeverMadeShowsTheDataAgeInstead()
+    {
+        using var ui = new UiHarness(settings =>
+        {
+            settings.Current.WelcomeOffered = true;
+            settings.Current.MatchDataCheckedAt = DateTimeOffset.UtcNow - DataStatusViewModel.UpToDateWindow - TimeSpan.FromHours(1);
+        });
+        ui.Show();
+        var status = ui.ViewModel.DataStatus;
+        Assert.StartsWith("Match data · patch 09-16 · ", status.Label);
+        Assert.DoesNotContain("up to date", status.Label);
+
+        ui.Settings.Update(settings => settings.MatchDataCheckedAt = DateTimeOffset.UtcNow);
+        Assert.Equal("Match data · patch 09-16 · up to date", status.Label);
+
+        ui.Settings.Update(settings => settings.MatchDataCheckedAt = null);
+        Assert.DoesNotContain("up to date", status.Label);
+    }
+
     [AvaloniaFact]
     public void WithoutMatchDataTheCardOffersToFetchIt()
     {

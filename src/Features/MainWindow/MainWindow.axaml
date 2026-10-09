@@ -208,10 +208,11 @@
                                               ToolTip.Tip="Backfill score rows after adding to the CSVs by hand"/>
                                     <MenuItem Header="Sync from Game API"
                                               Command="{Binding DataMenu.SyncGameApiCommand}"
+                                              IsVisible="{Binding ShowsEditors}"
                                               ToolTip.Tip="Pull item stats, costs, ids and new shop items from deadlock-api.com"/>
                                     <MenuItem Header="Download Match Data…"
                                               Command="{Binding DataMenu.DownloadMatchDataCommand}"
-                                              ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (in the background)"/>
+                                              ToolTip.Tip="Pull item win rates from real matches (seconds from the shared download, a few minutes from deadlock-api.com; in the background)"/>
                                     <MenuItem Header="Check for Formula Updates"
                                               Command="{Binding DataMenu.CheckModelCommand}"
                                               ToolTip.Tip="Take the newest published hero ratings and item formulas, asking about any you've changed"/>

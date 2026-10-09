@@ -606,7 +606,8 @@ afterwards (see "Tests and goldens" below).
 
 ## Patch workflow
 
-1. **Data → Sync from Game API.** Beyond the usual added-items and field-changes
+1. **Data → Sync from Game API** (an editor tool: it shows once Settings → General's
+   "Edit the scoring model" is on). Beyond the usual added-items and field-changes
    sections, the report now contains:
    - **Item stat changes**: every stat that moved, e.g. "Long Range: Weapon
      Damage (conditional) none -> 40%". These need no action; stat rules pick

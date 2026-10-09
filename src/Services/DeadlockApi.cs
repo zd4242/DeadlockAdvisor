@@ -6,6 +6,7 @@ using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Text.Json.Nodes;
 using System.Threading;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Services.Contracts;
 
 namespace DeadlockAdvisor.Services;
@@ -13,7 +14,12 @@ namespace DeadlockAdvisor.Services;
 /// <summary>One shared <see cref="HttpClient"/> for every call to deadlock-api.com, identified by <see cref="UserAgent"/>.</summary>
 public sealed class DeadlockApi : IDeadlockApi, IDisposable
 {
-    public const string UserAgent = "deadlock-advisor/1.0";
+    /// <summary>The app, its version and where to reach its maker: all a request says about who sent it.</summary>
+    public static readonly string UserAgent = UserAgentFor(AppVersion.Release);
+
+    internal static string UserAgentFor(Version? release) =>
+        $"deadlock-advisor/{release?.ToString(3) ?? "dev"} (+https://github.com/zd4242/DeadlockAdvisor)";
+
     public static readonly TimeSpan Timeout = TimeSpan.FromSeconds(60);
 
     /// <summary>How long a connection gets to open. A link that goes nowhere then fails in this, not in <see cref="Timeout"/>.</summary>

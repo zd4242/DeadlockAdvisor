@@ -248,11 +248,14 @@ Data Folder…** is not repaired: it is refused, and left as it was.
   by hand. Backfills missing hero × trait rows at 0, drops rows for
   deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
   no rows), and lists unrated heroes and items with no rules.
-- **Sync from Game API**: pulls heroes and the shop from
+- **Sync from Game API**: an editor tool, shown with *Edit the scoring
+  model* on (Settings → General) like the items above it. It pulls heroes and the shop from
   `deadlock-api.com`, following patches (costs, tiers, new items), and
   rewrites the item stats and tooltips. It also re-measures the Has High
   Max HP and Durability traits from the game's numbers. Only changed files are written.
-  Run it after each patch: the report lists each item stat that moved,
+  Everyone else gets the same data through the published model, and running it
+  makes your files differ from it, so every later formula update asks about them.
+  The maintainer runs it after each patch: the report lists each item stat that moved,
   items with hand-typed rules whose tooltip changed, stats it doesn't know
   how to map, and per-item overrides that no longer match the game. New
   heroes don't need it: a workflow adds them to the published model, rated
@@ -267,8 +270,10 @@ Data Folder…** is not repaired: it is refused, and left as it was.
   every match (under a minute a patch), or with the rank groups too
   (about 3 minutes a patch), with each phase behind its chip in the status
   bar. Either way a finished patch is never fetched again, each patch's
-  numbers are in use as soon as they arrive, and the status bar turns red
-  when a newer patch is out than the data covers.
+  numbers are in use as soon as they arrive. The status bar chip says
+  *up to date* while a check in the last three days found no newer patch
+  (otherwise how old the data is), and turns red when a newer patch is out
+  than the data covers.
 - **Check for Formula Updates**: takes the newest published hero ratings
   and item formulas ([formula updates](#formula-updates)), asking again
   about files you kept your own changes in.
@@ -471,7 +476,9 @@ SmartScreen warns about the download as described under Install.
 **Privacy.** This program will not transfer any information to other
 networked systems unless specifically requested by the user or the person
 installing or operating it. It downloads the following, and its requests
-carry no personal information beyond what any web request does:
+carry no personal information beyond what any web request does. They
+identify the app and its version (`deadlock-advisor/<version>`) and
+nothing else:
 
 - From [deadlock-api.com](https://deadlock-api.com): hero, item and patch
   data, art, and match statistics. Importing a match sends the match ID you

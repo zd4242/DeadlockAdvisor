@@ -2,6 +2,7 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Threading;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 
@@ -29,6 +30,29 @@ public sealed class DeadlockApiTests
         await api.GetBytesAsync(Url, DeadlockApi.UserAgent);
 
         Assert.Equal([new HostReach("api.deadlock-api.com", true)], reach);
+    }
+
+    [Fact]
+    public void TheUserAgentNamesTheAppItsVersionAndWhereToReachItsMaker()
+    {
+        Assert.Equal("deadlock-advisor/1.2.0 (+https://github.com/zd4242/DeadlockAdvisor)", DeadlockApi.UserAgentFor(new Version(1, 2, 0)));
+        Assert.Equal("deadlock-advisor/1.2.0 (+https://github.com/zd4242/DeadlockAdvisor)", DeadlockApi.UserAgentFor(new Version(1, 2, 0, 5)));
+        Assert.Equal("deadlock-advisor/dev (+https://github.com/zd4242/DeadlockAdvisor)", DeadlockApi.UserAgentFor(null));
+        Assert.Equal(DeadlockApi.UserAgentFor(AppVersion.Release), DeadlockApi.UserAgent);
+        Assert.StartsWith(DeadlockApi.UserAgent, ArtDownloadService.UserAgent);
+        Assert.EndsWith("(asset downloader)", ArtDownloadService.UserAgent);
+    }
+
+    [Fact]
+    public async Task EveryRequestCarriesTheUserAgent()
+    {
+        var handler = new StubHandler(() => new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent("{}") });
+        using var api = new DeadlockApi(handler);
+
+        await api.GetJsonAsync(Url);
+        await api.GetBytesAsync(Url, ArtDownloadService.UserAgent);
+
+        Assert.Equal([DeadlockApi.UserAgent, ArtDownloadService.UserAgent], handler.UserAgents);
     }
 
     [Theory]
@@ -102,7 +126,12 @@ public sealed class DeadlockApiTests
 
     private sealed class StubHandler(Func<HttpResponseMessage> answer) : HttpMessageHandler
     {
-        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken) =>
-            Task.FromResult(answer());
+        public List<string> UserAgents { get; } = [];
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            UserAgents.Add(request.Headers.UserAgent.ToString());
+            return Task.FromResult(answer());
+        }
     }
 }

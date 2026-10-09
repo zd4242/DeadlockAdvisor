@@ -1,6 +1,6 @@
 # WP09 Update wording, status label, hide Sync from Game API, versioned User-Agent
 
-Status: todo
+Status: done
 Effort: S · Risk: low · Depends on: WP08 (one shared line) · Wave: C
 Touches: `src/Features/MainWindow/DataStatusViewModel.cs`, `DataStatusView.axaml`, **`src/Features/MainWindow/MainWindow.axaml`** (the Data menu), `src/Services/DeadlockApi.cs`, `src/Services/ArtDownloadService.cs` (one line), `README.md`, tests (`MenuTests`, `StatusBarTests`, `DeadlockApiTests`)
 Docs to update: `README.md` (Data menu, Privacy), `docs/scoring_model.md` ("Patch workflow"), `docs/architecture.md` (section 7)

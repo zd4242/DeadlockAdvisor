@@ -119,10 +119,10 @@ public class MenuTests
         ui.Show();
         var data = ui.Window.MainMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "_Data"));
         List<string> Shown() => data.Items.OfType<MenuItem>().Where(item => item.IsVisible).Select(item => (string)item.Header!).ToList();
-        string[] modelTools = ["Sync New Heroes / Items / Categories", "Model Health Report", "Reload from Disk", "Export Snapshot to Excel"];
+        string[] modelTools = ["Sync New Heroes / Items / Categories", "Sync from Game API", "Model Health Report", "Reload from Disk", "Export Snapshot to Excel"];
 
         Assert.Empty(Shown().Intersect(modelTools));
-        Assert.Contains("Sync from Game API", Shown());
+        Assert.Contains("Download Match Data…", Shown());
         ui.Window.KeyPressQwerty(PhysicalKey.R, RawInputModifiers.Control);
         UiHarness.Settle();
         Assert.Equal(0, reloads);

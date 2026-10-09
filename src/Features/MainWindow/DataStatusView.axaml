@@ -76,7 +76,7 @@
                     <Button HorizontalAlignment="Left"
                             Content="{Binding FetchText}"
                             Command="{Binding FetchCommand}"
-                            ToolTip.Tip="Pull item win rates from real matches on deadlock-api.com (a few minutes, in the background)"/>
+                            ToolTip.Tip="Pull item win rates from real matches (seconds from the shared download, a few minutes from deadlock-api.com; in the background)"/>
 
                     <StackPanel Spacing="8" IsVisible="{Binding ShowsCoverage}">
                         <Border Classes="hline" Margin="0,4"/>

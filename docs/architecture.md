@@ -131,7 +131,8 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   opinion; `BlendScale` puts the two on one scale. Details and rules: scoring_model.md.
 - **Match data:** downloads bring segments (`data/match_counts/<patch>.json`); `MatchStatsMath.Analyse` turns them into lifts
   (`match_item_lift.csv` + `.meta.json`); `Hero Items` builds its table from the segments (`HeroItemTable`, `HeroFits`).
-- **Game data:** `Data → Sync from Game API` (`GameApiService` → `GameSync`) rewrites heroes, items, item stats and tooltips and
+- **Game data:** `Data → Sync from Game API` (`GameApiService` → `GameSync`; the menu item shows only with the model editors on)
+  rewrites heroes, items, item stats and tooltips and
   measures the max-HP and durability traits (scoring_model.md). Everyone else gets those files through the model update.
 
 ## 5. Threading and background jobs
@@ -171,10 +172,11 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
 | Formulas (the model) | `ModelUpdateService`, `ModelManifest`, `ModelUpdatePlan` (`DataMenuViewModel.CheckModelAsync`) | the `model` release, published by CI from `main` | startup, reconnect | automatic; files the user changed are asked about |
 | Match data | `MatchSnapshotService` / `SnapshotPlan` (shared snapshot) then `MatchStatsService` / `MatchFetchPlan` (deadlock-api.com) | the `match-data` release, built daily by `tools/MatchSnapshot` | startup, reconnect | automatic when a patch is new or the current one is 36 h old (3 days via the API) |
 | Art | `ArtDownloadService`, `ArtManifest`, `TopbarDerivation` (`DataMenuViewModel.DownloadArtAsync`); `ArtService` serves it to the UI | deadlock-api.com asset API and CDN | startup, weekly (daily while a hero lacks art) | automatic after the first-run consent |
-| Game data | `GameApiService`, `GameSync` | deadlock-api.com | **manual**: Data → Sync from Game API | none; users get it when the model is published |
+| Game data | `GameApiService`, `GameSync` | deadlock-api.com | **manual**, editors only: Data → Sync from Game API | none; users get it when the model is published |
 
 - `DeadlockApi` is the one `HttpClient` for deadlock-api.com and GitHub: timeouts, ETag conditional requests, brotli/gzip,
-  `BytesReceived`, and `Reachability`, which `ConnectivityService` watches for the offline chip (it probes every 30 s while
+  `BytesReceived`, the `UserAgent` every request carries (`deadlock-advisor/<AppVersion.Release as x.y.z, or dev> (+repo URL)`;
+  art's adds "(asset downloader)"), and `Reachability`, which `ConnectivityService` watches for the offline chip (it probes every 30 s while
   offline). `DataMenuViewModel.OnStartup`/`OnReconnected` run the checks; nothing re-checks while the app stays open
   (roadmap WP10).
 - Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes
@@ -186,6 +188,9 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   reports stay on the UI thread (not `Parallel.ForEachAsync`). A URL fetched or confirmed current earlier in the run is copied
   to the next group's folder (the hero card is in `heroes` and `topbar/_cards/normal`); a 5xx or 429 is retried twice through an
   injectable delay; `ArtManifest` locks its dictionary. `WelcomeViewModel.ArtSize` is the size of a first download.
+- The match data chip (`DataStatusViewModel`) reads "up to date" while no newer patch is known and
+  `AppSettings.MatchDataCheckedAt` is under 3 days old (`UpToDateWindow`); otherwise it shows how old the data is, so an
+  install that never checked doesn't claim it.
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the
