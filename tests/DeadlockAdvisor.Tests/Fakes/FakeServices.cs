@@ -33,7 +33,7 @@ public sealed class FakeDeadlockApi : IDeadlockApi
     /// <summary>URLs the site answers with an error status for, rather than not answering at all.</summary>
     public Dictionary<string, HttpStatusCode> Statuses { get; } = [];
 
-    public long BytesReceived => 0;
+    public long BytesReceived { get; set; }
 
     /// <summary>The URLs a "not modified" came back for.</summary>
     public List<string> NotModified { get; } = [];

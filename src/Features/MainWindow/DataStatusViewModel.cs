@@ -58,6 +58,9 @@ public class DataStatusViewModel : ViewModelBase
     /// <summary>The chip's text: the patch of the match data and that it's current or how old it is, or that there's none.</summary>
     [Reactive] public string Label { get; private set; } = "";
 
+    /// <summary>The label without its "Match data · ": "patch 10-07 · up to date", "none yet".</summary>
+    [Reactive] public string Summary { get; private set; } = "";
+
     [Reactive] public bool HasData { get; private set; }
 
     /// <summary>A newer patch is out than the match data was fetched under, so it wants fetching again.</summary>
@@ -99,7 +102,8 @@ public class DataStatusViewModel : ViewModelBase
             var patch = MatchStatsMath.PatchLabel(meta);
             var age = MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0 - at);
             var current = IsCurrent() ? "up to date" : age;
-            Label = IsOutdated ? $"Match data · patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"Match data · patch {patch} · {current}";
+            Summary = IsOutdated ? $"patch {patch} · {_dataMenu.NewerPatch!.Label} is out" : $"patch {patch} · {current}";
+            Label = $"Match data · {Summary}";
             Warning = IsOutdated
                 ? $"Patch {_dataMenu.NewerPatch!.Label} is out since these were fetched. Download again for numbers that match the game."
                 : null;
@@ -117,6 +121,7 @@ public class DataStatusViewModel : ViewModelBase
         }
         else
         {
+            Summary = "none yet";
             Label = "No match data";
             Warning = null;
             Facts = [];

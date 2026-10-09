@@ -36,6 +36,9 @@ public class DataMenuViewModel : ViewModelBase
     public const string ArtChangedAction = "ArtChanged";
     public const string WelcomeChipTitle = "Downloads";
     public const string ModelChipTitle = "Formulas";
+    public const string MatchDataJobTitle = "Match data";
+    public const string ArtJobTitle = "Art";
+    public const string NewHeroesChipTitle = "New heroes";
 
     // Showing new art re-reads every image on screen, so it's done this often at most while art arrives.
     private static readonly TimeSpan _artShowGap = TimeSpan.FromSeconds(5);
@@ -57,6 +60,8 @@ public class DataMenuViewModel : ViewModelBase
     private readonly IFilePickerService _filePicker;
     private readonly ILoggingService _log;
     private readonly IConnectivityService _connectivity;
+    private readonly Activity _modelChecks;
+    private readonly Activity _matchDataChecks;
 
     public DataMenuViewModel(IDataService data, IGameApiService gameApi, IMatchStatsService matchStats, IMatchSnapshotService snapshots,
         IModelUpdateService models, IExcelExportService excel, IArtDownloadService artDownload, IArtService art, IModalService modals,
@@ -87,6 +92,8 @@ public class DataMenuViewModel : ViewModelBase
         _notifications = notifications;
         _settings = settings;
         _filePicker = filePicker;
+        _modelChecks = new Activity(() => this.RaisePropertyChanged(nameof(IsCheckingModel)));
+        _matchDataChecks = new Activity(() => this.RaisePropertyChanged(nameof(IsCheckingMatchData)));
 
         var idle = this.WhenAnyValue(vm => vm.IsBusy).Select(busy => !busy);
         SyncNewDataCommand = ReactiveCommand.Create(SyncNewData);
@@ -120,6 +127,12 @@ public class DataMenuViewModel : ViewModelBase
     [Reactive] public bool IsDownloadingMatchData { get; private set; }
     [Reactive] public bool IsDownloadingArt { get; private set; }
     public bool HasRunningJobs => IsDownloadingMatchData || IsDownloadingArt;
+
+    /// <summary>A formula check, from the published model's manifest to the update it leads to, is under way.</summary>
+    public bool IsCheckingModel => _modelChecks.IsRunning;
+
+    /// <summary>A match-data check, against the shared download's manifest or the patch list, is under way.</summary>
+    public bool IsCheckingMatchData => _matchDataChecks.IsRunning;
 
     /// <summary>The background downloads the status bar shows: running, or finished with a report not yet opened.</summary>
     public ObservableCollection<BackgroundJobViewModel> Jobs { get; } = [];
@@ -328,6 +341,7 @@ public class DataMenuViewModel : ViewModelBase
     /// </summary>
     private async Task CheckMatchDataAsync()
     {
+        using var checking = _matchDataChecks.Begin();
         var store = _data.Store;
         if (!_settings.Current.AutoUpdateMatchData || store.MatchSegments.Count == 0)
         {
@@ -367,6 +381,7 @@ public class DataMenuViewModel : ViewModelBase
     /// <summary>One call to /v1/patches. Says nothing unless a newer patch is out: a failed check isn't worth interrupting anyone over.</summary>
     private async Task CheckForNewerPatchAsync()
     {
+        using var checking = _matchDataChecks.Begin();
         try
         {
             NewerPatch = await _matchStats.NewerPatchAsync(_data.Store.MatchMeta);
@@ -521,7 +536,7 @@ public class DataMenuViewModel : ViewModelBase
         _data.FlushSaves();
         var details = plan is MatchFetchPlan calls ? new MatchDownloadProgressViewModel(calls) : null;
         var source = plan is SnapshotPlan ? "the shared download" : "deadlock-api.com";
-        var job = new BackgroundJobViewModel("Match data", _clock, cancel => _modals.Confirm(
+        var job = new BackgroundJobViewModel(MatchDataJobTitle, _clock, cancel => _modals.Confirm(
             "Stop downloading match data? What has finished is kept and already in use; the rest stays as it was.",
             "Stop", cancel, cancelText: "Keep going")) { Details = details };
         IsDownloadingMatchData = true;
@@ -603,6 +618,7 @@ public class DataMenuViewModel : ViewModelBase
     /// <param name="manual">From the Data menu: says how it went, and asks again about files kept over this version.</param>
     internal async Task CheckModelAsync(bool manual)
     {
+        using var checking = _modelChecks.Begin();
         var answer = await _models.PublishedAsync();
         if (answer.Manifest is not { } published)
         {
@@ -621,6 +637,7 @@ public class DataMenuViewModel : ViewModelBase
     /// </summary>
     private async Task CheckModelWhileOpenAsync()
     {
+        using var checking = _modelChecks.Begin();
         if (!_settings.Current.AutoUpdateModel)
         {
             if (_settings.Current.CheckForNewHeroes)
@@ -722,7 +739,7 @@ public class DataMenuViewModel : ViewModelBase
         var names = ModelUpdateService.NewHeroNames(_data.DataDir, files);
         if (names.Count == 0)
             return;
-        var job = new BackgroundJobViewModel("New heroes", _clock);
+        var job = new BackgroundJobViewModel(NewHeroesChipTitle, _clock);
         job.Succeed(string.Join(", ", names), () => AddNewHeroes(files), "Click to add them, and their art");
         Show(job);
     }
@@ -1077,7 +1094,7 @@ public class DataMenuViewModel : ViewModelBase
     {
         if (IsDownloadingArt)
             return;
-        var job = new BackgroundJobViewModel("Art", _clock);
+        var job = new BackgroundJobViewModel(ArtJobTitle, _clock);
         var shown = _clock.Now;
         using var showAsItArrives = job.WhenAnyValue(vm => vm.Done)
             .Where(_ => _clock.Now - shown >= _artShowGap)
@@ -1219,4 +1236,23 @@ public class DataMenuViewModel : ViewModelBase
     // -- modals ---------------------------------------------------------------------
 
     private void ShowMessage(string title, IEnumerable<string> lines) => _modals.ShowMessage(title, string.Join("\n", lines));
+
+    /// <summary>How many runs of one kind of check are under way, so overlapping ones don't clear each other's flag.</summary>
+    private sealed class Activity(Action changed)
+    {
+        private int _running;
+
+        public bool IsRunning => _running > 0;
+
+        public IDisposable Begin()
+        {
+            _running++;
+            changed();
+            return Disposable.Create(() =>
+            {
+                _running--;
+                changed();
+            });
+        }
+    }
 }

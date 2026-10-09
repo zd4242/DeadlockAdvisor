@@ -46,6 +46,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
     private readonly ReactiveCommand<string, Unit> _open;
     private readonly Subject<Unit> _restartRequested = new();
     private CancellationTokenSource? _download;
+    private int _checks;
 
     /// <param name="open">Opens a web page in the browser.</param>
     public AppUpdateViewModel(IAppUpdateService updates, ISettingsService settings, INotificationService notifications, ReactiveCommand<string, Unit> open)
@@ -80,6 +81,9 @@ public sealed class AppUpdateViewModel : ViewModelBase
     [Reactive] public AppRelease? Available { get; private set; }
 
     [Reactive] public AppUpdateState State { get; private set; }
+
+    /// <summary>A request to GitHub for the newest release is under way.</summary>
+    [Reactive] public bool IsChecking { get; private set; }
 
     /// <summary>The version downloaded, which is installed in place of this one as the app closes.</summary>
     [Reactive] public AppRelease? Installed { get; private set; }
@@ -163,7 +167,17 @@ public sealed class AppUpdateViewModel : ViewModelBase
         }
         if (!manual && !_settings.Current.CheckForAppUpdates || State is AppUpdateState.Downloading or AppUpdateState.Ready)
             return;
-        var latest = await _updates.LatestAsync();
+        AppRelease? latest;
+        _checks++;
+        IsChecking = true;
+        try
+        {
+            latest = await _updates.LatestAsync();
+        }
+        finally
+        {
+            IsChecking = --_checks > 0;
+        }
         if (latest is null)
         {
             if (manual)

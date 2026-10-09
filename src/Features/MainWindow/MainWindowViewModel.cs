@@ -10,6 +10,7 @@ using DeadlockAdvisor.Features.HeroItems;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.MainWindow.Updates;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Settings;
 using DeadlockAdvisor.Features.Settings.Data;
@@ -122,7 +123,8 @@ public class MainWindowViewModel : ViewModelBase
         IAppUpdateService appUpdates,
         IConnectivityService connectivity,
         IForegroundService foreground,
-        IAttentionService attention)
+        IAttentionService attention,
+        IDeadlockApi api)
     {
         _foreground = foreground;
         _attention = attention;
@@ -210,6 +212,7 @@ public class MainWindowViewModel : ViewModelBase
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         Connection = new ConnectionViewModel(connectivity, art).DisposeWith(Disposables);
+        Updates = new UpdatesViewModel(data, settings, connectivity, art, api, dataMenu, AppUpdate, DataStatus).DisposeWith(Disposables);
         connectivity.Reconnected
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(reconnected =>
@@ -337,6 +340,9 @@ public class MainWindowViewModel : ViewModelBase
 
     /// <summary>The status bar's chip while the app can't reach the internet.</summary>
     public ConnectionViewModel Connection { get; }
+
+    /// <summary>The status bar's Updates chip and the flyout it opens: the app, the formulas, the match data and the art.</summary>
+    public UpdatesViewModel Updates { get; }
 
     public ReactiveCommand<Unit, Unit> ZoomInCommand { get; }
     public ReactiveCommand<Unit, Unit> ZoomOutCommand { get; }
