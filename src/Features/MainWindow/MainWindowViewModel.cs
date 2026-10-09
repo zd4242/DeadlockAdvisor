@@ -475,6 +475,9 @@ public class MainWindowViewModel : ViewModelBase
         page.FocusSearch();
     }
 
+    /// <summary>Raises the window, restored if it was minimised.</summary>
+    public void BringForward() => RequestViewAction(BringForwardAction);
+
     /// <summary>
     /// Detect onto the Match page, bringing the window forward only once there's something to see (the
     /// review or what went wrong): before the capture, it would cover the game.

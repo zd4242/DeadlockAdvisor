@@ -1,6 +1,6 @@
 # WP15 Single-instance guard
 
-Status: todo
+Status: done
 Effort: S · Risk: low-medium (it runs before anything else; the update installer must still work) · Depends on: none · Wave: A
 Touches: `Program.cs`, new `src/Core/SingleInstance.cs`, `App.axaml.cs`, `src/Features/MainWindow/MainWindowViewModel.cs` (a public `BringForward()`), new `tests/DeadlockAdvisor.Tests/SingleInstanceTests.cs`
 Docs to update: `docs/architecture.md` (section 3), `README.md` (a line under Install)

@@ -25,6 +25,7 @@ status bar says so: **Update** downloads it in the background, and it's
 installed in place of the old exe when you close the app; **Restart now**
 does that straight away. The formulas and match data keep themselves up to date without a
 new version.
+Only one copy runs at a time: starting it again brings the open window to the front.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,

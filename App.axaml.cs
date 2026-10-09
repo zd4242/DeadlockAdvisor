@@ -99,6 +99,8 @@ public partial class App : Application
                     DataContext = services.GetRequiredService<MainWindowViewModel>(),
                 };
                 services.GetRequiredService<IGlobalHotkeyService>().Attach(desktop.MainWindow);
+                var mainViewModel = (MainWindowViewModel)desktop.MainWindow.DataContext!;
+                Program.Primary?.Listen(() => Dispatcher.UIThread.Post(mainViewModel.BringForward));
             }
             catch (Exception ex)
             {

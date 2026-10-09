@@ -76,7 +76,11 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 ## 3. Startup and dependency injection
 
 1. `Program.Main`: if started as an update installer (`--install`) it installs and exits (`AppUpdateService.InstallIfAsked`);
-   otherwise it starts Avalonia. After shutdown it installs a downloaded update (`AppUpdateService.InstallIfDownloaded`).
+   otherwise, on Windows, it claims the data folder (`SingleInstance`: a named mutex whose name hashes
+   `JsonSettingsService.AppDataPath`, so a copy with its own `DEADLOCK_ADVISOR_HOME` runs beside the real one). A second copy
+   sets the first one's named event and exits; the first raises its window (`App` listens once the window exists, and posts
+   `MainWindowViewModel.BringForward`). Then it starts Avalonia. After shutdown it lets go of the claim and installs a
+   downloaded update (`AppUpdateService.InstallIfDownloaded`).
 2. `App.Initialize` loads the XAML, builds the container (`App.RegisterServices`: services as singletons;
    `DetectAction`, `ImportMatchAction` and the page view models as transients; `NotificationOverlayViewModel` singleton) and
    installs the global exception handlers (Rx default handler, dispatcher, unobserved tasks, and
