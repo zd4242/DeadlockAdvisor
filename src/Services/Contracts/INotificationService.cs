@@ -12,12 +12,16 @@ public record Notification(
     string Message,
     NotificationSeverity Severity,
     TimeSpan Duration,
-    Guid Id = default
+    Guid Id = default,
+    DateTimeOffset At = default
 );
 
 public interface INotificationService
 {
     IObservable<Notification> Notifications { get; }
+
+    /// <summary>The last few messages, oldest first, for looking one up after its toast is gone.</summary>
+    IReadOnlyList<Notification> Recent { get; }
 
     void Show(string message, NotificationSeverity severity = NotificationSeverity.Info, TimeSpan? duration = null);
     void ShowInformation(string message, TimeSpan? duration = null);

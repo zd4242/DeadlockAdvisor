@@ -169,6 +169,10 @@
         <Style Selector="Border#StatusBar TextBlock.saving">
             <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
         </Style>
+        <Style Selector="Border#StatusBar TextBlock.saving.failed">
+            <Setter Property="Foreground" Value="{DynamicResource NegativeBrush}"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
         <!-- A tooltip that opens under the pointer would take the hover from the control it describes. -->
         <Style Selector="ToolTip">
             <Setter Property="IsHitTestVisible" Value="False"/>
@@ -243,6 +247,8 @@
                                 </MenuItem>
                                 <MenuItem Header="_Help">
                                     <MenuItem Header="How Scoring Works" Command="{Binding HelpCommand}"/>
+                                    <MenuItem Header="Recent Messages…" Command="{Binding RecentMessagesCommand}"
+                                              ToolTip.Tip="The last messages that popped up, in case one went before you read it"/>
                                     <MenuItem Header="Third-Party Notices" Command="{Binding NoticesCommand}"
                                               ToolTip.Tip="The licenses of the software the app is built with"/>
                                 </MenuItem>
@@ -320,6 +326,7 @@
                         </ItemsControl>
                         <TextBlock Grid.Column="5"
                                    Classes="saving"
+                                   Classes.failed="{Binding SaveFailed}"
                                    Margin="12,0,0,0"
                                    Text="{Binding SaveText}"
                                    IsVisible="{Binding SaveText, Converter={x:Static StringConverters.IsNotNullOrEmpty}}"/>

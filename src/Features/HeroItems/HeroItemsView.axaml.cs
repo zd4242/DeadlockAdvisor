@@ -1,8 +1,10 @@
+using System.Reactive.Disposables;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.ReactiveUI;
 using Avalonia.VisualTree;
+using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.HeroItems;
 
@@ -15,6 +17,21 @@ public partial class HeroItemsView : ReactiveUserControl<HeroItemsViewModel>
         TierSwitch.AddHandler(InputElement.PointerPressedEvent, OnTierPressed, RoutingStrategies.Bubble, handledEventsToo: true);
         // Tunnelled, to step the slider by whole percents before it steps by its own (far finer) positions.
         MinUsage.AddHandler(InputElement.KeyDownEvent, OnUsageKeyDown, RoutingStrategies.Tunnel);
+
+        this.WhenActivated(disposables =>
+        {
+            ViewModel!.ViewInteraction
+                .Subscribe(action =>
+                {
+                    // Without match data the picker is hidden, and there is nothing to search.
+                    if (action == HeroItemsViewModel.FocusSearchAction && HeroPicker.IsEffectivelyVisible)
+                    {
+                        HeroPicker.Focus();
+                        HeroPicker.IsDropDownOpen = true;
+                    }
+                })
+                .DisposeWith(disposables);
+        });
     }
 
     private void OnUsageKeyDown(object? sender, KeyEventArgs e)

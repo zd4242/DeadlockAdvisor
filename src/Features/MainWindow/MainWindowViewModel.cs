@@ -189,12 +189,16 @@ public class MainWindowViewModel : ViewModelBase
             .DisposeWith(Disposables);
 
         data.SaveStates
-            .Subscribe(state => SaveText = state switch
+            .Subscribe(state =>
             {
-                SaveState.Saving => "saving...",
-                SaveState.Saved => "saved",
-                SaveState.Failed => "save failed",
-                _ => "",
+                SaveText = state switch
+                {
+                    SaveState.Saving => "saving...",
+                    SaveState.Saved => "saved",
+                    SaveState.Failed => "save failed",
+                    _ => "",
+                };
+                SaveFailed = state == SaveState.Failed;
             })
             .DisposeWith(Disposables);
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
@@ -241,6 +245,7 @@ public class MainWindowViewModel : ViewModelBase
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         NoticesCommand = ReactiveCommand.Create(ShowNotices);
+        RecentMessagesCommand = ReactiveCommand.Create(ShowRecentMessages);
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
@@ -312,6 +317,9 @@ public class MainWindowViewModel : ViewModelBase
     [Reactive] public string ZoomText { get; private set; } = "";
     [Reactive] public string SaveText { get; private set; } = "";
 
+    /// <summary>The last save didn't reach the disk: the status text shows as an error, not as progress.</summary>
+    [Reactive] public bool SaveFailed { get; private set; }
+
     /// <summary>The status bar's match data chip and its card.</summary>
     public DataStatusViewModel DataStatus { get; }
 
@@ -338,6 +346,7 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> FindCommand { get; }
     public ReactiveCommand<Unit, Unit> HelpCommand { get; }
     public ReactiveCommand<Unit, Unit> NoticesCommand { get; }
+    public ReactiveCommand<Unit, Unit> RecentMessagesCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
@@ -461,6 +470,15 @@ public class MainWindowViewModel : ViewModelBase
     }
 
     private void ShowNotices() => _modals.ShowDocument("Third-party notices", ThirdPartyNotices.Text());
+
+    /// <summary>Help → Recent messages: the last toasts, newest first, for reading one that has gone.</summary>
+    private void ShowRecentMessages()
+    {
+        var lines = _notifications.Recent
+            .Reverse()
+            .Select(message => $"{message.At.ToLocalTime():HH:mm}  {message.Severity}  {message.Message}");
+        _modals.ShowMessage("Recent messages", lines.Any() ? string.Join("\n", lines) : "No messages yet.");
+    }
 
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()

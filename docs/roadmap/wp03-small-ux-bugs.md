@@ -1,6 +1,6 @@
 # WP03 Ctrl+F on Hero Items, longer error toasts and Recent messages, a save-failed style
 
-Status: todo
+Status: done
 Effort: S · Risk: low · Depends on: WP01 · Wave: B
 Touches: `src/Features/HeroItems/HeroItemsViewModel.cs` and `HeroItemsView.axaml(.cs)`, `src/Services/NotificationService.cs`, `src/Services/Contracts/INotificationService.cs`, `src/Features/Shared/Notifications/*`, **`src/Features/MainWindow/MainWindow.axaml`** (Help menu, the saving style), `src/Features/MainWindow/MainWindowViewModel.cs`
 Docs to update: `README.md` (Shortcuts: Ctrl+F), `docs/architecture.md` (section 6)

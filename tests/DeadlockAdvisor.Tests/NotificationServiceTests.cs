@@ -79,4 +79,43 @@ public class NotificationServiceTests
 
         Assert.Empty(seen);
     }
+
+    [Fact]
+    public void AnErrorStaysLongerThanOtherMessagesUnlessGivenATime()
+    {
+        var service = Service();
+        var seen = new List<Notification>();
+        using var _ = service.Notifications.Subscribe(seen.Add);
+
+        service.ShowInformation("info");
+        service.ShowError("error");
+        service.ShowError("with a cause", new InvalidOperationException("boom"));
+        service.ShowError("brief", TimeSpan.FromSeconds(1));
+
+        Assert.Equal(NotificationService.DefaultDuration, seen[0].Duration);
+        Assert.Equal(NotificationService.DefaultErrorDuration, seen[1].Duration);
+        Assert.Equal(NotificationService.DefaultErrorDuration, seen[2].Duration);
+        Assert.Equal(TimeSpan.FromSeconds(1), seen[3].Duration);
+        Assert.True(NotificationService.DefaultErrorDuration >= TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public void RecentKeepsTheLastMessagesWithTheirTime()
+    {
+        var service = Service();
+        service.ShowInformation("before anyone listens");
+        using var _ = service.Notifications.Subscribe(_ => { });
+        for (var i = 1; i <= NotificationService.MaxRecent; i++)
+        {
+            _now += TimeSpan.FromMinutes(1);
+            service.ShowWarning($"m{i}");
+        }
+
+        var recent = service.Recent;
+        Assert.Equal(NotificationService.MaxRecent, recent.Count);
+        Assert.Equal("m1", recent[0].Message);
+        Assert.Equal($"m{NotificationService.MaxRecent}", recent[^1].Message);
+        Assert.Equal(_now, recent[^1].At);
+        Assert.Equal(NotificationSeverity.Warning, recent[^1].Severity);
+    }
 }

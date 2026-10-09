@@ -9,9 +9,13 @@ public class NotificationService : INotificationService
     internal const int MaxHeld = 8;
     internal static readonly TimeSpan MaxHeldAge = TimeSpan.FromMinutes(1);
 
-    private static readonly TimeSpan _defaultDuration = TimeSpan.FromSeconds(3);
+    internal const int MaxRecent = 20;
+    internal static readonly TimeSpan DefaultDuration = TimeSpan.FromSeconds(3);
+    /// <summary>An error is the one message worth reading twice, and it may say what to do about it.</summary>
+    internal static readonly TimeSpan DefaultErrorDuration = TimeSpan.FromSeconds(10);
 
     private readonly Subject<Notification> _notificationSubject = new();
+    private readonly List<Notification> _recent = [];
     private readonly ILoggingService _loggingService;
     private readonly Func<DateTimeOffset> _utcNow;
     private readonly object _gate = new();
@@ -48,18 +52,31 @@ public class NotificationService : INotificationService
         });
     }
 
+    public IReadOnlyList<Notification> Recent
+    {
+        get
+        {
+            lock (_gate)
+                return [.. _recent];
+        }
+    }
+
     public void Show(string message, NotificationSeverity severity = NotificationSeverity.Info, TimeSpan? duration = null)
     {
         var notification = new Notification(
             message,
             severity,
-            duration ?? _defaultDuration,
-            Guid.NewGuid()
+            duration ?? (severity == NotificationSeverity.Error ? DefaultErrorDuration : DefaultDuration),
+            Guid.NewGuid(),
+            _utcNow()
         );
 
         _loggingService.Debug($"Sent notification - {message}");
         lock (_gate)
         {
+            _recent.Add(notification);
+            if (_recent.Count > MaxRecent)
+                _recent.RemoveAt(0);
             if (!_hasSubscriber)
             {
                 _held.Enqueue((notification, _utcNow()));

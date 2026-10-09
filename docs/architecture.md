@@ -143,7 +143,8 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   whichever is open). `MainWindow` shows each in a borderless `ModalWindow` laid over the main window and kept in step with its
   bounds; if another app is in front (`IForegroundService`) it waits until you switch back. `Confirm`, `ShowMessage` and a
   progress dialog are helpers in `Features/Shared/Modals`. Content is found by `ViewLocator`.
-- `INotificationService` raises toasts (`NotificationOverlayViewModel`), 3 seconds by default. Startup runs before the
+- `INotificationService` raises toasts (`NotificationOverlayViewModel`): 3 seconds by default, 10 for an error, and a click
+  dismisses one. `Recent` keeps the last 20 with their time, which Help → Recent Messages lists. Startup runs before the
   overlay exists, so `NotificationService` holds what is sent while nobody listens (the newest 8 from the last minute) and
   hands it to the first subscriber only; later subscribers get new messages alone.
 

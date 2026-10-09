@@ -295,6 +295,34 @@ public class StatusBarTests
         ui.Screenshot("status_card_editors.png");
     }
 
+    /// <summary>A save that couldn't reach the disk reads as an error, not in the accent colour of one in progress.</summary>
+    [AvaloniaFact]
+    public void AFailedSaveShowsInTheNegativeColourNotTheSavingOne()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var text = ui.Window.StatusBar.GetVisualDescendants().OfType<TextBlock>().Single(block => block.Classes.Contains("saving"));
+        ui.Data.MarkEdited(DataFiles.HeroScores);
+        UiHarness.Settle();
+        Assert.Equal("saving...", text.Text);
+        Assert.False(ui.ViewModel.SaveFailed);
+        Assert.Same(ui.Window.FindResource("AccentBrush"), text.Foreground);
+
+        using (new FileStream(Path.Combine(ui.Data.DataDir, DataStore.HeroScoresFile), FileMode.Open, FileAccess.Read, FileShare.None))
+            Assert.False(ui.Data.FlushSaves());
+        UiHarness.Settle();
+
+        Assert.Equal("save failed", text.Text);
+        Assert.True(ui.ViewModel.SaveFailed);
+        Assert.Same(ui.Window.FindResource("NegativeBrush"), text.Foreground);
+        ui.Screenshot("status_save_failed.png");
+
+        Assert.True(ui.Data.FlushSaves());
+        UiHarness.Settle();
+        Assert.Equal("saved", text.Text);
+        Assert.False(ui.ViewModel.SaveFailed);
+    }
+
     [AvaloniaFact]
     public void TheStatusBarZoomButtonsStepAndResetTheZoom()
     {

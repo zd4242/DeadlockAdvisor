@@ -31,4 +31,7 @@ public class NotificationOverlayViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
     }
+
+    /// <summary>Takes a toast off early. Its timer finds it gone and does nothing.</summary>
+    public void Dismiss(NotificationViewModel notification) => _notifications.Remove(notification);
 }

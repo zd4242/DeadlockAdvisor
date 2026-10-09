@@ -194,7 +194,7 @@ the Match page rescores as you go.
 |---|---|
 | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd>, <kbd>Ctrl</kbd>+wheel, or the wheel over the status bar's zoom buttons | zoom (remembered, along with the window and your last match) |
 | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | next / previous page |
-| <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search |
+| <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search (on Hero Items, the hero picker) |
 | <kbd>Ctrl</kbd>+<kbd>R</kbd> | reload the data from disk |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> / <kbd>Ctrl</kbd>+<kbd>Q</kbd> | open Settings / quit |
 | <kbd>F9</kbd> | detect the match from the screen, from the game too (see below) |

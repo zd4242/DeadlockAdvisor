@@ -308,6 +308,25 @@ public class HeroItemsPageTests
         Assert.Equal([false, true, false, false], toggles.Select(toggle => toggle.IsChecked));
     }
 
+    /// <summary>Ctrl+F belongs to the page in view: here the hero picker, not a jump to the Match page's search.</summary>
+    [AvaloniaFact]
+    public async Task CtrlFOpensTheHeroSearchAndStaysOnThePage()
+    {
+        using var ui = new UiHarness(settings => settings.Current.LastPage = 1);
+        await SyntheticItemStatsApi.DownloadAsync(ui.Data.Store);
+        ui.Data.NotifyReplaced();
+        ui.Show();
+        var picker = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<SearchComboBox>().Single(box => box.Name == "HeroPicker");
+        Assert.False(picker.IsDropDownOpen);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F, RawInputModifiers.Control);
+        UiHarness.Settle();
+
+        Assert.True(ui.ViewModel.IsHeroItemsPage);
+        Assert.True(picker.IsDropDownOpen);
+        ui.Screenshot("hero_items_search.png");
+    }
+
     private static List<Border> Rows(UiHarness ui) =>
         ui.Window.HeroItemsPage.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("row")).ToList();
 

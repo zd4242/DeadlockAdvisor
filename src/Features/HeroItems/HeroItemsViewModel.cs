@@ -70,8 +70,10 @@ public class TierToggle(int tier) : ReactiveObject
 /// Unlike them, items bought in only a few of the hero's matches can be hidden, since their win rates
 /// rest on too few matches to mean much.
 /// </summary>
-public class HeroItemsViewModel : ViewModelBase
+public class HeroItemsViewModel : ViewModelBase, ISearchablePage
 {
+    public const string FocusSearchAction = "FocusSearch";
+
     public const string MinUsageTip =
         "Hide items bought in fewer of this hero's matches than this.\n"
         + "A rarely bought item's win rate rests on few matches, and on who buys it, so it says little.";
@@ -319,6 +321,9 @@ public class HeroItemsViewModel : ViewModelBase
         if (Heroes.FirstOrDefault(hero => hero.HeroId == selfHero) is { } hero)
             SelectedHero = hero;
     }
+
+    /// <summary>Ctrl+F: the hero picker, open with its search ready.</summary>
+    public void FocusSearch() => RequestViewAction(FocusSearchAction);
 
     private void Reload() => Load(SelectedHero?.HeroId);
 
