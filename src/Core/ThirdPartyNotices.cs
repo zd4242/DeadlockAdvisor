@@ -15,4 +15,6 @@ public static class ThirdPartyNotices
         resource.CopyTo(bytes);
         return bytes.ToArray();
     }
+
+    public static string Text() => System.Text.Encoding.UTF8.GetString(Bytes());
 }

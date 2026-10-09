@@ -11,6 +11,7 @@ using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
+using DeadlockAdvisor.Features.Shared.Modals.Document;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services.Contracts;
 using Microsoft.Extensions.DependencyInjection;
@@ -40,6 +41,21 @@ public class MenuTests
         Assert.Equal(0, drags);
         var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
         Assert.Equal("How scoring works", Assert.IsType<MessageModalViewModel>(((ModalViewModel)modal.DataContext!).Content).Title);
+    }
+
+    [AvaloniaFact]
+    public void TheThirdPartyNoticesOpenInAModalInsteadOfATextEditor()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+
+        ui.ViewModel.NoticesCommand.Execute().Subscribe();
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var notices = Assert.IsType<DocumentModalViewModel>(((ModalViewModel)modal.DataContext!).Content);
+        Assert.Equal(Core.ThirdPartyNotices.Text(), notices.Text);
+        Assert.Contains("Avalonia", notices.Text);
     }
 
     [AvaloniaFact]

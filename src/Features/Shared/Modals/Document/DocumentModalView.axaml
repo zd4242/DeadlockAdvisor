@@ -1,0 +1,25 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:document="using:DeadlockAdvisor.Features.Shared.Modals.Document"
+             x:Class="DeadlockAdvisor.Features.Shared.Modals.Document.DocumentModalView"
+             x:DataType="document:DocumentModalViewModel">
+    <StackPanel Margin="20" Spacing="12">
+        <TextBlock Classes="h2" Text="{Binding Title}"/>
+        <TextBox x:Name="TextBox"
+                 Text="{Binding Text, Mode=OneWay}"
+                 IsReadOnly="True"
+                 TextWrapping="Wrap"
+                 AcceptsReturn="True"
+                 Width="720"
+                 Height="480"/>
+        <Button x:Name="CloseButton"
+                Classes="primary"
+                Content="Close"
+                MinWidth="80"
+                HorizontalAlignment="Right"
+                HorizontalContentAlignment="Center"
+                IsDefault="True"
+                IsCancel="True"
+                Command="{Binding CloseCommand}"/>
+    </StackPanel>
+</UserControl>

@@ -16,6 +16,7 @@ using DeadlockAdvisor.Features.Settings.Detection;
 using DeadlockAdvisor.Features.Settings.General;
 using DeadlockAdvisor.Features.Settings.Shortcuts;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
+using DeadlockAdvisor.Features.Shared.Modals.Document;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Features.Shared.Notifications;
@@ -459,21 +460,7 @@ public class MainWindowViewModel : ViewModelBase
         HeroTraits.OpenCell(cell);
     }
 
-    /// <summary>The licenses of everything the app ships with: a long text, so it's written beside the settings and opened in the text editor.</summary>
-    private void ShowNotices()
-    {
-        var path = Path.Combine(JsonSettingsService.AppDataPath, ThirdPartyNotices.FileName);
-        try
-        {
-            AtomicFile.Write(path, ThirdPartyNotices.Bytes());
-        }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
-        {
-            _notifications.ShowError($"Couldn't write {path}: {ex.Message}", ex);
-            return;
-        }
-        DataMenu.OpenFolderCommand.Execute(path).Subscribe();
-    }
+    private void ShowNotices() => _modals.ShowDocument("Third-party notices", ThirdPartyNotices.Text());
 
     /// <summary>Ctrl+F belongs to whichever page is open; jumping back to Match would lose your place.</summary>
     private void Find()
