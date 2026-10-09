@@ -28,3 +28,4 @@ countered_by_counterspell,Countered by Counterspell,0,100,How much this hero's p
 countered_by_dispel_magic,Countered by Dispel Magic,0,100,How reliant this hero is on buffs/debuffs that Dispel Magic would strip
 countered_by_divine_barrier,Countered by Divine Barrier,0,100,How reliant this hero is on a single burst window Divine Barrier could block
 consistent_heavy_spirit_hits,Consistent Heavy Spirit Hits,0,100,"How consistently this hero lands individual spirit damage hits of 75 or more over a fight, from repeated nukes, strong ticks or fast ability rotations; hits below 75 don't count. For items like Witchmail that react to each such hit"
+large_single_hits,Large Single Hits,0,100,"How large this hero's biggest individual spirit damage hits are, from nukes, slams and charged abilities, rather than ticks and many small hits (around 175 and up counts as large). For items that scale with one big hit, such as Mystic Reverb's echo, or block one, such as Spellbreaker"

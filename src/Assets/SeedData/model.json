@@ -4,6 +4,10 @@
   "notes": [
     {
       "published": "2026-10-09",
+      "text": "New Large Single Hits rating, with rules for Mystic Reverb and Spellbreaker. Heroes aren\u0027t rated for it yet, so recommendations don\u0027t change until they are."
+    },
+    {
+      "published": "2026-10-09",
       "text": "New Consistent Heavy Spirit Hits rating for every hero, ready for items that react to heavy spirit hits."
     },
     {
@@ -12,9 +16,9 @@
     }
   ],
   "files": {
-    "categories.csv": "7b23a28b2d3ed52d8cffe6a4f7c6fd787330d83880a9651bc8e69136cb50fba5",
-    "hero_category_scores.csv": "9d97d2337e9b86fedccc145379e0ab16ce14e402e41b7345d4ec4dfdd3c335b4",
-    "item_formula_coefficients.csv": "a06d823a8fec5e2685e266052fb40cd9bd398e9e8b36405042c207eb8641f3b7",
+    "categories.csv": "5abd1c4a81c22c72c77d5e640d2d2f2299d4293651b7fca3807219a311f12431",
+    "hero_category_scores.csv": "a9bede314444e4d118346885b69ea4fe6e7e0539e2819c032d7725e6b1ce21b0",
+    "item_formula_coefficients.csv": "63e7dfa551c3bcf39a03dcfe4f94dc0414ea65ee3a30f4d58d31a8ecbd94894b",
     "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
     "stat_rules.csv": "d523b5c5ed362025859d0f82949aa96ca06855cc7498119b91517046ba65342b",
     "heroes.csv": "b78c096a285b21aec60f00f6f4c0af693b83a3729441d8a7c1065576614c52b5",
