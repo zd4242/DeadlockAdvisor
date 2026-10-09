@@ -1,6 +1,10 @@
 # Project Context
 This is a dotnet project using Avalonia and Reactive UI: Deadlock Item Advisor, a Windows desktop app that recommends in-game items based on the heroes in your match. It can read the match off the screen, and takes a second opinion from real match results on deadlock-api.com. The repo is public on GitHub under the MIT license, so keep personal data, local paths and anything that isn't ours (beyond the Valve art and API data the README credits) out of it.
 
+# Architecture and roadmap
+- `docs/architecture.md` maps the app: folders, startup and DI, data flow, the update channels, Detect, tests, recipes for adding a page, setting or shortcut, and gotchas. Read it before exploring, and when you add a service, page, setting, shortcut or update channel, update the part you change in the same commit.
+- `docs/roadmap/README.md` lists planned work as packages (WP01, WP02, ...). "Implement WP08" means: read that README's "How to implement a package", then the package's own file (`docs/roadmap/wp08-....md`), which carries its context, evidence, tests and acceptance criteria. Packages that touch different files can run side by side; otherwise one at a time.
+
 # Scoring model
 Read `docs/scoring_model.md` before touching scoring, the formula CSVs (`stat_rules.csv`, `item_formula_coefficients.csv`, `trait_weights.csv`, `categories.csv`) or `GameSync`. The rules to follow:
 - A hero's trait counts as `(score − roster average over profiled heroes) × coefficient` (`DataStore.TraitBaselines`, `ItemScoring.BuildWeightMatrix`). Don't reintroduce raw-score sums or flat per-item bonuses: they make the same items win every match.
