@@ -12,6 +12,7 @@ using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
+using DeadlockAdvisor.Vision;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -218,6 +219,88 @@ public class ShortcutTests
         Assert.True(await UiHarness.WaitUntilAsync(MessageShown));
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, broughtForward);
+    }
+
+    /// <summary>Presses Detect's key with the game in front (unless told otherwise) and waits for the run to wind down.</summary>
+    private static async Task PressDetectKeyAsync(UiHarness ui, ScreenCapture? capture, bool gameInFront = true)
+    {
+        Support.VisionData.CopyTopbarInto(ui.Data.AssetsDir);
+        ui.Show();
+        ui.Capture.Next = capture;
+        ui.Foreground.IsAnotherAppInFront = gameInFront;
+        var detecting = false;
+        using var _ = ui.ViewModel.DetectFromAnywhereCommand.IsExecuting.Subscribe(executing => detecting = executing);
+
+        ui.Hotkey.Press();
+
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Capture.Captures == 1 && !detecting));
+    }
+
+    private static ScreenCapture NoScoreboard() => new(new RgbImage(2560, 316), 2560, 1440);
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameChimesWhenTheMatchWasApplied()
+    {
+        using var ui = new UiHarness();
+
+        await PressDetectKeyAsync(ui, Support.VisionData.Capture("screen_2560x1440_band"));
+
+        Assert.Equal([AttentionKind.Done], ui.Attention.Chimes);
+        Assert.Equal(0, ui.Attention.Flashes);
+    }
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameChimesAndFlashesWhenTheMatchNeedsReviewing()
+    {
+        using var ui = new UiHarness(settings => settings.Current.AutoApplyDetect = false);
+
+        await PressDetectKeyAsync(ui, Support.VisionData.Capture());
+
+        Assert.Equal([AttentionKind.NeedsLook], ui.Attention.Chimes);
+        Assert.Equal(1, ui.Attention.Flashes);
+    }
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameChimesAndFlashesWhenNothingCouldBeRead()
+    {
+        using var ui = new UiHarness();
+
+        await PressDetectKeyAsync(ui, NoScoreboard());
+
+        Assert.Equal([AttentionKind.NeedsLook], ui.Attention.Chimes);
+        Assert.Equal(1, ui.Attention.Flashes);
+    }
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameChimesWhenTheScreenCouldNotBeCaptured()
+    {
+        using var ui = new UiHarness();
+
+        await PressDetectKeyAsync(ui, null);
+
+        Assert.Equal([AttentionKind.NeedsLook], ui.Attention.Chimes);
+    }
+
+    [AvaloniaFact]
+    public async Task F9WithThisWindowInFrontMakesNoSound()
+    {
+        using var ui = new UiHarness();
+
+        await PressDetectKeyAsync(ui, Support.VisionData.Capture("screen_2560x1440_band"), gameInFront: false);
+
+        Assert.Empty(ui.Attention.Chimes);
+        Assert.Equal(0, ui.Attention.Flashes);
+    }
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameMakesNoSoundWhenTurnedOff()
+    {
+        using var ui = new UiHarness(settings => settings.Current.SoundOnDetect = false);
+
+        await PressDetectKeyAsync(ui, NoScoreboard());
+
+        Assert.Empty(ui.Attention.Chimes);
+        Assert.Equal(0, ui.Attention.Flashes);
     }
 
     /// <summary>A modal closed while it waited for the window, such as Detect's progress, never opens.</summary>

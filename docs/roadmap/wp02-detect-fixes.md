@@ -1,6 +1,6 @@
 # WP02 Detect: find the game, reject empty frames, chime on in-game F9
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium (the detection rules apply) · Depends on: none · Wave: A
 Touches: `src/Services/ScreenCaptureService.cs`, `src/Vision/Detector.cs`, `src/Features/Match/Detect/DetectAction.cs`, **`src/Features/MainWindow/MainWindowViewModel.cs`** (`DetectFromAnywhereAsync`), new `src/Services/AttentionService.cs` and `src/Services/Contracts/IAttentionService.cs`, `App.axaml.cs` (`RegisterServices`), `src/Models/AppSettings.cs`, `src/Features/Settings/Detection/*`, `tests/DeadlockAdvisor.Tests/Ui/UiHarness.cs` and `Fakes/FakeServices.cs`
 Docs to update: `README.md` ("Detecting the match from the screen"), `docs/detection_model.md` (pipeline step 1, capture), `docs/architecture.md` (section 8)

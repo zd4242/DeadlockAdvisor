@@ -6,13 +6,18 @@ is how each step works, why it works that way, and how to change it without maki
 
 ## The pipeline
 
-1. **Capture** (`ScreenCaptureService`): the top 22% of Deadlock's window, in physical pixels.
+1. **Capture** (`ScreenCaptureService`): the top 22% of Deadlock's window, in physical pixels. The
+   window is the foreground one when its process is the game's (`project8.exe`, or `deadlock`), else
+   the running game's main window; with no game running it reads the primary monitor.
 2. **Grid** (`Layout`): twelve slots in two blocks of six, evenly pitched, with a gap for the clock.
    Five numbers place every slot: centre, pitch, middle gap, art width, top. The grid is searched
    for once per screen size and then cached (`AppSettings.VisionGeometry`, versioned by
    `Layout.CacheVersion`). A cached grid is searched for afresh when its **fit** falls under 0.7.
    Fit is the trimmed mean of the slots' best scores (`Detection.Fit`). A right grid fits at 0.81 to
-   0.92 even with four players dead.
+   0.92 even with four players dead. A grid fitting under `Detector.MinFit` (0.5) isn't a scoreboard
+   (`Detection.FoundStrip`): a lobby, a black or HDR-blank frame fit under 0.1. `DetectAction` ends
+   such a run as "Nothing found", caches no grid, and `VisionCorpusTests` checks every labelled
+   capture clears it with margin.
 3. **Read** (`Detector`): a wide pass finds and refits the grid. Then every slot is read in its own
    box, within ±4% and at 0.95, 1.0 and 1.05× its size. The score is the dot product of a high-passed
    24×40 descriptor (`ImageOps.Descriptor`) against every reference image. A hero takes their best
@@ -32,7 +37,9 @@ is how each step works, why it works that way, and how to change it without maki
    slot the read couldn't settle keeps the applied hero ("kept"), and you carry over.
 7. **Apply or review** (`DetectAction`): if every slot is confident or kept and you're known, the
    match is applied without the review, and **Review** beside Detect reopens it. A Street Brawl's
-   blank slots count as read (below). Otherwise the review opens.
+   blank slots count as read (below). Otherwise the review opens. Either way the run reports how it
+   ended (`DetectAction.Finished`); an F9 pressed in the game turns that into a sound, and the review
+   stays behind the game unless *Switch here for a review* is on.
 
 ## The reference art
 

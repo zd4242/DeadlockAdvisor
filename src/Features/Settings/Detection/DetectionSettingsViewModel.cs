@@ -51,6 +51,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.ComeUpForReview = value);
     }
 
+    public bool SoundOnDetect
+    {
+        get => Current.SoundOnDetect;
+        set => Change(s => s.SoundOnDetect = value);
+    }
+
     public bool MinimizeToDetect
     {
         get => Current.MinimizeToDetect;

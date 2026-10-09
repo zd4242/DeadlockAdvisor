@@ -37,6 +37,7 @@ public class DetectAction
 
     private readonly Subject<Unit> _artWanted = new();
     private readonly BehaviorSubject<bool> _canReview = new(false);
+    private readonly Subject<DetectOutcome> _finished = new();
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
@@ -67,6 +68,9 @@ public class DetectAction
     /// <summary>Whether there's a detection applied without review to look back at.</summary>
     public IObservable<bool> CanReview => _canReview;
 
+    /// <summary>How each run ended, once whatever it needs the user for is up.</summary>
+    public IObservable<DetectOutcome> Finished => _finished;
+
     /// <summary>
     /// Run a detection into <paramref name="match"/>: applied straight away when nothing in it is in
     /// doubt (and the setting allows), otherwise shown for review. <paramref name="applied"/> is called
@@ -91,6 +95,7 @@ public class DetectAction
                 _modals.Confirm($"There's no hero art to match against yet.\n\nDownload it from deadlock-api.com into {directory} now? "
                                 + "It downloads in the background; press Detect again once it's done.",
                     "Download", () => _artWanted.OnNext(Unit.Default), cancelText: "Not now");
+            _finished.OnNext(DetectOutcome.NoArt);
             return;
         }
 
@@ -103,6 +108,7 @@ public class DetectAction
         {
             _log.Warning($"Detect: capture failed: {ex.Message}");
             _modals.ShowMessage("Could not capture the screen", ex.Message);
+            _finished.OnNext(DetectOutcome.CaptureFailed);
             return;
         }
 
@@ -111,6 +117,9 @@ public class DetectAction
         var cached = _settings.Current.VisionGeometry.TryGetValue(screenKey, out var saved) ? Geometry.FromJson(saved) : null;
         var clock = System.Diagnostics.Stopwatch.StartNew();
         var detection = await DetectWithProgressAsync(progress => Detect(capture, bank, cached, progress));
+        var rejectedFit = detection is { FoundStrip: false } ? detection.Fit : (double?)null;
+        if (rejectedFit is not null)
+            detection = null;
         if (detection is not null)
         {
             var roster = match.Slots.ToDictionary(pair => pair.Value, pair => pair.Key);
@@ -124,7 +133,7 @@ public class DetectAction
         _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} {source} at {capture.Origin.X},{capture.Origin.Y}, "
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
                          + (detection is null
-                             ? "no strip found"
+                             ? rejectedFit is { } fit ? $"no strip found (best fit {fit:0.00}, under {Detector.MinFit:0.00})" : "no strip found"
                              : (detection.BlankSlots.Count > 0 ? "Street Brawl, " : "")
                                + $"{detection.ConfidentCount}/12 confident, {detection.Slots.Count(slot => slot.Kept)} kept from the match, "
                                + $"you in slot {detection.SelfSlot?.ToString() ?? "unknown"}, fit {detection.Fit:0.00}, "
@@ -140,8 +149,12 @@ public class DetectAction
         {
             _modals.ShowMessage("Nothing found",
                 "Could not find the hero strip along the top of the screen.\n\n"
-                + "Detection reads the live scoreboard, so Deadlock needs to be in a match when you press Detect."
+                + "Detection reads the live scoreboard, so Deadlock needs to be in a match, not a lobby or a loading screen, "
+                + "with its top bar showing, when you press Detect.\n\n"
+                + "A game that captures as a black screen can't be read either: try borderless windowed instead of exclusive fullscreen, "
+                + "or turn HDR off."
                 + (capture.FoundGame ? "" : "\n\nDeadlock's window wasn't found, so the primary monitor was read."));
+            _finished.OnNext(DetectOutcome.NothingFound);
             return;
         }
         if (detection.ConfidentCount > 0)
@@ -151,7 +164,10 @@ public class DetectAction
         if (_settings.Current.AutoApplyDetect && detection.IsSettled)
             await ApplyWithoutReviewAsync(match, applied, read);
         else
+        {
             ShowReview(match, applied, read);
+            _finished.OnNext(DetectOutcome.NeedsReview);
+        }
     }
 
     /// <summary>Open the review of the detection last applied without one, to check or correct it.</summary>
@@ -182,6 +198,7 @@ public class DetectAction
         _canReview.OnNext(true);
         _log.Information("Detect: applied without review, every slot being settled");
         _notifications.ShowSuccess("Read the match off the screen and applied it. Review beside Detect shows what was read.", _appliedToast);
+        _finished.OnNext(DetectOutcome.Applied);
         await KeepCaptureAsync(read.Capture, read.At,
             LabeledCapture.FromApplied(read.Detection, heroes, self, [], reviewed: false, read.Capture.ScreenWidth, read.Capture.ScreenHeight));
     }

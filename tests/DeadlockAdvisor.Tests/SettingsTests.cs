@@ -80,6 +80,7 @@ public class SettingsTests
         Assert.True(settings.CheckForNewerPatch);
         Assert.True(settings.DetectFromAnywhere);
         Assert.False(settings.ComeUpForReview);
+        Assert.True(settings.SoundOnDetect);
         Assert.True(settings.MinimizeToDetect);
         Assert.True(settings.KeepUnreadCaptures);
         Assert.True(settings.RememberCorrections);

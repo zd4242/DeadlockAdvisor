@@ -421,17 +421,52 @@ public sealed class DetectTests : IDisposable
     }
 
     [AvaloniaFact]
-    public async Task ABlankScreenReadsNoHeroesAndCachesNoGrid()
+    public async Task AScreenWithNoScoreboardFindsNothingAndCachesNoGrid()
     {
         CopyTopbarInto(_fixture.Data.AssetsDir);
-        _capture.Next = new(new RgbImage(2560, 316), 2560, 1440);
+        var noise = new byte[2560 * 316 * 3];
+        new Random(1).NextBytes(noise);
+        List<RgbImage> frames = [new RgbImage(2560, 316), new RgbImage(2560, 316, noise)];
+        var outcomes = new List<DetectOutcome>();
+        using var _ = _page.DetectFinished.Subscribe(outcomes.Add);
+
+        foreach (var frame in frames)
+        {
+            _capture.Next = new(frame, 2560, 1440);
+
+            await _page.DetectCommand.Execute();
+
+            var message = Assert.IsType<MessageModalViewModel>(_shown[^1]);
+            Assert.Equal("Nothing found", message.Title);
+            Assert.Contains("lobby", message.Body);
+            Assert.Contains("HDR", message.Body);
+            _fixture.Modals.CloseModal();
+        }
+
+        Assert.DoesNotContain(_shown, modal => modal is DetectReviewViewModel);
+        Assert.Empty(_fixture.Settings.Current.VisionGeometry);
+        Assert.Equal([DetectOutcome.NothingFound, DetectOutcome.NothingFound], outcomes);
+    }
+
+    [AvaloniaFact]
+    public async Task EachWayDetectEndsIsReported()
+    {
+        var outcomes = new List<DetectOutcome>();
+        using var _ = _page.DetectFinished.Subscribe(outcomes.Add);
 
         await _page.DetectCommand.Execute();
+        _fixture.Modals.CloseModal();
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        await _page.DetectCommand.Execute();
+        _fixture.Modals.CloseModal();
+        _capture.Next = Capture();
+        await _page.DetectCommand.Execute();
+        _fixture.Modals.CloseModal();
+        _fixture.Settings.Current.AutoApplyDetect = true;
+        _capture.Next = Capture(Certain);
+        await _page.DetectCommand.Execute();
 
-        var review = Assert.IsType<DetectReviewViewModel>(_shown[^1]);
-        Assert.All(review.Slots, slot => Assert.Null(slot.HeroId));
-        Assert.Null(review.SelfSlot);
-        Assert.Empty(_fixture.Settings.Current.VisionGeometry);
+        Assert.Equal([DetectOutcome.NoArt, DetectOutcome.CaptureFailed, DetectOutcome.NeedsReview, DetectOutcome.Applied], outcomes);
     }
 
     [AvaloniaFact]

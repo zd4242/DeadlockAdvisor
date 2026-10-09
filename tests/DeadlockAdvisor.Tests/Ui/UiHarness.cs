@@ -45,6 +45,7 @@ public sealed class UiHarness : IDisposable
         services.AddSingleton<IScreenCaptureService>(Capture);
         services.AddSingleton<IGlobalHotkeyService>(Hotkey);
         services.AddSingleton<IForegroundService>(Foreground);
+        services.AddSingleton<IAttentionService>(Attention);
         overrides?.Invoke(services);
         _services = services.BuildServiceProvider();
 
@@ -82,6 +83,7 @@ public sealed class UiHarness : IDisposable
     public FakeScreenCapture Capture { get; } = new();
     public FakeGlobalHotkey Hotkey { get; } = new();
     public FakeForeground Foreground { get; } = new();
+    public FakeAttention Attention { get; } = new();
     public IDataService Data { get; }
     public IArtService Art { get; }
     public MainWindowViewModel ViewModel { get; }

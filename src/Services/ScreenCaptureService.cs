@@ -18,7 +18,8 @@ public class ScreenCaptureService : IScreenCaptureService
 
     public const int MinBandHeight = 64;
 
-    private const string GameProcess = "deadlock";
+    // Steam's executable is project8.exe, Valve's codename for the game; "deadlock" is kept in case that changes.
+    private static readonly string[] _gameProcesses = ["project8", "deadlock"];
 
     // Long enough for Windows' minimise animation to finish, so the window isn't caught mid-fade.
     private static readonly TimeSpan _minimiseDelay = TimeSpan.FromMilliseconds(350);
@@ -92,17 +93,52 @@ public class ScreenCaptureService : IScreenCaptureService
         return info.Monitor;
     }
 
+    /// <summary>Whether a process of this name (no extension) is the game.</summary>
+    internal static bool IsGameProcess(string? name) =>
+        name is not null && _gameProcesses.Contains(name, StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// The window to read: the foreground one when it's the game's (the monitor you're playing on), otherwise the
+    /// first running game process's main window, or <see cref="IntPtr.Zero"/> when the game isn't up.
+    /// </summary>
+    internal static IntPtr ChooseGameWindow(IntPtr foreground, string? foregroundProcess, IEnumerable<(string Process, IntPtr Window)> running)
+    {
+        if (foreground != IntPtr.Zero && IsGameProcess(foregroundProcess))
+            return foreground;
+        return running.Where(candidate => IsGameProcess(candidate.Process) && candidate.Window != IntPtr.Zero)
+            .Select(candidate => candidate.Window)
+            .FirstOrDefault();
+    }
+
     private static IntPtr FindGameWindow()
     {
-        var processes = Process.GetProcessesByName(GameProcess);
+        var foreground = Native.GetForegroundWindow();
+        var processes = _gameProcesses.SelectMany(Process.GetProcessesByName).ToList();
         try
         {
-            return processes.Select(MainWindowOf).FirstOrDefault(handle => handle != IntPtr.Zero);
+            return ChooseGameWindow(foreground, ForegroundProcessName(foreground),
+                processes.Select(process => (process.ProcessName, MainWindowOf(process))));
         }
         finally
         {
             foreach (var process in processes)
                 process.Dispose();
+        }
+    }
+
+    private static string? ForegroundProcessName(IntPtr foreground)
+    {
+        if (foreground == IntPtr.Zero || Native.GetWindowThreadProcessId(foreground, out var id) == 0)
+            return null;
+        try
+        {
+            using var process = Process.GetProcessById((int)id);
+            return process.ProcessName;
+        }
+        catch (ArgumentException)
+        {
+            // It exited while we looked.
+            return null;
         }
     }
 
@@ -239,6 +275,12 @@ public class ScreenCaptureService : IScreenCaptureService
             public uint ClrUsed;
             public uint ClrImportant;
         }
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
 
         [DllImport("user32.dll")]
         [return: MarshalAs(UnmanagedType.Bool)]

@@ -162,14 +162,21 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
 `GlobalHotkeyService` (F9 through Win32 `RegisterHotKey`, rebindable, system-wide) or the button runs `DetectAction.RunAsync`:
 `ScreenCaptureService` copies the top 22% of the game window's client area (GDI `BitBlt`, falling back to the primary monitor)
 and may minimise the advisor first; `TemplateBank.Load` reads the reference art in `assets/topbar`; `Detector.Detect` finds
-the grid (cached per screen size in `AppSettings.VisionGeometry`), reads the twelve slots and which is you;
+the grid (cached per screen size in `AppSettings.VisionGeometry`), reads the twelve slots and which is you; a grid that fits
+under `Detector.MinFit` (`Detection.FoundStrip`) ends the run as "Nothing found";
 `RosterContinuity` keeps heroes already applied; `NetWorthReader` reads souls; then the match is applied
 (`VisionApply.ApplyToMatch`) or `DetectReviewViewModel` opens. Applied captures are kept in `captures/`; they are the corpus
 detection is measured on. Rules and numbers: detection_model.md.
 
-**The game's process is `project8.exe`** (Steam: `.../Deadlock/game/bin/win64/project8.exe`). As of this writing
-`ScreenCaptureService` looks for a process named `deadlock`, so it never finds the window and always reads the primary monitor
-(roadmap WP02). When that is fixed, correct this paragraph.
+**The game's process is `project8.exe`** (Steam: `.../Deadlock/game/bin/win64/project8.exe`); `ScreenCaptureService` matches
+that name (and `deadlock`), preferring the foreground window when it is the game's (`ChooseGameWindow`), so the capture
+comes from the monitor the game is on. The log line says "Deadlock window" or "primary monitor (Deadlock's window not found)".
+
+`DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsReview`, `NothingFound`,
+`CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`
+(the system-wide F9) notes `IForegroundService.IsAnotherAppInFront` before capturing, and if the game was in front and
+`AppSettings.SoundOnDetect` is on, calls `IAttentionService` (`AttentionService`: `MessageBeep` and `FlashWindowEx`, no-ops
+off Windows): a `Done` chime for an applied match, a `NeedsLook` chime and a taskbar flash for anything else.
 
 ## 9. Tests
 

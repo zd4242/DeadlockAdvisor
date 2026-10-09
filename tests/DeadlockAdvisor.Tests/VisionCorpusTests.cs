@@ -60,6 +60,16 @@ public class VisionCorpusTests
         Assert.True(problems.Count == 0, string.Join("\n", problems) + $"\n(see {report})");
     }
 
+    /// <summary>A real scoreboard must never be turned away as "nothing found", Street Brawl and dead players included.</summary>
+    [Fact]
+    public void EveryLabelledCaptureHasAStripToFind()
+    {
+        var weakest = VisionEval.Run(Labelled(), Bank).MinBy(outcome => outcome.Detection.Fit)!;
+
+        Assert.True(weakest.Detection.FoundStrip, $"{weakest.Capture.Name} fits at {weakest.Detection.Fit:0.00}, under {Detector.MinFit}");
+        Assert.True(weakest.Detection.Fit >= Detector.MinFit + 0.2, "MinFit sits too close to a real scoreboard's fit to be safe");
+    }
+
     private static IEnumerable<int> Slots(JsonNode? node) => node?.AsArray().Select(slot => (int)slot!) ?? [];
 
     /// <summary>

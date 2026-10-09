@@ -49,6 +49,7 @@ public partial class App : Application
         services.AddSingleton<IScreenCaptureService, ScreenCaptureService>();
         services.AddSingleton<IGlobalHotkeyService, GlobalHotkeyService>();
         services.AddSingleton<IForegroundService, ForegroundService>();
+        services.AddSingleton<IAttentionService, AttentionService>();
         services.AddSingleton<IMatchLookupService, MatchLookupService>();
         services.AddTransient<DetectAction>();
         services.AddTransient<ImportMatchAction>();

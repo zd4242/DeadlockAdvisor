@@ -47,6 +47,9 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
     /// </summary>
     public double Fit => Scores.Count == 0 ? 0 : Layout.TrimmedScore(Scores.Select(row => row.Max()).ToArray());
 
+    /// <summary>Whether the grid fits well enough to be a scoreboard at all (<see cref="Detector.MinFit"/>), not a lobby or a black frame.</summary>
+    public bool FoundStrip => Fit >= Detector.MinFit;
+
     /// <summary>The heroes the scores are for, in the bank's order.</summary>
     public IReadOnlyList<string> Heroes { get; init; } = [];
 
@@ -68,6 +71,13 @@ public static class Detector
     public static readonly double[] FinalScales = [0.95, 1.0, 1.05];
     public const double FinalSpan = 0.04;
     public const int FinalSamples = 5;
+
+    /// <summary>
+    /// The least <see cref="Detection.Fit"/> of a real scoreboard. Right grids fit 0.81 to 0.92 even with four
+    /// players dead; this sits well under the lowest on the labelled corpus and above what a grid fits on a
+    /// frame with no strip in it.
+    /// </summary>
+    public const double MinFit = 0.5;
 
     /// <summary>How much lower the final read may score than the wide one before the refit behind it is distrusted.</summary>
     public const double RefitTolerance = 0.1;

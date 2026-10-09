@@ -9,6 +9,7 @@ using DeadlockAdvisor.Features.HeroItems;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Settings;
 using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Settings.Detection;
@@ -94,6 +95,8 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IModalService _modals;
     private readonly IArtService _art;
     private readonly IAppUpdateService _appUpdates;
+    private readonly IForegroundService _foreground;
+    private readonly IAttentionService _attention;
     private bool _closeConfirmed;
     /// <summary>The pages opened in order, for the mouse's back and forward buttons, with the one showing at <see cref="_historyIndex"/>.</summary>
     private readonly List<int> _history = [];
@@ -113,8 +116,12 @@ public class MainWindowViewModel : ViewModelBase
         IArtService art,
         IGlobalHotkeyService hotkey,
         IAppUpdateService appUpdates,
-        IConnectivityService connectivity)
+        IConnectivityService connectivity,
+        IForegroundService foreground,
+        IAttentionService attention)
     {
+        _foreground = foreground;
+        _attention = attention;
         NotificationOverlay = notificationOverlay;
         Match = match;
         HeroItems = heroItems;
@@ -503,7 +510,23 @@ public class MainWindowViewModel : ViewModelBase
                 .Take(1)
                 .Subscribe(_ => RequestViewAction(BringForwardAction))
             : null;
+
+        // Asked before the capture, which can move focus. Pressed with this window in front, you're looking at it.
+        using var sound = _settings.Current.SoundOnDetect && _foreground.IsAnotherAppInFront
+            ? Match.DetectFinished.Take(1).Subscribe(Chime)
+            : null;
         await Match.DetectCommand.Execute();
+    }
+
+    private void Chime(DetectOutcome outcome)
+    {
+        if (outcome == DetectOutcome.Applied)
+        {
+            _attention.Chime(AttentionKind.Done);
+            return;
+        }
+        _attention.Chime(AttentionKind.NeedsLook);
+        _attention.FlashWindow();
     }
 
     private void ReloadArt()

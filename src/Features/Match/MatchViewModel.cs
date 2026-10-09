@@ -127,6 +127,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             Results.ResetSearch();
         }).DisposeWith(Disposables);
         ArtWanted = detect.ArtWanted;
+        DetectFinished = detect.Finished;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
         PickHeroesCommand = ReactiveCommand.Create(Board.OpenPicker);
@@ -260,6 +261,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>Detect found no art to match against and was asked to download it.</summary>
     public IObservable<Unit> ArtWanted { get; }
+
+    /// <summary>How each Detect run ended.</summary>
+    public IObservable<DetectOutcome> DetectFinished { get; }
     public ReactiveCommand<Unit, Unit> ImportCommand { get; }
 
     /// <summary>Open the hero picker, from the empty match's quick start.</summary>

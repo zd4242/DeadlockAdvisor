@@ -348,10 +348,18 @@ game, and reads the scoreboard strip: all twelve heroes, and which one is
 you (off the coloured backplate behind your slot).
 
 F9 works from inside the game as well, without switching windows first:
-the advisor holds it system-wide (no admin needed) and captures. It only
-comes up if there's something for you to check. While it's running,
-other apps don't get F9; turn that off under **Settings → Detection** and
-F9 only works while the advisor has focus.
+the advisor holds it system-wide (no admin needed) and captures the game's
+own window, on whichever monitor it is. By default it stays behind the game
+and tells you how it went with a short sound: one tone when the match was
+read and applied, another (and a flashing taskbar button) when it needs a
+look or found no scoreboard to read. **Settings → Detection** can turn the
+sound off, or make the advisor come up for a review instead. While it's
+running, other apps don't get F9; turn that off under **Settings →
+Detection** and F9 only works while the advisor has focus.
+
+If there's no scoreboard on screen (a lobby, a loading screen, a hidden
+HUD, or a game captured as a black screen by exclusive fullscreen or HDR),
+Detect says "Nothing found" instead of opening an empty review.
 
 **When every hero is certain, the match is applied straight away**, and
 **Review** beside Detect shows what was read. Otherwise the review opens

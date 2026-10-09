@@ -92,3 +92,14 @@ public sealed class FakeLoggingService : ILoggingService
     public void Error(string message) { }
     public void Error(string message, Exception exception) { }
 }
+
+/// <summary>Records the calls for attention instead of beeping at whoever runs the tests.</summary>
+public sealed class FakeAttention : IAttentionService
+{
+    public List<AttentionKind> Chimes { get; } = [];
+    public int Flashes { get; private set; }
+
+    public void Chime(AttentionKind kind) => Chimes.Add(kind);
+
+    public void FlashWindow() => Flashes++;
+}
