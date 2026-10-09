@@ -29,8 +29,8 @@ public enum AppUpdateState
 }
 
 /// <summary>
-/// The status bar's word that a newer version of the app is out: checked once a startup against GitHub's
-/// newest release, unless Settings → Data turns it off. On Windows, Update downloads it in the background,
+/// The status bar's word that a newer version of the app is out: checked at startup, and again every few hours while the app
+/// stays open, against GitHub's newest release, unless Settings → Data turns it off. On Windows, Update downloads it in the background,
 /// to be installed in place of this exe as the app closes, and Restart now closes it to do that and starts
 /// the new version. Elsewhere, or where the exe's folder can't be written to, it opens the release page instead.
 /// Dismissing it skips that version. A build made outside the release workflow has no version to compare,

@@ -35,6 +35,7 @@ public class DataMenuViewModel : ViewModelBase
 {
     public const string ArtChangedAction = "ArtChanged";
     public const string WelcomeChipTitle = "Downloads";
+    public const string ModelChipTitle = "Formulas";
 
     // Showing new art re-reads every image on screen, so it's done this often at most while art arrives.
     private static readonly TimeSpan _artShowGap = TimeSpan.FromSeconds(5);
@@ -204,13 +205,52 @@ public class DataMenuViewModel : ViewModelBase
     private void StartDataChecks()
     {
         Launch(CheckMatchDataAsync);
+        Launch(CheckArtAsync);
+    }
+
+    /// <summary>Whether the app can make its routine checks now: there's a connection, no dialog is up, and no job holds the data.</summary>
+    public bool CanCheckInBackground => !_connectivity.IsOffline && !_modals.IsModalOpen && !IsBusy;
+
+    /// <summary>
+    /// The scheduler's tick (<see cref="UpdateScheduler"/>): <see cref="CheckAllAsync"/> in the background, unless this
+    /// isn't the moment (<see cref="CanCheckInBackground"/>), in which case the next tick tries again.
+    /// </summary>
+    /// <returns>Whether the checks were started, for the caller to make its own beside them.</returns>
+    public bool OnScheduledCheck()
+    {
+        if (!CanCheckInBackground)
+            return false;
+        Launch(() => CheckAllAsync(manual: false));
+        return true;
+    }
+
+    /// <summary>
+    /// Every check the app makes on startup: the formulas, the match data against the patch list, and the art. Left to
+    /// itself it never opens a dialog over someone, and a first-run offer waits for its own chip.
+    /// </summary>
+    /// <param name="manual">Asked for: the formula check says how it went and asks again about files kept over this version.</param>
+    internal Task CheckAllAsync(bool manual)
+    {
+        var checks = new List<Task> { manual ? CheckModelAsync(manual: true) : CheckModelWhileOpenAsync() };
+        if (!NeedsWelcome())
+        {
+            checks.Add(CheckMatchDataAsync());
+            checks.Add(CheckArtAsync());
+        }
+        return Task.WhenAll(checks);
+    }
+
+    /// <summary>Quietly download the art that's missing or changed, if the last check is old, a hero lacks art, or portraits were cut by an older version.</summary>
+    private Task CheckArtAsync()
+    {
         var hasTopbarArt = Directory.Exists(TopbarDir)
                            && Directory.EnumerateFiles(TopbarDir).Any(file => ImageFile.Suffixes.Contains(Path.GetExtension(file).ToLowerInvariant()));
         var due = _settings.Current.ArtCheckedAt is not { } checkedAt
                   || _clock.Now - checkedAt >= ArtCheckInterval
                   || _clock.Now - checkedAt >= MissingArtRetryInterval && HeroesMissingArt();
-        if (hasTopbarArt && (due || !TopbarDerivation.IsCurrent(TopbarDir)))
-            Launch(() => DownloadArtAsync(force: false, quiet: true));
+        return hasTopbarArt && (due || !TopbarDerivation.IsCurrent(TopbarDir))
+            ? DownloadArtAsync(force: false, quiet: true)
+            : Task.CompletedTask;
     }
 
     /// <summary>
@@ -571,6 +611,41 @@ public class DataMenuViewModel : ViewModelBase
             return;
         }
         Checked(s => s.ModelCheckedAt = _clock.Now);
+        await TakeModelAsync(published, manual);
+    }
+
+    /// <summary>
+    /// The formula check of a session that has been open a while. Like the startup's, but nothing changes under someone
+    /// editing the formulas, and no dialog opens over a match: with the model editors shown, or files of the user's
+    /// own to ask about, a chip offers the update and a click makes it.
+    /// </summary>
+    private async Task CheckModelWhileOpenAsync()
+    {
+        if (!_settings.Current.AutoUpdateModel)
+        {
+            if (_settings.Current.CheckForNewHeroes)
+                await OfferNewHeroesAsync();
+            return;
+        }
+        if ((await _models.PublishedAsync()).Manifest is not { } published)
+            return;
+        Checked(s => s.ModelCheckedAt = _clock.Now);
+        var update = ModelUpdatePlan.For(published, _data.DataDir, askAgain: false);
+        if (!_settings.Current.ShowModelEditors && update.Edited.Count == 0)
+            await TakeModelAsync(published, manual: false);
+        else if (update.HasWork)
+            OfferModelUpdate();
+    }
+
+    private void OfferModelUpdate()
+    {
+        var job = new BackgroundJobViewModel(ModelChipTitle, _clock);
+        job.Succeed("update available", () => Launch(() => CheckModelAsync(manual: true)), "Click to apply the newer formulas");
+        Show(job);
+    }
+
+    private async Task TakeModelAsync(ModelManifest published, bool manual)
+    {
         if (!_data.FlushSaves())
             return;
         var dataDir = _data.DataDir;

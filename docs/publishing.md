@@ -4,10 +4,10 @@ Four things reach the people using the app, each its own way:
 
 | What | How installs get it | What you do |
 |---|---|---|
-| **Hero ratings and item formulas** (the model) | At their next startup once CI passes, without a new download | `dotnet run --project tools/PublishModel -- --note "What changed" --push` |
+| **Hero ratings and item formulas** (the model) | At their next startup, or within about six hours if the app is open, once CI passes, without a new download | `dotnet run --project tools/PublishModel -- --note "What changed" --push` |
 | **New heroes** | As part of the model: a workflow adds them, unrated, within hours of the game listing them | Nothing, until you rate them (an issue reminds you) |
-| **Match data** (item win rates) | At startup, when it's newer than theirs | Nothing: a workflow refreshes it daily |
-| **The app itself** | A new download from Releases | Actions → Release → Run workflow, choose `patch` / `minor` / `major` |
+| **Match data** (item win rates) | At startup and about every six hours while the app is open, when it's newer than theirs | Nothing: a workflow refreshes it daily |
+| **The app itself** | A new download from Releases (found at startup and about every six hours while the app is open) | Actions → Release → Run workflow, choose `patch` / `minor` / `major` |
 
 Formula and match data changes never need an app release. Release the app for code changes:
 features, fixes, new screens, or a change to what the data files hold.
@@ -136,7 +136,8 @@ players should read more; the app's "What's new" link opens that page. It keeps 
 download link) is always the newest. It takes about 10 minutes. Pushing a tag yourself
 (`git tag v1.2.0 && git push origin v1.2.0`) does the same with the version you chose.
 
-**How installs get it** (`AppUpdateService`, `AppUpdateViewModel`): at startup an install asks GitHub's
+**How installs get it** (`AppUpdateService`, `AppUpdateViewModel`): at startup, and again about every six
+hours while it stays open (`UpdateScheduler`), an install asks GitHub's
 API for the newest release (the `match-data` and `model` pre-releases don't count) and, if it's newer,
 shows "Version x.y.z is out · Update · What's new" in the status bar. **Update** downloads the release's
 `DeadlockAdvisor.exe` beside the running one as `DeadlockAdvisor.update.exe`, and checks it against the

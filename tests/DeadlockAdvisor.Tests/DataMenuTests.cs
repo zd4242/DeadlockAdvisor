@@ -1139,4 +1139,228 @@ public sealed class DataMenuTests : IDisposable
         Assert.Empty(_toasts);
         Assert.Null(_fixture.Settings.Current.ModelCheckedAt);
     }
+
+    // -- checks while the app stays open ----------------------------------------------
+
+    /// <summary>The scheduler as the window wires it, on the fixture's clock and ticking exactly on the interval.</summary>
+    private UpdateScheduler TickingEverySixHours(DataMenuViewModel menu)
+    {
+        var scheduler = new UpdateScheduler(_fixture.Clock, () => 0.5, () => menu.OnScheduledCheck());
+        scheduler.Start();
+        return scheduler;
+    }
+
+    private void NextTick() => _fixture.Clock.AdvanceBy(UpdateScheduler.Interval);
+
+    [Fact]
+    public void ATickChecksTheMatchDataLikeARestartWould()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+        using var scheduler = TickingEverySixHours(menu);
+        Assert.DoesNotContain(_api.Asked, url => url.Contains("/item-stats?"));
+
+        NextTick();
+
+        Assert.Contains(_api.Asked, url => url.Contains("/item-stats?"));
+        Assert.Empty(_shown);
+    }
+
+    [Fact]
+    public void ATickFlagsAPatchThatCameOutWhileTheAppWasOpenAndDownloadsItQuietly()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        using var menu = Menu(matchStats: new HeldMatchStats());
+        _fixture.Data.Store.PutMatchSegment(new MatchSegment(_patches[1], _patches[1].Start, _patches[0].Start - 1, true, _patches[0].Start,
+            SliceCounts.Empty, [], []));
+        using var scheduler = TickingEverySixHours(menu);
+        Assert.Null(menu.NewerPatch);
+
+        NextTick();
+
+        Assert.Equal("09-29", menu.NewerPatch!.Label);
+        Assert.True(Assert.Single(menu.Jobs).IsRunning);
+        Assert.Empty(_shown);
+        menu.CancelJobs();
+    }
+
+    [Fact]
+    public void ATickLeavesFreshMatchDataAlone()
+    {
+        var now = new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddHours(-2), now);
+        using var scheduler = TickingEverySixHours(menu);
+
+        NextTick();
+
+        Assert.Empty(menu.Jobs);
+        Assert.DoesNotContain(_api.Asked, url => url.Contains("/item-stats?"));
+    }
+
+    [Fact]
+    public void AnOfflineTickDoesNothingAndTheNextOneAfterReconnectingWorks()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+        using var scheduler = TickingEverySixHours(menu);
+        _connectivity.GoOffline();
+
+        NextTick();
+
+        Assert.Empty(_api.Asked);
+
+        _connectivity.Reconnect();
+        NextTick();
+
+        Assert.Contains(_api.Asked, url => url.Contains("/item-stats?"));
+    }
+
+    [Fact]
+    public void ATickWhileADialogIsOpenDoesNothingAndTheNextOneAfterItClosesWorks()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+        using var scheduler = TickingEverySixHours(menu);
+        _fixture.Modals.ShowMessage("Something", "To read first.");
+
+        NextTick();
+
+        Assert.Empty(_api.Asked);
+
+        _fixture.Modals.CloseModal();
+        NextTick();
+
+        Assert.Contains(_api.Asked, url => url.Contains("/item-stats?"));
+    }
+
+    [Fact]
+    public async Task ATickWhileAJobHoldsTheDataDoesNothing()
+    {
+        var now = new DateTimeOffset(2026, 10, 5, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddDays(-4), now);
+        using var scheduler = TickingEverySixHours(menu);
+
+        var running = menu.ModelHealthCommand.Execute().ToTask();
+        Assert.True(menu.IsBusy);
+        NextTick();
+        await running;
+
+        Assert.Empty(_api.Asked);
+        _fixture.Modals.CloseModal();
+        NextTick();
+        Assert.Contains(_api.Asked, url => url.Contains("/item-stats?"));
+    }
+
+    [Fact]
+    public void TicksNeverStartASecondDownload()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        var stats = new HeldMatchStats();
+        using var menu = Menu(matchStats: stats);
+        _fixture.Data.Store.PutMatchSegment(new MatchSegment(_patches[1], _patches[1].Start, _patches[0].Start - 1, true, _patches[0].Start,
+            SliceCounts.Empty, [], []));
+        using var scheduler = TickingEverySixHours(menu);
+
+        NextTick();
+        NextTick();
+
+        Assert.True(Assert.Single(menu.Jobs).IsRunning);
+        menu.CancelJobs();
+    }
+
+    [Fact]
+    public void ATickWithoutAnyArtOrMatchDataLeavesTheFirstRunOfferToItsOwnChip()
+    {
+        using var menu = Menu();
+        using var scheduler = TickingEverySixHours(menu);
+
+        NextTick();
+
+        Assert.Empty(_shown);
+        Assert.Empty(menu.Jobs);
+        Assert.DoesNotContain(MatchStatsService.Patches, _api.Asked);
+    }
+
+    [Fact]
+    public void ATickInstallsANewerModelQuietlyWhenTheEditorsAreHidden()
+    {
+        _fixture.Settings.Current.ShowModelEditors = false;
+        var weights = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "1.3");
+        PublishModel((DataStore.TraitWeightsFile, weights));
+        using var scheduler = TickingEverySixHours(_menu);
+
+        NextTick();
+
+        Assert.Equal(weights, DataBytes(DataStore.TraitWeightsFile));
+        Assert.Empty(_shown);
+        Assert.Empty(_menu.Jobs);
+        Assert.Equal(1, _replaced);
+    }
+
+    [Fact]
+    public async Task WithTheEditorsShownATickOffersTheModelAndWritesNothingUntilAskedTo()
+    {
+        _fixture.Settings.Current.ShowModelEditors = true;
+        var before = DataBytes(DataStore.TraitWeightsFile);
+        var weights = ModelUpdateTests.FirstRowEnding(before, "1.3");
+        PublishModel((DataStore.TraitWeightsFile, weights));
+        using var scheduler = TickingEverySixHours(_menu);
+
+        NextTick();
+
+        var offered = Assert.Single(_menu.Jobs);
+        Assert.Equal((DataMenuViewModel.ModelChipTitle, "update available"), (offered.Title, offered.StatusText));
+        Assert.Equal(before, DataBytes(DataStore.TraitWeightsFile));
+        Assert.Equal("2026-10-02", ModelManifest.Installed(_fixture.Data.DataDir)!.Published);
+        Assert.Equal(0, _replaced);
+
+        // The next tick offers it again rather than piling up chips.
+        NextTick();
+        var chip = Assert.Single(_menu.Jobs);
+
+        await chip.OpenCommand.Execute();
+
+        Assert.Equal(weights, DataBytes(DataStore.TraitWeightsFile));
+        Assert.Empty(_menu.Jobs);
+    }
+
+    [Fact]
+    public void ATickOffersFilesTheOwnerChangedAsAChipRatherThanADialog()
+    {
+        _fixture.Settings.Current.ShowModelEditors = false;
+        PublishModel((DataStore.TraitWeightsFile, ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "1.3")));
+        var mine = ModelUpdateTests.FirstRowEnding(DataBytes(DataStore.TraitWeightsFile), "2");
+        File.WriteAllBytes(Path.Combine(_fixture.Data.DataDir, DataStore.TraitWeightsFile), mine);
+        using var scheduler = TickingEverySixHours(_menu);
+
+        NextTick();
+
+        Assert.Empty(_shown);
+        Assert.Equal(DataMenuViewModel.ModelChipTitle, Assert.Single(_menu.Jobs).Title);
+        Assert.Equal(mine, DataBytes(DataStore.TraitWeightsFile));
+    }
+
+    [Fact]
+    public void ATickWithNothingNewInTheModelSaysNothing()
+    {
+        PublishModel();
+        using var scheduler = TickingEverySixHours(_menu);
+
+        NextTick();
+
+        Assert.Empty(_shown);
+        Assert.Empty(_menu.Jobs);
+        Assert.Empty(_toasts);
+        Assert.NotNull(_fixture.Settings.Current.ModelCheckedAt);
+    }
+
+    [Fact]
+    public async Task CheckingEverythingOnDemandSaysHowTheFormulaCheckWent()
+    {
+        PublishModel();
+
+        await _menu.CheckAllAsync(manual: true);
+
+        Assert.Contains("up to date: the version published 2026-10-09", LastMessage().Body);
+    }
 }

@@ -24,7 +24,8 @@ Settings → Data shows which version you have. When a new one is out, the
 status bar says so: **Update** downloads it in the background, and it's
 installed in place of the old exe when you close the app; **Restart now**
 does that straight away. The formulas and match data keep themselves up to date without a
-new version.
+new version. The app looks for all three at startup and again about every six hours while it
+stays open, so a session left running for days still hears about a new patch or version.
 Only one copy runs at a time: starting it again brings the open window to the front.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
@@ -32,8 +33,9 @@ of the data. One dialog offers the hero and item art and the match data,
 both downloading in the background: the art from `deadlock-api.com`, the
 match data ready-made from this repo's [shared download](#shared-match-data).
 With the match data's "keep it up to date" on (the default, and in
-Settings → Data), later startups refresh it quietly when a newer patch is
-out or it's a day and a half old. Settings live beside it in `settings.json`.
+Settings → Data), later startups, and the checks every six hours while the app
+stays open, refresh it quietly when a newer patch is out or it's a day and a half
+old. Settings live beside it in `settings.json`.
 
 Offline, it all still works from what's saved: the starter data recommends
 items, and until the art has been downloaded heroes show as their initials
@@ -290,7 +292,9 @@ Data Folder…** is not repaired: it is refused, and left as it was.
 The hero ratings, item formulas and the game data they're tuned against
 (everything in `src/Assets/SeedData` but the match lift) are the **model**.
 A new install starts from the copy built into the app, and later startups
-take the newest one published to this repo's rolling
+(and the checks about every six hours while it stays open: with **Edit the
+scoring model** on, or files of yours to ask about, a status bar chip offers the update
+instead of changing files under you) take the newest one published to this repo's rolling
 [`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model)
 pre-release, which CI publishes from `main` once the tests pass (Settings →
 Data turns that off; **Data → Check for Formula Updates** checks on
@@ -490,8 +494,8 @@ nothing else:
   [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)
   applies.
 
-Settings → Data turns off the startup checks for match data, formulas and
-new versions.
+Settings → Data turns off the startup checks, and the ones every six hours,
+for match data, formulas and new versions.
 
 ## License
 

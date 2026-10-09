@@ -1,5 +1,6 @@
 using System.IO;
 using System.Reactive;
+using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Avalonia.Input;
@@ -98,6 +99,7 @@ public class MainWindowViewModel : ViewModelBase
     private readonly IAppUpdateService _appUpdates;
     private readonly IForegroundService _foreground;
     private readonly IAttentionService _attention;
+    private readonly UpdateScheduler _updateScheduler;
     private bool _closeConfirmed;
     private bool _discardEditsConfirmed;
     /// <summary>The pages opened in order, for the mouse's back and forward buttons, with the one showing at <see cref="_historyIndex"/>.</summary>
@@ -213,6 +215,9 @@ public class MainWindowViewModel : ViewModelBase
                 _ = AppUpdate.CheckAsync();
             })
             .DisposeWith(Disposables);
+        // The timer runs on a pool thread; each pass is handed to the UI thread.
+        _updateScheduler = new UpdateScheduler(Scheduler.Default, Random.Shared.NextDouble,
+            () => RxApp.MainThreadScheduler.Schedule(CheckForUpdates)).DisposeWith(Disposables);
         AppUpdate.RestartRequested.Subscribe(_ => RequestViewAction(CloseAction)).DisposeWith(Disposables);
         dataMenu.ViewInteraction.Subscribe(RequestViewAction).DisposeWith(Disposables);
         match.FormulaRequested.Merge(heroItems.FormulaRequested).Subscribe(ShowFormula).DisposeWith(Disposables);
@@ -362,11 +367,19 @@ public class MainWindowViewModel : ViewModelBase
     /// <summary>The rebindable keys (F6–F9 unless Settings → Shortcuts moves them), for the window to bind.</summary>
     [Reactive] public IReadOnlyList<ShortcutBinding> ShortcutBindings { get; private set; } = [];
 
-    /// <summary>The window is up: time for the background checks and the first-run art offer.</summary>
+    /// <summary>The window is up: time for the background checks and the first-run art offer, and then for the ones every few hours.</summary>
     public void OnOpened()
     {
         DataMenu.OnStartup();
         _ = AppUpdate.OnStartupAsync();
+        _updateScheduler.Start();
+    }
+
+    /// <summary>The scheduler's tick: the checks of a startup, for a session that has stayed open.</summary>
+    private void CheckForUpdates()
+    {
+        if (DataMenu.OnScheduledCheck())
+            _ = AppUpdate.CheckAsync();
     }
 
     /// <summary>

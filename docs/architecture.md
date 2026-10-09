@@ -91,8 +91,8 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
    first run, load the tables through `DataRecovery`, build the weight matrix), point the art service at the assets folder, create `MainWindow` with
    a `MainWindowViewModel`, attach the hotkey service. A startup failure writes `startup-error.log` and rethrows.
 4. `MainWindow.OnOpened` calls `MainWindowViewModel.OnOpened`: `DataMenuViewModel.OnStartup()` (formula check, first-run
-   offer, match-data and art checks) and `AppUpdateViewModel.OnStartupAsync()`. A reconnect repeats the startup checks
-   (`OnReconnected`). `MainWindowViewModel` builds the page view models through DI and a few children with `new`
+   offer, match-data and art checks) and `AppUpdateViewModel.OnStartupAsync()`, then starts the `UpdateScheduler` (section 7).
+   A reconnect repeats the startup checks (`OnReconnected`). `MainWindowViewModel` builds the page view models through DI and a few children with `new`
    (`DataStatusViewModel`, `AppUpdateViewModel`, `ConnectionViewModel`, `SettingsViewModel` and its pages).
 
 Where the user's files live: `%AppData%\DeadlockAdvisor` (or the folder in `DEADLOCK_ADVISOR_HOME`) holds `settings.json` and
@@ -168,17 +168,26 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
 
 | What | Service (view model) | Source | Checked | Automation |
 |---|---|---|---|---|
-| The app | `AppUpdateService` (`AppUpdateViewModel`) | GitHub `releases/latest` | startup, reconnect | check automatic; **Update** click downloads; installed when the app closes |
-| Formulas (the model) | `ModelUpdateService`, `ModelManifest`, `ModelUpdatePlan` (`DataMenuViewModel.CheckModelAsync`) | the `model` release, published by CI from `main` | startup, reconnect | automatic; files the user changed are asked about |
-| Match data | `MatchSnapshotService` / `SnapshotPlan` (shared snapshot) then `MatchStatsService` / `MatchFetchPlan` (deadlock-api.com) | the `match-data` release, built daily by `tools/MatchSnapshot` | startup, reconnect | automatic when a patch is new or the current one is 36 h old (3 days via the API) |
-| Art | `ArtDownloadService`, `ArtManifest`, `TopbarDerivation` (`DataMenuViewModel.DownloadArtAsync`); `ArtService` serves it to the UI | deadlock-api.com asset API and CDN | startup, weekly (daily while a hero lacks art) | automatic after the first-run consent |
+| The app | `AppUpdateService` (`AppUpdateViewModel`) | GitHub `releases/latest` | startup, reconnect, every 6 h | check automatic; **Update** click downloads; installed when the app closes |
+| Formulas (the model) | `ModelUpdateService`, `ModelManifest`, `ModelUpdatePlan` (`DataMenuViewModel.CheckModelAsync`) | the `model` release, published by CI from `main` | startup, reconnect, every 6 h | automatic; files the user changed are asked about (while open: offered as a chip) |
+| Match data | `MatchSnapshotService` / `SnapshotPlan` (shared snapshot) then `MatchStatsService` / `MatchFetchPlan` (deadlock-api.com) | the `match-data` release, built daily by `tools/MatchSnapshot` | startup, reconnect, every 6 h | automatic when a patch is new or the current one is 36 h old (3 days via the API) |
+| Art | `ArtDownloadService`, `ArtManifest`, `TopbarDerivation` (`DataMenuViewModel.DownloadArtAsync`); `ArtService` serves it to the UI | deadlock-api.com asset API and CDN | startup, every 6 h (it downloads weekly, daily while a hero lacks art) | automatic after the first-run consent |
 | Game data | `GameApiService`, `GameSync` | deadlock-api.com | **manual**, editors only: Data → Sync from Game API | none; users get it when the model is published |
 
 - `DeadlockApi` is the one `HttpClient` for deadlock-api.com and GitHub: timeouts, ETag conditional requests, brotli/gzip,
   `BytesReceived`, the `UserAgent` every request carries (`deadlock-advisor/<AppVersion.Release as x.y.z, or dev> (+repo URL)`;
   art's adds "(asset downloader)"), and `Reachability`, which `ConnectivityService` watches for the offline chip (it probes every 30 s while
-  offline). `DataMenuViewModel.OnStartup`/`OnReconnected` run the checks; nothing re-checks while the app stays open
-  (roadmap WP10).
+  offline). `DataMenuViewModel.OnStartup`/`OnReconnected` run the checks.
+- **Checks while the app stays open:** `UpdateScheduler` (`MainWindowViewModel` creates it, `OnOpened` starts it, it is disposed
+  with the window) ticks every 6 hours ±10%, each tick scheduled from the last. A tick runs on the UI thread through
+  `MainWindowViewModel.CheckForUpdates`: `DataMenuViewModel.OnScheduledCheck` skips (and the next tick tries again) while
+  offline, a modal is open or `IsBusy` (`CanCheckInBackground`); otherwise it launches `CheckAllAsync` (the formula check, the
+  match-data check and the art check, the last two as at startup, and none of them while the first-run offer is still
+  pending), and `AppUpdateViewModel.CheckAsync` runs beside it. The downloads' own guards (`IsDownloadingMatchData`,
+  `IsDownloadingArt`) stop a second one. The formula check of a tick (`CheckModelWhileOpenAsync`) installs quietly only
+  when the model editors are hidden and none of the user's own files are in the way; otherwise it offers a "Formulas"
+  chip whose click runs `CheckModelAsync(manual: true)`, so nothing changes under someone editing and no dialog opens
+  over a match. `CheckAllAsync(manual: true)` is the same set with the formula check's own messages.
 - Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes
   or no shop items, and `MatchStatsService` throws it for an empty "every match" baseline over a window longer than 6 hours.
   Both reach the user as a failure ("Nothing was changed"), and in CI as a failed job, so nothing is published. Analytics

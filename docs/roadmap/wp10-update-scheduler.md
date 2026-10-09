@@ -1,6 +1,6 @@
 # WP10 Re-check for updates while the app is open
 
-Status: todo
+Status: done
 Effort: M · Risk: medium (several flows share it) · Depends on: none (do after WP07, which edits the same view model) · Wave: C
 Touches: **`src/Features/MainWindow/DataMenuViewModel.cs`**, **`src/Features/MainWindow/MainWindowViewModel.cs`**, new `src/Features/MainWindow/UpdateScheduler.cs`, `tests/DeadlockAdvisor.Tests/DataMenuTests.cs`
 Docs to update: `README.md` (Install: how updates are found; Settings → Data wording), `docs/architecture.md` (section 7), `docs/publishing.md` ("How installs get it")
