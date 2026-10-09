@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http;
 using System.Text.Json.Nodes;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Fakes;
@@ -215,6 +216,65 @@ public class MatchStatsServiceTests
         Assert.Equal(["09-29", "09-16"], store.MatchSegments.Select(segment => segment.Patch.Label));
         Assert.False(File.Exists(Path.Combine(data.Path, DataStore.MatchCountsDir, old.FileName)));
         Assert.False(File.Exists(data.File(DataStore.LegacyMatchCountsFile)));
+    }
+
+    [Fact]
+    public async Task ADownloadAppliedAwayFromTheCallingThreadWritesTheSameFilesAndCountsAsOneApplied()
+    {
+        using var data = CopyData();
+        var store = DataStore.Load(data.Path);
+        var service = new SyntheticItemStatsApi(store).Service();
+        var plan = await service.PlanAsync(store, includeRanks: true);
+        var pump = new PumpContext();
+        FetchResult? result = null;
+        var applying = 0;
+        var most = 0;
+
+        var download = pump.Start(() => service.FetchAsync(store, plan, null, async segment =>
+        {
+            most = Math.Max(most, ++applying);
+            result = await service.ApplyAsync(store, segment, plan.Keep);
+            applying--;
+        }, CancellationToken.None));
+        pump.Finish(download);
+
+        // Every apply handed its work to another thread, which posted the rest back to the caller's.
+        Assert.NotEmpty(pump.PostedBy);
+        Assert.DoesNotContain(Environment.CurrentManagedThreadId, pump.PostedBy);
+        Assert.Equal(1, most);
+        var expected = Json("match_fetch/result.json");
+        Assert.Equal(expected["lines"]!.AsArray().Select(Text), result!.Lines());
+        AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.csv"), data.File(DataStore.MatchLiftFile));
+        AssertEx.BytesEqual(PathOf("match_fetch", "match_item_lift.meta.json"), data.File(DataStore.MatchMetaFile));
+        Assert.Equal(store.MatchSegments.Select(segment => segment.ToJsonBytes()),
+            DataStore.Load(data.Path).MatchSegments.Select(segment => segment.ToJsonBytes()));
+    }
+
+    [Fact]
+    public async Task ARankRangePickedWhileTheLiftsAreWorkedOutIsTheOneTheyEndUpFor()
+    {
+        using var data = CopyData();
+        await SyntheticItemStatsApi.DownloadAsync(DataStore.Load(data.Path));
+        var store = DataStore.Load(data.Path);
+        var service = new MatchStatsService(new FakeDeadlockApi());
+        var mystic = new RankRange(5, 11);
+        var expected = MatchStatsMath.Analyse(store.MatchSegments, mystic, store.Items.Values);
+        var pump = new PumpContext();
+
+        // The first step has put the counts away; the filter changes before the lifts are taken.
+        var applying = pump.Start(() => service.ApplyAsync(store, store.MatchSegments[0], store.MatchSegments.Select(segment => segment.Patch)));
+        pump.RunNext();
+        service.Reanalyse(store, mystic);
+        pump.Finish(applying);
+
+        Assert.Equal(mystic, (await applying).Rank);
+        Assert.Equal(mystic, MatchStatsMath.RankOf(store.MatchMeta));
+        var saved = DataStore.Load(data.Path);
+        Assert.Equal(mystic, MatchStatsMath.RankOf(saved.MatchMeta));
+        // The file keeps three decimals.
+        static int Leaning(IEnumerable<MatchLift> lifts) => lifts.Count(lift => Math.Round(lift.RankShift, 3) != 0);
+        Assert.NotEqual(0, Leaning(saved.MatchLift.Values));
+        Assert.Equal(Leaning(expected.Lifts.Values), Leaning(saved.MatchLift.Values));
     }
 
     [Fact]

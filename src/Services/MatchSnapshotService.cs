@@ -92,12 +92,12 @@ public interface IMatchSnapshotService
     SnapshotPlan? Plan(DataStore store, MatchSnapshot snapshot);
 
     /// <summary>
-    /// Fetch each patch file in turn, checking it, and hand its segment to <paramref name="finished"/> before
-    /// the next, so a download stopped part-way keeps what it finished. Throws <see cref="OperationCanceledException"/>,
+    /// Fetch each patch file in turn, checking it (off the calling thread), and hand its segment to
+    /// <paramref name="finished"/>, waiting for it, before the next, so a download stopped part-way keeps what it finished. Throws <see cref="OperationCanceledException"/>,
     /// an HTTP / timeout error, <see cref="System.IO.InvalidDataException"/> for a damaged file, or whatever
     /// <paramref name="finished"/> throws.
     /// </summary>
-    Task FetchAsync(SnapshotPlan plan, IProgress<FetchProgress>? progress, Action<MatchSegment> finished, CancellationToken cancellationToken);
+    Task FetchAsync(SnapshotPlan plan, IProgress<FetchProgress>? progress, Func<MatchSegment, Task> finished, CancellationToken cancellationToken);
 }
 
 public static class MatchSnapshotServiceExtensions
@@ -106,6 +106,15 @@ public static class MatchSnapshotServiceExtensions
     public static async Task<SnapshotPlan?> PlanAsync(this IMatchSnapshotService service, DataStore store,
         CancellationToken cancellationToken = default) =>
         await service.SnapshotAsync(cancellationToken) is { } snapshot ? service.Plan(store, snapshot) : null;
+
+    /// <summary><see cref="IMatchSnapshotService.FetchAsync"/> for a callback that doesn't wait on anything.</summary>
+    public static Task FetchAsync(this IMatchSnapshotService service, SnapshotPlan plan, IProgress<FetchProgress>? progress,
+        Action<MatchSegment> finished, CancellationToken cancellationToken) =>
+        service.FetchAsync(plan, progress, segment =>
+        {
+            finished(segment);
+            return Task.CompletedTask;
+        }, cancellationToken);
 }
 
 /// <summary>The shared match data on GitHub (<see cref="MatchSnapshot"/>): the manifest, then the patch files it names.</summary>
@@ -142,7 +151,7 @@ public sealed class MatchSnapshotService : IMatchSnapshotService
 
     public SnapshotPlan? Plan(DataStore store, MatchSnapshot snapshot) => SnapshotPlan.For(snapshot, store.MatchSegments, Now);
 
-    public async Task FetchAsync(SnapshotPlan plan, IProgress<FetchProgress>? progress, Action<MatchSegment> finished,
+    public async Task FetchAsync(SnapshotPlan plan, IProgress<FetchProgress>? progress, Func<MatchSegment, Task> finished,
         CancellationToken cancellationToken)
     {
         for (var i = 0; i < plan.Steps.Count; i++)
@@ -151,7 +160,7 @@ public sealed class MatchSnapshotService : IMatchSnapshotService
             progress?.Report(new FetchProgress(i, plan.Steps.Count, $"Patch {entry.Patch.Label}"));
             var gzipped = await _api.GetBytesAsync(MatchSnapshot.UrlOf(entry), DeadlockApi.UserAgent, cancellationToken);
             cancellationToken.ThrowIfCancellationRequested();
-            finished(MatchSnapshot.Unpack(entry, gzipped));
+            await finished(await Task.Run(() => MatchSnapshot.Unpack(entry, gzipped), cancellationToken));
         }
         progress?.Report(new FetchProgress(plan.Steps.Count, plan.Steps.Count, "Done"));
     }

@@ -82,6 +82,45 @@ public sealed class MatchSnapshotTests : IDisposable
     }
 
     [Fact]
+    public async Task EachFileIsUnpackedAwayFromTheCallingThreadAndAppliedBeforeTheNextOneIsAsked()
+    {
+        using var data = CopyData();
+        var store = DataStore.Load(data.Path);
+        await SyntheticItemStatsApi.DownloadAsync(store);
+        var packed = store.MatchSegments.Select(MatchSnapshot.Pack).ToList();
+        var api = new FakeDeadlockApi();
+        foreach (var (entry, gzipped) in packed)
+            api.Bytes[MatchSnapshot.UrlOf(entry)] = gzipped;
+        var plan = SnapshotPlan.For(new MatchSnapshot(_now, packed.Select(file => file.Entry).ToList()), [], _now)!;
+        var service = new MatchSnapshotService(api, () => DateTimeOffset.FromUnixTimeSeconds(_now));
+        var pump = new PumpContext();
+        var gate = new TaskCompletionSource();
+        var thread = Environment.CurrentManagedThreadId;
+        var applied = new List<MatchSegment>();
+        var calledOn = new List<int>();
+
+        var download = pump.Start(() => service.FetchAsync(plan, null, async segment =>
+        {
+            calledOn.Add(Environment.CurrentManagedThreadId);
+            if (applied.Count == 0)
+                await gate.Task;
+            applied.Add(segment);
+        }, CancellationToken.None));
+        Assert.False(download.IsCompleted);
+        pump.RunNext();
+
+        // The first is being applied: the second isn't asked for yet.
+        Assert.Equal([MatchSnapshot.UrlOf(packed[0].Entry)], api.Asked);
+        Assert.NotEqual(thread, pump.PostedBy[0]);
+        gate.SetResult();
+        pump.Finish(download);
+
+        Assert.Equal(packed.Select(file => MatchSnapshot.UrlOf(file.Entry)), api.Asked);
+        Assert.Equal(store.MatchSegments.Select(segment => segment.ToJsonBytes()), applied.Select(segment => segment.ToJsonBytes()));
+        Assert.All(calledOn, id => Assert.Equal(thread, id));
+    }
+
+    [Fact]
     public async Task APlanTakesWhatTheSnapshotHasNewerAndNeverDropsANewerPatch()
     {
         using var data = CopyData();

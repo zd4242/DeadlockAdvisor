@@ -532,7 +532,7 @@ public class DataMenuViewModel : ViewModelBase
             var started = _clock.Now;
             var done = await RunInBackgroundAsync(job, async () =>
                 {
-                    void Finished(MatchSegment segment) => applied = ApplySegment(segment, plan);
+                    async Task Finished(MatchSegment segment) => applied = await ApplySegmentAsync(segment, plan);
                     await (plan switch
                     {
                         SnapshotPlan shared => _snapshots.FetchAsync(shared, job, Finished, job.Token),
@@ -577,9 +577,9 @@ public class DataMenuViewModel : ViewModelBase
         }
     }
 
-    private FetchResult ApplySegment(MatchSegment segment, MatchDownloadPlan plan)
+    private async Task<FetchResult> ApplySegmentAsync(MatchSegment segment, MatchDownloadPlan plan)
     {
-        var result = _matchStats.Apply(_data.Store, segment, plan.Keep);
+        var result = await _matchStats.ApplyAsync(_data.Store, segment, plan.Keep);
         NewerPatch = null;
         _data.NotifyReplaced();
         return result;

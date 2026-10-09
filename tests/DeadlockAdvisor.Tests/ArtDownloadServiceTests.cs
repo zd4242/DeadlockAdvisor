@@ -180,6 +180,26 @@ public sealed class ArtDownloadServiceTests : IDisposable
     }
 
     [Fact]
+    public void TheTopBarPortraitsAreCutAwayFromTheCallingThread()
+    {
+        var pump = new PumpContext();
+        var before = -1;
+        var progress = new SyncProgress(step =>
+        {
+            if (step.Text.StartsWith("Cutting"))
+                before = pump.PostedBy.Count;
+        });
+        var thread = Environment.CurrentManagedThreadId;
+
+        var download = pump.Start(() => _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, progress, CancellationToken.None));
+        pump.Finish(download);
+
+        Assert.True(before >= 0);
+        Assert.NotEmpty(pump.PostedBy.Skip(before));
+        Assert.DoesNotContain(thread, pump.PostedBy.Skip(before));
+    }
+
+    [Fact]
     public async Task DownloadingAgainOnlyAsksWhetherAnythingChanged()
     {
         await _service.DownloadAsync(TestStore.Make(), _assets.Path, force: false, null, CancellationToken.None);

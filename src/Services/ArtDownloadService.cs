@@ -213,7 +213,8 @@ public sealed class ArtDownloadService : IArtDownloadService
             manifest.Save();
         }
         progress?.Report(new FetchProgress(total, total, "Cutting top-bar portraits from the cards"));
-        var derivation = TopbarDerivation.Run(topbarDir, heroes.Keys, force);
+        var heroIds = heroes.Keys.ToList();
+        var derivation = await Task.Run(() => TopbarDerivation.Run(topbarDir, heroIds, force));
         progress?.Report(new FetchProgress(total, total, "done"));
         return new ArtDownloadReport(reports, derivation);
     }

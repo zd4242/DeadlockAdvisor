@@ -32,7 +32,7 @@ public sealed class HeldMatchStats : IMatchStatsService
         return includeRanks ? Plan : Plan with { Phases = [Plan.Phases[0]] };
     }
 
-    public Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+    public Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Func<MatchSegment, Task> finished,
         CancellationToken cancellationToken)
     {
         Progress = progress;
@@ -40,6 +40,7 @@ public sealed class HeldMatchStats : IMatchStatsService
     }
 
     public FetchResult Apply(DataStore store, MatchSegment segment, IEnumerable<Patch> keep) => throw new NotSupportedException();
+    public Task<FetchResult> ApplyAsync(DataStore store, MatchSegment segment, IEnumerable<Patch> keep) => throw new NotSupportedException();
     public FetchResult Reanalyse(DataStore store, RankRange? range) => throw new NotSupportedException();
     public Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default) => Task.FromResult<Patch?>(null);
 }

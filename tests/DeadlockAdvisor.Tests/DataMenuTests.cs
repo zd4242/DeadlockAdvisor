@@ -756,6 +756,14 @@ public sealed class DataMenuTests : IDisposable
         return snapshot;
     }
 
+    /// <summary>A download started in the background has its heavy steps on other threads, so what it did shows up a moment later.</summary>
+    private static async Task MatchDataDownloadEndsAsync(DataMenuViewModel menu)
+    {
+        using var patience = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        while (menu.IsDownloadingMatchData)
+            await Task.Delay(5, patience.Token);
+    }
+
     private DataMenuViewModel SharedMenu(DateTimeOffset now)
     {
         WithoutModelChecks();
@@ -784,6 +792,7 @@ public sealed class DataMenuTests : IDisposable
         Assert.StartsWith("a few seconds · ", dialog.SharedDetail);
         Assert.Contains("last fetched from deadlock-api.com 1h ago", dialog.Intro);
         await dialog.DownloadCommand.Execute();
+        await MatchDataDownloadEndsAsync(menu);
 
         var store = _fixture.Data.Store;
         Assert.Equal(2, store.MatchSegments.Count);
@@ -806,6 +815,7 @@ public sealed class DataMenuTests : IDisposable
         using var menu = SharedMenu(now);
 
         menu.OnStartup();
+        await MatchDataDownloadEndsAsync(menu);
 
         // The patch before is complete, so only the current one is fetched.
         Assert.Equal([MatchSnapshot.ManifestUrl, MatchSnapshot.UrlOf(snapshot.Patches[0])], _api.Asked);

@@ -41,11 +41,11 @@ public interface IMatchStatsService
 
     /// <summary>
     /// Fetch <paramref name="plan"/> phase by phase, handing each finished phase's segment to
-    /// <paramref name="finished"/> before the next starts, so a download stopped part-way keeps what it
-    /// finished. Only reads the store. Throws <see cref="OperationCanceledException"/>, an HTTP / timeout
+    /// <paramref name="finished"/> and waiting for it before the next starts, so a download stopped part-way
+    /// keeps what it finished. Only reads the store. Throws <see cref="OperationCanceledException"/>, an HTTP / timeout
     /// error, or whatever <paramref name="finished"/> throws.
     /// </summary>
-    Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+    Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Func<MatchSegment, Task> finished,
         CancellationToken cancellationToken);
 
     /// <summary>
@@ -53,6 +53,13 @@ public interface IMatchStatsService
     /// <paramref name="keep"/>, work the lifts out again for the rank range the data was set to, and write it all out.
     /// </summary>
     FetchResult Apply(DataStore store, MatchSegment segment, IEnumerable<Patch> keep);
+
+    /// <summary>
+    /// <see cref="Apply"/> with the heavy part (the maths, the formatting, the writing of the counts) off the calling
+    /// thread, which keeps the store: only it changes the store, so call this from the thread that owns it. Once started
+    /// it finishes, so a segment is never half applied.
+    /// </summary>
+    Task<FetchResult> ApplyAsync(DataStore store, MatchSegment segment, IEnumerable<Patch> keep);
 
     /// <summary>
     /// Work the lifts out again from the stored counts for another rank range (null: every match), and
@@ -70,6 +77,15 @@ public static class MatchStatsServiceExtensions
     public static async Task<MatchFetchPlan> PlanAsync(this IMatchStatsService service, DataStore store, bool includeRanks,
         CancellationToken cancellationToken = default) =>
         service.Plan(store, await service.PatchesAsync(cancellationToken), includeRanks);
+
+    /// <summary><see cref="IMatchStatsService.FetchAsync"/> for a callback that doesn't wait on anything.</summary>
+    public static Task FetchAsync(this IMatchStatsService service, DataStore store, MatchFetchPlan plan,
+        IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished, CancellationToken cancellationToken) =>
+        service.FetchAsync(store, plan, progress, segment =>
+        {
+            finished(segment);
+            return Task.CompletedTask;
+        }, cancellationToken);
 }
 
 /// <summary>
@@ -133,7 +149,7 @@ public sealed class MatchStatsService : IMatchStatsService
     public MatchFetchPlan Plan(DataStore store, IReadOnlyList<Patch> patches, bool includeRanks) =>
         MatchFetchPlan.For(store.MatchSegments, patches, Now, includeRanks, Heroes(store).Count);
 
-    public async Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Action<MatchSegment> finished,
+    public async Task FetchAsync(DataStore store, MatchFetchPlan plan, IProgress<MatchFetchProgress>? progress, Func<MatchSegment, Task> finished,
         CancellationToken cancellationToken)
     {
         var heroes = Heroes(store);
@@ -165,7 +181,7 @@ public sealed class MatchStatsService : IMatchStatsService
                 segment = basis with { Ranks = ranks, ByRank = byRank };
             }
             fetched[phase.Patch.Start] = segment;
-            finished(segment);
+            await finished(segment);
         }
     }
 
@@ -347,16 +363,49 @@ public sealed class MatchStatsService : IMatchStatsService
         return Reanalyse(store, MatchStatsMath.RankOf(store.MatchMeta));
     }
 
-    public FetchResult Reanalyse(DataStore store, RankRange? range)
+    public async Task<FetchResult> ApplyAsync(DataStore store, MatchSegment segment, IEnumerable<Patch> keep)
+    {
+        store.PutMatchSegment(segment);
+        await Task.Run(() => store.SaveMatchSegment(segment));
+        store.PruneMatchSegments(keep.Select(patch => patch.Start).ToHashSet());
+
+        // The rank filter can change while the lifts are worked out, and they would then be for the old range.
+        RankRange? range;
+        Reanalysis worked;
+        do
+        {
+            range = MatchStatsMath.RankOf(store.MatchMeta);
+            worked = await Task.Run(Reanalysing(store, range));
+        }
+        while (range != MatchStatsMath.RankOf(store.MatchMeta));
+        return Take(store, worked);
+    }
+
+    public FetchResult Reanalyse(DataStore store, RankRange? range) => Take(store, Reanalysing(store, range)());
+
+    /// <summary>The lifts for the counts and items as they are now, as a job that touches nothing else of the store.</summary>
+    private static Func<Reanalysis> Reanalysing(DataStore store, RankRange? range)
     {
         if (store.MatchSegments.Count == 0)
             throw new InvalidOperationException("There are no downloaded match counts to work the lifts out from.");
-        var result = MatchStatsMath.Analyse(store.MatchSegments, range, store.Items.Values);
-        store.MatchLift = new OrderedDictionary<MatchLiftKey, MatchLift>(result.Lifts);
-        store.MatchMeta = result.Meta();
-        store.SaveMatchLift();
-        return result;
+        var (segments, items, itemIds) = (store.MatchSegments, store.Items.Values.ToList(), store.Items.Keys.ToList());
+        return () =>
+        {
+            var result = MatchStatsMath.Analyse(segments, range, items);
+            var meta = result.Meta();
+            return new Reanalysis(result, meta, DataStore.FormatMatchLift(result.Lifts.Values, meta, itemIds));
+        };
     }
+
+    private static FetchResult Take(DataStore store, Reanalysis worked)
+    {
+        store.MatchLift = new OrderedDictionary<MatchLiftKey, MatchLift>(worked.Result.Lifts);
+        store.MatchMeta = worked.Meta;
+        store.WriteMatchLiftFiles(worked.Files);
+        return worked.Result;
+    }
+
+    private sealed record Reanalysis(FetchResult Result, JsonObject Meta, MatchLiftFiles Files);
 
     public async Task<Patch?> NewerPatchAsync(JsonObject meta, CancellationToken cancellationToken = default)
     {

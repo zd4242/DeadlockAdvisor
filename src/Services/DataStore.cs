@@ -22,6 +22,9 @@ public sealed record Coverage(
 /// <param name="ItemCount">How many current items carry the stat.</param>
 public sealed record StatCatalogEntry(string Label, string Unit, int ItemCount);
 
+/// <summary>match_item_lift.csv and its meta file, ready to write.</summary>
+public sealed record MatchLiftFiles(byte[] Csv, byte[] Meta);
+
 /// <summary>
 /// The CSV tables under data/, held in memory and written back when they're edited. No UI here,
 /// so the data layer and the scoring maths can be tested on their own.
@@ -895,15 +898,18 @@ public sealed class DataStore
     }
 
     /// <summary>
-    /// Worked out from the match counts, never edited by hand, so no backup: the counts rebuild it. The
-    /// CSV goes first: a meta file describing rows that aren't there would be worse than the other way round.
+    /// Worked out from the match counts, never edited by hand, so no backup: the counts rebuild it.
     /// </summary>
-    public void SaveMatchLift()
+    public void SaveMatchLift() => WriteMatchLiftFiles(FormatMatchLift(MatchLift.Values, MatchMeta, Items.Keys));
+
+    /// <summary>The two lift files as bytes. Reads nothing from a store, so it can run away from the one in use.</summary>
+    public static MatchLiftFiles FormatMatchLift(IEnumerable<MatchLift> lifts, JsonObject meta, IEnumerable<string> itemIds)
     {
+        var all = lifts.ToList();
         // Only lifts leaning toward a rank range have a shift, so every match's keep the file's original columns.
-        var leaning = MatchLift.Values.Any(lift => lift.RankShift != 0);
-        var itemOrder = IndexOf(Items.Keys);
-        var rows = MatchLift.Values
+        var leaning = all.Any(lift => lift.RankShift != 0);
+        var itemOrder = IndexOf(itemIds);
+        var rows = all
             .OrderBy(lift => lift.Relation, StringComparer.Ordinal)
             .ThenBy(lift => lift.HeroId, StringComparer.Ordinal)
             .ThenBy(lift => itemOrder.GetValueOrDefault(lift.ItemId, _missingOrder))
@@ -914,8 +920,14 @@ public sealed class DataStore
                 .. leaning ? [NumberFormat.Fixed(lift.RankShift, 3)] : Array.Empty<string>(),
             ]);
         IReadOnlyList<string> header = ["item_id", "hero_id", "relation", "matches", "lift", "se", "lift_shrunk", .. leaning ? ["rank_shift"] : Array.Empty<string>()];
-        AtomicFile.Write(PathOf(MatchLiftFile), CsvWriter.ToBytes(header, rows));
-        AtomicFile.Write(PathOf(MatchMetaFile), DataJson.ToFileBytes(MatchMeta, ensureAscii: true));
+        return new MatchLiftFiles(CsvWriter.ToBytes(header, rows), DataJson.ToFileBytes(meta, ensureAscii: true));
+    }
+
+    /// <summary>The CSV goes first: a meta file describing rows that aren't there would be worse than the other way round.</summary>
+    public void WriteMatchLiftFiles(MatchLiftFiles files)
+    {
+        AtomicFile.Write(PathOf(MatchLiftFile), files.Csv);
+        AtomicFile.Write(PathOf(MatchMetaFile), files.Meta);
     }
 
     /// <summary>Downloaded, and big: no backup, the next download fetches it again.</summary>

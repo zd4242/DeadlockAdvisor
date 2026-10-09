@@ -1,6 +1,6 @@
 # WP11 Heavy download work off the UI thread
 
-Status: todo
+Status: done
 Effort: M · Risk: medium (threading around a non-thread-safe store; goldens must stay byte-identical) · Depends on: WP08 · Wave: C
 Touches: `src/Services/MatchSnapshotService.cs`, `src/Services/MatchStatsService.cs` (`Apply`, `Reanalyse`), `src/Services/DataStore.cs` (the lift/segment save methods), **`src/Features/MainWindow/DataMenuViewModel.cs`** (`DownloadMatchDataAsync`, `ApplySegment`), `src/Services/ArtDownloadService.cs` (the top-bar cut), `src/Services/Contracts/` (the `FetchAsync` callbacks), tests that fake these services
 Docs to update: `docs/architecture.md` (section 5)
