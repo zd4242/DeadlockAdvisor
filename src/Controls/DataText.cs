@@ -17,6 +17,9 @@ public class DataText : AmountLine
 
     private static readonly IBrush _dataLabel = new SolidColorBrush(Palette.WithAlpha(Palette.Data, 170));
 
+    private static readonly IBrush _against = new SolidColorBrush(Palette.RelationColor(Relation.Against));
+    private static readonly IBrush _self = new SolidColorBrush(Palette.DataSelf);
+
     public OrderedDictionary<string, double>? Data
     {
         get => GetValue(DataProperty);
@@ -38,7 +41,7 @@ public class DataText : AmountLine
             if (Data is null || !Data.TryGetValue(relation.Key(), out var value))
                 continue;
             Separate();
-            Word(ExplainText.DataWord(relation.Key()), new SolidColorBrush(Palette.RelationColor(relation)));
+            Word(ExplainText.DataWord(relation.Key()), relation == Relation.Against ? _against : _self);
             Amount(value);
         }
     }

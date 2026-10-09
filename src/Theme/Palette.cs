@@ -34,6 +34,9 @@ public static class Palette
     /// <summary>Real-match data, where it's drawn beside the formula's gold.</summary>
     public static readonly Color Data = Color.Parse("#5bbfc7");
 
+    /// <summary>"You" in a match-data line, so it isn't read as the formula's gold.</summary>
+    public static readonly Color DataSelf = Color.Parse("#8fa4f0");
+
     public static readonly Color Tier1 = Color.Parse("#7d8590");
     public static readonly Color Tier2 = Color.Parse("#4a9dd6");
     public static readonly Color Tier3 = Color.Parse("#a86fd6");
