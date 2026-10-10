@@ -11,7 +11,7 @@ how the parts work. Read this first, then the doc for the area you're touching:
 | [publishing.md](publishing.md) | releases, the published model, shared match data, workflows |
 | [roadmap/README.md](roadmap/README.md) | planned improvements, as work packages ("implement WP08") |
 
-Last checked against the code: 2026-10-09. Names below are stable; line numbers aren't given on purpose. If you add a
+Last checked against the code: 2026-10-10. Names below are stable; line numbers aren't given on purpose. If you add a
 service, page, setting, shortcut or update channel, update the matching section here in the same commit.
 
 ## What the app is
@@ -41,6 +41,22 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 - **Views** are `.axaml` with thin code-behind. Custom painted controls live in `src/Controls` and read colours from
   `src/Theme/Palette.cs`; the XAML brushes and styles are in the root `Themes/` (`DarkTheme.axaml` exposes the palette,
   `Styles.axaml` holds the shared styles).
+- **Accessibility** (screen readers and contrast): a button with only a picture or a symbol in it (×, +, a glyph) gets
+  `AutomationProperties.Name` in its XAML, because without one it is read out as its content's type name; a button with
+  words in it needs nothing. A control that paints itself overrides `OnCreateAutomationPeer` and returns a `PaintedPeer`
+  (`src/Controls`) with its role, a name such as "Haze, enemy, net worth 25k" and, where it explains itself, a help
+  text; a picture whose meaning is printed beside it (`ScoreBar`, `ArtImage`) is marked decorative. A `SettingRow` names
+  its lone control (a toggle, a drop-down) after its title and description. Text colours come from `Palette` and must read
+  at 4.5:1 (WCAG AA) on the surfaces they sit on: `TextFaint` is the dimmest, 4.6:1 on `Surface2`, and
+  `PaletteTests` holds the pairs. `AccessibilityTests` fails for any visible button of ours with no name.
+- **Layout** is designed for a window of at least 900 × 600 at 100% zoom, and `MainWindow` scales its minimum size with
+  the zoom (up to the screen), so every zoom shows a page the same room: at 150% the minimum is 1350 × 900, and the
+  window waits to grow until the pointer leaves the status bar's zoom buttons. Shared widths (the Hero Items table's
+  columns) are `x:Double` resources used by header and rows alike. A region that must lay out differently when narrow
+  takes `behaviors:Responsive.NarrowBelow="<width>"`, which adds the class `narrow` for styles to key on (the Results
+  rows, the Why-this-item lines); a Grid's `SharedSizeGroup` keeps the widest width it has had, so a view that moves
+  cells out of a shared column resets its scope when `Responsive.IsNarrow` changes (`ExplainView`). A type selector
+  such as `controls|DataText` doesn't match a control that overrides `StyleKeyOverride`: give it a class instead.
 - **Services** have interfaces in `src/Services/Contracts` and are registered in `App.RegisterServices` (tests reuse it).
   A class that depends on time takes an `IScheduler` or a clock through an `internal` constructor that the public one
   delegates to, so tests drive time with a `TestScheduler` (`DataMenuViewModel`, `DataService`, `ConnectivityService`).
@@ -65,7 +81,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
 | `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, image ops and PNG codec |
 | `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
-| `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls, behaviours (middle-click autoscroll, popups following the zoom), converters, palette and fonts, enums |
+| `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls and their automation peers, behaviours (middle-click autoscroll, popups following the zoom, the `narrow` class), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
 | `Themes/` | XAML resource dictionaries (brushes, shared styles) |
 | `tools/MatchSnapshot`, `tools/PublishModel` | the CI programs (publishing.md); both reference the app project |
@@ -170,7 +186,8 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   whichever is open). `MainWindow` shows each in a borderless `ModalWindow` laid over the main window and kept in step with its
   bounds; if another app is in front (`IForegroundService`) it waits until you switch back. `Confirm`, `ShowMessage` and a
   progress dialog are helpers in `Features/Shared/Modals`. Content is found by `ViewLocator`.
-- **Zoom** is one `LayoutTransformControl` around the main window's content (`MainWindowViewModel.UiScale`). A dialog is a
+- **Zoom** is one `LayoutTransformControl` around the main window's content (`MainWindowViewModel.UiScale`); the window's
+  `MinWidth`/`MinHeight` follow it (section 1, "Layout"). A dialog is a
   window of its own, so `MainWindow.OpenModalWindow` copies `UiScale` into `ModalViewModel.UiScale` for as long as it is
   open and `Modal.axaml` wraps its card in a `LayoutTransformControl` (a panel between the two, since the control sets its
   child's `RenderTransform`, which the card's entrance animation uses). Popups (tooltips, flyouts, menus, drop-down lists)
@@ -276,6 +293,10 @@ off Windows): a `Done` chime for an applied match, a `NeedsLook` chime and a tas
   `App.RegisterServices` over fakes and a throwaway copy of the golden data; `Show()`, `Settle()`, `Screenshot(name)` writes a PNG
   to `mockups/`. `DEADLOCK_ASSETS=<an assets folder>` renders with real art. **To look at a page, run the UI test that renders it
   and read the PNG; don't launch the app.**
+  `AccessibilityTests` walks every page, Settings category and the Updates flyout for unnamed buttons and checks the painted
+  peers; `LayoutTests` renders every page at the smallest window at 100% and 150% (`mockups/layout_<page>_<zoom>.png`) and
+  fails for anything painted past the edge of the window or its scroll viewer. It can't see one control drawn over
+  another, so look at the PNGs after a layout change.
 - `Fakes/` (`FakeDeadlockApi` and the other fake services in `FakeServices.cs`, `FakeConnectivity`, `FakeScreenCapture`,
   `FakeGlobalHotkey`, `FakeForeground`, `HeldDownloads`, `SyntheticItemStatsApi`), `Support/` (`DataFixture`, `TestStore`,
   `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and

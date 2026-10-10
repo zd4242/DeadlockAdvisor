@@ -5,6 +5,7 @@
              xmlns:art="using:DeadlockAdvisor.Controls.Art"
              xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
              xmlns:theme="using:DeadlockAdvisor.Theme"
+             xmlns:behaviors="using:DeadlockAdvisor.Behaviors"
              x:Class="DeadlockAdvisor.Features.Match.Explain.ExplainView"
              x:DataType="explain:ExplainViewModel">
 
@@ -17,6 +18,27 @@
             <Setter Property="Height" Value="20"/>
             <Setter Property="Margin" Value="0,0,6,0"/>
             <Setter Property="VerticalAlignment" Value="Center"/>
+        </Style>
+        <!-- A trait's arithmetic sits in a column between its name and its share, and beneath the name when the panel is too narrow to leave the name room. -->
+        <Style Selector="Grid.traitLine > TextBlock.arithmetic">
+            <Setter Property="Grid.Column" Value="1"/>
+            <Setter Property="Margin" Value="10,0,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Right"/>
+        </Style>
+        <Style Selector="Grid.traitLine > Border.source">
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.ColumnSpan" Value="2"/>
+        </Style>
+        <Style Selector="DockPanel.narrow Grid.traitLine > TextBlock.arithmetic">
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.Column" Value="0"/>
+            <Setter Property="Margin" Value="12,2,0,0"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style Selector="DockPanel.narrow Grid.traitLine > Border.source">
+            <Setter Property="Grid.Row" Value="2"/>
+            <Setter Property="Grid.ColumnSpan" Value="1"/>
         </Style>
         <!-- Without the math (Settings → General), each line says what it is and how much it counts, and the rest shows on hover. -->
         <Style Selector="DockPanel.simple :is(Control).math">
@@ -141,7 +163,10 @@
         </DataTemplate>
     </UserControl.DataTemplates>
 
-    <DockPanel Classes.simple="{Binding !ShowsMath}" Classes.editors="{Binding ShowsEditors}">
+    <DockPanel x:Name="Root"
+               behaviors:Responsive.NarrowBelow="440"
+               Classes.simple="{Binding !ShowsMath}"
+               Classes.editors="{Binding ShowsEditors}">
         <TextBlock DockPanel.Dock="Top" Classes="section" Text="WHY THIS ITEM?"/>
 
         <Grid DockPanel.Dock="Top"
@@ -182,7 +207,7 @@
         <Border DockPanel.Dock="Top" Classes="hline" Margin="0,8,0,6"/>
 
         <ScrollViewer HorizontalScrollBarVisibility="Disabled">
-            <StackPanel Spacing="4" Margin="0,0,4,0" Grid.IsSharedSizeScope="True">
+            <StackPanel x:Name="Columns" Spacing="4" Margin="0,0,4,0" Grid.IsSharedSizeScope="True">
                 <TextBlock Classes="hint"
                            TextWrapping="Wrap"
                            IsVisible="{Binding !HasItem}"
@@ -276,7 +301,7 @@
                                             <DataTemplate x:DataType="explain:TraitLine">
                                                 <Grid Classes="traitLine"
                                                       Classes.hasCell="{Binding Cell, Converter={x:Static ObjectConverters.IsNotNull}}"
-                                                      RowDefinitions="Auto,Auto"
+                                                      RowDefinitions="Auto,Auto,Auto"
                                                       Background="Transparent">
                                                     <Grid.ColumnDefinitions>
                                                         <ColumnDefinition Width="*"/>
@@ -284,11 +309,7 @@
                                                         <ColumnDefinition Width="Auto" SharedSizeGroup="Share"/>
                                                     </Grid.ColumnDefinitions>
                                                     <TextBlock TextWrapping="Wrap" Text="{Binding TraitName}"/>
-                                                    <TextBlock Grid.Column="1"
-                                                               Classes="faintText math"
-                                                               Margin="10,0,0,0"
-                                                               HorizontalAlignment="Right"
-                                                               Text="{Binding Arithmetic}"/>
+                                                    <TextBlock Classes="faintText math arithmetic" Text="{Binding Arithmetic}"/>
                                                     <controls:SignedAmount Grid.Column="2"
                                                                            Classes.math="{Binding IsSole}"
                                                                            Margin="10,0,0,0"
@@ -297,7 +318,7 @@
                                                                            Text="{Binding Share.Text}"
                                                                            ToolTip.Tip="{Binding Share.Tip}"
                                                                            Color="{x:Static theme:Palette.Text}"/>
-                                                    <Border Grid.Row="1" Grid.ColumnSpan="2" Classes="math">
+                                                    <Border Classes="math source">
                                                         <controls:RichText Classes="faintText"
                                                                    Margin="12,2,0,0"
                                                                    FontSize="12"

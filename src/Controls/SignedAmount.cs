@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Media;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Theme;
@@ -98,6 +99,14 @@ public class SignedAmount : Control
             || change.Property == FontSizeProperty || change.Property == IsBoldProperty)
             _text = null;
     }
+
+    // The triangle says which way it moved; a reader needs it said.
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Text, () =>
+        {
+            var size = Text ?? Format.Num(Math.Abs(Value));
+            return Value > 0 ? $"up {size}" : Value < 0 ? $"down {size}" : size;
+        });
 
     protected override Size MeasureOverride(Size availableSize) =>
         new(Math.Round(Triangle + _gap + Formatted.WidthIncludingTrailingWhitespace) + 1, Formatted.Height);

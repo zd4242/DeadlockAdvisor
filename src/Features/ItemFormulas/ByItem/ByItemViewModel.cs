@@ -107,6 +107,9 @@ public class ByItemViewModel : ViewModelBase
     [Reactive] public Item? CurrentItem { get; private set; }
     [Reactive] public string DetailTitle { get; private set; } = "Select an item";
     [Reactive] public string DetailSub { get; private set; } = "";
+
+    /// <summary>The item's in-game card beside its rules. The view puts it away when the rules would be squeezed.</summary>
+    [Reactive] public bool ShowCard { get; set; } = true;
     public ResettableCollection<RuleCardViewModel> Rules { get; } = [];
     [Reactive] public string? RulesHint { get; private set; }
     public IReadOnlyList<DerivedRuleEntry> DerivedRules

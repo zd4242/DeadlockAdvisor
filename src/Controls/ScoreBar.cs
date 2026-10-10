@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Media;
 using DeadlockAdvisor.Theme;
 
@@ -34,6 +35,10 @@ public class ScoreBar : Control
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
+
+    // The score's number is printed beside the bar.
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Image, () => null, decorative: true);
 
     public override void Render(DrawingContext context)
     {

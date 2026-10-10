@@ -120,6 +120,7 @@
                                             VerticalAlignment="Center"
                                             Content="×"
                                             Command="{Binding RemoveCommand}"
+                                            AutomationProperties.Name="Delete this stat rule"
                                             ToolTip.Tip="Delete this stat rule"/>
                                 </StackPanel>
                             </DataTemplate>
@@ -159,6 +160,7 @@
                 ClipToBounds="True">
             <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Disabled">
                 <byTrait:CoefficientGrid x:Name="Grid"
+                                         AutomationProperties.Name="Item coefficients for this trait"
                                          VerticalAlignment="Top"
                                          Rows="{Binding Rows}"
                                          CurrentRow="{Binding CurrentRow}"

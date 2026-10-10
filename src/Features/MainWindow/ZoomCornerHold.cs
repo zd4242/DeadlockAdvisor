@@ -37,6 +37,12 @@ internal sealed class ZoomCornerHold
         corner.PointerExited += (_, _) => Leave();
     }
 
+    /// <summary>Whether the pointer is on the corner, where nothing may move it.</summary>
+    public bool IsHovered => _hovered;
+
+    /// <summary>The pointer has left the corner.</summary>
+    public event Action? Released;
+
     /// <summary>The window's zoom is now <paramref name="zoom"/>. With the pointer elsewhere the corner follows at once.</summary>
     public void ZoomChanged(double zoom)
     {
@@ -59,6 +65,7 @@ internal sealed class ZoomCornerHold
         _hovered = false;
         if (_drawn != _zoom)
             Ease();
+        Released?.Invoke();
     }
 
     private void Ease()

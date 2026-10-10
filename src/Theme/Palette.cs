@@ -19,7 +19,8 @@ public static class Palette
     public static readonly Color BorderStrong = Color.Parse("#4a4a5a");
     public static readonly Color Text = Color.Parse("#eceae6");
     public static readonly Color TextDim = Color.Parse("#a2a0a9");
-    public static readonly Color TextFaint = Color.Parse("#6d6b77");
+    // 4.6:1 on Surface2 and 5.4:1 on Bg, the least WCAG AA asks of small text, while still a step down from TextDim.
+    public static readonly Color TextFaint = Color.Parse("#8b8995");
     public static readonly Color Accent = Color.Parse("#e0a745");
     public static readonly Color AccentDim = Color.Parse("#a87c31");
     public static readonly Color Ally = Color.Parse("#45b585");

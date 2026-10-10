@@ -5,6 +5,7 @@
              xmlns:art="using:DeadlockAdvisor.Controls.Art"
              xmlns:card="using:DeadlockAdvisor.Features.Shared.ItemCard"
              xmlns:theme="using:DeadlockAdvisor.Theme"
+             xmlns:behaviors="using:DeadlockAdvisor.Behaviors"
              x:Class="DeadlockAdvisor.Features.Match.Results.ResultsView"
              x:DataType="results:ResultsViewModel">
 
@@ -22,6 +23,24 @@
         <!-- An item a search found that the filters leave out of the list. -->
         <Style Selector="Border.result.hidden">
             <Setter Property="Opacity" Value="0.6"/>
+        </Style>
+        <!-- Beside the name and its badges while the list has room for them; below them, as a line of its own, when it doesn't. -->
+        <Style Selector="Border.result StackPanel.data">
+            <Setter Property="Grid.Column" Value="5"/>
+            <Setter Property="Margin" Value="8,0,10,0"/>
+        </Style>
+        <Style Selector="ItemsControl.narrow Border.result StackPanel.data">
+            <Setter Property="Grid.Row" Value="1"/>
+            <Setter Property="Grid.Column" Value="0"/>
+            <Setter Property="Grid.ColumnSpan" Value="8"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Margin" Value="0,3,0,0"/>
+        </Style>
+        <Style Selector="ItemsControl.narrow Border.result Border.vline">
+            <Setter Property="Width" Value="0"/>
+        </Style>
+        <Style Selector="ItemsControl.narrow Border.result TextBlock.name">
+            <Setter Property="MaxWidth" Value="170"/>
         </Style>
         <!-- A template, so every row gets a menu of its own. The formula only while the editors are shown. -->
         <Style Selector="Border.result">
@@ -51,6 +70,7 @@
 
         <ScrollViewer HorizontalScrollBarVisibility="Disabled" IsVisible="{Binding !IsEmpty}">
             <ItemsControl x:Name="List"
+                          behaviors:Responsive.NarrowBelow="560"
                           ItemsSource="{Binding Entries}"
                           Margin="0,0,4,0">
                 <ItemsControl.ItemsPanel>
@@ -75,9 +95,10 @@
                                               VerticalAlignment="Center"
                                               card:ItemCardHover.ItemId="{Binding ItemId}"/>
                                 <StackPanel Grid.Column="1" Margin="8,0,0,0" Spacing="5" VerticalAlignment="Center">
-                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto">
+                                    <Grid ColumnDefinitions="Auto,Auto,Auto,Auto,*,Auto,Auto,Auto" RowDefinitions="Auto,Auto">
                                         <StackPanel Orientation="Horizontal" Spacing="8">
-                                            <TextBlock Text="{Binding Name}"
+                                            <TextBlock Classes="name"
+                                                       Text="{Binding Name}"
                                                        FontWeight="Bold"
                                                        TextTrimming="CharacterEllipsis"
                                                        VerticalAlignment="Center"/>
@@ -108,8 +129,7 @@
                                                         Color="{x:Static theme:Palette.TextDim}"
                                                         IsVisible="{Binding IsRarelyBuilt}"
                                                         ToolTip.Tip="{Binding RarelyBuiltTip}"/>
-                                        <controls:DataText Grid.Column="5"
-                                                           Margin="8,0,10,0"
+                                        <controls:DataText Classes="data"
                                                            VerticalAlignment="Center"
                                                            Data="{Binding Data}"
                                                            IsVisible="{Binding HasData}"

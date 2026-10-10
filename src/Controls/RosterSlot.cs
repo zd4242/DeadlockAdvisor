@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -175,6 +176,28 @@ public class RosterSlot : Control
             || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty)
             UpdateToolTip();
     }
+
+    // -- accessibility ----------------------------------------------------------
+
+    /// <summary>"Haze, enemy, focused, net worth 25k"; what the tooltip says a click does is the peer's help text.</summary>
+    internal string AccessibleName
+    {
+        get
+        {
+            var team = Team.Label().ToLowerInvariant();
+            if (IsEmpty)
+                return $"Empty {team} slot";
+            var parts = new List<string> { HeroName, IsSelf ? "you" : team };
+            if (IsFocusTarget)
+                parts.Add("focused");
+            if (NetWorth is { } souls)
+                parts.Add($"net worth {Format.Compact(souls)}");
+            return string.Join(", ", parts);
+        }
+    }
+
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Button, () => AccessibleName, () => ToolTip.GetTip(this)?.ToString());
 
     // -- sizing ---------------------------------------------------------------
 

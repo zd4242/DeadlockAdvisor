@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Media;
@@ -39,6 +40,9 @@ public class InfoBadge : Control
 
     /// <summary>Whether a click is holding the text open.</summary>
     public bool IsPinned => _pinned?.IsOpen == true;
+
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Button, () => "More information", () => ToolTip.GetTip(this)?.ToString());
 
     protected override Size MeasureOverride(Size availableSize) => new(_size, _size);
 

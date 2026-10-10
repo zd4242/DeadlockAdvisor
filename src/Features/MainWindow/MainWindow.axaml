@@ -278,6 +278,7 @@
                                 <Button x:Name="SettingsButton"
                                         Classes="caption"
                                         Classes.active="{Binding IsSettingsOpen}"
+                                        AutomationProperties.Name="Settings"
                                         ToolTip.Tip="Settings (Ctrl+,)"
                                         Command="{Binding OpenSettingsCommand}">
                                     <Path Data="M13.24,6.69 L15.21,6.86 L15.21,9.14 L13.24,9.31 A5.4,5.4 0 0 1 12.63,10.78 L13.91,12.29 L12.29,13.91 L10.78,12.63 A5.4,5.4 0 0 1 9.31,13.24 L9.14,15.21 L6.86,15.21 L6.69,13.24 A5.4,5.4 0 0 1 5.22,12.63 L3.71,13.91 L2.09,12.29 L3.37,10.78 A5.4,5.4 0 0 1 2.76,9.31 L0.79,9.14 L0.79,6.86 L2.76,6.69 A5.4,5.4 0 0 1 3.37,5.22 L2.09,3.71 L3.71,2.09 L5.22,3.37 A5.4,5.4 0 0 1 6.69,2.76 L6.86,0.79 L9.14,0.79 L9.31,2.76 A5.4,5.4 0 0 1 10.78,3.37 L12.29,2.09 L13.91,3.71 L12.63,5.22 A5.4,5.4 0 0 1 13.24,6.69 Z M10.4,8 A2.4,2.4 0 1 1 5.6,8 A2.4,2.4 0 1 1 10.4,8 Z"
@@ -286,13 +287,13 @@
                                           Stretch="Uniform"
                                           StrokeJoin="Round"/>
                                 </Button>
-                                <Button Classes="caption" ToolTip.Tip="Minimize" Click="MinimizeButton_Click">
+                                <Button Classes="caption" AutomationProperties.Name="Minimize" ToolTip.Tip="Minimize" Click="MinimizeButton_Click">
                                     <Path Data="M0.5,5.5 L10.5,5.5" Width="11" Height="11"/>
                                 </Button>
-                                <Button Classes="caption" x:Name="MaximizeButton" ToolTip.Tip="Maximize" Click="MaximizeRestoreButton_Click">
+                                <Button Classes="caption" x:Name="MaximizeButton" AutomationProperties.Name="Maximize" ToolTip.Tip="Maximize" Click="MaximizeRestoreButton_Click">
                                     <Path x:Name="MaximizeGlyph" Data="M0.5,0.5 H9.5 V9.5 H0.5 Z" Width="11" Height="11"/>
                                 </Button>
-                                <Button Classes="caption close" ToolTip.Tip="Close" Click="CloseButton_Click">
+                                <Button Classes="caption close" AutomationProperties.Name="Close" ToolTip.Tip="Close" Click="CloseButton_Click">
                                     <Path Data="M0.5,0.5 L9.5,9.5 M9.5,0.5 L0.5,9.5" Width="11" Height="11"/>
                                 </Button>
                             </StackPanel>
@@ -342,6 +343,7 @@
                                         Margin="0,4"
                                         Background="Transparent">
                                 <Button Classes="zoom"
+                                        AutomationProperties.Name="Zoom out"
                                         ToolTip.Tip="Zoom out (Ctrl+-)"
                                         ToolTip.Placement="Top"
                                         ToolTip.VerticalOffset="-6"
@@ -351,11 +353,13 @@
                                 <Button x:Name="ZoomLevel"
                                         Classes="zoom level"
                                         Content="{Binding ZoomText}"
+                                        AutomationProperties.Name="{Binding ZoomText, StringFormat='Zoom {0}, reset to 100%'}"
                                         ToolTip.Tip="Zoom: click for 100% (Ctrl+0), scroll to change"
                                         ToolTip.Placement="Top"
                                         ToolTip.VerticalOffset="-6"
                                         Command="{Binding ResetZoomCommand}"/>
                                 <Button Classes="zoom"
+                                        AutomationProperties.Name="Zoom in"
                                         ToolTip.Tip="Zoom in (Ctrl+=)"
                                         ToolTip.Placement="Top"
                                         ToolTip.VerticalOffset="-6"

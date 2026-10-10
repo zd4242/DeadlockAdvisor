@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
@@ -71,6 +72,10 @@ public class HeroTile : Control
         get => GetValue(IsHighlightedProperty);
         set => SetValue(IsHighlightedProperty, value);
     }
+
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Button,
+            () => Role == Role.None ? HeroName : $"{HeroName}, {Role.Label().ToLowerInvariant()}");
 
     protected override Size MeasureOverride(Size availableSize) =>
         new(_portrait + _pad * 2, _portrait + _pad * 2 + _nameHeight);

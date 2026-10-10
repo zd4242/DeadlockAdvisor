@@ -10,6 +10,18 @@
              x:Class="DeadlockAdvisor.Features.HeroItems.HeroItemsView"
              x:DataType="heroItems:HeroItemsViewModel">
 
+    <UserControl.Resources>
+        <!-- Each column's width, once, for its header and for its cells. Together they leave the item's name about 170 of the smallest window's width, with the change columns on. -->
+        <x:Double x:Key="CostColumn">64</x:Double>
+        <x:Double x:Key="WinRateColumn">104</x:Double>
+        <x:Double x:Key="FitColumn">72</x:Double>
+        <x:Double x:Key="WinRateChangeColumn">76</x:Double>
+        <x:Double x:Key="UsageColumn">116</x:Double>
+        <x:Double x:Key="UsageBarWidth">84</x:Double>
+        <x:Double x:Key="UsageChangeColumn">84</x:Double>
+        <x:Double x:Key="MatchesColumn">100</x:Double>
+    </UserControl.Resources>
+
     <UserControl.Styles>
         <!-- The table's columns are fixed-width cells in Auto columns, so a column the page hides takes no room, and each header sits over its cells. -->
         <Style Selector="Button.header">
@@ -140,6 +152,7 @@
                             Classes="glyph"
                             VerticalAlignment="Center"
                             Classes.active="{Binding HasActiveFilters}"
+                            AutomationProperties.Name="Filters"
                             ToolTip.Tip="{Binding FiltersButtonTip}">
                         <Path Data="M1.5,2.5 H14.5 L9.5,8.5 V13.5 L6.5,11.5 V8.5 Z" Stretch="Uniform"/>
                         <Button.Flyout>
@@ -237,6 +250,7 @@
                             Classes="picker"
                             MinWidth="140"
                             Content="{Binding PatchSummary}"
+                            AutomationProperties.Name="{Binding PatchSummary, StringFormat='Patches: {0}'}"
                             ToolTip.Tip="The patches whose matches the table counts: pick several to add them up. The changes are since the patch before the oldest one.">
                         <Button.Flyout>
                             <Flyout Placement="BottomEdgeAlignedLeft">
@@ -310,32 +324,32 @@
                             <Button Classes="header name" Classes.sorted="{Binding ItemHeader.IsSorted}" Content="{Binding ItemHeader.Text}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Item}"/>
                             <Button Grid.Column="1" Classes="header cost" Classes.sorted="{Binding CostHeader.IsSorted}" Content="{Binding CostHeader.Text}"
-                                    Width="72"
+                                    Width="{StaticResource CostColumn}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Cost}"/>
                             <Button Grid.Column="2" Classes="header" Classes.sorted="{Binding WinRateHeader.IsSorted}" Content="{Binding WinRateHeader.Text}"
-                                    Width="112"
+                                    Width="{StaticResource WinRateColumn}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRate}"
                                     ToolTip.Tip="The share of the hero's matches with the item that were won, and its distance from the hero's average"/>
                             <Button Grid.Column="3" Classes="header" Classes.sorted="{Binding FitHeader.IsSorted}" Content="{Binding FitHeader.Text}"
-                                    Width="88"
+                                    Width="{StaticResource FitColumn}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Fit}"
                                     ToolTip.Tip="{x:Static heroItems:HeroItemsViewModel.FitHeaderTip}"/>
                             <Button Grid.Column="4" Classes="header" Classes.sorted="{Binding WinRateChangeHeader.IsSorted}" Content="{Binding WinRateChangeHeader.Text}"
-                                    Width="88"
+                                    Width="{StaticResource WinRateChangeColumn}"
                                     IsVisible="{Binding ShowChanges}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.WinRateChange}"
                                     ToolTip.Tip="{Binding ChangeTip}"/>
                             <Button Grid.Column="5" Classes="header" Classes.sorted="{Binding UsageHeader.IsSorted}" Content="{Binding UsageHeader.Text}"
-                                    Width="140"
+                                    Width="{StaticResource UsageColumn}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Usage}"
                                     ToolTip.Tip="The share of this hero's matches the item was bought in"/>
                             <Button Grid.Column="6" Classes="header" Classes.sorted="{Binding UsageChangeHeader.IsSorted}" Content="{Binding UsageChangeHeader.Text}"
-                                    Width="96"
+                                    Width="{StaticResource UsageChangeColumn}"
                                     IsVisible="{Binding ShowChanges}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.UsageChange}"
                                     ToolTip.Tip="{Binding ChangeTip}"/>
                             <Button Grid.Column="7" Classes="header" Classes.sorted="{Binding MatchesHeader.IsSorted}" Content="{Binding MatchesHeader.Text}"
-                                    Width="112"
+                                    Width="{StaticResource MatchesColumn}"
                                     Command="{Binding SortCommand}" CommandParameter="{x:Static heroItems:HeroItemSort.Matches}"/>
                         </Grid>
                     </Border>
@@ -360,20 +374,27 @@
                                 <DataTemplate x:DataType="heroItems:HeroItemRowViewModel">
                                     <Border Classes="row">
                                         <Grid ColumnDefinitions="*,Auto,Auto,Auto,Auto,Auto,Auto,Auto">
-                                            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
-                                                <art:ArtImage Width="30"
+                                            <!-- The name gives way, with an ellipsis, to the columns beside it. -->
+                                            <DockPanel VerticalAlignment="Center">
+                                                <art:ArtImage DockPanel.Dock="Left"
+                                                              Width="30"
                                                               Height="30"
+                                                              Margin="0,0,10,0"
                                                               Kind="Item"
                                                               ArtId="{Binding ItemId}"
                                                               ArtName="{Binding Name}"
                                                               Tint="{Binding ShopColor}"
                                                               VerticalAlignment="Center"
                                                               card:ItemCardHover.ItemId="{Binding ItemId}"/>
+                                                <controls:Badge DockPanel.Dock="Left"
+                                                                Margin="0,0,8,0"
+                                                                VerticalAlignment="Center"
+                                                                Text="{Binding TierText}"
+                                                                Color="{Binding TierColor}"/>
                                                 <TextBlock Text="{Binding Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" VerticalAlignment="Center"/>
-                                                <controls:Badge VerticalAlignment="Center" Text="{Binding TierText}" Color="{Binding TierColor}"/>
-                                            </StackPanel>
-                                            <TextBlock Grid.Column="1" Classes="cell cost dim" Width="72" Text="{Binding CostText}"/>
-                                            <Panel Grid.Column="2" Width="112">
+                                            </DockPanel>
+                                            <TextBlock Grid.Column="1" Classes="cell cost dim" Width="{StaticResource CostColumn}" Text="{Binding CostText}"/>
+                                            <Panel Grid.Column="2" Width="{StaticResource WinRateColumn}">
                                                 <Border MinWidth="64"
                                                         Padding="8,3"
                                                         CornerRadius="5"
@@ -396,7 +417,7 @@
                                                        Classes="cell fit"
                                                        Classes.good="{Binding FitGood}"
                                                        Classes.bad="{Binding FitBad}"
-                                                       Width="88"
+                                                       Width="{StaticResource FitColumn}"
                                                        Background="Transparent"
                                                        Text="{Binding FitText}"
                                                        ToolTip.Tip="{Binding FitTip}"/>
@@ -404,13 +425,13 @@
                                                        Classes="cell change"
                                                        Classes.rose="{Binding WinRateRose}"
                                                        Classes.fell="{Binding WinRateFell}"
-                                                       Width="88"
+                                                       Width="{StaticResource WinRateChangeColumn}"
                                                        IsVisible="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).ShowChanges}"
                                                        Text="{Binding WinRateChangeText}"/>
                                             <!-- The share, with its bar beneath, so the header centres over both. -->
-                                            <StackPanel Grid.Column="5" Width="140" Spacing="4" VerticalAlignment="Center">
+                                            <StackPanel Grid.Column="5" Width="{StaticResource UsageColumn}" Spacing="4" VerticalAlignment="Center">
                                                 <TextBlock Classes="cell" Text="{Binding UsageText}"/>
-                                                <controls:ScoreBar Width="96"
+                                                <controls:ScoreBar Width="{StaticResource UsageBarWidth}"
                                                                    Height="4"
                                                                    HorizontalAlignment="Center"
                                                                    Fraction="{Binding Usage}"
@@ -420,12 +441,12 @@
                                                        Classes="cell change"
                                                        Classes.rose="{Binding UsageRose}"
                                                        Classes.fell="{Binding UsageFell}"
-                                                       Width="96"
+                                                       Width="{StaticResource UsageChangeColumn}"
                                                        IsVisible="{Binding $parent[heroItems:HeroItemsView].((heroItems:HeroItemsViewModel)DataContext).ShowChanges}"
                                                        Text="{Binding UsageChangeText}"/>
                                             <TextBlock Grid.Column="7"
                                                        Classes="cell dim"
-                                                       Width="112"
+                                                       Width="{StaticResource MatchesColumn}"
                                                        Background="Transparent"
                                                        Text="{Binding WinLossText}"
                                                        ToolTip.Tip="{Binding WinLossTip}"/>

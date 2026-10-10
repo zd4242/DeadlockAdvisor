@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Media;
 using DeadlockAdvisor.Theme;
 
@@ -34,6 +35,9 @@ public class Badge : Control
         get => GetValue(ColorProperty);
         set => SetValue(ColorProperty, value);
     }
+
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Text, () => Text);
 
     protected override Size MeasureOverride(Size availableSize)
     {

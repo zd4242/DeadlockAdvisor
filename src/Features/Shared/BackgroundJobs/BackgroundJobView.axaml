@@ -106,11 +106,13 @@
                     Content="✕"
                     IsVisible="{Binding IsRunning}"
                     Command="{Binding CancelCommand}"
+                    AutomationProperties.Name="{Binding Title, StringFormat='Cancel {0} download'}"
                     ToolTip.Tip="Cancel"/>
             <Button Classes="icon close"
                     Content="✕"
                     IsVisible="{Binding IsFinished}"
                     Command="{Binding DismissCommand}"
+                    AutomationProperties.Name="{Binding Title, StringFormat='Dismiss {0} result'}"
                     ToolTip.Tip="Dismiss"/>
         </StackPanel>
     </Border>

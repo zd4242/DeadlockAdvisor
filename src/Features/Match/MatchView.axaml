@@ -73,6 +73,7 @@
                                         <Button DockPanel.Dock="Right"
                                                 Classes="icon"
                                                 Content="×"
+                                                AutomationProperties.Name="Stop focusing"
                                                 Command="{Binding Board.ClearFocusCommand}"
                                                 ToolTip.Tip="Stop focusing: every enemy counts the same again"/>
                                         <TextBlock VerticalAlignment="Center"
@@ -103,6 +104,7 @@
                                   ItemsSource="{Binding Ranks}"
                                   SelectedItem="{Binding SelectedRank}"
                                   IsEnabled="{Binding HasMatchData}"
+                                  AutomationProperties.Name="Items ranked by"
                                   ToolTip.ShowOnDisabled="True"
                                   ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;plus its hero fit: how much more your hero wins with it than everyone who builds it. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Download Match Data).">
                             <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
@@ -133,6 +135,7 @@
                                 Classes="glyph"
                                 Classes.open="{Binding Results.IsSearchOpen}"
                                 Command="{Binding ToggleItemSearchCommand}"
+                                AutomationProperties.Name="Search items"
                                 IsEnabled="{Binding !IsMatchEmpty}"
                                 ToolTip.Tip="Search the recommended items, or put the search away (Ctrl+F)">
                             <!-- Drawn at the glyph's own 16px size, about as wide as the funnel and centred on its box, with a stroke that matches the funnel's weight. -->
@@ -150,6 +153,7 @@
                                 VerticalAlignment="Stretch"
                                 Classes="glyph"
                                 Classes.active="{Binding HasActiveFilters}"
+                                AutomationProperties.Name="Filters"
                                 ToolTip.Tip="{Binding FiltersButtonTip}">
                             <Path Data="M1.5,2.5 H14.5 L9.5,8.5 V13.5 L6.5,11.5 V8.5 Z" Stretch="Uniform"/>
                             <Button.Flyout>

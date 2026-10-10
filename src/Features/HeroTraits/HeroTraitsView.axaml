@@ -47,6 +47,7 @@
                 ClipToBounds="True">
             <ScrollViewer x:Name="Scroller" HorizontalScrollBarVisibility="Auto">
                 <heroTraits:TraitGrid x:Name="Grid"
+                                      AutomationProperties.Name="Hero trait ratings"
                                       HorizontalAlignment="Left"
                                       VerticalAlignment="Top"
                                       Heroes="{Binding Heroes}"

@@ -1,3 +1,4 @@
+using Avalonia.Automation.Peers;
 using Avalonia.Media;
 using DeadlockAdvisor.Services.Contracts;
 
@@ -66,6 +67,10 @@ public class ArtImage : Control
             || change.Property == ArtHost.RevisionProperty)
             HideRankWithoutArt();
     }
+
+    // The name is printed beside the art wherever it matters.
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new PaintedPeer(this, AutomationControlType.Image, () => ArtName ?? ArtId, decorative: true);
 
     /// <summary>A rank badge with no art takes no room, rather than leaving a gap where it would sit.</summary>
     private void HideRankWithoutArt()

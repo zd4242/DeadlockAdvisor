@@ -74,7 +74,7 @@
                                   IsChecked="{Binding IsPickerOpen}"
                                   ToolTip.Tip="Show every hero, to set or correct the match by hand"/>
                     <!-- The rarer ways to fill or empty the match, out of the way of detecting and fixing it. -->
-                    <Button x:Name="MoreButton" Classes="glyph" ToolTip.Tip="Import a match, random heroes, or clear the match">
+                    <Button x:Name="MoreButton" Classes="glyph" AutomationProperties.Name="More match actions" ToolTip.Tip="Import a match, random heroes, or clear the match">
                         <Path Classes="solid"
                               Data="M1.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 M6.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0 M11.5,8 a1.5,1.5 0 1,0 3,0 a1.5,1.5 0 1,0 -3,0"/>
                         <Button.Flyout>

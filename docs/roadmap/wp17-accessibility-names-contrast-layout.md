@@ -1,6 +1,6 @@
 # WP17 Accessible names, contrast, layouts at minimum size and zoom
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium (touches many views; mostly additive) · Depends on: WP13 (so the new chip and flyout are included) · Wave: E
 Touches: many `*.axaml` (**`MainWindow.axaml`**, settings views, match views), `src/Controls/*` (`RosterSlot`, `HeroTile`, `ScoreBar`, `Badge`, `SignedAmount`, `HeatCell`, `InfoBadge`), `src/Theme/Palette.cs`, `Themes/*.axaml`, `src/Features/MainWindow/MainWindow.axaml` (minimum width), tests (`Ui/*`)
 Docs to update: `docs/architecture.md` (sections 1 and 9: the accessibility conventions), `README.md` (nothing unless a shortcut changes)

@@ -483,6 +483,9 @@ public class StatusBarTests
     public void TheZoomButtonsKeepTheirPlaceWhileThePointerIsOnThem()
     {
         using var ui = new UiHarness();
+        // Big enough for the window's smallest size at every zoom, which grows with it: the corner stays where it is.
+        ui.Window.Width = 1800;
+        ui.Window.Height = 1200;
         ui.Show();
         var buttons = ZoomButtons(ui);
         var before = buttons.Select(button => ScreenBounds(ui, button)).ToList();

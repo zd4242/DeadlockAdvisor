@@ -34,14 +34,14 @@
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Border Classes="segmented">
                             <StackPanel>
-                                <Button Content="−" ToolTip.Tip="Zoom out (Ctrl+-)" Command="{Binding ZoomOutCommand}"/>
+                                <Button Content="−" AutomationProperties.Name="Zoom out" ToolTip.Tip="Zoom out (Ctrl+-)" Command="{Binding ZoomOutCommand}"/>
                                 <TextBlock x:Name="ZoomLevel"
                                            Text="{Binding ZoomText}"
                                            Width="52"
                                            TextAlignment="Center"
                                            FontWeight="SemiBold"
                                            VerticalAlignment="Center"/>
-                                <Button Content="+" ToolTip.Tip="Zoom in (Ctrl+=)" Command="{Binding ZoomInCommand}"/>
+                                <Button Content="+" AutomationProperties.Name="Zoom in" ToolTip.Tip="Zoom in (Ctrl+=)" Command="{Binding ZoomInCommand}"/>
                             </StackPanel>
                         </Border>
                         <Button Classes="ghost" Content="Reset" ToolTip.Tip="Back to 100% (Ctrl+0)" Command="{Binding ResetZoomCommand}"/>

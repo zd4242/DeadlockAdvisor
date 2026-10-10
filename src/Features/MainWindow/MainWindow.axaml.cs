@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
 using Avalonia.Interactivity;
@@ -27,6 +28,8 @@ public partial class MainWindow : Window
     private readonly ISettingsService? _settings;
     private readonly IForegroundService? _foreground;
     private readonly ZoomCornerHold _zoomHold;
+    private readonly Size _smallestAtFullSize;
+    private double _minimumFor = 1;
     private readonly List<KeyBinding> _shortcutBindings = [];
     private ModalWindow? _modalWindow;
     private ViewModelBase? _waitingModal;
@@ -39,6 +42,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        _smallestAtFullSize = new Size(MinWidth, MinHeight);
 
 #if DEBUG
         this.AttachDevTools();
@@ -52,6 +56,7 @@ public partial class MainWindow : Window
         ResizeGrip.PointerPressed += OnResizeGripPressed;
         ZoomStepper.PointerWheelChanged += OnZoomStepperWheel;
         _zoomHold = new ZoomCornerHold(ZoomCorner);
+        _zoomHold.Released += () => ScaleMinimumSize(_minimumFor);
         PointerPressed += OnDismissLayerPressed;
         PointerPressed += OnNavigationButtonPressed;
         TitleBar.LayoutUpdated += (_, _) => PlaceTitle();
@@ -94,6 +99,7 @@ public partial class MainWindow : Window
                 }),
                 vm.WhenAnyValue(v => v.IsSettingsOpen).Where(open => open).Subscribe(_ => SettingsPage.FocusCategories()),
                 vm.WhenAnyValue(v => v.UiScale).Subscribe(_zoomHold.ZoomChanged),
+                vm.WhenAnyValue(v => v.UiScale).Subscribe(ScaleMinimumSize),
                 vm.WhenAnyValue(v => v.ShortcutBindings).Subscribe(ApplyShortcuts));
         }
     }
@@ -113,6 +119,25 @@ public partial class MainWindow : Window
     }
 
     // -- window state -----------------------------------------------------------
+
+    /// <summary>
+    /// The pages are laid out for a window of at least 900 × 600 at 100%, and the window's size is in
+    /// screen units, so zoomed in it keeps the same room for them: the minimum follows the zoom, up
+    /// to what the screen has. A window that has to grow for it waits until the pointer is off the
+    /// zoom buttons, which it would otherwise carry out from under the next click.
+    /// </summary>
+    private void ScaleMinimumSize(double zoom)
+    {
+        _minimumFor = zoom;
+        if (PlatformImpl is null || _zoomHold.IsHovered)
+            return;
+        var screen = Screens.ScreenFromWindow(this) ?? Screens.Primary;
+        var room = screen is null
+            ? new Size(double.PositiveInfinity, double.PositiveInfinity)
+            : new Size(screen.WorkingArea.Width / screen.Scaling, screen.WorkingArea.Height / screen.Scaling);
+        MinWidth = Math.Min(_smallestAtFullSize.Width * zoom, Math.Max(room.Width, _smallestAtFullSize.Width));
+        MinHeight = Math.Min(_smallestAtFullSize.Height * zoom, Math.Max(room.Height, _smallestAtFullSize.Height));
+    }
 
     private void RestoreGeometry(WindowGeometry? geometry)
     {
@@ -153,6 +178,7 @@ public partial class MainWindow : Window
             var maximized = WindowState == WindowState.Maximized;
             MaximizeGlyph.Data = maximized ? _restoreGlyph : _maximizeGlyph;
             ToolTip.SetTip(MaximizeButton, maximized ? "Restore Down" : "Maximize");
+            AutomationProperties.SetName(MaximizeButton, maximized ? "Restore down" : "Maximize");
             var floating = WindowState == WindowState.Normal;
             WindowOutline.IsVisible = floating;
             ResizeGrip.IsVisible = floating;

@@ -133,7 +133,7 @@ public sealed class UiHarness : IDisposable
     private static string Save(Window window, string name)
     {
         Settle();
-        var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("Nothing was rendered");
+        using var frame = window.CaptureRenderedFrame() ?? throw new InvalidOperationException("Nothing was rendered");
         var path = MockupPath(name);
         frame.Save(path);
         return path;

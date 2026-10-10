@@ -92,7 +92,7 @@
                             MinHeight="{TemplateBinding MinHeight}">
                         <Grid ColumnDefinitions="*,Auto">
                             <StackPanel VerticalAlignment="Center" Spacing="3" Margin="0,0,24,0">
-                                <TextBlock Text="{TemplateBinding Title}" FontWeight="SemiBold"/>
+                                <TextBlock Text="{TemplateBinding Title}" FontWeight="SemiBold" TextWrapping="Wrap"/>
                                 <TextBlock Classes="dim"
                                            FontSize="12"
                                            TextWrapping="Wrap"
