@@ -153,6 +153,10 @@ public class StatusBarTests
                 settings.Current.AppUpdateCheckedAt = checkedAt;
             },
             services => services.AddSingleton<IAppUpdateService>(new AppUpdateService(github, new Version(0, 1, 1))));
+        Directory.CreateDirectory(ui.Art.FolderOf(ArtKind.Hero));
+        foreach (var heroId in ui.Data.Store.Heroes.Keys)
+            File.WriteAllBytes(Path.Combine(ui.Art.FolderOf(ArtKind.Hero), heroId + ".png"), [1]);
+        ui.Art.Refresh();
         ui.Show();
         Assert.True(await UiHarness.WaitUntilAsync(() => ChipText(ui) == "Up to date"));
 
@@ -394,7 +398,7 @@ public class StatusBarTests
         Assert.Equal("none yet", status.Summary);
         Assert.Empty(status.Facts);
         var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match data");
-        Assert.Equal(UpdateState.Off, row.State);
+        Assert.Equal(UpdateState.NotDownloaded, row.State);
         Assert.Equal("Download…", row.ActionText);
         Assert.Same(ui.ViewModel.DataMenu.DownloadMatchDataCommand, row.Action);
         OpenFlyout(ui, showMatchDataDetails: true);

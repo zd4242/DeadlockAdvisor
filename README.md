@@ -31,8 +31,10 @@ Only one copy runs at a time: starting it again brings the open window to the fr
 
 The **Updates** chip is the one place to ask whether everything is current. It reads
 *Up to date*, *Updating match data 40%*, *Patch 10-07 is out*, *2 updates*, *Updates paused*
-(offline) or what failed. Its flyout has a row each for the app, the formulas, the match data
-and the art, saying what state each is in and when it was last checked, with that row's
+(offline), *Match data and art not downloaded* (never fetched, so nothing is current) or what
+failed. Its flyout has a row each for the app, the formulas (hero ratings and item formulas),
+the match data and the art, saying in plain words what it is, what state it is in and when it
+was last checked, with that row's
 action (Update, Restart now, Apply, Download, or Check when it is current), **What's new**
 for the app and the formulas, **Skip this version** for the app, **Download again…** for the
 match data, **Download…** for the art, and **Details…** for the match data (which patch, how

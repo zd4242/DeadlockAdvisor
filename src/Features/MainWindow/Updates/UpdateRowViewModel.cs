@@ -26,7 +26,10 @@ public enum UpdateState
 
     Offline,
 
-    /// <summary>Turned off, or not downloaded at all: it says nothing about whether anything is current.</summary>
+    /// <summary>Never downloaded (the first run's offer was declined, or couldn't be made): nothing is current because nothing is there.</summary>
+    NotDownloaded,
+
+    /// <summary>Turned off: it says nothing about whether anything is current.</summary>
     Off,
 
     /// <summary>The last download ended in an error.</summary>
@@ -88,10 +91,12 @@ public abstract class UpdateStatusViewModel : ViewModelBase
 public sealed class UpdateRowViewModel : UpdateStatusViewModel
 {
     /// <param name="details">More about it, opened by the row's Details; null when there's nothing more to say.</param>
-    public UpdateRowViewModel(UpdateSource source, string title, ViewModelBase? details = null)
+    /// <param name="about">What it is in plain words, beside the title; empty when the title says it.</param>
+    public UpdateRowViewModel(UpdateSource source, string title, ViewModelBase? details = null, string about = "")
     {
         Source = source;
         Title = title;
+        About = about;
         Details = details;
         ToggleDetailsCommand = ReactiveCommand.Create(() =>
         {
@@ -104,6 +109,9 @@ public sealed class UpdateRowViewModel : UpdateStatusViewModel
 
     /// <summary>"App", "Formulas", "Match data", "Art".</summary>
     public string Title { get; }
+
+    /// <summary>"hero ratings and item formulas": what the title stands for, for someone who doesn't know the word.</summary>
+    public string About { get; }
 
     public ViewModelBase? Details { get; }
     public bool HasDetails => Details is not null;

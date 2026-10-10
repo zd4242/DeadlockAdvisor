@@ -175,6 +175,7 @@ public sealed class UpdatesViewModelTests : IDisposable
     [Fact]
     public void NothingThatWasNeverCheckedIsCalledUpToDate()
     {
+        HavePortraits();
         var updates = Build();
 
         Assert.Equal(UpdateState.NotChecked, updates.State);
@@ -183,7 +184,41 @@ public sealed class UpdatesViewModelTests : IDisposable
         Assert.Equal("Version 0.1.1 · not checked yet", Row(UpdateSource.App).Summary);
         Assert.Equal(UpdateState.NotChecked, Row(UpdateSource.Formulas).State);
         Assert.Equal(UpdateState.NotChecked, Row(UpdateSource.MatchData).State);
-        Assert.Equal(UpdateState.Off, Row(UpdateSource.Art).State);
+        Assert.Equal(UpdateState.UpToDate, Row(UpdateSource.Art).State);
+    }
+
+    /// <summary>Not "Up to date" while there is no match data or art to be current: the chip says what is missing.</summary>
+    [Fact]
+    public void WhatWasNeverDownloadedIsSaidSoRatherThanUpToDate()
+    {
+        ACurrentInstall();
+        foreach (var file in Directory.GetFiles(_art.FolderOf(ArtKind.Hero)))
+            File.Delete(file);
+        _art.Refresh();
+        var updates = Build();
+
+        Assert.Equal(UpdateState.NotDownloaded, Row(UpdateSource.Art).State);
+        Assert.Equal(UpdateState.NotDownloaded, updates.State);
+        Assert.Equal("Art not downloaded", updates.Headline);
+        Assert.Equal("Some of it hasn't been downloaded yet.", updates.Status);
+        Assert.False(updates.IsGood);
+        Assert.False(updates.IsAttention);
+
+        _fixture.Data.Store.MatchMeta.Clear();
+        _fixture.Data.NotifyReplaced();
+
+        Assert.Equal(UpdateState.NotDownloaded, Row(UpdateSource.MatchData).State);
+        Assert.Equal("Match data not downloaded", Row(UpdateSource.MatchData).Headline);
+        Assert.Equal("Match data and art not downloaded", updates.Headline);
+    }
+
+    [Fact]
+    public void EachRowSaysInPlainWordsWhatItIs()
+    {
+        var updates = Build();
+
+        Assert.Equal(["", "hero ratings and item formulas", "item win rates from real matches", "hero portraits and item icons"],
+            updates.Rows.Select(row => row.About));
     }
 
     [Fact]
@@ -453,9 +488,9 @@ public sealed class UpdatesViewModelTests : IDisposable
         _art.Refresh();
         _fixture.Settings.Update(_ => { });
 
-        Assert.All(updates.Rows, row => Assert.Equal(UpdateState.Off, row.State));
-        Assert.Equal(UpdateState.Off, updates.State);
-        Assert.Equal("Updates are off", updates.Headline);
+        Assert.All(updates.Rows.Where(row => row.Source != UpdateSource.Art), row => Assert.Equal(UpdateState.Off, row.State));
+        Assert.Equal(UpdateState.NotDownloaded, Row(UpdateSource.Art).State);
+        Assert.Equal("Art not downloaded", updates.Headline);
     }
 
     [Fact]

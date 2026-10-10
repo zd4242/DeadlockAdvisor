@@ -49,9 +49,9 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         Rows =
         [
             new UpdateRowViewModel(UpdateSource.App, "App"),
-            new UpdateRowViewModel(UpdateSource.Formulas, "Formulas"),
-            new UpdateRowViewModel(UpdateSource.MatchData, "Match data", matchData),
-            new UpdateRowViewModel(UpdateSource.Art, "Art"),
+            new UpdateRowViewModel(UpdateSource.Formulas, "Formulas", about: "hero ratings and item formulas"),
+            new UpdateRowViewModel(UpdateSource.MatchData, "Match data", matchData, "item win rates from real matches"),
+            new UpdateRowViewModel(UpdateSource.Art, "Art", about: "hero portraits and item icons"),
         ];
         foreach (var row in Rows)
             row.DisposeWith(Disposables);
@@ -242,7 +242,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         }
         if (!_matchData.HasData)
         {
-            return new(UpdateState.Off, "None yet · real win rates add a second opinion to the recommendations", "", "Download…",
+            return new(UpdateState.NotDownloaded, "None yet · real win rates add a second opinion to the recommendations", "Match data not downloaded", "Download…",
                 _dataMenu.DownloadMatchDataCommand, download);
         }
 
@@ -272,7 +272,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         var items = _art.Count(ArtKind.Item);
         if (heroes == 0 && items == 0)
         {
-            return new(UpdateState.Off, "None yet · portraits, icons and the art Detect from screen reads", "", "Download…",
+            return new(UpdateState.NotDownloaded, "None yet · portraits, icons and the art Detect from screen reads", "Art not downloaded", "Download…",
                 _dataMenu.DownloadArtCommand, download);
         }
 
@@ -303,11 +303,12 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     /// <summary>The most pressing state first: a failure, then a download, something waiting, no connection, and so on down to current.</summary>
     private static int Rank(UpdateState state) => state switch
     {
-        UpdateState.Failed => 7,
-        UpdateState.Updating => 6,
-        UpdateState.Available => 5,
-        UpdateState.Offline => 4,
-        UpdateState.Checking => 3,
+        UpdateState.Failed => 8,
+        UpdateState.Updating => 7,
+        UpdateState.Available => 6,
+        UpdateState.Offline => 5,
+        UpdateState.Checking => 4,
+        UpdateState.NotDownloaded => 3,
         UpdateState.NotChecked => 2,
         UpdateState.UpToDate => 1,
         _ => 0,
@@ -329,6 +330,10 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
                 return "Updates paused";
             case UpdateState.Checking:
                 return "Checking for updates…";
+            case UpdateState.NotDownloaded:
+                return rows is [var missing]
+                    ? missing.Headline
+                    : $"{Listed(rows.Select((row, index) => index == 0 ? row.Title : row.Title.ToLowerInvariant()).ToList())} not downloaded";
             case UpdateState.NotChecked:
                 return "Not checked yet";
             case UpdateState.Off:
@@ -345,6 +350,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         UpdateState.Available => waiting > 1 ? $"{waiting} updates are waiting." : "An update is waiting.",
         UpdateState.Offline => "No internet connection: everything works from what's saved.",
         UpdateState.Checking => "Checking for updates…",
+        UpdateState.NotDownloaded => "Some of it hasn't been downloaded yet.",
         UpdateState.NotChecked => "Some of it hasn't been checked yet.",
         UpdateState.Off => "Updates are off.",
         _ => "Everything is up to date.",

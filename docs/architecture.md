@@ -261,10 +261,13 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   a service's state changes (settings, `AppUpdateViewModel`, `DataMenuViewModel`'s `NewerPatch`, `IsDownloading*`,
   `IsChecking*` and `Jobs`, connectivity, the store, new art) it works every row out again from them
   (`UpdateRowViewModel.Apply`, one per `UpdateSource`: App, Formulas, Match data, Art). A row has an `UpdateState`
-  (`UpToDate`, `NotChecked`, `Checking`, `Updating`, `Available`, `Offline`, `Off`, `Failed`), a one-line summary with
-  when it was last checked (`MatchStatsMath.Age`), a chip headline, one action and a few links. The whole takes the most
-  pressing state (failed, updating, available, offline, checking, not checked, up to date; `Off` ranks last and doesn't
-  count against up to date), and the chip says that row's headline or "2 updates". The Formulas, New heroes and first-run
+  (`UpToDate`, `NotChecked`, `NotDownloaded`, `Checking`, `Updating`, `Available`, `Offline`, `Off`, `Failed`), a plain-words
+  `About` beside the title, a one-line summary with when it was last checked (`MatchStatsMath.Age`), a chip headline, one
+  action and a few links. The whole takes the most pressing state (failed, updating, available, offline, checking, not
+  downloaded, not checked, up to date; `Off`, a source the user turned off, ranks last and doesn't count against up to
+  date), and the chip says that row's headline or "2 updates". `NotDownloaded` is match data or art that was never
+  fetched: the chip names it ("Match data and art not downloaded") with a neutral dot, so it doesn't claim "Up to date"
+  and doesn't nag like an update waiting. The Formulas, New heroes and first-run
   ("Downloads") chips the Data menu puts in the status bar stay there for the click and count as offers: their
   `OpenCommand` is the action. The Match data row's Details is `DataStatusView`, the old card: it reads "up to date" while no
   newer patch is known and `AppSettings.MatchDataCheckedAt` is under 3 days old (`DataStatusViewModel.UpToDateWindow`),
