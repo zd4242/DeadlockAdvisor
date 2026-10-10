@@ -351,13 +351,13 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
-    public async Task SyncNewDataBackfillsAndReports()
+    public async Task SyncNewDataReports()
     {
         await _menu.SyncNewDataCommand.Execute();
 
         var report = LastMessage();
         Assert.Equal("Sync complete", report.Title);
-        Assert.StartsWith("Added 0 missing hero × trait row(s), defaulted to 0.", report.Body);
+        Assert.StartsWith("No row points at an id that no longer exists.", report.Body);
         Assert.Equal(1, _replaced);
     }
 

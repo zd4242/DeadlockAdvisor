@@ -24,7 +24,7 @@ public sealed class HeroTraitsTests : IDisposable
         _fixture.Dispose();
     }
 
-    private double Score(int row, int column) =>
+    private double? Score(int row, int column) =>
         _fixture.Data.Store.HeroScore(_vm.Heroes[row].HeroId, _vm.Categories[column].CategoryId);
 
     private int SignedColumn => _vm.Categories.ToList().FindIndex(category => category.IsSigned);
@@ -98,7 +98,7 @@ public sealed class HeroTraitsTests : IDisposable
     }
 
     [Fact]
-    public void BackspaceRubsOutADigitOrBlanksTheCellAndMovesOn()
+    public void BackspaceRubsOutADigitOrEmptiesTheCellAndMovesOn()
     {
         Type("4");
         Press(Key.Back);
@@ -107,8 +107,35 @@ public sealed class HeroTraitsTests : IDisposable
 
         _vm.SetValue(0, 0, 40);
         Press(Key.Back);
-        Assert.Equal(0, Score(0, 0));
+        Assert.Null(Score(0, 0));
         Assert.Equal(1, _vm.CurrentRow);
+    }
+
+    [Fact]
+    public void AnEmptyCellIsNotRatedAndAZeroIs()
+    {
+        _vm.SetValue(0, 0, 0);
+        _vm.SetValue(1, 0, null);
+        Assert.Equal(0, Score(0, 0));
+        Assert.Null(Score(1, 0));
+
+        _fixture.Clock.AdvanceBy(DataService.SaveDebounce);
+        var saved = DataStore.Load(_fixture.Data.DataDir);
+        Assert.Equal(0, saved.HeroScore(_vm.Heroes[0].HeroId, _vm.Categories[0].CategoryId));
+        Assert.Null(saved.HeroScore(_vm.Heroes[1].HeroId, _vm.Categories[0].CategoryId));
+    }
+
+    [Fact]
+    public void SortingPutsTheUnratedLastEitherWay()
+    {
+        _vm.SetValue(0, 0, null);
+        _vm.SetValue(1, 0, 0);
+
+        _vm.SortCommand.Execute(0).Subscribe();
+        Assert.True(_vm.VisibleRows.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
+        _vm.SortCommand.Execute(0).Subscribe();
+        Assert.True(_vm.VisibleRows.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
+        Assert.Contains(_vm.VisibleRows, row => Score(row, 0) is null);
     }
 
     [Fact]
@@ -173,7 +200,15 @@ public sealed class HeroTraitsTests : IDisposable
         Assert.Equal(_vm.VisibleRows[1], _vm.CurrentRow);
     }
 
-    private List<double> ShownScores(int column) => _vm.VisibleRows.Select(row => Score(row, column)).ToList();
+    private List<double?> ShownScores(int column) => _vm.VisibleRows.Select(row => Score(row, column)).ToList();
+
+    /// <summary>The scores that are rated, the unrated heroes having gathered after them.</summary>
+    private static List<double> Rated(List<double?> scores)
+    {
+        var rated = scores.TakeWhile(score => score is not null).Select(score => score!.Value).ToList();
+        Assert.All(scores.Skip(rated.Count), score => Assert.Null(score));
+        return rated;
+    }
 
     [Fact]
     public void SortingCyclesHighestFirstThenLowestFirstThenByName()
@@ -182,7 +217,7 @@ public sealed class HeroTraitsTests : IDisposable
         var byName = _vm.VisibleRows.ToList();
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
-        var descending = ShownScores(SignedColumn);
+        var descending = Rated(ShownScores(SignedColumn));
         Assert.Equal(descending.OrderDescending(), descending);
         Assert.Equal((_vm.VisibleRows[0], SignedColumn), (_vm.CurrentRow, _vm.CurrentColumn));
         // Ties keep name order.
@@ -190,7 +225,7 @@ public sealed class HeroTraitsTests : IDisposable
             Assert.True(Score(pair.First, SignedColumn) != Score(pair.Second, SignedColumn) || pair.First < pair.Second));
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
-        var ascending = ShownScores(SignedColumn);
+        var ascending = Rated(ShownScores(SignedColumn));
         Assert.Equal(ascending.Order(), ascending);
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
@@ -219,7 +254,7 @@ public sealed class HeroTraitsTests : IDisposable
     {
         _vm.SortCommand.Execute(0).Subscribe();
         _vm.FilterText = "a";
-        var shown = ShownScores(0);
+        var shown = Rated(ShownScores(0));
         Assert.NotEmpty(shown);
         Assert.Equal(shown.OrderDescending(), shown);
     }
@@ -357,7 +392,7 @@ public sealed class HeroTraitsTests : IDisposable
 
         // The undo is saved like any other edit.
         _fixture.Clock.AdvanceBy(DataService.SaveDebounce);
-        Assert.Equal(profile.Count(score => score != 0), DataStore.Load(_fixture.Data.DataDir).HeroFilledCount(hero.HeroId));
+        Assert.Equal(profile.Count(score => score is not null), DataStore.Load(_fixture.Data.DataDir).HeroFilledCount(hero.HeroId));
     }
 
     [Fact]
@@ -390,6 +425,6 @@ public sealed class HeroTraitsTests : IDisposable
 
         _fixture.Data.Reload();
 
-        Assert.Equal(0, Score(0, 0));
+        Assert.Null(Score(0, 0));
     }
 }

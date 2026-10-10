@@ -12,7 +12,7 @@ weight(item, hero, relation) = Σ over traits of
     (hero_score[hero, trait] − baseline[trait]) × coefficient[item, trait, relation]
 
 coefficient  = trait_weight[trait, relation] × (typed + from_stats)
-baseline     = average of hero_score[·, trait] over the profiled heroes
+baseline     = average of hero_score[·, trait] over the profiled heroes rated on the trait
 score(item)  = Σ factor(hero) × weight over enemies (against) + allies (with) + you (as)
 ```
 
@@ -25,10 +25,20 @@ items" below).
 
 - A **relation** is `against` (an enemy has the trait), `with` (an ally has it)
   or `as` (your own hero has it).
-- **Profiled heroes** are heroes with at least one nonzero trait
+- A hero's score on a trait is a number or **unrated** (an empty `score` in
+  `hero_category_scores.csv`, a blank cell in Hero Traits). 0 is a rating: the
+  hero has none of the trait, and counts below the average. Unrated means nobody
+  has got to it yet, so the hero is left out of that trait: it adds nothing to the
+  trait's baseline, and no rule on the trait moves its weight. `DataStore.HeroScore`
+  returns `null` for it, and every reader has to decide what that means.
+- **Profiled heroes** are heroes rated on at least one trait
   (`DataStore.IsProfiled`). Unprofiled heroes are left out of the baseline, and
   they contribute nothing to any score. If they counted, a hero with every trait
-  at 0 would look "below average at everything".
+  unrated would look "below average at everything".
+- A file from before this, which wrote 0 for every cell nobody had filled in, has no
+  empty score at all. Loading it reads a hero scoring 0 on everything as unrated
+  (`DataStore.LoadHeroScores`); its other zeros stay ratings, since they can't be
+  told from a deliberate 0 until someone empties them.
 - `typed` is a hand-typed coefficient. `from_stats` is derived from the item's
   real stats through `stat_rules.csv` (see below).
 - A **score above 0** means *this match wants the item more than a typical match
@@ -633,7 +643,7 @@ afterwards (see "Tests and goldens" below).
 3. **Data → Model Health Report** to check the model as a whole (next section).
 
 **New heroes need no step here.** The New heroes workflow adds each hero the game
-lists as active to the seed with every trait at 0 (`GameSync.ApplyRoster`, run by
+lists as active to the seed with every trait unrated (`GameSync.ApplyRoster`, run by
 `PublishModel --add-new-heroes`), and installs take it with the next model update, so
 the only manual work is rating it in Hero Traits and publishing as usual. Until then
 the hero is unprofiled: left out of the baselines and out of scoring, as above, so
@@ -656,7 +666,7 @@ from the profiled heroes) using the real scoring code, then lists:
   above the median lands at the top or the bottom of nearly every list. The usual
   cause is a coefficient much bigger than the rest, such as a stat rule giving
   5.5 per point of healing.
-- **Empty traits:** traits some rule uses that every hero scores 0 on.
+- **Empty traits:** traits some rule uses that every hero scores 0 on or hasn't been rated on.
 - **Match data:** which patches it comes from with each one's share of the
   weight, which ranks, and how far lifts move from patch to patch.
 - **Match data disagrees:** per item and relation, the Pearson r across heroes

@@ -283,7 +283,7 @@ public static class ModelHealth
             .Concat(store.StatRules.Values.Select(rule => rule.CategoryId))
             .ToHashSet();
         return store.Categories.Keys
-            .Where(categoryId => used.Contains(categoryId) && store.Heroes.Keys.All(heroId => store.HeroScore(heroId, categoryId) == 0))
+            .Where(categoryId => used.Contains(categoryId) && store.Heroes.Keys.All(heroId => store.HeroScore(heroId, categoryId) is null or 0))
             .ToHashSet();
     }
 
@@ -376,7 +376,10 @@ public static class ModelHealth
             {
                 var traitWeight = store.TraitWeight(categoryId, Relation.Against);
                 var baseline = baselines.GetValueOrDefault(categoryId);
-                var points = rated.Select(lift => (store.HeroScore(lift.HeroId, categoryId) - baseline, lift.Lift, 1 / (lift.Se * lift.Se))).ToList();
+                var points = rated
+                    .Where(lift => store.HeroScore(lift.HeroId, categoryId) is not null)
+                    .Select(lift => (store.HeroScore(lift.HeroId, categoryId)!.Value - baseline, lift.Lift, 1 / (lift.Se * lift.Se)))
+                    .ToList();
                 if (traitWeight == 0 || MatchStatsMath.Slope(points) is not { } slope || Math.Abs(slope.T) < SuggestT)
                     continue;
                 var hand = store.EffectiveCoefficient(itemId, categoryId, Relation.Against) / traitWeight;

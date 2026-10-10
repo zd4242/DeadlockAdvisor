@@ -22,7 +22,8 @@ namespace DeadlockAdvisor.Features.HeroTraits;
 /// two keystrokes, 100 on three), dropping one hero down. Space or Tab commits a half-typed value
 /// early, needed only for a bare 0-9.</item>
 /// <item>Traits run 0..100, or -100..100 for the signed ones; press "-" first for those.</item>
-/// <item>Backspace rubs out the last digit typed, or blanks the cell back to 0 when nothing is pending.</item>
+/// <item>Backspace rubs out the last digit typed, or empties the cell when nothing is pending. An empty cell
+/// isn't rated and leaves the hero out of that trait; a 0 is a rating.</item>
 /// <item>"Copy from..." clones an already-rated hero's whole profile as a starting point.</item>
 /// <item>Clicking a trait's header sorts the heroes by it: highest first, then lowest, then back to by name.</item>
 /// <item>Ctrl+Z undoes the last edit, a cleared or copied hero included; Ctrl+Y or Ctrl+Shift+Z redoes it.</item>
@@ -35,7 +36,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public const string Hint =
         "Type 0–100: it commits as soon as no more digits fit (space or Tab ends a short one).\n"
-        + "\"-\" first for ± traits.\nBackspace clears.\nEnter moves down a hero.\nCtrl+Z undoes, Ctrl+Y redoes.";
+        + "\"-\" first for ± traits.\nBackspace empties a cell: empty means not rated, 0 is a score.\nEnter moves down a hero.\nCtrl+Z undoes, Ctrl+Y redoes.";
 
     private readonly IDataService _data;
     private readonly IModalService _modals;
@@ -104,7 +105,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     /// <summary>How many rows a Page Up/Down moves; the view keeps this in step with the grid's height.</summary>
     public int PageRows { get; set; } = 10;
 
-    public Func<string, string, double> ValueOf => (heroId, categoryId) => _data.Store.HeroScore(heroId, categoryId);
+    public Func<string, string, double?> ValueOf =>(heroId, categoryId) => _data.Store.HeroScore(heroId, categoryId);
 
     public ReactiveCommand<Unit, Unit> CopyFromCommand { get; }
     public ReactiveCommand<Unit, Unit> ClearHeroCommand { get; }
@@ -132,15 +133,17 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     // -- editing ------------------------------------------------------------------
 
-    /// <summary>Write one cell, clamped to the trait's scale. Rescoring and saving follow from the data service.</summary>
-    public void SetValue(int row, int column, double value)
+    /// <summary>Write one cell, clamped to the trait's scale, or empty it with null. Rescoring and saving follow from the data service.</summary>
+    public void SetValue(int row, int column, double? value)
     {
         if (row < 0 || row >= Heroes.Count || column < 0 || column >= Categories.Count)
             return;
         var (hero, category) = (Heroes[row], Categories[column]);
-        var number = Math.Max(category.ScaleMin, Math.Min(category.ScaleMax, value));
-        RecordEdit($"setting {category.CategoryName} on {hero.HeroName} to {Format.Num(number)}", hero, category, [category],
-            () => _data.Store.SetHeroScore(hero.HeroId, category.CategoryId, number));
+        double? number = value is { } score ? Math.Max(category.ScaleMin, Math.Min(category.ScaleMax, score)) : null;
+        var description = number is { } rating
+            ? $"setting {category.CategoryName} on {hero.HeroName} to {Format.Num(rating)}"
+            : $"clearing {category.CategoryName} on {hero.HeroName}";
+        RecordEdit(description, hero, category, [category], () => _data.Store.SetHeroScore(hero.HeroId, category.CategoryId, number));
     }
 
     /// <summary>Typed characters: digits build the pending number, "-" flips its sign on ± traits.</summary>
@@ -219,7 +222,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
         if (key is Key.Delete or Key.Back)
         {
-            // Mid-number, backspace rubs out one digit; on a settled cell it still means "blank this and move on".
+            // Mid-number, backspace rubs out one digit; on a settled cell it still means "empty this and move on".
             if (HasPending)
             {
                 if (_pendingDigits.Length > 0)
@@ -229,7 +232,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
                 UpdatePendingText();
                 return true;
             }
-            SetValue(row, column, 0);
+            SetValue(row, column, null);
             Advance(row, column);
             return true;
         }
@@ -413,8 +416,10 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         {
             var store = _data.Store;
             var categoryId = Categories[SortColumn].CategoryId;
-            Func<int, double> score = row => store.HeroScore(Heroes[row].HeroId, categoryId);
-            rows = SortDescending ? rows.OrderByDescending(score) : rows.OrderBy(score);
+            Func<int, double?> score = row => store.HeroScore(Heroes[row].HeroId, categoryId);
+            // Unrated heroes gather at the bottom either way, to find what's left to fill in.
+            var rated = rows.OrderBy(row => score(row) is null);
+            rows = SortDescending ? rated.ThenByDescending(score) : rated.ThenBy(score);
         }
         RowOrder = rows.ToList();
     }
@@ -466,7 +471,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         }
 
         _modals.Confirm(
-            $"Reset every trait on {hero.HeroName} to 0?\n\n{filled} of {Categories.Count} are rated. Ctrl+Z on the grid undoes this.",
+            $"Empty every trait on {hero.HeroName}?\n\n{filled} of {Categories.Count} are rated. Ctrl+Z on the grid undoes this.",
             "Clear hero",
             () =>
             {
@@ -503,7 +508,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     private void Redo() => Replay(_redo, _undo, change => change.After, "Redid");
 
     /// <summary>Put one edit's values back (or forward again), then show the cell it was made from.</summary>
-    private void Replay(Stack<ScoreEdit> from, Stack<ScoreEdit> to, Func<ScoreChange, double> valueOf, string verb)
+    private void Replay(Stack<ScoreEdit> from, Stack<ScoreEdit> to, Func<ScoreChange, double?> valueOf, string verb)
     {
         ClearPending();
         if (!from.TryPop(out var edit))
@@ -546,7 +551,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     private sealed record ScoreEdit(string Description, string HeroId, string CategoryId, IReadOnlyList<ScoreChange> Changes);
 
-    private readonly record struct ScoreChange(string CategoryId, double Before, double After);
+    private readonly record struct ScoreChange(string CategoryId, double? Before, double? After);
 
     private void ShowMessage(string text) => ContextSpans = [new TextSpan(text)];
 
@@ -558,14 +563,14 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         RefreshProgress();
         if (CurrentHero is not { } hero || CurrentCategory is not { } category)
             return;
-        var value = _data.Store.HeroScore(hero.HeroId, category.CategoryId);
+        var current = _data.Store.HeroScore(hero.HeroId, category.CategoryId) is { } value ? $"currently {Format.Num(value)}" : "not rated";
         ContextSpans =
         [
             new TextSpan(hero.HeroName, Bold: true),
             new TextSpan("  ·  "),
             new TextSpan(category.CategoryName, Bold: true),
             new TextSpan(" "),
-            new TextSpan($"(scale {Format.Num(category.ScaleMin)} to {Format.Num(category.ScaleMax)}, currently {Format.Num(value)})", Palette.TextFaint),
+            new TextSpan($"(scale {Format.Num(category.ScaleMin)} to {Format.Num(category.ScaleMax)}, {current})", Palette.TextFaint),
             TextSpan.LineBreak,
             new TextSpan(category.Description, Palette.TextDim),
         ];

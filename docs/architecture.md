@@ -23,7 +23,7 @@ second opinion. The "model" (hero ratings, item formulas, game data) and the mat
 releases that installs download.
 
 Words used throughout: **hero**, **item** (shop upgrade, tier 1-4), **trait** (a `categories.csv` row), **relation**
-(`against` an enemy, `with` an ally, `as` you), **profiled hero** (at least one nonzero trait), **model** (the formula
+(`against` an enemy, `with` an ally, `as` you), **profiled hero** (rated on at least one trait; a blank score is "not rated", 0 is a rating), **model** (the formula
 files, see publishing.md), **seed** (`src/Assets/SeedData`, the starter and published copy of the model), **lift** (an
 item's win-rate gain from match data), **segment** (one patch's raw match counts), **snapshot** (the shared download of
 segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies the list leans toward).

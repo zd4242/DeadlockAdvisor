@@ -98,7 +98,7 @@ public class HeroTraitsPageTests
 
         ui.Window.KeyPressQwerty(PhysicalKey.Backspace, RawInputModifiers.None);
         UiHarness.Settle();
-        Assert.Equal(0, ui.Data.Store.HeroScore(page.Heroes[2].HeroId, category));
+        Assert.Null(ui.Data.Store.HeroScore(page.Heroes[2].HeroId, category));
         Assert.Equal(3, page.CurrentRow);
 
         // Tab ends a short number as Space does, and doesn't move focus out of the grid.

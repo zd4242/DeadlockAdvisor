@@ -46,6 +46,22 @@ public class ScoringTests
     }
 
     [Fact]
+    public void AnUnratedTraitLeavesTheHeroAndTheAverageOutOfIt()
+    {
+        var store = TestStore.Make();
+        store.SetHeroScore("low_hp", "deals_spirit_damage_general", null);
+
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+
+        // (5 + 1) / 2: the unrated hero isn't a 0 pulling the average down.
+        Assert.Equal(3.0, store.TraitBaselines()["deals_spirit_damage_general"]);
+        Assert.Equal(4.0, matrix[Key("spirit_resist_t1", "heavy_spirit", Relation.Against)]); // (5 - 3) * 2
+        Assert.False(matrix.ContainsKey(Key("spirit_resist_t1", "low_hp", Relation.Against)));
+        // Still scored on the traits it is rated on.
+        AssertEx.Close(-8.0 / 3, matrix[Key("pct_dmg_t3", "low_hp", Relation.Against)]);
+    }
+
+    [Fact]
     public void TheWholeRosterAsEnemiesScoresNothing()
     {
         var store = TestStore.Make();

@@ -182,12 +182,12 @@ reads the downloaded match data, so it needs **Data → Download Match Data**.
 |---|---|
 | `0`–`100` | commits as soon as no more digits fit; <kbd>Space</kbd> or <kbd>Tab</kbd> ends a short number |
 | `-` first | negative value, for the ± traits |
-| <kbd>Backspace</kbd> | clears the cell |
+| <kbd>Backspace</kbd> | empties the cell: not rated yet, so the hero isn't scored on that trait. A `0` is a rating |
 | <kbd>Enter</kbd> | next hero, same trait |
 | double-click / <kbd>F2</kbd> | a numeric editor, for decimals |
 | <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | undo / redo |
 
-**Copy from…** clones another hero's profile; **Clear hero** resets one.
+**Copy from…** clones another hero's profile; **Clear hero** empties one.
 The footer explains whichever trait you're on.
 
 **Item Formulas** — what each item responds to.
@@ -234,7 +234,7 @@ Nothing locks the files, so don't edit them from two places at once.
 | `heroes.csv` | hero_id, hero_name, game_id | game_id filled in by the game sync |
 | `items.csv` | item_id, item_name, category, tier, game_id, cost | category is the shop: weapon/vitality/spirit |
 | `categories.csv` | category_id, category_name, scale_min, scale_max, description | the trait list |
-| `hero_category_scores.csv` | hero_id, category_id, score | every hero × trait pair |
+| `hero_category_scores.csv` | hero_id, category_id, score | every hero × trait pair; an empty score is not rated |
 | `item_formula_coefficients.csv` | item_id, category_id, relation, coefficient | only the traits an item cares about |
 | `trait_weights.csv` | category_id, relation, weight | only weights other than 1 |
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
@@ -261,8 +261,7 @@ Data Folder…** is not repaired: it is refused, and left as it was.
 ## Data menu
 
 - **Sync New Heroes / Items / Categories**: after adding rows to the CSVs
-  by hand. Backfills missing hero × trait rows at 0, drops rows for
-  deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
+  by hand. Drops rows for deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
   no rows), and lists unrated heroes and items with no rules.
 - **Sync from Game API**: an editor tool, shown with *Edit the scoring
   model* on (Settings → General) like the items above it. It pulls heroes and the shop from

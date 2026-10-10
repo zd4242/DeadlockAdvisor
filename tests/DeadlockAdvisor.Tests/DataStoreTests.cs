@@ -144,6 +144,70 @@ public class DataStoreTests
         }
     }
 
+    [Fact]
+    public void AnEmptyScoreIsNotRatedAndAZeroIs()
+    {
+        using var folder = CopyOfGolden();
+        var (heroes, traits) = HeroesAndTraits(folder);
+        File.WriteAllText(folder.File(DataStore.HeroScoresFile),
+            "hero_id,category_id,score\r\n"
+            + $"{heroes[0]},{traits[0]},0\r\n{heroes[0]},{traits[1]},\r\n"
+            + $"{heroes[1]},{traits[0]},\r\n{heroes[1]},{traits[1]},7\r\n");
+
+        var store = DataStore.Load(folder.Path);
+
+        Assert.Equal(0, store.HeroScore(heroes[0], traits[0]));
+        Assert.Null(store.HeroScore(heroes[0], traits[1]));
+        Assert.Null(store.HeroScore(heroes[1], traits[0]));
+        Assert.Equal(7, store.HeroScore(heroes[1], traits[1]));
+        Assert.Equal(1, store.HeroFilledCount(heroes[0]));
+        Assert.True(store.IsProfiled(heroes[0]));
+        Assert.False(store.IsProfiled(heroes[2]));
+    }
+
+    [Fact]
+    public void SavingKeepsAnEmptyScoreEmpty()
+    {
+        using var folder = CopyOfGolden();
+        var store = DataStore.Load(folder.Path);
+        var (heroes, traits) = HeroesAndTraits(folder);
+        store.SetHeroScore(heroes[0], traits[0], 0);
+        store.SetHeroScore(heroes[0], traits[1], null);
+        store.SaveHeroScores();
+
+        var rows = File.ReadAllLines(folder.File(DataStore.HeroScoresFile));
+        Assert.Contains($"{heroes[0]},{traits[0]},0", rows);
+        Assert.Contains($"{heroes[0]},{traits[1]},", rows);
+        var reloaded = DataStore.Load(folder.Path);
+        Assert.Equal(0, reloaded.HeroScore(heroes[0], traits[0]));
+        Assert.Null(reloaded.HeroScore(heroes[0], traits[1]));
+    }
+
+    [Fact]
+    public void AFileFromBeforeEmptyMeantNotRatedReadsAnAllZeroHeroAsUnrated()
+    {
+        using var folder = CopyOfGolden();
+        var (heroes, traits) = HeroesAndTraits(folder);
+        File.WriteAllText(folder.File(DataStore.HeroScoresFile),
+            "hero_id,category_id,score\r\n"
+            + $"{heroes[0]},{traits[0]},0\r\n{heroes[0]},{traits[1]},0\r\n"
+            + $"{heroes[1]},{traits[0]},0\r\n{heroes[1]},{traits[1]},7\r\n");
+
+        var store = DataStore.Load(folder.Path);
+
+        Assert.False(store.IsProfiled(heroes[0]));
+        Assert.Null(store.HeroScore(heroes[0], traits[0]));
+        // Where nothing else says otherwise, a 0 beside a rating stays a rating.
+        Assert.Equal(0, store.HeroScore(heroes[1], traits[0]));
+        Assert.Equal(7, store.HeroScore(heroes[1], traits[1]));
+    }
+
+    private static (List<string> Heroes, List<string> Traits) HeroesAndTraits(TempDirectory folder)
+    {
+        var store = DataStore.Load(folder.Path);
+        return (store.Heroes.Keys.Take(3).ToList(), store.Categories.Keys.Take(2).ToList());
+    }
+
     private static TempDirectory CopyOfGolden()
     {
         var folder = new TempDirectory();

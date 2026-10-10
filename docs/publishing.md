@@ -77,11 +77,11 @@ A hero the game releases reaches everyone without anyone touching the app, excep
    `dotnet run --project tools/PublishModel -- --add-new-heroes` (`ModelPublisher.AddNewHeroesAsync`). That
    compares the heroes deadlock-api.com lists as active (`/v1/assets/heroes?only_active=true`, so a hero the API doesn't list as active yet
    doesn't count, and neither does a placeholder such as `hero_testhero`) with the seed's
-   `heroes.csv`, adds the missing ones with every trait at 0 (`GameSync.ApplyRoster`), and dates `model.json`
+   `heroes.csv`, adds the missing ones with every trait unrated (`GameSync.ApplyRoster`), and dates `model.json`
    with a note ("New hero: Baba. Its ratings are still to come, …"). When the seed changed it commits it, and
    starts CI by hand, because a push made with the workflow's own token doesn't start it. CI's tests and its
    `publish-model` job then publish it as above. It also opens an issue, "Rate new hero: Baba".
-2. **Why that's safe to publish unattended.** A hero with every trait at 0 is unprofiled
+2. **Why that's safe to publish unattended.** A hero with no trait rated is unprofiled
    (`DataStore.IsProfiled`): it's left out of the baselines and out of scoring, so no recommendation changes. It
    just makes the hero pickable and detectable.
 3. **You rate it.** Data → Check for Formula Updates puts the new hero in your data folder, then rate it in Hero

@@ -414,7 +414,7 @@ public class GameApiTests
         Assert.Equal(["Low HP: -4 -> -5", "Generic: 0 -> 2"], report.MeasuredChanges);
         Assert.Equal(-5, store.HeroScore("low_hp", "max_hp"));
         // A new hero rated on nothing else stays unprofiled rather than counting as below average at everything.
-        Assert.Equal(0, store.HeroScore("unrated", "max_hp"));
+        Assert.Null(store.HeroScore("unrated", "max_hp"));
         Assert.Contains("_kitHealth: Abrams isn't among the game's heroes", report.StaleOverrides);
         Assert.Contains("Has High Max HP, measured from each hero's health, changed on 2 hero(es):", report.Lines());
         Assert.Empty(GameSync.Apply(store, heroes, []).MeasuredChanges);
@@ -455,10 +455,10 @@ public class GameApiTests
 
         var report = GameSync.Apply(store, heroes, [], HeroStats());
 
-        Assert.Equal(["Heavy Spirit: 0 -> 50", "Low HP: 0 -> 5", "Generic: 0 -> 68"], report.DurabilityChanges);
+        Assert.Equal(["Heavy Spirit: unrated -> 50", "Low HP: unrated -> 5", "Generic: unrated -> 68"], report.DurabilityChanges);
         Assert.Equal(68, store.HeroScore("generic", "durability"));
         // A new hero rated on nothing else stays unprofiled rather than counting as below average at everything.
-        Assert.Equal(0, store.HeroScore("unrated", "durability"));
+        Assert.Null(store.HeroScore("unrated", "durability"));
         Assert.Contains("Durability, measured from the damage each hero takes, changed on 3 hero(es):", report.Lines());
         Assert.Empty(GameSync.Apply(store, heroes, [], HeroStats()).DurabilityChanges);
         Assert.Empty(report.MeasuredChanges);
@@ -472,7 +472,7 @@ public class GameApiTests
 
         Assert.Empty(GameSync.Apply(store, heroes, []).DurabilityChanges);
         Assert.Empty(GameSync.Apply(store, heroes, [], new JsonArray(HeroStatsRow(13, 10, 300_000))).DurabilityChanges);
-        Assert.Equal(0, store.HeroScore("heavy_spirit", "durability"));
+        Assert.Null(store.HeroScore("heavy_spirit", "durability"));
         Assert.Empty(GameSync.Apply(TestStore.Make(), heroes, [], HeroStats()).DurabilityChanges);
     }
 
@@ -594,8 +594,8 @@ public class GameApiTests
         Assert.Equal(["heavy_spirit", "low_hp", "generic", "rat_king"], store.Heroes.Keys);
         Assert.Equal(84, store.Heroes["rat_king"].GameId);
         Assert.Equal(2, store.Heroes["low_hp"].GameId);
-        // Rows for every trait, all at 0: unprofiled, so left out of scoring until someone rates it.
-        Assert.All(store.Categories.Keys, category => Assert.True(store.HeroScores.ContainsKey(new ScoreKey("rat_king", category))));
+        // Rated on no trait: unprofiled, so left out of scoring until someone rates it.
+        Assert.All(store.Categories.Keys, category => Assert.Null(store.HeroScore("rat_king", category)));
         Assert.False(store.IsProfiled("rat_king"));
         // The measured max HP is part of a full sync only: it would move every rated hero's score with the median.
         Assert.Empty(report.MeasuredChanges);

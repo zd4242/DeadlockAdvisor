@@ -6,7 +6,7 @@
   "items_tagged": 93,
   "rules": 42,
   "derived_rules": 100,
-  "scores_filled": 490,
+  "scores_filled": 874,
   "scores_total": 874
  },
  "uncovered_items": [
@@ -393,155 +393,155 @@
  "hero_filled_count": [
   [
    "abrams",
-   15
+   23
   ],
   [
    "apollo",
-   14
+   23
   ],
   [
    "bebop",
-   16
+   23
   ],
   [
    "billy",
-   15
+   23
   ],
   [
    "calico",
-   11
+   23
   ],
   [
    "celeste",
-   14
+   23
   ],
   [
    "drifter",
-   14
+   23
   ],
   [
    "dynamo",
-   11
+   23
   ],
   [
    "graves",
-   14
+   23
   ],
   [
    "grey_talon",
-   12
+   23
   ],
   [
    "haze",
-   13
+   23
   ],
   [
    "holliday",
-   14
+   23
   ],
   [
    "infernus",
-   12
+   23
   ],
   [
    "ivy",
-   14
+   23
   ],
   [
    "kelvin",
-   10
+   23
   ],
   [
    "lady_geist",
-   12
+   23
   ],
   [
    "lash",
-   13
+   23
   ],
   [
    "mcginnis",
-   12
+   23
   ],
   [
    "mina",
-   13
+   23
   ],
   [
    "mirage",
-   12
+   23
   ],
   [
    "mo_and_krill",
-   11
+   23
   ],
   [
    "paige",
-   13
+   23
   ],
   [
    "paradox",
-   11
+   23
   ],
   [
    "pocket",
-   12
+   23
   ],
   [
    "rem",
-   11
+   23
   ],
   [
    "seven",
-   14
+   23
   ],
   [
    "shiv",
-   12
+   23
   ],
   [
    "silver",
-   16
+   23
   ],
   [
    "doorman",
-   10
+   23
   ],
   [
    "sinclair",
-   9
+   23
   ],
   [
    "venator",
-   12
+   23
   ],
   [
    "victor",
-   13
+   23
   ],
   [
    "vindicta",
-   15
+   23
   ],
   [
    "viscous",
-   15
+   23
   ],
   [
    "vyper",
-   12
+   23
   ],
   [
    "warden",
-   14
+   23
   ],
   [
    "wraith",
-   14
+   23
   ],
   [
    "yamato",
-   15
+   23
   ]
  ],
  "stat_catalog": [

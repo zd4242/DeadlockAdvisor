@@ -1,6 +1,6 @@
 name: New heroes
 
-# Adds the heroes deadlock-api.com lists and the seed (src/Assets/SeedData) lacks, with every trait at 0, and
+# Adds the heroes deadlock-api.com lists and the seed (src/Assets/SeedData) lacks, with every trait unrated, and
 # publishes them through CI like any other model change. A hero nobody has rated is left out of scoring, so
 # this changes no recommendation: it makes the hero pickable and detectable, and its art follows on each
 # install. Rating it is still done by hand, and the issue this opens is the reminder. Runs every six hours;
@@ -58,7 +58,7 @@ jobs:
           gh workflow run ci.yml --ref main
           if [ -n "$names" ]; then
             gh issue create --title "Rate new hero: $names" --body "$(cat <<EOF
-          The New heroes workflow added $names to the seed with every trait at 0, and CI is publishing it. Until they are rated, recommendations leave them out.
+          The New heroes workflow added $names to the seed with every trait unrated, and CI is publishing it. Until they are rated, recommendations leave them out.
 
           - [ ] Data → Check for Formula Updates (or Sync from Game API), so your data folder has them
           - [ ] Rate their traits in Hero Traits

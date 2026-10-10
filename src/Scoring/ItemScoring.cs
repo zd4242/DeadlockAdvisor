@@ -46,9 +46,9 @@ public static class ItemScoring
             var baseline = baselines.GetValueOrDefault(key.CategoryId);
             foreach (var heroId in profiled)
             {
-                var deviation = store.HeroScore(heroId, key.CategoryId) - baseline;
-                if (deviation == 0)
+                if (store.HeroScore(heroId, key.CategoryId) is not { } score || score == baseline)
                     continue;
+                var deviation = score - baseline;
                 var cell = new MatrixKey(key.ItemId, heroId, key.Relation);
                 weights[cell] = weights.GetValueOrDefault(cell) + deviation * coefficient;
             }
@@ -245,9 +245,8 @@ public static class ItemScoring
                 continue;
             if (ranked is { } wanted && store.OnBestTargets(itemId, categoryId, relation) != wanted)
                 continue;
-            var heroScore = store.HeroScore(heroId, categoryId);
             var baseline = baselines.GetValueOrDefault(categoryId);
-            if (heroScore == baseline)
+            if (store.HeroScore(heroId, categoryId) is not { } heroScore || heroScore == baseline)
                 continue;
             parts.Add(new TraitPart(
                 categoryId, category.CategoryName, heroScore,

@@ -251,12 +251,24 @@ public sealed class DataStore
 
     internal void LoadHeroScores()
     {
+        var anyEmpty = false;
         foreach (var row in ReadOptional(HeroScoresFile) ?? [])
         {
             if (!row.Has("hero_id") || !row.Has("category_id"))
                 continue;
-            HeroScores[new ScoreKey(row.Required("hero_id"), row.Required("category_id"))] = NumberFormat.ToFloat(row.Get("score"));
+            if (NumberFormat.TryParseFloat(row.Get("score"), out var score))
+                HeroScores[new ScoreKey(row.Required("hero_id"), row.Required("category_id"))] = score;
+            else
+                anyEmpty = true;
         }
+        if (anyEmpty)
+            return;
+
+        // A file with no empty score is from before an empty one meant "not rated": it wrote 0 for every cell
+        // nobody had filled in, so a hero scoring 0 on everything was never rated at all.
+        var unrated = HeroScores.GroupBy(pair => pair.Key.HeroId).Where(hero => hero.All(pair => pair.Value == 0)).SelectMany(hero => hero).ToList();
+        foreach (var (key, _) in unrated)
+            HeroScores.Remove(key);
     }
 
     internal void LoadItemCoefficients()
@@ -470,15 +482,17 @@ public sealed class DataStore
 
     // -- reads ------------------------------------------------------------------
 
-    public double HeroScore(string heroId, string categoryId) =>
-        HeroScores.GetValueOrDefault(new ScoreKey(heroId, categoryId));
+    /// <summary>A hero's score on a trait, or null when it hasn't been rated: unlike 0, which is a rating, it leaves the hero out of that trait.</summary>
+    public double? HeroScore(string heroId, string categoryId) =>
+        HeroScores.TryGetValue(new ScoreKey(heroId, categoryId), out var score) ? score : null;
 
-    public bool IsProfiled(string heroId) => Categories.Keys.Any(categoryId => HeroScore(heroId, categoryId) != 0);
+    /// <summary>Whether the hero is rated on any trait, 0 included.</summary>
+    public bool IsProfiled(string heroId) => Categories.Keys.Any(categoryId => HeroScore(heroId, categoryId) is not null);
 
     /// <summary>
-    /// Each trait's average over the profiled heroes. Scoring counts a hero's trait relative to it, so a
-    /// trait the whole roster shares doesn't hand its items the same bonus in every match. Unprofiled
-    /// heroes are left out: all zeros would read as "below average at everything".
+    /// Each trait's average over the profiled heroes rated on it. Scoring counts a hero's trait relative
+    /// to it, so a trait the whole roster shares doesn't hand its items the same bonus in every match.
+    /// Unprofiled heroes are left out, as are heroes not yet rated on the trait: neither is a score of 0.
     /// </summary>
     public Dictionary<string, double> TraitBaselines()
     {
@@ -487,9 +501,15 @@ public sealed class DataStore
         foreach (var categoryId in Categories.Keys)
         {
             var total = 0.0;
+            var rated = 0;
             foreach (var heroId in profiled)
-                total += HeroScore(heroId, categoryId);
-            baselines[categoryId] = profiled.Count == 0 ? 0.0 : total / profiled.Count;
+            {
+                if (HeroScore(heroId, categoryId) is not { } score)
+                    continue;
+                total += score;
+                rated++;
+            }
+            baselines[categoryId] = rated == 0 ? 0.0 : total / rated;
         }
         return baselines;
     }
@@ -626,12 +646,16 @@ public sealed class DataStore
 
     // -- writes -----------------------------------------------------------------
 
-    /// <summary>True if the value actually changed, so callers can skip a pointless save and rescore.</summary>
-    public bool SetHeroScore(string heroId, string categoryId, double score)
+    /// <summary>Rate a hero on a trait, or take the rating back with null. True if it actually changed, so callers can skip a pointless save and rescore.</summary>
+    public bool SetHeroScore(string heroId, string categoryId, double? score)
     {
         if (HeroScore(heroId, categoryId) == score)
             return false;
-        HeroScores[new ScoreKey(heroId, categoryId)] = score;
+        var key = new ScoreKey(heroId, categoryId);
+        if (score is { } rating)
+            HeroScores[key] = rating;
+        else
+            HeroScores.Remove(key);
         return true;
     }
 
@@ -766,12 +790,8 @@ public sealed class DataStore
         var changed = false;
         foreach (var categoryId in Categories.Keys)
         {
-            var key = new ScoreKey(heroId, categoryId);
-            if (HeroScores.GetValueOrDefault(key) != 0.0)
-            {
-                HeroScores[key] = 0.0;
+            if (SetHeroScore(heroId, categoryId, null))
                 changed = true;
-            }
         }
         return changed;
     }
@@ -818,7 +838,7 @@ public sealed class DataStore
     public void SaveHeroScores()
     {
         var rows = Heroes.Keys.SelectMany(heroId => Categories.Keys.Select(categoryId =>
-            Row(heroId, categoryId, NumberFormat.Short(HeroScore(heroId, categoryId)))));
+            Row(heroId, categoryId, HeroScore(heroId, categoryId) is { } score ? NumberFormat.Short(score) : "")));
         WriteCsv(HeroScoresFile, ["hero_id", "category_id", "score"], rows);
     }
 
@@ -955,27 +975,6 @@ public sealed class DataStore
     // -- growth / maintenance ---------------------------------------------------
 
     /// <summary>
-    /// Backfill any missing (hero, category) row with a score of 0, without touching scores already
-    /// entered. Call after adding a hero or a category, then save. Returns how many rows were added.
-    /// </summary>
-    public int SyncCategories()
-    {
-        var added = 0;
-        foreach (var heroId in Heroes.Keys)
-        {
-            foreach (var categoryId in Categories.Keys)
-            {
-                var key = new ScoreKey(heroId, categoryId);
-                if (HeroScores.ContainsKey(key))
-                    continue;
-                HeroScores[key] = 0.0;
-                added++;
-            }
-        }
-        return added;
-    }
-
-    /// <summary>
     /// Drop score, coefficient and weight rows pointing at ids that no longer exist. Does nothing while a base table
     /// is empty: every id would look gone.
     /// </summary>
@@ -1014,11 +1013,12 @@ public sealed class DataStore
         return Items.Keys.Where(itemId => !covered.Contains(itemId)).ToList();
     }
 
-    /// <summary>Heroes whose trait scores are still all zero: they contribute nothing to any recommendation yet.</summary>
+    /// <summary>Heroes not rated on any trait yet: they contribute nothing to any recommendation.</summary>
     public List<string> UnprofiledHeroes() => Heroes.Keys.Where(heroId => !IsProfiled(heroId)).ToList();
 
+    /// <summary>How many traits the hero is rated on, 0 included.</summary>
     public int HeroFilledCount(string heroId) =>
-        Categories.Keys.Count(categoryId => HeroScore(heroId, categoryId) != 0);
+        Categories.Keys.Count(categoryId => HeroScore(heroId, categoryId) is not null);
 
     /// <summary>Headline numbers for the status bar.</summary>
     public Coverage Coverage() => new(
@@ -1028,7 +1028,7 @@ public sealed class DataStore
         ItemsTagged: Items.Count - UncoveredItems().Count,
         Rules: ItemCoefficients.Count,
         DerivedRules: Derived.Count,
-        ScoresFilled: HeroScores.Values.Count(value => value != 0),
+        ScoresFilled: HeroScores.Count,
         ScoresTotal: Heroes.Count * Categories.Count);
 
     // -- helpers ----------------------------------------------------------------

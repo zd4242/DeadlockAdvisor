@@ -399,18 +399,16 @@ public class DataMenuViewModel : ViewModelBase
 
     // -- sync -----------------------------------------------------------------------
 
-    /// <summary>Backfill score rows after adding heroes, items or categories to the CSVs by hand, and drop rows for ids that are gone.</summary>
+    /// <summary>After adding heroes, items or categories to the CSVs by hand: drop rows for ids that are gone, and list what still has nothing to score by.</summary>
     private void SyncNewData()
     {
         var store = _data.Store;
-        var added = store.SyncCategories();
         var removed = store.PruneOrphans();
         try
         {
-            if (added > 0 || removed > 0)
-                store.SaveHeroScores();
             if (removed > 0)
             {
+                store.SaveHeroScores();
                 store.SaveItemCoefficients();
                 store.SaveTraitWeights();
             }
@@ -420,15 +418,13 @@ public class DataMenuViewModel : ViewModelBase
             _notifications.ShowError($"Writing to {_data.DataDir} failed: {ex.Message}", ex);
         }
 
-        var lines = new List<string> { $"Added {added} missing hero × trait row(s), defaulted to 0." };
-        if (removed > 0)
-            lines.Add($"Dropped {removed} row(s) pointing at ids that no longer exist.");
+        var lines = new List<string> { removed > 0 ? $"Dropped {removed} row(s) pointing at ids that no longer exist." : "No row points at an id that no longer exists." };
         var empty = store.EmptyBaseTables();
         if (empty.Count > 0)
             lines.Add($"Nothing was dropped: {string.Join(" and ", empty)} has no rows, which looks like a damaged file; Reload from Disk restores it.");
         var unprofiled = store.UnprofiledHeroes();
         if (unprofiled.Count > 0)
-            lines.AddRange(Listed($"\n{unprofiled.Count} hero(es) still have every trait at 0:", unprofiled.Select(id => store.Heroes[id].HeroName)));
+            lines.AddRange(Listed($"\n{unprofiled.Count} hero(es) aren't rated on any trait yet:", unprofiled.Select(id => store.Heroes[id].HeroName)));
         var uncovered = store.UncoveredItems();
         if (uncovered.Count > 0)
             lines.AddRange(Listed($"\n{uncovered.Count} item(s) have no formula rules and will score 0:", uncovered.Select(id => store.Items[id].ItemName)));

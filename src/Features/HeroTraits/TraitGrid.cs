@@ -65,8 +65,8 @@ public class TraitGrid : ScrollingGrid
     public static readonly StyledProperty<IReadOnlyList<int>> VisibleRowsProperty =
         AvaloniaProperty.Register<TraitGrid, IReadOnlyList<int>>(nameof(VisibleRows), []);
 
-    public static readonly StyledProperty<Func<string, string, double>?> ValueOfProperty =
-        AvaloniaProperty.Register<TraitGrid, Func<string, string, double>?>(nameof(ValueOf));
+    public static readonly StyledProperty<Func<string, string, double?>?> ValueOfProperty =
+        AvaloniaProperty.Register<TraitGrid, Func<string, string, double?>?>(nameof(ValueOf));
 
     public static readonly StyledProperty<int> CurrentRowProperty =
         AvaloniaProperty.Register<TraitGrid, int>(nameof(CurrentRow), -1, defaultBindingMode: BindingMode.TwoWay);
@@ -127,8 +127,8 @@ public class TraitGrid : ScrollingGrid
         set => SetValue(VisibleRowsProperty, value);
     }
 
-    /// <summary>(hero id, category id) → stored score.</summary>
-    public Func<string, string, double>? ValueOf
+    /// <summary>(hero id, category id) → stored score, or null when the hero isn't rated on the trait.</summary>
+    public Func<string, string, double?>? ValueOf
     {
         get => GetValue(ValueOfProperty);
         set => SetValue(ValueOfProperty, value);
@@ -340,7 +340,7 @@ public class TraitGrid : ScrollingGrid
         var viewport = Viewport;
         var bounds = new Rect(offset.X + RowHeaderWidth, offset.Y + _headerHeight,
             Math.Max(0, viewport.Width - RowHeaderWidth), Math.Max(0, viewport.Height - _headerHeight));
-        var value = ValueOf(Heroes[row].HeroId, category.CategoryId);
+        var value = ValueOf(Heroes[row].HeroId, category.CategoryId) ?? 0;
         BeginEdit(cell, bounds, value, Math.Truncate(category.ScaleMin), Math.Truncate(category.ScaleMax), 5, 0,
             edited => RaiseEvent(new CellEditedEventArgs(CellEditedEvent, row, column, edited)));
     }
@@ -383,7 +383,7 @@ public class TraitGrid : ScrollingGrid
 
     private string HeroTip(Hero hero)
     {
-        var filled = ValueOf is null ? 0 : Categories.Count(category => ValueOf(hero.HeroId, category.CategoryId) != 0);
+        var filled = ValueOf is null ? 0 : Categories.Count(category => ValueOf(hero.HeroId, category.CategoryId) is not null);
         return $"{hero.HeroName} — {filled}/{Categories.Count} traits rated";
     }
 
@@ -428,7 +428,8 @@ public class TraitGrid : ScrollingGrid
         var hero = Heroes[row];
         var category = Categories[column];
         var rect = new Rect(ColumnX(column), RowY(display), ColumnWidth, RowHeight);
-        var value = ValueOf?.Invoke(hero.HeroId, category.CategoryId) ?? 0;
+        var rating = ValueOf?.Invoke(hero.HeroId, category.CategoryId);
+        var value = rating ?? 0;
         var limit = Math.Max(Math.Abs(category.ScaleMin), Math.Abs(category.ScaleMax));
         var current = row == CurrentRow && column == CurrentColumn;
 
@@ -441,9 +442,10 @@ public class TraitGrid : ScrollingGrid
 
         if (current && PendingText is { } pending)
             DrawCentered(context, CachedText(pending, 13, Palette.Accent, bold: true), rect);
-        else if (value == 0)
-            DrawCentered(context, CachedText("·", 12, Palette.TextFaint), rect);
-        else
+        // An unrated cell stays blank, so a zero reads as a score rather than a gap.
+        else if (rating is not null && value == 0)
+            DrawCentered(context, CachedText("0", 12, Palette.TextFaint), rect);
+        else if (rating is not null)
             DrawCentered(context, CachedText(Format.Num(value), Math.Abs(value) >= 100 ? 12 : 13,
                 Math.Abs(value) / (limit == 0 ? 1 : limit) < 0.75 ? Palette.Text : _darkText, bold: true), rect);
     }

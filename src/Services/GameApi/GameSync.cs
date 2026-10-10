@@ -618,7 +618,7 @@ public static partial class GameSync
         var report = new SyncReport();
         var knownItems = store.Items.Values.ToDictionary(item => item.ItemId);
         var heroes = heroRecords.OfType<JsonNode>().ToList();
-        ApplyRoster(store, heroes, report);
+        ApplyHeroes(store, heroes, report);
         var recordsByItem = ApplyItems(store, itemRecords.OfType<JsonNode>().ToList(), report);
         ApplyStats(store, recordsByItem, knownItems, ShopBonuses(heroes), report);
         ApplyTooltips(store, recordsByItem, report);
@@ -632,22 +632,15 @@ public static partial class GameSync
     }
 
     /// <summary>
-    /// Only the hero half of <see cref="Apply"/>: new heroes are added with every trait at 0, which leaves
+    /// Only the hero half of <see cref="Apply"/>: new heroes are added with no trait rated, which leaves
     /// them unprofiled (out of the baselines and out of scoring) until someone rates them, and renamed ones
     /// follow the game. What a new hero's arrival means for items and measured scores waits for a full sync.
     /// </summary>
     public static SyncReport ApplyRoster(DataStore store, IEnumerable<JsonNode?> heroRecords)
     {
         var report = new SyncReport();
-        ApplyRoster(store, heroRecords.OfType<JsonNode>().ToList(), report);
+        ApplyHeroes(store, heroRecords.OfType<JsonNode>().ToList(), report);
         return report;
-    }
-
-    private static void ApplyRoster(DataStore store, List<JsonNode> heroes, SyncReport report)
-    {
-        ApplyHeroes(store, heroes, report);
-        if (report.AddedHeroes.Count > 0)
-            store.SyncCategories();
     }
 
     // -- hero traits measured from the game ---------------------------------------------
@@ -730,11 +723,11 @@ public static partial class GameSync
         foreach (var (heroId, score) in scores)
         {
             var key = new ScoreKey(heroId, trait);
-            var old = store.HeroScores.GetValueOrDefault(key);
+            var old = store.HeroScore(heroId, trait);
             if (old == score || !store.IsProfiled(heroId))
                 continue;
             store.HeroScores[key] = score;
-            changes.Add($"{store.Heroes[heroId].HeroName}: {Format.Num(old)} -> {Format.Num(score)}");
+            changes.Add($"{store.Heroes[heroId].HeroName}: {(old is { } before ? Format.Num(before) : "unrated")} -> {Format.Num(score)}");
         }
     }
 

@@ -206,7 +206,7 @@
                                     <MenuItem Header="Sync New Heroes / Items / Categories"
                                               Command="{Binding DataMenu.SyncNewDataCommand}"
                                               IsVisible="{Binding ShowsEditors}"
-                                              ToolTip.Tip="Backfill score rows after adding to the CSVs by hand"/>
+                                              ToolTip.Tip="Drop rows for ids that are gone after editing the CSVs by hand"/>
                                     <MenuItem Header="Sync from Game API"
                                               Command="{Binding DataMenu.SyncGameApiCommand}"
                                               IsVisible="{Binding ShowsEditors}"

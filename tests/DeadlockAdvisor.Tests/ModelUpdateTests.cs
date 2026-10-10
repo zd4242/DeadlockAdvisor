@@ -324,8 +324,11 @@ public sealed class ModelUpdateTests : IDisposable
             result.Published.Note?.Text);
         var after = DataStore.Load(seed.Path);
         Assert.Equal(before.Heroes.Keys.Concat(["newcomer", "latecomer"]), after.Heroes.Keys);
-        Assert.Equal(before.HeroScores.Count + 2 * after.Categories.Count, after.HeroScores.Count);
+        Assert.Equal(before.HeroScores.Count, after.HeroScores.Count);
+        // The file still has a row for every trait, empty for the new heroes.
+        Assert.Equal(after.Heroes.Count * after.Categories.Count, File.ReadAllLines(Path.Combine(seed.Path, DataStore.HeroScoresFile)).Length - 1);
         Assert.All(["newcomer", "latecomer"], heroId => Assert.False(after.IsProfiled(heroId)));
+        Assert.All(["newcomer", "latecomer"], heroId => Assert.All(after.Categories.Keys, category => Assert.Null(after.HeroScore(heroId, category))));
         Assert.All(before.HeroScores, pair => Assert.Equal(pair.Value, after.HeroScore(pair.Key.HeroId, pair.Key.CategoryId)));
         // The seed still passes TheSeedsModelJsonListsEveryModelFileByItsHash.
         var listed = ModelManifest.Parse(File.ReadAllBytes(Path.Combine(seed.Path, ModelManifest.FileName)));

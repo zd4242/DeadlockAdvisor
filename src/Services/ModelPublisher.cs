@@ -85,7 +85,7 @@ public static class ModelPublisher
 
     /// <summary>
     /// What CI's new-heroes job runs (tools/PublishModel --add-new-heroes): the game's heroes folded into the
-    /// seed's and published as <see cref="Publish"/> does. A new hero arrives with every trait at 0, which
+    /// seed's and published as <see cref="Publish"/> does. A new hero arrives with no trait rated, which
     /// scoring leaves out until someone rates it, so it makes the hero pickable and detectable and changes no
     /// recommendation. Nothing is written when the seed already has them all.
     /// </summary>
