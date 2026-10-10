@@ -86,7 +86,7 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
         + "Unlike the win rate, it isn't raised by items being bought late in games already going well, but it says nothing "
         + "about how strong the item is for everyone. A low fit doesn't make an item a bad buy: it only means this hero "
         + "gains less from it than from its usual picks, and a strong item can fit every hero below that.\n"
-        + "The Match page's \"you\" match data is the same measure.";
+        + "The Match page's \"you\" match results are the same measure.";
 
     public const string FiltersTip = "Which matches count, and which columns show";
 
@@ -556,10 +556,10 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
                   + "once you're connected."
                 : "No match counts to show yet. Data → Check for Updates brings them, with the items each hero's players buy."
             : table is null
-                ? $"{(picked.Count == 1 ? "This patch's" : "These patches'")} match data has no rank groups. "
-                  + "Download the match data again with them to narrow it to ranks."
+                ? $"{(picked.Count == 1 ? "This patch's" : "These patches'")} match results have no rank groups. "
+                  + "Download the match results again with them to narrow them to ranks."
                 : table.Matches.Matches == 0
-                    ? $"No {SelectedHero!.HeroName} matches in {theirs} match data{(Range is null ? "" : " at these ranks")}."
+                    ? $"No {SelectedHero!.HeroName} matches in {theirs} match results{(Range is null ? "" : " at these ranks")}."
                     : null;
         this.RaisePropertyChanged(nameof(IsEmpty));
         if (table is null || EmptyHint is not null)

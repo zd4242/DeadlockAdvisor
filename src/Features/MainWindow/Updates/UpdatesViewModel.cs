@@ -51,8 +51,8 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         Rows =
         [
             new UpdateRowViewModel(UpdateSource.App, "App"),
-            new UpdateRowViewModel(UpdateSource.Formulas, "Formulas", about: "hero ratings and item formulas"),
-            new UpdateRowViewModel(UpdateSource.MatchData, "Match data", matchData, "item win rates from real matches"),
+            new UpdateRowViewModel(UpdateSource.Formulas, "Advisor rating", about: "hero ratings and item formulas"),
+            new UpdateRowViewModel(UpdateSource.MatchData, "Match results", matchData, "how items do in real matches"),
             new UpdateRowViewModel(UpdateSource.Art, "Art", about: "hero portraits and item icons"),
         ];
         foreach (var row in Rows)
@@ -213,7 +213,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         IReadOnlyList<UpdateLink> links = [new("What's new", _dataMenu.ModelNotesCommand, "What the publisher said changed, version by version")];
 
         if (Offer(DataMenuViewModel.ModelChipTitle) is { } update)
-            return new(UpdateState.Available, "A newer version of the formulas is ready", "New formulas", "Apply", update.OpenCommand, update.ToolTipText, links);
+            return new(UpdateState.Available, "A newer advisor rating is ready", "New advisor rating", "Apply", update.OpenCommand, update.ToolTipText, links);
         if (Offer(DataMenuViewModel.NewHeroesChipTitle) is { } heroes)
             return new(UpdateState.Available, $"New heroes: {heroes.StatusText}", $"New heroes: {heroes.StatusText}", "Add", heroes.OpenCommand,
                 heroes.ToolTipText, links);
@@ -232,22 +232,22 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
         var settings = _settings.Current;
         var job = Job(DataMenuViewModel.MatchDataJobTitle);
         if (_dataMenu.IsDownloadingMatchData)
-            return Downloading(job, "match data");
+            return Downloading(job, "match results");
         if (job is { HasFailed: true })
         {
-            return new(UpdateState.Failed, "The last download didn't finish", "Match data download failed", "Try again", _dataMenu.DownloadMatchDataCommand,
+            return new(UpdateState.Failed, "The last download didn't finish", "Match results download failed", "Try again", _dataMenu.DownloadMatchDataCommand,
                 null, [new("What went wrong", job.OpenCommand)]);
         }
 
         var summary = _matchData.Summary;
-        var download = "Pull item win rates from real matches (seconds from the shared download, a few minutes from deadlock-api.com; in the background)";
+        var download = "Pull how items do in real matches (seconds from the shared download, a few minutes from deadlock-api.com; in the background)";
         if (_dataMenu.NewerPatch is { } newer)
         {
             return new(UpdateState.Available, summary, $"Patch {newer.Label} is out", "Update…", _dataMenu.DownloadMatchDataCommand, download);
         }
         if (!_matchData.HasData)
         {
-            return new(UpdateState.NotDownloaded, "None yet · real win rates add a second opinion to the recommendations", "Match data not downloaded", "Download…",
+            return new(UpdateState.NotDownloaded, "None yet · real match results add a second opinion to the recommendations", "Match results not downloaded", "Download…",
                 _dataMenu.DownloadMatchDataCommand, download);
         }
 
@@ -257,7 +257,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             : _dataMenu.IsCheckingMatchData ? (UpdateState.Checking, $"{summary} · checking for a new patch…")
             : checkedAt is null ? (UpdateState.NotChecked, $"{summary} · not checked yet")
             : (UpdateState.UpToDate, $"{summary} · {CheckedText(checkedAt)}");
-        return new(state, text, "", "Check", _dataMenu.CheckMatchDataCommand, "Take any newer match data from the shared download, or say it's up to date",
+        return new(state, text, "", "Check", _dataMenu.CheckMatchDataCommand, "Take any newer match results from the shared download, or say they're up to date",
             [new("Download again…", _dataMenu.DownloadMatchDataCommand, download)]);
     }
 

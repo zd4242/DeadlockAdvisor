@@ -41,7 +41,7 @@ public class SettingsViewModel : ViewModelBase
                 Geometry.Parse("M1.5,2.5 H14.5 V11.5 H1.5 Z M5,14.5 H11 M8,11.5 V14.5 "
                                + "M4,6.5 V4.5 H6 M10,4.5 H12 V6.5 M4,7.5 V9.5 H6 M10,9.5 H12 V7.5"),
                 Detection),
-            new("Data", "Keeping the art, match data, formulas and app up to date, and where the data lives.",
+            new("Data", "Keeping the art, match results, advisor rating and app up to date, and where the data lives.",
                 Geometry.Parse("M2.5,4 A5.5,2 0 1,0 13.5,4 A5.5,2 0 1,0 2.5,4 M2.5,4 V12 A5.5,2 0 0,0 13.5,12 V4 M2.5,8 A5.5,2 0 0,0 13.5,8"),
                 Data),
         ];

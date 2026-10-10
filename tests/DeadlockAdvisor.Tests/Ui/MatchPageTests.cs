@@ -190,7 +190,7 @@ public class MatchPageTests
         match.Results.SearchText = "knock";
 
         var row = match.Results.Entries.OfType<ResultRowViewModel>().Single();
-        Assert.Equal("Left out of the list: the formula and the match data disagree on it (Filters).", row.HiddenReason);
+        Assert.Equal("Left out of the list: the advisor rating and the match results disagree on it (Filters).", row.HiddenReason);
         Assert.Equal("knockdown", match.Results.SelectedItemId);
         ui.Screenshot("match_search_hidden.png");
     }
@@ -391,7 +391,7 @@ public class MatchPageTests
 
         var conversion = explain.GetVisualDescendants().OfType<TextBlock>()
             .Single(block => block.Text == match.Explain.FormulaConversion && block.IsEffectivelyVisible);
-        var label = ((Grid)conversion.Parent!).Children.OfType<TextBlock>().Single(block => block.Text == "Formula");
+        var label = ((Grid)conversion.Parent!).Children.OfType<TextBlock>().Single(block => block.Text == "Advisor rating");
         Assert.Equal(MiddleOf(label), MiddleOf(conversion), 1);
         Assert.True(conversion.Bounds.Left > label.Bounds.Right);
     }
@@ -746,7 +746,7 @@ public class MatchPageTests
 
         Assert.False(radios[0].IsChecked);
         Assert.Contains("active", button.Classes);
-        Assert.Contains("Match data leaning toward Mystic+", ui.ViewModel.Match.FiltersButtonTip);
+        Assert.Contains("Match results leaning toward Mystic+", ui.ViewModel.Match.FiltersButtonTip);
         Assert.Equal(new RankRange(5, 11), MatchStatsMath.RankOf(ui.Data.Store.MatchMeta));
         Assert.True(File.Exists(ui.Screenshot("match_data_ranks.png")));
     }
@@ -786,7 +786,7 @@ public class MatchPageTests
 
         match.HideDisagreed = true;
         Assert.True(ui.Settings.Current.ResultsHideDisagreed);
-        Assert.EndsWith("On now:\n• Items the formula and data disagree on are hidden", match.FiltersButtonTip);
+        Assert.EndsWith("On now:\n• Items the advisor rating and results disagree on are hidden", match.FiltersButtonTip);
 
         match.SelectedRank = MatchViewModel.RankPresets.Single(preset => preset.RankBy == RankBy.Formula);
         Assert.False(match.RanksByBoth);

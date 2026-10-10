@@ -84,7 +84,7 @@
             <Border Classes="inset">
                 <StackPanel Spacing="4">
                     <Grid ColumnDefinitions="Auto,*,Auto">
-                        <TextBlock Text="Match data" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource DataBrush}"/>
+                        <TextBlock Text="Match results" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource DataBrush}"/>
                         <controls:InfoBadge Grid.Column="1"
                                             Margin="6,0,0,0"
                                             HorizontalAlignment="Left"
@@ -234,7 +234,7 @@
                       Background="Transparent"
                       ToolTip.Tip="{Binding FormulaTotalTip}"
                       IsVisible="{Binding ShowsFormulaTotal}">
-                    <TextBlock Text="Formula" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource FormulaBrush}"/>
+                    <TextBlock Text="Advisor rating" FontWeight="Bold" VerticalAlignment="Center" Foreground="{DynamicResource FormulaBrush}"/>
                     <!-- The cards add up in points; the verdict above counts them in typical scores. -->
                     <TextBlock Grid.Column="1"
                                Classes="faintText"

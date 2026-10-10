@@ -21,12 +21,15 @@ and the maintainer tools sit behind the existing "Edit the scoring model" switch
 - **Rows:** a current row's button is Check; the dialog-opening download is a link. Match data and art that were never fetched read
   "not downloaded" (`UpdateState.NotDownloaded`, neutral dot), not "Up to date". Titles stay Formulas, Match data and Art, the Match
   page's own names; each row says in plain words what it is (`UpdateRowViewModel.About`).
+  *Superseded:* the names are now **Advisor rating** (was Formula) and **Match results** (was Match data) everywhere players
+  see them: the Match page's ranking, tooltips and hints, the explain panel, the flyout, chips, toasts, Settings → Data and
+  the first-run dialog. The editors' Item Formulas tab, the CSVs and the maintainer docs keep the old words.
+- **The first-run dialog sets the update mode** (Automatic / Tell me / Off, one choice for the match results and the advisor
+  rating) instead of a "keep it up to date" checkbox.
 - **A turned-down first-run offer is repeated once** as the "Downloads" chip after 3 days (`RemindAboutDownloads`).
 - Automatic updates say what changed in toasts; the flyout's "What changed recently" opens Help → Recent Messages.
 
 ## Not done, and ideas
 
 - A persistent update history (what changed, when, across restarts): Recent Messages keeps only the last 20 toasts of the session.
-- Row titles in plainer words would have to change the Match page's "Formula + match data" too.
-- A first-run dialog that sets the update modes (Automatic / Tell me / Off) up front, rather than Settings → Data afterwards.
 - Offering the Model Tools to someone who edits CSVs by hand without wanting the editors' tabs.

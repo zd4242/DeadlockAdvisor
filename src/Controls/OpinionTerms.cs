@@ -5,8 +5,9 @@ using DeadlockAdvisor.Theme;
 namespace DeadlockAdvisor.Controls;
 
 /// <summary>
-/// Colours the two opinions an item gets wherever a label names them: "formula" in the formula's gold,
-/// "data" or "match data" in the data's teal, matching the bars they draw.
+/// Colours the two opinions an item gets wherever a label names them: "advisor rating" in its gold,
+/// "match results" in their teal, matching the bars they draw. The editors' old words, "formula" and
+/// "(match) data", still colour the same way.
 /// </summary>
 public static partial class OpinionTerms
 {
@@ -23,7 +24,8 @@ public static partial class OpinionTerms
         {
             if (term.Index > at)
                 spans.Add(new TextSpan(text[at..term.Index]));
-            var isFormula = term.Value.Equals("formula", StringComparison.OrdinalIgnoreCase);
+            var isFormula = term.Value.Equals("formula", StringComparison.OrdinalIgnoreCase)
+                            || term.Value.Equals("advisor rating", StringComparison.OrdinalIgnoreCase);
             spans.Add(new TextSpan(term.Value, isFormula ? Palette.Formula : Palette.Data));
             at = term.Index + term.Length;
         }
@@ -32,6 +34,6 @@ public static partial class OpinionTerms
         return spans;
     }
 
-    [GeneratedRegex(@"\b(formula|(match )?data)\b", RegexOptions.IgnoreCase)]
+    [GeneratedRegex(@"\b(advisor rating|formula|match results|(match )?data)\b", RegexOptions.IgnoreCase)]
     private static partial Regex Term();
 }

@@ -110,16 +110,16 @@ public class SettingsPageTests
         ui.Show();
         var data = settings.Data;
         Assert.Equal(UpdateMode.Automatic, data.MatchDataMode.Mode);
-        Assert.Equal(["Automatic", "Tell me", "Off"], SegmentsOf(ui, "Keep match data up to date"));
+        Assert.Equal(["Automatic", "Tell me", "Off"], SegmentsOf(ui, "Keep match results up to date"));
         Assert.Equal(["Automatic", "Tell me", "Off"], SegmentsOf(ui, "Keep the hero ratings and item formulas up to date"));
         Assert.Equal(["Tell me", "Off"], SegmentsOf(ui, "Say when a new version is out"));
         ui.Screenshot("settings_data_modes.png");
 
-        Click(ui.Window, SegmentOf(ui, "Keep match data up to date", "Tell me"));
+        Click(ui.Window, SegmentOf(ui, "Keep match results up to date", "Tell me"));
 
         Assert.False(ui.Settings.Current.AutoUpdateMatchData);
         Assert.True(ui.Settings.Current.CheckForNewerPatch);
-        Assert.Equal(data.MatchDataModes[1].Description, RowTitled(ui, "Keep match data up to date").Description);
+        Assert.Equal(data.MatchDataModes[1].Description, RowTitled(ui, "Keep match results up to date").Description);
 
         Click(ui.Window, SegmentOf(ui, "Keep the hero ratings and item formulas up to date", "Off"));
 

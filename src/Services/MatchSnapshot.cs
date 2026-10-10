@@ -131,13 +131,13 @@ public sealed record MatchSnapshot(long CheckedAt, IReadOnlyList<SnapshotPatch> 
     public static MatchSegment Unpack(SnapshotPatch entry, byte[] gzipped)
     {
         if (gzipped.Length != entry.Bytes || Convert.ToHexStringLower(SHA256.HashData(gzipped)) != entry.Sha256)
-            throw new InvalidDataException($"The shared match data for patch {entry.Patch.Label} didn't arrive intact.");
+            throw new InvalidDataException($"The shared match results for patch {entry.Patch.Label} didn't arrive intact.");
         using var input = new GZipStream(new MemoryStream(gzipped), CompressionMode.Decompress);
         using var json = new MemoryStream();
         input.CopyTo(json);
         var segment = MatchSegment.Parse(json.ToArray());
         if (segment.Patch.Start != entry.Start || segment.FetchedAt != entry.FetchedAt)
-            throw new InvalidDataException($"The shared match data for patch {entry.Patch.Label} holds another patch's counts.");
+            throw new InvalidDataException($"The shared match results for patch {entry.Patch.Label} hold another patch's counts.");
         return segment;
     }
 }

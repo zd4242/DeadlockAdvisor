@@ -42,7 +42,8 @@ public class MainWindowViewModel : ViewModelBase
     public const string BringForwardAction = "BringForward";
 
     public const string HowScoringWorks =
-        "Every hero is rated 0-100 on a list of traits (Hero Traits tab).\n"
+        "The advisor rating is the app's own rating of an item for a match.\n"
+        + "Every hero is rated 0-100 on a list of traits (Hero Traits tab).\n"
         + "Every item gets rules saying which traits it responds to, and how\n"
         + "strongly (Item Formulas tab). Both tabs show with Settings →\n"
         + "Edit the scoring model.\n\n"
@@ -78,20 +79,20 @@ public class MainWindowViewModel : ViewModelBase
         + "opponents: a focused enemy counts 5× as much as each of the others,\n"
         + "×3 against ×0.6 with one focused in a full match. The enemies\n"
         + "together still count as much as before, so the list leans toward\n"
-        + "items good against whoever you focused, and the match data's enemy\n"
+        + "items good against whoever you focused, and the match results' enemy\n"
         + "numbers lean the same way.\n\n"
         + "Click any recommendation to see exactly which hero and which trait\n"
         + "produced its score.\n\n"
-        + "The small 'data' numbers are a separate second opinion from real\n"
+        + "The small 'results' numbers are a separate second opinion from real\n"
         + "matches (Data → Check for Updates): win-rate points the item gains\n"
         + "against your enemies, and on your own hero ('hero fit': how much more\n"
         + "your hero wins with it than everyone who builds it). They're never added\n"
-        + "into the score, but ranking by 'Match data' orders the list by them\n"
-        + "instead, and 'Formula + match data' (recommended, the default) adds the two, each\n"
+        + "into the score, but ranking by 'Match results' orders the list by them\n"
+        + "instead, and 'Advisor rating + match results' (recommended, the default) adds the two, each\n"
         + "measured by how far it typically strays from 0, so an item one of them\n"
         + "has nothing to say about still ranks on the other.\n"
-        + "DATA ★ marks an item that stands out in real matches, and 'Match\n"
-        + "data also likes' lists standouts the formula scores 0 or below.";
+        + "RESULTS ★ marks an item that stands out in real matches, and 'Match\n"
+        + "results also like' lists standouts the advisor rating scores 0 or below.";
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;

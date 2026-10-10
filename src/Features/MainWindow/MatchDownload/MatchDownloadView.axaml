@@ -63,7 +63,7 @@
         <StackPanel Spacing="6">
             <TextBlock Classes="section" Text="YOU HAVE"/>
             <ItemsControl ItemsSource="{Binding Stored}" IsVisible="{Binding HasStored}"/>
-            <TextBlock Classes="faint" Margin="16,0,0,0" Text="No match data yet." IsVisible="{Binding !HasStored}"/>
+            <TextBlock Classes="faint" Margin="16,0,0,0" Text="No match results yet." IsVisible="{Binding !HasStored}"/>
         </StackPanel>
 
         <StackPanel Spacing="8">

@@ -206,7 +206,7 @@
                                     <MenuItem Header="Check for Updates"
                                               InputGesture="Ctrl+U"
                                               Command="{Binding Updates.CheckAllCommand}"
-                                              ToolTip.Tip="Look for a newer app, formulas and match data, and fetch the match data and art you don't have yet"/>
+                                              ToolTip.Tip="Look for a newer app, advisor rating and match results, and fetch the match results and art you don't have yet"/>
                                     <MenuItem Header="Downloads and Updates…"
                                               Command="{Binding OpenDataSettingsCommand}"
                                               ToolTip.Tip="What is installed and when it was checked, a button for each download, and how each is kept up to date"/>

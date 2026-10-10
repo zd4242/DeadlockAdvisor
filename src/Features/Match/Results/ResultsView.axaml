@@ -111,7 +111,7 @@
                                         <controls:Badge Grid.Column="1"
                                                         Margin="8,0,0,0"
                                                         VerticalAlignment="Center"
-                                                        Text="DATA ★"
+                                                        Text="RESULTS ★"
                                                         Color="{x:Static theme:Palette.Data}"
                                                         IsVisible="{Binding IsStandout}"
                                                         ToolTip.Tip="{x:Static results:ResultRowViewModel.StandoutTip}"/>

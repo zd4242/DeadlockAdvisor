@@ -27,23 +27,23 @@ public static class ExplainText
         + "many matches it comes from. The points on the right are that gain once a small or noisy sample is pulled "
         + "toward 0, plus how far your chosen ranks move it (\"ranks\"), and they're what the totals at the top add up.";
 
-    /// <summary>How "Formula + match data" puts its two opinions on one footing, for its tooltips.</summary>
+    /// <summary>How "Advisor rating + match results" puts its two opinions on one footing, for its tooltips.</summary>
     public const string BlendScaleNote =
         "Each is scaled by how big it usually gets in line-ups like this one, so the two count equally.";
 
-    public const string VerdictTip = "Ranked by the formula and the match data added together. " + BlendScaleNote;
+    public const string VerdictTip = "Ranked by the advisor rating and the match results added together. " + BlendScaleNote;
 
-    /// <summary>For the formula's total over the hero cards, when the list ranks by the formula and the data together.</summary>
+    /// <summary>For the advisor rating's total over the hero cards, when the list ranks by it and the match results together.</summary>
     public static string FormulaTotalInBlendTip(double part) =>
-        $"The formula's score, which the heroes below add up to. In the ranking it counts as {Format.SignedFixed(part, 1)}, "
-        + "scaled so the formula and the match data count equally.";
+        $"The advisor rating's score, which the heroes below add up to. In the ranking it counts as {Format.SignedFixed(part, 1)}, "
+        + "scaled so the advisor rating and the match results count equally.";
 
     /// <summary>"1683.8 pts ÷ 251 typical = +6.7": how the cards' total becomes the formula's part of the verdict.</summary>
     public static string FormulaConversion(double total, double typical, double part) =>
         $"{NumberFormat.Fixed(total, 1)} pts ÷ {Format.Num(Math.Round(typical))} typical = {Format.SignedFixed(part, 1)}";
 
     public const string FormulaTotalByDataTip =
-        "The formula's score, which the heroes below add up to. The list is ranked by the match data instead.";
+        "The advisor rating's score, which the heroes below add up to. The list is ranked by the match results instead.";
 
     /// <summary>"Vindicta builds this 1/12 as often as the average player, so the gains against the enemies count ×0.33 …"</summary>
     public static string RarelyBuilt(string who, double ratio) =>

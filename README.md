@@ -24,30 +24,33 @@ Settings → Data shows which version you have. When a new one is out, the
 **Updates** chip at the left of the status bar says so; rest the pointer on it (or click it)
 and the **App** row's **Update** downloads it in the background, and it's
 installed in place of the old exe when you close the app; **Restart now**
-does that straight away. The formulas and match data keep themselves up to date without a
-new version. The app looks for all three at startup and again about every six hours while it
+does that straight away. The advisor rating (the hero ratings and item formulas behind the
+recommendations) and the match results (how items do in real matches) keep themselves up to date
+without a new version. The app looks for all three at startup and again about every six hours while it
 stays open, so a session left running for days still hears about a new patch or version.
 Only one copy runs at a time: starting it again brings the open window to the front.
 
 The **Updates** chip is the one place to ask whether everything is current. It reads
-*Up to date*, *Updating match data 40%*, *Patch 10-07 is out*, *2 updates*, *Updates paused*
-(offline), *Match data and art not downloaded* (never fetched, so nothing is current) or what
-failed. Its flyout has a row each for the app, the formulas (hero ratings and item formulas),
-the match data and the art, saying in plain words what it is, what state it is in and when it
+*Up to date*, *Updating match results 40%*, *Patch 10-07 is out*, *2 updates*, *Updates paused*
+(offline), *Match results and art not downloaded* (never fetched, so nothing is current) or what
+failed. Its flyout has a row each for the app, the advisor rating (hero ratings and item formulas),
+the match results and the art, saying in plain words what it is, what state it is in and when it
 was last checked, with that row's
 action (Update, Restart now, Apply, Download, or Check when it is current), **What's new**
-for the app and the formulas, **Skip this version** for the app, **Download again…** for the
-match data, **Download…** for the art, and **Details…** for the match data (which patch, how
+for the app and the advisor rating, **Skip this version** for the app, **Download again…** for the
+match results, **Download…** for the art, and **Details…** for the match results (which patch, how
 many matches, how old). **Check for updates** (also **Data → Check for Updates**) looks for
 all of them now, and the flyout's last line says how much the app has downloaded this
 session. Downloads under way keep their own progress and cancel chips beside it.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
-of the data. One dialog offers the hero and item art and the match data,
+of the data. One dialog offers the hero and item art and the match results,
 both downloading in the background: the art from `deadlock-api.com`, the
-match data ready-made from this repo's [shared download](#shared-match-data).
-With the match data set to *Automatic* (the default; Settings → Data has one
-*Automatic / Tell me / Off* choice each for the match data, the formulas and the app),
+match results ready-made from this repo's [shared download](#shared-match-data),
+and asks how to keep the match results and the advisor rating up to date
+(*Automatic*, *Tell me* or *Off*, one choice for both).
+With them set to *Automatic* (the default; Settings → Data has one
+*Automatic / Tell me / Off* choice each for the match results, the advisor rating and the app),
 later startups, and the checks every six hours while the app
 stays open, refresh it quietly when a newer patch is out or it's a day and a half
 old. *Tell me* only says so in the status bar; *Off* never checks. Settings live
@@ -134,14 +137,15 @@ portrait removes it. Clicking an ally plays as them. Clicking an enemy
 **focuses** the recommendations on them: a focused enemy counts 5× as much as
 each of the others, and the enemies together still count as much as before, so
 the list leans toward items good against whoever you focused, and the match
-data's enemy numbers lean the same way. Focus both your lane opponents if you
+results' enemy numbers lean the same way. Focus both your lane opponents if you
 like; click again to stop, or use the × beside the "vs …" label to stop focusing on everyone.
 Recommendations score everyone in the match across all four tiers. The
-dropdown beside them picks what ranks the list: the formula, the match
-data, or both. The rest sits behind **Filters**: the cutoff hides items
+dropdown beside them picks what ranks the list: the advisor rating (the
+app's own rating), the match results (how items do in real matches), or
+both. The rest sits behind **Filters**: the cutoff hides items
 scoring under 20/40/60% of the best, **Group by tier** splits the list
 into collapsible tiers, each cut against its own best so the cheap tiers
-keep their picks, and **Match data from** leans the match data
+keep their picks, and **Match results from** leans the match results
 toward a range of ranks: the numbers move only where those ranks play
 detectably differently. That's worked out on the spot from the downloaded
 rank groups, and stays set until changed. The button fills in while a
@@ -158,7 +162,7 @@ they are, by at most 30%, so counters to a fed enemy and items for a fed ally
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
 the arithmetic, which then shows when you hover a line. With nothing selected, the panel
-lists what the match data likes that the hand model doesn't.
+lists what the match results like that the hand model doesn't.
 
 **Hero Items** — what one hero's players buy, and how they do with it.
 
@@ -180,7 +184,7 @@ an item a bad buy: it only means the hero gains less from it than from its usual
 Wiki page, or its formula while the model editors are shown. **Min
 usage** hides the items bought in only a few of the hero's matches, whose
 win rates rest on too few matches, and on who buys them, to mean much. It
-reads the downloaded match data, so it needs **Data → Check for Updates**.
+reads the downloaded match results, so it needs **Data → Check for Updates**.
 
 **Hero Traits** — the hero × trait grid, edited in place.
 
@@ -267,11 +271,18 @@ Reload from Disk** does the same for the folder in use. A folder you pick with
 
 ## Data menu
 
+A word on names. In the app, the app's own rating of an item is the
+**advisor rating** (worked out from the hero ratings and item formulas, which
+together are the *model*), and what real matches say is the **match results**
+(win rates against your enemies, and your hero's fit). The Item Formulas
+editor, the CSV files and the maintainer sections of this README keep the
+older words *formula* and *match data* for the same two things.
+
 - **Check for Updates**: asks for everything at once: a newer version of
   the app, the newest published hero ratings and item formulas
   ([formula updates](#formula-updates), asking again about files you kept
-  your own changes in), newer match data and the art. Because you asked,
-  it also downloads the match data you never downloaded, and asks before
+  your own changes in), newer match results and the art. Because you asked,
+  it also downloads the match results you never downloaded, and asks before
   fetching art you have none of (about 23 MB), with *Not now* and *Don't ask
   again*; a first run that was never offered them gets the offer instead,
   which shows what each costs. A source that is already current says
@@ -307,12 +318,12 @@ Reload from Disk** does the same for the folder in use. A folder you pick with
   - **Reload from Disk** (Ctrl+R), **Export Snapshot to Excel** (a read-only
     `deadlock_advisor_data.xlsx`, never read back) and **Open Data Folder**.
 
-### Match data downloads
+### Match results downloads
 
 Item win rates against, with and as each hero are shown beside each
-recommendation as "data": a second opinion, not part of the score. Check for
+recommendation as "results": a second opinion, not part of the advisor rating. Check for
 Updates fetches them when there are none, and keeps them current. Settings →
-Data's **Download…** (and the Match data row of the Updates flyout) first shows
+Data's **Download…** (and the Match results row of the Updates flyout) first shows
 a dialog with the patches stored, what the download will fetch, and about how
 long it takes and how big it is. It comes from the
 [shared download](#shared-match-data) in a few seconds, with the rank groups
@@ -321,10 +332,10 @@ available it asks `deadlock-api.com` directly: every match (under a minute a
 patch), or with the rank groups too (about 3 minutes a patch), with each phase
 behind its chip in the status bar. Either way a finished patch is never fetched
 again, and each patch's numbers are in use as soon as they arrive. The Match
-data row of the Updates flyout says *up to date* while a check in the last three
+results row of the Updates flyout says *up to date* while a check in the last three
 days found no newer patch (otherwise how old the data is), and the chip says
 *Patch 10-07 is out* when a newer patch is out than the data covers. Settings →
-Data also has **Check now** for the match data: with the shared download
+Data also has **Check now** for the match results: with the shared download
 available it takes anything newer in it straight away, or says the data is up to
 date, and it opens the dialog only when it has to ask `deadlock-api.com` itself.
 

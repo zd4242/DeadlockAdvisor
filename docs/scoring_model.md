@@ -172,18 +172,21 @@ rules copies its marks, and clearing or deleting a rule card clears them.
 
 ## Match data on the Match page
 
-The real-match lifts (`DataScores`) are **never added into the formula score**,
+Players see the score as the **advisor rating** and the real-match lifts as the
+**match results**; this document and the code keep "formula score" and "match
+data". The lifts (`DataScores`) are **never added into the formula score**,
 because they're in different units and are partly about who buys the item. They
 change the list in three ways only:
 
 - **Rank by** (`AppSettings.ResultsRankBy`, `ResultsViewModel.Ranked`) orders the
-  list by **Formula + match data** by default, the two added in common units (below),
-  or by the score or `DataStrength` alone. Without match data it ranks by the score.
-- **DATA ★** marks a row whose `DataStrength` is 1 or more.
-- **"Match data also likes"** lists the items with a strength of 1 or more that the
+  list by **Advisor rating + match results** (formula + match data) by default,
+  the two added in common units (below), or by the score or `DataStrength` alone.
+  Without match data it ranks by the score.
+- **RESULTS ★** marks a row whose `DataStrength` is 1 or more.
+- **"Match results also like"** lists the items with a strength of 1 or more that the
   formula scores 0 or below (`DataOnlyPicks`), at the end of the formula-ranked list.
 
-### Formula + match data
+### Formula + match data (Advisor rating + match results)
 
 ```
 blend(item) = score ÷ σF + DataStrength ÷ σD
@@ -205,9 +208,9 @@ so the two are weighted equally.
   below 0 when negative: the formula's part on top and the data's below. The row
   tip gives the working.
 - **DISAGREE** marks an item the two rate at least a unit each in opposite
-  directions (`BlendScale.Disagree`). The Match tab's "Hide items the formula and
-  data disagree on" filter drops them from this ranking's list; it never changes a score.
-- **The explain panel** heads the item with the verdict, such as "Formula +1.6 · data
+  directions (`BlendScale.Disagree`). The Match tab's "Hide items the advisor rating
+  and results disagree on" filter drops them from this ranking's list; it never changes a score.
+- **The explain panel** heads the item with the verdict, such as "Advisor rating +1.6 · results
   +0.7 → +2.3", and says when either opinion has nothing to add. Under the hero cards'
   total in points it shows the conversion, "402.0 pts ÷ 251 typical = +1.6".
 
@@ -483,7 +486,7 @@ changes nothing.
   the enemy's focus factor before `Relevance`, and the explain panel's data lines
   show it. Net worth never weights the data, because it's an opinion about who
   matters; focus changes the question, and the data has an answer for each enemy.
-  Without it, ranking by "Match data" would ignore focus, and the default ranking
+  Without it, ranking by "Match results" would ignore focus, and the default ranking
   would follow it at half strength.
 - **The blend scale knows it.** `LineUpShape.Focused` counts the focused enemies,
   and `Draw` focuses that many, so `ScoreScales` measures line-ups as concentrated

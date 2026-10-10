@@ -138,7 +138,7 @@ public class DataRanksViewModel : ViewModelBase
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
             // The store has the new lifts all the same; only writing them out failed.
-            _notifications.ShowError($"Writing the match data to {_data.DataDir} failed: {ex.Message}", ex);
+            _notifications.ShowError($"Writing the match results to {_data.DataDir} failed: {ex.Message}", ex);
         }
         _data.NotifyReplaced();
     }

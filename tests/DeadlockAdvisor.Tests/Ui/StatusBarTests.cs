@@ -15,6 +15,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.Updates;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
@@ -133,7 +134,8 @@ public class StatusBarTests
         Assert.True(await UiHarness.WaitUntilAsync(() => chip.Flyout.IsOpen));
         var texts = FlyoutTexts(ui);
         Assert.Contains("UPDATES", texts);
-        Assert.Equal(["App", "Formulas", "Match data", "Art"], texts.Where(text => text is "App" or "Formulas" or "Match data" or "Art"));
+        Assert.Equal(["App", "Advisor rating", "Match results", "Art"],
+            texts.Where(text => text is "App" or "Advisor rating" or "Match results" or "Art"));
         Assert.Contains("Check for updates", FlyoutButtons(ui).Select(button => button.Content as string));
         Assert.Contains("Nothing downloaded this session", texts);
         ui.Screenshot("status_updates.png");
@@ -206,18 +208,18 @@ public class StatusBarTests
         UiHarness.Settle();
 
         var chips = ui.Window.StatusBar.GetVisualDescendants().OfType<BackgroundJobView>().ToList();
-        Assert.Equal(["Match data", "Art"], chips.Select(chip => ((BackgroundJobViewModel)chip.DataContext!).Title));
+        Assert.Equal(["Match results", "Art"], chips.Select(chip => ((BackgroundJobViewModel)chip.DataContext!).Title));
         Assert.Equal(barHeight, ui.Window.StatusBar.Bounds.Height);
         ui.Screenshot("status_downloads.png");
         OpenFlyout(ui);
         Assert.Contains(FlyoutTexts(ui), text => text is not null && text.StartsWith("Downloading · 31%"));
-        Assert.Equal("Updating match data 31%", ChipText(ui));
+        Assert.Equal("Updating match results 31%", ChipText(ui));
         ui.Screenshot("status_updates_downloads.png");
 
         ui.Window.Close();
         Assert.False(closed);
         var ask = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(shown));
-        Assert.StartsWith("Still downloading:\n  • Match data: 31%", ask.Prompt);
+        Assert.StartsWith("Still downloading:\n  • Match results: 31%", ask.Prompt);
         ask.ConfirmCommand!.Execute(null);
         UiHarness.Settle();
         Assert.True(closed);
@@ -307,12 +309,32 @@ public class StatusBarTests
         // Faded in, for the screenshot.
         Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
         var texts = dialog.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text).ToList();
-        Assert.Contains("No match data yet.", texts);
+        Assert.Contains("No match results yet.", texts);
         Assert.Contains("about 35 s · 1.3 MB", texts);
         Assert.Contains("Patch 09-29", texts);
         Assert.Contains("New: downloading it", texts);
         Assert.Contains("Up to date: skipped", texts);
         ui.ScreenshotModal("match_download_dialog.png");
+    }
+
+    [AvaloniaFact]
+    public async Task TheFirstRunDialogOffersTheDownloadsAndHowToKeepThemUpToDate()
+    {
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = false,
+            services => services.AddSingleton<IMatchStatsService>(new HeldMatchStats()));
+        ui.Show();
+        ui.ViewModel.DataMenu.OnStartup();
+
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.Window.OwnedWindows.OfType<ModalWindow>().Any()));
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var dialog = modal.GetVisualDescendants().OfType<WelcomeView>().Single();
+        Assert.True(await UiHarness.WaitUntilAsync(() => dialog.GetVisualAncestors().All(visual => visual.Opacity >= 1)));
+        var texts = dialog.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible).Select(text => text.Text).ToList();
+        Assert.Contains("Keep the match results and the advisor rating up to date", texts);
+        Assert.Equal(["Automatic", "Tell me", "Off"], dialog.GetVisualDescendants().OfType<ListBox>().Single().GetVisualDescendants()
+            .OfType<TextBlock>().Select(text => text.Text));
+        Assert.Contains(((WelcomeViewModel)dialog.DataContext!).Mode.Description, texts);
+        ui.ScreenshotModal("welcome_dialog.png");
     }
 
     [AvaloniaFact]
@@ -408,7 +430,7 @@ public class StatusBarTests
         Assert.False(status.HasData);
         Assert.Equal("none yet", status.Summary);
         Assert.Empty(status.Facts);
-        var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match data");
+        var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match results");
         Assert.Equal(UpdateState.NotDownloaded, row.State);
         Assert.Equal("Download…", row.ActionText);
         Assert.Same(ui.ViewModel.DataMenu.DownloadMatchDataCommand, row.Action);
@@ -759,7 +781,7 @@ public class StatusBarTests
 
         var chip = ui.Window.StatusBar.GetVisualDescendants().OfType<BackgroundJobView>().Single();
         Assert.Contains("Downloads", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
-        Assert.Contains("available: art and match data", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
+        Assert.Contains("available: art and match results", chip.GetVisualDescendants().OfType<TextBlock>().Select(text => text.Text));
         ui.Screenshot("status_welcome_chip.png");
     }
 
@@ -799,7 +821,7 @@ public class StatusBarTests
         UiHarness.Settle();
         if (showMatchDataDetails)
         {
-            var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match data");
+            var row = ui.ViewModel.Updates.Rows.Single(row => row.Title == "Match results");
             row.ToggleDetailsCommand.Execute().Subscribe();
             UiHarness.Settle();
         }

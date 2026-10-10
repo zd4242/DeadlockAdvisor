@@ -19,7 +19,7 @@ public sealed record StatusFact(string Label, string Value);
 public class DataStatusViewModel : ViewModelBase
 {
     public const string NoDataText =
-        "Real-match win rates add a second opinion to the recommendations. Fetching them takes seconds from the shared download, "
+        "Real-match results add a second opinion to the recommendations. Fetching them takes seconds from the shared download, "
         + "or a few minutes from deadlock-api.com, in the background.";
 
     /// <summary>How recently a check must have found no newer patch for the chip to say the data is up to date.</summary>

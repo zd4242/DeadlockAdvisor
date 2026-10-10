@@ -27,8 +27,8 @@ public sealed class MatchDownloadViewModel : ViewModelBase
 
     /// <summary>What "keep it up to date" does, for every place that offers it.</summary>
     public const string AutoUpdateInfo =
-        "When the app starts, it checks for newer match data: one quick request.\n"
-        + "If a new patch is out, a patch has ended since your last download, or the current patch's data is a day and a half old\n"
+        "When the app starts, it checks for newer match results: one quick request.\n"
+        + "If a new patch is out, a patch has ended since your last download, or the current patch's results are a day and a half old\n"
         + "(three days when the shared download isn't available and it has to ask deadlock-api.com itself),\n"
         + "it downloads just what changed, in the background. Patches you already have in full are never downloaded again.\n"
         + "It never starts a first download, and if an update fails it quietly tries again next time.\n"
@@ -46,7 +46,7 @@ public sealed class MatchDownloadViewModel : ViewModelBase
         MatchFetchEstimate estimate, bool includeRanks, bool keepUpToDate, Action<MatchDownloadChoice> download)
         : this(modals, stored, everyMatch, withRanks, includeRanks, keepUpToDate, download)
     {
-        Intro = "Item win rates from real matches on deadlock-api.com, shown beside each recommendation as a second opinion. "
+        Intro = "How items do in real matches on deadlock-api.com, shown beside each recommendation as a second opinion. "
                 + "The shared download isn't available right now, so this asks deadlock-api.com directly. "
                 + "Patches you already have in full are skipped.";
         EveryMatchDetail = Cost(everyMatch, estimate);
@@ -62,7 +62,7 @@ public sealed class MatchDownloadViewModel : ViewModelBase
         : this(modals, stored, shared, shared, includeRanks, keepUpToDate, download)
     {
         IsShared = true;
-        Intro = "Item win rates from real matches on deadlock-api.com, shown beside each recommendation as a second opinion. "
+        Intro = "How items do in real matches on deadlock-api.com, shown beside each recommendation as a second opinion. "
                 + "They come ready-made from this app's shared download, with the rank groups the Match tab's filters use, "
                 + $"last fetched from deadlock-api.com {MatchStatsMath.Age(shared.Now - shared.FetchedAt)}.";
         SharedDetail = shared.HasWork ? $"{SharedTime} · {MatchFetchEstimate.DescribeBytes(shared.Bytes)}" : "nothing to download";
@@ -105,7 +105,7 @@ public sealed class MatchDownloadViewModel : ViewModelBase
             })
             .DisposeWith(Disposables);
 
-    public string Title => "Download match data";
+    public string Title => "Download match results";
 
     public string Intro { get; } = "";
 

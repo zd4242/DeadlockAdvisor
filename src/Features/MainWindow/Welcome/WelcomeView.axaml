@@ -2,6 +2,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:welcome="using:DeadlockAdvisor.Features.MainWindow.Welcome"
              xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
+             xmlns:settingsData="using:DeadlockAdvisor.Features.Settings.Data"
              xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.MainWindow.Welcome.WelcomeView"
              x:DataType="welcome:WelcomeViewModel">
@@ -18,7 +19,7 @@
         <StackPanel Spacing="4">
             <CheckBox IsChecked="{Binding MatchData}" IsEnabled="{Binding CanDownloadMatchData}">
                 <StackPanel Spacing="2">
-                    <TextBlock TextWrapping="Wrap" Text="Match data: item win rates from real matches, a second opinion beside each recommendation"/>
+                    <TextBlock TextWrapping="Wrap" Text="Match results: how items do in real matches, a second opinion beside each recommendation"/>
                     <TextBlock Classes="faint" Text="{Binding MatchDataDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
                 </StackPanel>
             </CheckBox>
@@ -28,14 +29,29 @@
                     <TextBlock Classes="faint" Text="{Binding RanksDetail}" IsVisible="{Binding CanDownloadMatchData}"/>
                 </StackPanel>
             </CheckBox>
-            <StackPanel Margin="28,0,0,0" Orientation="Horizontal" Spacing="6">
-                <CheckBox IsChecked="{Binding KeepUpToDate}" IsEnabled="{Binding MatchData}" Content="Keep it up to date automatically"/>
-                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
-            </StackPanel>
             <TextBlock Classes="warning" TextWrapping="Wrap" Text="{Binding Offline}" IsVisible="{Binding !CanDownloadMatchData}"/>
         </StackPanel>
 
-        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Data → Check for Updates brings both any time, and Settings → Data can turn the updates off."/>
+        <StackPanel Spacing="6">
+            <StackPanel Orientation="Horizontal" Spacing="6">
+                <TextBlock VerticalAlignment="Center" Text="Keep the match results and the advisor rating up to date"/>
+                <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
+            </StackPanel>
+            <ListBox Classes="segmented"
+                     HorizontalAlignment="Left"
+                     AutomationProperties.Name="How to keep up to date"
+                     ItemsSource="{Binding Modes}"
+                     SelectedItem="{Binding Mode}">
+                <ListBox.ItemTemplate>
+                    <DataTemplate x:DataType="settingsData:UpdateModeOption">
+                        <TextBlock Text="{Binding Label}"/>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+            <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Mode.Description}"/>
+        </StackPanel>
+
+        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Data → Check for Updates brings the downloads any time, and Settings → Data changes how it keeps up to date."/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
             <Button Classes="primary"

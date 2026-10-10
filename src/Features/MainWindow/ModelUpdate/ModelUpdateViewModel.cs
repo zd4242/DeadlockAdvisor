@@ -50,7 +50,7 @@ public sealed class ModelUpdateViewModel : ViewModelBase
     /// <summary>A newer version, when files it replaces were changed here: those are kept unless ticked.</summary>
     /// <param name="apply">Called with the edited files to replace; the rest of them are kept.</param>
     public static ModelUpdateViewModel Update(IModalService modals, ModelUpdatePlan update, Action<IReadOnlySet<string>> apply) =>
-        new(modals, update, apply, "Formula update",
+        new(modals, update, apply, "Advisor rating update",
             $"A newer version of the hero ratings and item formulas was published on {update.Published.Published}. "
             + "You've changed some of the files it replaces since they were installed, by editing them or with Sync from Game API.",
             "REPLACE YOUR CHANGES?", "Update",
@@ -61,7 +61,7 @@ public sealed class ModelUpdateViewModel : ViewModelBase
     /// <summary>Every file that differs from the published version, ticked, to put back to it.</summary>
     /// <param name="apply">Called with the files to put back; the rest are left as they are.</param>
     public static ModelUpdateViewModel Reset(IModalService modals, ModelUpdatePlan reset, Action<IReadOnlySet<string>> apply) =>
-        new(modals, reset, apply, "Reset formulas",
+        new(modals, reset, apply, "Reset advisor rating",
             $"These files differ from the version published on {reset.Published.Published}: edited, synced from the game API, "
             + "or kept over an update. Ticked ones go back to the published version.",
             "PUT BACK TO THE PUBLISHED VERSION", "Reset",

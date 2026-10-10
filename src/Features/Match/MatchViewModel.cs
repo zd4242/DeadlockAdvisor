@@ -47,17 +47,17 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public const string HideRarelyBuiltLabel = "Hide items your hero rarely builds";
 
-    public const string FiltersTip = "Filters: which items are listed, how they're laid out, and which matches the data comes from";
+    public const string FiltersTip = "Filters: which items are listed, how they're laid out, and which matches the results come from";
 
     public static readonly string HideRarelyBuiltTip =
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
-        + "Needs your hero picked and match data downloaded (Data → Check for Updates).";
+        + "Needs your hero picked and match results downloaded (Data → Check for Updates).";
 
-    public const string HideDisagreedLabel = "Hide items the formula and data disagree on";
+    public const string HideDisagreedLabel = "Hide items the advisor rating and results disagree on";
 
     public const string HideDisagreedTip =
-        "Leave out the items marked DISAGREE: the formula rates them well and the match data poorly, or the other way round.\n"
-        + "Only when ranking by formula + match data, which puts the two on one scale.";
+        "Leave out the items marked DISAGREE: the advisor rating rates them well and the match results poorly, or the other way round.\n"
+        + "Only when ranking by advisor rating + match results, which puts the two on one scale.";
 
     // Relative to the best item rather than a fixed count or score, so the cutoff adapts to how many
     // heroes are picked and to a match where one item runs away with it.
@@ -72,9 +72,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public static readonly IReadOnlyList<RankPreset> RankPresets =
     [
-        new("Formula + match data", RankBy.Both, Recommended: true),
-        new("Formula", RankBy.Formula),
-        new("Match data", RankBy.MatchData),
+        new("Advisor rating + match results", RankBy.Both, Recommended: true),
+        new("Advisor rating", RankBy.Formula),
+        new("Match results", RankBy.MatchData),
     ];
 
     private readonly IDataService _data;
@@ -364,9 +364,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         if (HideRarelyBuilt)
             active.Add("Items your hero rarely builds are hidden");
         if (HideDisagreed && RanksByBoth)
-            active.Add("Items the formula and data disagree on are hidden");
+            active.Add("Items the advisor rating and results disagree on are hidden");
         if (DataRanks is { CanFilter: true, RangeLabel: { } range })
-            active.Add($"Match data leaning toward {range}");
+            active.Add($"Match results leaning toward {range}");
         return active;
     }
 

@@ -239,7 +239,7 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   match-data check and the art check, the last two as at startup, and none of them while the first-run offer is still
   pending), and `AppUpdateViewModel.CheckAsync` runs beside it. The downloads' own guards (`IsDownloadingMatchData`,
   `IsDownloadingArt`) stop a second one. The formula check of a tick (`CheckModelWhileOpenAsync`) installs quietly only
-  when the model editors are hidden and none of the user's own files are in the way; otherwise it offers a "Formulas"
+  when the model editors are hidden and none of the user's own files are in the way; otherwise it offers an "Advisor rating"
   chip whose click runs `CheckModelAsync(manual: true)`, so nothing changes under someone editing and no dialog opens
   over a match. `CheckAllAsync(manual: true)` is Check for Updates (`CheckForUpdatesAsync`): the same checks, and the click
   is also the consent to fetch what was never downloaded: match data through `CheckMatchDataNowAsync` (the shared
@@ -267,16 +267,16 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   to date?", at the left of the status bar, with a hover/click flyout. `UpdatesViewModel` holds no state of its own: whenever
   a service's state changes (settings, `AppUpdateViewModel`, `DataMenuViewModel`'s `NewerPatch`, `IsDownloading*`,
   `IsChecking*` and `Jobs`, connectivity, the store, new art) it works every row out again from them
-  (`UpdateRowViewModel.Apply`, one per `UpdateSource`: App, Formulas, Match data, Art). A row has an `UpdateState`
+  (`UpdateRowViewModel.Apply`, one per `UpdateSource`: App, Formulas, MatchData, Art, titled App, Advisor rating, Match results, Art). A row has an `UpdateState`
   (`UpToDate`, `NotChecked`, `NotDownloaded`, `Checking`, `Updating`, `Available`, `Offline`, `Off`, `Failed`), a plain-words
   `About` beside the title, a one-line summary with when it was last checked (`MatchStatsMath.Age`), a chip headline, one
   action and a few links. The whole takes the most pressing state (failed, updating, available, offline, checking, not
   downloaded, not checked, up to date; `Off`, a source the user turned off, ranks last and doesn't count against up to
   date), and the chip says that row's headline or "2 updates". `NotDownloaded` is match data or art that was never
-  fetched: the chip names it ("Match data and art not downloaded") with a neutral dot, so it doesn't claim "Up to date"
+  fetched: the chip names it ("Match results and art not downloaded") with a neutral dot, so it doesn't claim "Up to date"
   and doesn't nag like an update waiting. The Formulas, New heroes and first-run
   ("Downloads") chips the Data menu puts in the status bar stay there for the click and count as offers: their
-  `OpenCommand` is the action. The Match data row's Details is `DataStatusView`, the old card: it reads "up to date" while no
+  `OpenCommand` is the action. The Match results row's Details is `DataStatusView`, the old card: it reads "up to date" while no
   newer patch is known and `AppSettings.MatchDataCheckedAt` is under 3 days old (`DataStatusViewModel.UpToDateWindow`),
   otherwise how old the data is, so an install that never checked doesn't claim it. A current row's button is **Check**
   (match data: `CheckMatchDataCommand`; art: `CheckArtCommand`, the quiet incremental download that says so when nothing was
@@ -293,8 +293,15 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   on, *Off* = both off; Formulas the same with `AutoUpdateModel` and `CheckForNewHeroes`; App is *Tell me* (`CheckForAppUpdates`)
   or *Off*. Choosing *Automatic* leaves the check-only flag as it was; every combination of flags reads as one mode.
   **Check now** for match data is `DataMenuViewModel.CheckMatchDataCommand`: with the shared snapshot usable it stamps the check,
-  starts the download when the plan `HasWork` (a toast says so) or toasts "Match data is up to date (patch 10-07, fetched 3h
+  starts the download when the plan `HasWork` (a toast says so) or toasts "Match results are up to date (patch 10-07, fetched 3h
   ago)"; the download dialog opens only when the snapshot isn't usable, and from the Updates row's buttons.
+  The first-run dialog (`WelcomeViewModel`) has the same three choices as one selector for the match results and the formulas
+  together (`WelcomeChoice.Mode`, written with `UpdateModes.SetMatchData`/`SetFormulas` only when it was moved, so a mix
+  made in Settings survives a re-offer).
+- **Names players see.** The app's own rating of an item (`RankBy.Formula`, `ScoredItem.Score`, the model's formulas) is the
+  *advisor rating*; what comes from real matches (`RankBy.MatchData`, `DataStrength`, the lifts) is the *match results*;
+  `OpinionTerms` colours both. Code, CSVs, the Item Formulas editor and the maintainer docs keep *formula* and *match data*.
+  User-facing text lives in the view models and views; `UpdateSource` and `DataMenuViewModel.*ChipTitle` carry the titles.
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the

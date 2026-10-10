@@ -170,10 +170,12 @@ public class ResultsViewModelTests
     {
         (string, Color?)[] expected =
         [
-            ("Formula", Palette.Formula), (" +8.0 · no ", null), ("match data", Palette.Data), (" · the ", null), ("data", Palette.Data),
+            ("Advisor rating", Palette.Formula), (" +8.0 · no ", null), ("match results", Palette.Data), (" · the ", null),
+            ("formula", Palette.Formula), (" and ", null), ("match data", Palette.Data),
         ];
 
-        Assert.Equal(expected, OpinionTerms.Spans("Formula +8.0 · no match data · the data").Select(span => (span.Text, span.Color)));
+        Assert.Equal(expected,
+            OpinionTerms.Spans("Advisor rating +8.0 · no match results · the formula and match data").Select(span => (span.Text, span.Color)));
         Assert.Empty(OpinionTerms.Spans(null));
         Assert.Equal([new TextSpan("Metadata")], OpinionTerms.Spans("Metadata"));
     }
@@ -197,8 +199,8 @@ public class ResultsViewModelTests
         // c: formula -3 against data +1.5; a: 10 and 1, the same way; d: -2 and -0.5, also the same way.
         var rows = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId);
         Assert.Equal(["c"], rows.Values.Where(row => row.Disagrees).Select(row => row.ItemId));
-        Assert.Contains("the match data rates this item well, the formula poorly", rows["c"].DisagreeTip);
-        Assert.EndsWith("Filters → \"Hide items the formula and data disagree on\" leaves these items out of the list.", rows["c"].DisagreeTip);
+        Assert.Contains("the match results rate this item well, the advisor rating poorly", rows["c"].DisagreeTip);
+        Assert.EndsWith("Filters → \"Hide items the advisor rating and results disagree on\" leaves these items out of the list.", rows["c"].DisagreeTip);
         Assert.Null(rows["a"].DisagreeTip);
 
         results.SetDisplay(RankBy.Formula, false, null);
@@ -212,7 +214,7 @@ public class ResultsViewModelTests
         Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.HasDataBar);
         results.SetDisplay(RankBy.MatchData, false, 0);
         Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.HasDataBar);
-        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.StartsWith("Data strength", row.BarTip));
+        Assert.All(results.Entries.OfType<ResultRowViewModel>(), row => Assert.StartsWith("Match results strength", row.BarTip));
     }
 
     [Fact]

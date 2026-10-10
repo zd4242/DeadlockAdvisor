@@ -1067,7 +1067,7 @@ public static partial class MatchStatsMath
         {
             "Second opinion from real matches (deadlock-api.com): how much more often players win when they build "
             + "the item, in win-rate points (+1 is 50% → 51%). Each hero's own strength is taken out, and small "
-            + "samples are pulled toward 0. It never changes the formula score.",
+            + "samples are pulled toward 0. It never changes the advisor rating.",
         };
         var against = FamilyMeta(meta, "against");
         if (IsTrue(against["kept"]))

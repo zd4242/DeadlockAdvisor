@@ -30,8 +30,8 @@ public class VerdictText : AmountLine
     {
         if (Verdict is not { } verdict)
             return;
-        Part("Formula", _formula, verdict.Formula, "no rule for this line-up");
-        Part("data", _data, verdict.Data, "none for these heroes");
+        Part("Advisor rating", _formula, verdict.Formula, "no rule for this line-up");
+        Part("results", _data, verdict.Data, "none for these heroes");
     }
 
     private void Part(string name, IBrush brush, double? value, string missing)

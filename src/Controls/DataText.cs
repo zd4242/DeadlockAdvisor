@@ -35,7 +35,7 @@ public class DataText : AmountLine
 
     protected override void Build()
     {
-        Word("data", _dataLabel, gap: 8);
+        Word("results", _dataLabel, gap: 8);
         foreach (var relation in new[] { Relation.Against, Relation.As })
         {
             if (Data is null || !Data.TryGetValue(relation.Key(), out var value))

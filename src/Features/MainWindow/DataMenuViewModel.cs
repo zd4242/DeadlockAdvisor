@@ -14,6 +14,7 @@ using DeadlockAdvisor.Features.MainWindow.Welcome;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
+using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Shared.Modals.Progress;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
@@ -36,8 +37,8 @@ public class DataMenuViewModel : ViewModelBase
 {
     public const string ArtChangedAction = "ArtChanged";
     public const string WelcomeChipTitle = "Downloads";
-    public const string ModelChipTitle = "Formulas";
-    public const string MatchDataJobTitle = "Match data";
+    public const string ModelChipTitle = "Advisor rating";
+    public const string MatchDataJobTitle = "Match results";
     public const string ArtJobTitle = "Art";
     public const string NewHeroesChipTitle = "New heroes";
 
@@ -398,12 +399,18 @@ public class DataMenuViewModel : ViewModelBase
             s.WelcomeOffered = true;
             s.WelcomeOfferedAt = _clock.Now;
         });
+        var startMode = UpdateModes.MatchData(_settings.Current);
         _modals.ShowModal(new WelcomeViewModel(_modals, shared, everyMatch, withRanks, Estimate, _settings.Current.MatchDataIncludeRanks,
-            _settings.Current.AutoUpdateMatchData, choice =>
+            startMode, choice =>
         {
             _settings.Update(s =>
             {
-                s.AutoUpdateMatchData = choice.KeepUpToDate;
+                // One choice for both; left as it is when the selector wasn't moved, so a mix made in Settings survives.
+                if (choice.Mode != startMode)
+                {
+                    UpdateModes.SetMatchData(s, choice.Mode);
+                    UpdateModes.SetFormulas(s, choice.Mode);
+                }
                 s.MatchDataIncludeRanks = choice.Ranks;
             });
             if (choice.Art)
@@ -417,7 +424,7 @@ public class DataMenuViewModel : ViewModelBase
     private void OfferWelcomeAsChip()
     {
         var job = new BackgroundJobViewModel(WelcomeChipTitle, _clock);
-        job.Succeed("available: art and match data", () => Launch(OfferWelcomeAsync), "Click to choose what to download");
+        job.Succeed("available: art and match results",() => Launch(OfferWelcomeAsync), "Click to choose what to download");
         Show(job);
     }
 
@@ -597,7 +604,7 @@ public class DataMenuViewModel : ViewModelBase
         }
         if (shared.HasWork)
         {
-            _notifications.ShowInformation("Downloading match data from the shared download…", _toastTime);
+            _notifications.ShowInformation("Downloading match results from the shared download…", _toastTime);
             await DownloadMatchDataAsync(shared);
             return;
         }
@@ -607,7 +614,7 @@ public class DataMenuViewModel : ViewModelBase
         var age = MatchStatsMath.FetchedAt(meta) is { } fetched
             ? $", fetched {MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - fetched)}"
             : "";
-        _notifications.ShowSuccess($"Match data is up to date (patch {MatchStatsMath.PatchLabel(meta)}{age}).", _toastTime);
+        _notifications.ShowSuccess($"Match results are up to date (patch {MatchStatsMath.PatchLabel(meta)}{age}).", _toastTime);
     }
 
     /// <summary>The download dialog, starting on the rank groups: what the filters ask for when there are none.</summary>
@@ -635,7 +642,7 @@ public class DataMenuViewModel : ViewModelBase
         catch (Exception ex) when (IsNetworkFailure(ex))
         {
             _notifications.ShowError(_connectivity.IsOffline
-                ? "You're offline. The patch list comes from deadlock-api.com, so the match data waits for a connection."
+                ? "You're offline. The patch list comes from deadlock-api.com, so the match results wait for a connection."
                 : $"Couldn't reach deadlock-api.com for the patch list: {ex.Message}", _toastTime);
             return;
         }
@@ -669,7 +676,7 @@ public class DataMenuViewModel : ViewModelBase
         var details = plan is MatchFetchPlan calls ? new MatchDownloadProgressViewModel(calls) : null;
         var source = plan is SnapshotPlan ? "the shared download" : "deadlock-api.com";
         var job = new BackgroundJobViewModel(MatchDataJobTitle, _clock, cancel => _modals.Confirm(
-            "Stop downloading match data? What has finished is kept and already in use; the rest stays as it was.",
+            "Stop downloading match results? What has finished is kept and already in use; the rest stays as it was.",
             "Stop", cancel, cancelText: "Keep going")) { Details = details };
         IsDownloadingMatchData = true;
         FetchResult? applied = null;
@@ -693,11 +700,11 @@ public class DataMenuViewModel : ViewModelBase
                     if (quiet)
                         Remove(job);
                     else
-                        Failed(job, "Match data download failed", failure is IOException or UnauthorizedAccessException
+                        Failed(job, "Match results download failed",failure is IOException or UnauthorizedAccessException
                             ? [$"Writing to {_data.DataDir} failed:", "", failure.Message]
-                            : [$"Couldn't download match data from {source}:", "", failure.Message, "", Kept()]);
+                            : [$"Couldn't download match results from {source}:", "", failure.Message, "", Kept()]);
                 },
-                () => $"Stopped downloading match data. {Kept()}");
+                () => $"Stopped downloading match results. {Kept()}");
             if (done is null)
                 return;
 
@@ -715,8 +722,8 @@ public class DataMenuViewModel : ViewModelBase
             lines.Add(plan.IncludesRanks || MatchStatsMath.RanksOf(_data.Store.MatchSegments).Count > 0
                 ? "The Match page's filters (the funnel) lean it toward a range of ranks, without downloading again."
                 : "Download the rank groups too for the Match page's filters to lean it toward your ranks.");
-            Succeeded(job, quiet ? "updated" : "downloaded", quiet ? "Match data updated" : "Match data downloaded", lines,
-                quiet ? $"Match data updated to patch {plan.Keep[0].Label}." : "Match data downloaded: the recommendations now show it.");
+            Succeeded(job, quiet ? "updated" : "downloaded", quiet ? "Match results updated" : "Match results downloaded", lines,
+                quiet ? $"Match results updated to patch {plan.Keep[0].Label}." : "Match results downloaded: the recommendations now show them.");
         }
         finally
         {
@@ -758,7 +765,7 @@ public class DataMenuViewModel : ViewModelBase
             if (!manual)
                 return;
             if (answer.NeedsNewerApp)
-                ShowMessage("Formula update", [NeedsNewerApp]);
+                ShowMessage("Advisor rating update", [NeedsNewerApp]);
             else
                 _notifications.ShowError(Unreachable, _toastTime);
             return;
@@ -794,7 +801,7 @@ public class DataMenuViewModel : ViewModelBase
     private void OfferModelUpdate()
     {
         var job = new BackgroundJobViewModel(ModelChipTitle, _clock);
-        job.Succeed("update available", () => Launch(() => CheckModelAsync(manual: true)), "Click to apply the newer formulas");
+        job.Succeed("update available", () => Launch(() => CheckModelAsync(manual: true)), "Click to apply the newer advisor rating");
         Show(job);
     }
 
@@ -909,7 +916,7 @@ public class DataMenuViewModel : ViewModelBase
         var news = withNews ? update.News : [];
         _notifications.ShowSuccess(
             news.Count > 0
-                ? $"Formulas updated: {string.Join(" ", news.Select(note => note.Text))}"
+                ? $"Advisor rating updated: {string.Join(" ", news.Select(note => note.Text))}"
                 : $"Added {string.Join(", ", added)} from the published heroes.",
             news.Count > 0 ? _newsToastTime : _toastTime);
     }
@@ -928,7 +935,7 @@ public class DataMenuViewModel : ViewModelBase
         var answer = await _models.PublishedAsync();
         if (answer.Manifest is not { } published)
         {
-            ShowMessage("Reset formulas", [Unavailable(answer)]);
+            ShowMessage("Reset advisor rating", [Unavailable(answer)]);
             return;
         }
         Checked(s => s.ModelCheckedAt = _clock.Now);
@@ -938,7 +945,7 @@ public class DataMenuViewModel : ViewModelBase
         var reset = ModelUpdatePlan.Reset(published, dataDir);
         if (!reset.HasWork)
         {
-            ShowMessage("Reset formulas", [$"Every file already matches the version published {published.Published}: there's nothing to reset."]);
+            ShowMessage("Reset advisor rating", [$"Every file already matches the version published {published.Published}: there's nothing to reset."]);
             return;
         }
         _modals.ShowModal(ModelUpdateViewModel.Reset(_modals, reset,
@@ -950,12 +957,12 @@ public class DataMenuViewModel : ViewModelBase
         var undoable = ModelUpdateService.Undoable(_data.DataDir);
         if (undoable.Count == 0)
         {
-            ShowMessage("Undo formula update", ["There's no formula update to undo: nothing since the last one has been left as it put it."]);
+            ShowMessage("Undo advisor rating update", ["There's no advisor rating update to undo: nothing since the last one has been left as it put it."]);
             return;
         }
         _modals.Confirm(
-            $"Put back the {Listing(undoable)} the last formula update or reset replaced?\n\n"
-            + "Newer formulas that are published later still ask before replacing them. Every file keeps a backup in data\\.backups.",
+            $"Put back the {Listing(undoable)} the last advisor rating update or reset replaced?\n\n"
+            + "A newer advisor rating published later still asks before replacing them. Every file keeps a backup in data\\.backups.",
             "Undo update", UndoModelUpdate);
     }
 
@@ -976,7 +983,7 @@ public class DataMenuViewModel : ViewModelBase
         if (restored.Count == 0)
             return;
         _data.Reload();
-        _notifications.ShowSuccess($"Put back the {Listing(restored)} from before the last formula update or reset.", _toastTime);
+        _notifications.ShowSuccess($"Put back the {Listing(restored)} from before the last advisor rating update or reset.", _toastTime);
     }
 
     private void ShowModelNotes()
@@ -985,7 +992,7 @@ public class DataMenuViewModel : ViewModelBase
         IEnumerable<string> lines = installed is null ? ["This data folder has no record of a published version."]
             : installed.Notes.Count == 0 ? [$"Installed: the version published {installed.Published}. It came without notes."]
             : [$"Installed: the version published {installed.Published}.", "", .. installed.Notes.Select(note => $"{note.Published}: {note.Text}")];
-        ShowMessage("What's new in the formulas", lines);
+        ShowMessage("What's new in the advisor rating", lines);
     }
 
     /// <summary>"item formulas and trait weights".</summary>
@@ -1008,7 +1015,7 @@ public class DataMenuViewModel : ViewModelBase
         {
             _log.Warning($"Formula update: failed\n{ex}");
             if (manual)
-                _notifications.ShowError($"Couldn't download the formula update: {ex.Message}", _toastTime);
+                _notifications.ShowError($"Couldn't download the advisor rating update: {ex.Message}", _toastTime);
             return;
         }
         // The data folder changed, or an edit couldn't be saved: writing now would lose something.
@@ -1041,8 +1048,8 @@ public class DataMenuViewModel : ViewModelBase
         var news = update.News;
         _notifications.ShowSuccess(
             news.Count > 0
-                ? $"Formulas updated: {string.Join(" ", news.Select(note => note.Text))} The old files are in data\\.backups."
-                : $"Updated to the formulas published {update.Published.Published}: {string.Join(", ", written.Select(ModelManifest.Title))}. "
+                ? $"Advisor rating updated: {string.Join(" ", news.Select(note => note.Text))} The old files are in data\\.backups."
+                : $"Updated the advisor rating to the version published {update.Published.Published}: {string.Join(", ", written.Select(ModelManifest.Title))}. "
                   + "The old files are in data\\.backups.",
             news.Count > 0 ? _newsToastTime : _toastTime);
     }

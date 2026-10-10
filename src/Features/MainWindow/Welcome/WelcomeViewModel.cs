@@ -2,6 +2,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
+using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
@@ -9,14 +10,15 @@ using ReactiveUI.Fody.Helpers;
 
 namespace DeadlockAdvisor.Features.MainWindow.Welcome;
 
-/// <param name="MatchData">The match data plan to download; null for none.</param>
+/// <param name="MatchData">The match results plan to download; null for none.</param>
 /// <param name="Ranks">The rank groups choice, for downloads from deadlock-api.com; the shared download always has them.</param>
-public sealed record WelcomeChoice(bool Art, MatchDownloadPlan? MatchData, bool Ranks, bool KeepUpToDate);
+/// <param name="Mode">How the match results and the advisor rating keep up to date from then on.</param>
+public sealed record WelcomeChoice(bool Art, MatchDownloadPlan? MatchData, bool Ranks, UpdateMode Mode);
 
 /// <summary>
-/// A first run's offer, in one go: the art the pages show and Detect reads, and the match data the
-/// recommendations take a second opinion from, each with what it costs, and whether to keep the match
-/// data up to date from then on.
+/// A first run's offer, in one go: the art the pages show and Detect reads, and the match results the
+/// recommendations take a second opinion from, each with what it costs, and how the match results and the
+/// advisor rating keep up to date from then on (Automatic, Tell me or Off).
 /// </summary>
 public sealed class WelcomeViewModel : ViewModelBase
 {
@@ -28,17 +30,18 @@ public sealed class WelcomeViewModel : ViewModelBase
     /// <param name="shared">The shared download's plan, which comes with the rank groups; null when it isn't available.</param>
     /// <param name="everyMatch">
     /// Without <paramref name="shared"/>, the download from deadlock-api.com. Null when the patch list couldn't be
-    /// fetched either, so there's no match data to offer.
+    /// fetched either, so there's no match results to offer.
     /// </param>
+    /// <param name="mode">How things keep up to date now, which the selector starts on.</param>
     public WelcomeViewModel(IModalService modals, SnapshotPlan? shared, MatchFetchPlan? everyMatch, MatchFetchPlan? withRanks,
-        MatchFetchEstimate estimate, bool includeRanks, bool keepUpToDate, Action<WelcomeChoice> start)
+        MatchFetchEstimate estimate, bool includeRanks, UpdateMode mode, Action<WelcomeChoice> start)
     {
         _everyMatch = shared ?? (MatchDownloadPlan?)everyMatch;
         _withRanks = shared ?? (MatchDownloadPlan?)withRanks;
         IsShared = shared is not null;
         CanDownloadMatchData = _everyMatch is not null && _withRanks is not null;
         MatchData = CanDownloadMatchData;
-        KeepUpToDate = keepUpToDate;
+        Mode = Modes.Single(option => option.Mode == mode);
         if (shared is not null)
         {
             MatchDataDetail = $"{MatchDownloadViewModel.SharedTime} · {MatchFetchEstimate.DescribeBytes(shared.Bytes)} · with the rank groups";
@@ -58,7 +61,7 @@ public sealed class WelcomeViewModel : ViewModelBase
         StartCommand = ReactiveCommand.Create(() =>
             {
                 modals.CloseModal();
-                start(new WelcomeChoice(Art, MatchData ? Ranks ? _withRanks : _everyMatch : null, Ranks, KeepUpToDate));
+                start(new WelcomeChoice(Art, MatchData ? Ranks ? _withRanks : _everyMatch : null, Ranks, Mode.Mode));
             },
             this.WhenAnyValue(vm => vm.Art, vm => vm.MatchData, (art, matchData) => art || matchData));
         NotNowCommand = ReactiveCommand.Create(modals.CloseModal);
@@ -90,9 +93,20 @@ public sealed class WelcomeViewModel : ViewModelBase
     /// <summary>"about 6 min more · 11.0 MB".</summary>
     public string RanksDetail { get; } = "";
 
-    [Reactive] public bool KeepUpToDate { get; set; }
+    /// <summary>How the match results and the advisor rating keep up to date; the same three choices as Settings → Data.</summary>
+    public IReadOnlyList<UpdateModeOption> Modes { get; } =
+    [
+        new(UpdateMode.Automatic, "Automatic",
+            "Keeps both current in the background, so the recommendations follow each patch. Recommended."),
+        new(UpdateMode.TellMe, "Tell me",
+            "Says in the status bar when something newer is out. Nothing changes until you ask."),
+        new(UpdateMode.Off, "Off",
+            "Never checks by itself. Data → Check for Updates does it when you want."),
+    ];
 
-    public string Offline => "Neither the shared download nor deadlock-api.com answered, so the match data waits: Data → Check for Updates any time.";
+    [Reactive] public UpdateModeOption Mode { get; set; }
+
+    public string Offline => "Neither the shared download nor deadlock-api.com answered, so the match results wait: Data → Check for Updates any time.";
 
     public ReactiveCommand<Unit, Unit> StartCommand { get; }
     public ReactiveCommand<Unit, Unit> NotNowCommand { get; }

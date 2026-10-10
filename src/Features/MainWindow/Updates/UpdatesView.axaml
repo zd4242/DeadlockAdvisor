@@ -191,7 +191,7 @@
                                 Classes="act"
                                 Content="{Binding CheckAllText}"
                                 Command="{Binding CheckAllCommand}"
-                                ToolTip.Tip="Look for a newer app, formulas and match data now, and fetch the match data and art you don't have yet"/>
+                                ToolTip.Tip="Look for a newer app, advisor rating and match results now, and fetch the match results and art you don't have yet"/>
                     </Grid>
                 </StackPanel>
             </Flyout>

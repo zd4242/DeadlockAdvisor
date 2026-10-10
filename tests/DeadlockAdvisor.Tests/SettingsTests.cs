@@ -228,11 +228,17 @@ public class SettingsTests
         Assert.Contains(text, await ReadShared(path));
     }
 
+    /// <summary>
+    /// Reads without keeping the file from being replaced: the settings service swaps a temp file over it once and
+    /// doesn't retry, so a reader holding it open at that moment would lose the write.
+    /// </summary>
     private static async Task<string> ReadShared(string path)
     {
         try
         {
-            return await File.ReadAllTextAsync(path);
+            await using var stream = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var reader = new StreamReader(stream);
+            return await reader.ReadToEndAsync();
         }
         catch (IOException)
         {

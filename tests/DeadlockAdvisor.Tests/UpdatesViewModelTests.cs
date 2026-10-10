@@ -149,7 +149,7 @@ public sealed class UpdatesViewModelTests : IDisposable
         Assert.Equal("Up to date", updates.Headline);
         Assert.Equal("Everything is up to date.", updates.Status);
         Assert.All(updates.Rows, row => Assert.Equal(UpdateState.UpToDate, row.State));
-        Assert.Equal(["App", "Formulas", "Match data", "Art"], updates.Rows.Select(row => row.Title));
+        Assert.Equal(["App", "Advisor rating", "Match results", "Art"], updates.Rows.Select(row => row.Title));
         Assert.Equal("Version 0.1.1 · checked 2h ago", Row(UpdateSource.App).Summary);
         Assert.Equal("Published 2026-10-02 · checked 2h ago", Row(UpdateSource.Formulas).Summary);
         Assert.Equal("patch 09-16 · up to date · checked 2h ago", Row(UpdateSource.MatchData).Summary);
@@ -209,8 +209,8 @@ public sealed class UpdatesViewModelTests : IDisposable
         _fixture.Data.NotifyReplaced();
 
         Assert.Equal(UpdateState.NotDownloaded, Row(UpdateSource.MatchData).State);
-        Assert.Equal("Match data not downloaded", Row(UpdateSource.MatchData).Headline);
-        Assert.Equal("Match data and art not downloaded", updates.Headline);
+        Assert.Equal("Match results not downloaded", Row(UpdateSource.MatchData).Headline);
+        Assert.Equal("Match results and art not downloaded", updates.Headline);
     }
 
     [Fact]
@@ -218,7 +218,7 @@ public sealed class UpdatesViewModelTests : IDisposable
     {
         var updates = Build();
 
-        Assert.Equal(["", "hero ratings and item formulas", "item win rates from real matches", "hero portraits and item icons"],
+        Assert.Equal(["", "hero ratings and item formulas", "how items do in real matches", "hero portraits and item icons"],
             updates.Rows.Select(row => row.About));
     }
 
@@ -339,14 +339,14 @@ public sealed class UpdatesViewModelTests : IDisposable
         Assert.Equal(31.0, row.Percent);
         Assert.Equal("Stop", row.ActionText);
         Assert.Equal(UpdateState.Updating, updates.State);
-        Assert.Equal("Updating match data 31%", updates.Headline);
+        Assert.Equal("Updating match results 31%", updates.Headline);
 
         var artRun = _menu.DownloadArtAsync(force: false);
-        Assert.Equal("Updating match data and art", updates.Headline);
+        Assert.Equal("Updating match results and art", updates.Headline);
         art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 38, 0, [], [])]));
         await artRun;
 
-        Assert.Equal("Updating match data 31%", updates.Headline);
+        Assert.Equal("Updating match results 31%", updates.Headline);
         _menu.CancelJobs();
     }
 
@@ -441,10 +441,10 @@ public sealed class UpdatesViewModelTests : IDisposable
 
         var row = Row(UpdateSource.Formulas);
         Assert.Equal(UpdateState.Available, row.State);
-        Assert.Equal("New formulas", row.Headline);
+        Assert.Equal("New advisor rating", row.Headline);
         Assert.Equal("Apply", row.ActionText);
         Assert.Same(_menu.Jobs.Single().OpenCommand, row.Action);
-        Assert.Equal("New formulas", updates.Headline);
+        Assert.Equal("New advisor rating", updates.Headline);
 
         row.Action!.Execute(null);
 

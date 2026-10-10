@@ -16,7 +16,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Everything at once"
-                                     Description="Look for a newer app, formulas and match data, and offer the match data and art you don't have yet. Also Data → Check for Updates (Ctrl+U).">
+                                     Description="Look for a newer app, advisor rating and match results, and offer the match results and art you don't have yet. Also Data → Check for Updates (Ctrl+U).">
                     <Button Content="Check for updates" Command="{Binding CheckForUpdatesCommand}"/>
                 </settings:SettingRow>
             </StackPanel>
@@ -36,18 +36,18 @@
             </StackPanel>
         </Border>
 
-        <TextBlock Classes="section" Text="MATCH DATA"/>
+        <TextBlock Classes="section" Text="MATCH RESULTS"/>
         <Border Classes="settings">
             <StackPanel>
-                <settings:SettingRow Title="Item win rates from real matches" Description="{Binding MatchDataSummary}">
+                <settings:SettingRow Title="How items do in real matches" Description="{Binding MatchDataSummary}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Classes="ghost" Content="Download…" Command="{Binding DownloadMatchDataCommand}"
                                 ToolTip.Tip="See what a download would fetch and about how long it takes"/>
                         <Button Content="Check now" Command="{Binding CheckMatchDataCommand}"
-                                ToolTip.Tip="Take any newer match data from the shared download, or say it's up to date"/>
+                                ToolTip.Tip="Take any newer match results from the shared download, or say they're up to date"/>
                     </StackPanel>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Keep match data up to date" Description="{Binding MatchDataModeDescription}">
+                <settings:SettingRow Title="Keep match results up to date" Description="{Binding MatchDataModeDescription}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <ListBox Classes="segmented" ItemsSource="{Binding MatchDataModes}" SelectedItem="{Binding MatchDataMode}"
                                  ItemTemplate="{StaticResource ModeLabel}"/>
@@ -57,7 +57,7 @@
             </StackPanel>
         </Border>
 
-        <TextBlock Classes="section" Text="FORMULAS"/>
+        <TextBlock Classes="section" Text="ADVISOR RATING"/>
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Hero ratings and item formulas" Description="{Binding ModelSummary}">
@@ -66,7 +66,7 @@
                                 ToolTip.Tip="What each published version changed"/>
                         <Button Classes="ghost" Content="Undo update" Command="{Binding UndoModelUpdateCommand}"
                                 IsVisible="{Binding CanUndoModelUpdate}"
-                                ToolTip.Tip="Put back the files the last formula update or reset replaced"/>
+                                ToolTip.Tip="Put back the files the last advisor rating update or reset replaced"/>
                         <Button Classes="ghost" Content="Reset…" Command="{Binding ResetModelCommand}"
                                 ToolTip.Tip="Put files that differ from the published version back to it, choosing which"/>
                         <Button Content="Check now" Command="{Binding CheckModelCommand}"/>

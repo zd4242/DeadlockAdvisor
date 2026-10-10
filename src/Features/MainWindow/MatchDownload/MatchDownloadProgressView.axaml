@@ -31,7 +31,7 @@
     </UserControl.Styles>
 
     <StackPanel Width="320" Spacing="8">
-        <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="DOWNLOADING MATCH DATA"/>
+        <TextBlock Classes="section" Foreground="{DynamicResource DataBrush}" Text="DOWNLOADING MATCH RESULTS"/>
         <ItemsControl ItemsSource="{Binding Phases}">
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="download:DownloadPhaseViewModel">

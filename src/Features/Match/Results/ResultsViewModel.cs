@@ -22,8 +22,8 @@ namespace DeadlockAdvisor.Features.Match.Results;
 public class ResultsViewModel : ViewModelBase
 {
     public const string DataPicksKey = "data";
-    public const string DataPicksTitle = "Match data also likes";
-    public const string DataPicksNote = "Formula score 0 or less, but a standout in real matches for this line-up.";
+    public const string DataPicksTitle = "Match results also like";
+    public const string DataPicksNote = "Advisor rating 0 or less, but a standout in real matches for this line-up.";
     public const string DataPicksEditorNote = DataPicksNote + " Worth a look for a missing rule.";
 
     private readonly string _nothingPickedHint;
@@ -297,7 +297,7 @@ public class ResultsViewModel : ViewModelBase
     {
         if (_hideRarelyBuilt && item.RarelyBuilt)
             return "your hero rarely builds it";
-        return _hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item) ? "the formula and the match data disagree on it" : null;
+        return _hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item) ? "the advisor rating and the match results disagree on it" : null;
     }
 
     private static double Share(double measure, double scale) => scale != 0 ? measure / scale : 0.0;
@@ -313,7 +313,7 @@ public class ResultsViewModel : ViewModelBase
     /// <summary>The data strength against the largest on screen, in the data's colour.</summary>
     private static Bars DataBars(ScoredItem item, double measure, double scale) =>
         new(Share(measure, scale),
-            Tip: $"Data strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}\n\n{DataStrengthNote}",
+            Tip: $"Match results strength {NumberFormat.Fixed(item.DataStrength, 2)}: {DataWorking(item)}\n\n{DataStrengthNote}",
             Color: Palette.Data);
 
     /// <summary>The formula's part and the data's, on one scale and below 0 when negative, so it shows which one carries the item.</summary>
@@ -322,8 +322,8 @@ public class ResultsViewModel : ViewModelBase
         var formula = blend.FormulaUnits(item);
         var data = blend.DataUnits(item);
         return new Bars(Share(formula, scale), Share(data, scale),
-            $"Formula {Format.SignedFixed(formula, 1)} (score {Format.Tenths(item.Score)})\n"
-            + $"Data {Format.SignedFixed(data, 1)} ({DataWorking(item)})\n"
+            $"Advisor rating {Format.SignedFixed(formula, 1)} (score {Format.Tenths(item.Score)})\n"
+            + $"Match results {Format.SignedFixed(data, 1)} ({DataWorking(item)})\n"
             + $"Ranked by the sum: {Format.SignedFixed(measure, 1)}\n\n"
             + ExplainText.BlendScaleNote);
     }
@@ -386,17 +386,17 @@ public class ResultsViewModel : ViewModelBase
     private string RankTip() => _rankBy switch
     {
         RankBy.MatchData =>
-            "Ranked by the match data: how much more often players win with each item in real matches.\n"
+            "Ranked by the match results: how much more often players win with each item in real matches.\n"
             + DataStrengthNote + "\n"
-            + "The bar and the number on the right show that; click an item to see its formula score.",
+            + "The bar and the number on the right show that; click an item to see its advisor rating.",
         RankBy.Both =>
-            "Ranked by the formula and the match data added together.\n"
+            "Ranked by the advisor rating and the match results added together.\n"
             + ExplainText.BlendScaleNote + "\n"
-            + "The number on the right is that sum; the top bar is the formula's part and the lower bar the data's.\n"
+            + "The number on the right is that sum; the top bar is the advisor rating's part and the lower bar the match results'.\n"
             + "An item only one of them has an opinion on ranks on that one alone.\n"
             + "DISAGREE marks an item one rates well and the other poorly.",
-        _ => "Ranked by the formula score: the app's own rating, from the heroes' traits and what the item does.\n"
-             + "The data numbers are a second opinion from real matches.",
+        _ => "Ranked by the advisor rating: the app's own rating, from the heroes' traits and what the item does.\n"
+             + "The match results numbers are a second opinion from real matches.",
     };
 
     private string Hint(bool nothingScored)
@@ -404,11 +404,11 @@ public class ResultsViewModel : ViewModelBase
         if (_rankBy == RankBy.Formula || nothingScored)
             return _nothingPickedHint;
         if (_scored.All(item => item.Data.Count == 0))
-            return "The match data has nothing on these heroes.\n\nIt covers your enemies and your own hero, "
-                   + "never allies. Data → Check for Updates fetches it.";
+            return "The match results have nothing on these heroes.\n\nThey cover your enemies and your own hero, "
+                   + "never allies. Data → Check for Updates fetches them.";
         return _rankBy == RankBy.Both
-            ? "The formula and the match data together rate no item above 0 for these heroes."
-            : "The match data rates no item above 0 for these heroes.";
+            ? "The advisor rating and the match results together rate no item above 0 for these heroes."
+            : "The match results rate no item above 0 for these heroes.";
     }
 
     private void SetSelection(string? itemId)

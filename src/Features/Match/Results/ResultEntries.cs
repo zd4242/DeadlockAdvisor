@@ -30,9 +30,11 @@ public class ResultRowViewModel : ViewModelBase
     /// <param name="formulaLikes">Whether the formula is the one rating the item well.</param>
     public static string DisagreeText(bool formulaLikes)
     {
-        var (likes, dislikes) = formulaLikes ? ("formula", "match data") : ("match data", "formula");
-        return $"The formula and the match data clearly disagree: the {likes} rates this item well, the {dislikes} poorly.\n"
-            + "Click it to see why each thinks what it does: a rule may be missing, or the data may reflect\n"
+        var verdict = formulaLikes
+            ? "the advisor rating rates this item well, the match results poorly"
+            : "the match results rate this item well, the advisor rating poorly";
+        return $"The advisor rating and the match results clearly disagree: {verdict}.\n"
+            + "Click it to see why each thinks what it does: a rule may be missing, or the results may reflect\n"
             + "who buys the item more than what it does.\n"
             + $"Filters → \"{MatchViewModel.HideDisagreedLabel}\" leaves these items out of the list.";
     }

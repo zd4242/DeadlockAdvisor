@@ -8,6 +8,7 @@ using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.MatchDownload;
 using DeadlockAdvisor.Features.MainWindow.ModelUpdate;
 using DeadlockAdvisor.Features.MainWindow.Welcome;
+using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -221,7 +222,7 @@ public sealed class DataMenuTests : IDisposable
         await _menu.DownloadMatchDataCommand.Execute();
 
         Assert.Empty(_shown);
-        Assert.Equal("You're offline. The patch list comes from deadlock-api.com, so the match data waits for a connection.",
+        Assert.Equal("You're offline. The patch list comes from deadlock-api.com, so the match results wait for a connection.",
             Assert.Single(_toasts).Message);
     }
 
@@ -238,7 +239,7 @@ public sealed class DataMenuTests : IDisposable
 
         await job.OpenCommand.Execute();
         var report = LastMessage();
-        Assert.Equal("Match data download failed", report.Title);
+        Assert.Equal("Match results download failed", report.Title);
         Assert.Contains("offline (test)", report.Body);
         Assert.EndsWith("Nothing was changed.", report.Body);
         Assert.Empty(_menu.Jobs);
@@ -421,22 +422,53 @@ public sealed class DataMenuTests : IDisposable
 
         var welcome = Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
         Assert.True(_fixture.Settings.Current.WelcomeOffered);
-        Assert.Equal((true, true, true, false, true),
-            (welcome.CanDownloadMatchData, welcome.Art, welcome.MatchData, welcome.Ranks, welcome.KeepUpToDate));
+        Assert.Equal((true, true, true, false, UpdateMode.Automatic),
+            (welcome.CanDownloadMatchData, welcome.Art, welcome.MatchData, welcome.Ranks, welcome.Mode.Mode));
+        Assert.Equal(["Automatic", "Tell me", "Off"], welcome.Modes.Select(option => option.Label));
         Assert.Equal(("about 35 s · 1.3 MB", "about 3 min more · 6.2 MB"), (welcome.MatchDataDetail, welcome.RanksDetail));
         welcome.Ranks = true;
-        welcome.KeepUpToDate = false;
+        welcome.Mode = welcome.Modes.Single(option => option.Mode == UpdateMode.Off);
         await welcome.StartCommand.Execute();
 
         Assert.Equal(1, art.Started);
-        var job = Assert.Single(menu.Jobs, job => job.Title == "Match data");
+        var job = Assert.Single(menu.Jobs, job => job.Title == "Match results");
         Assert.Equal(2, Assert.IsType<MatchDownloadProgressViewModel>(job.Details).Phases.Count);
-        Assert.Equal((true, false), (_fixture.Settings.Current.MatchDataIncludeRanks, _fixture.Settings.Current.AutoUpdateMatchData));
+        var settings = _fixture.Settings.Current;
+        Assert.True(settings.MatchDataIncludeRanks);
+        Assert.Equal((UpdateMode.Off, UpdateMode.Off), (UpdateModes.MatchData(settings), UpdateModes.Formulas(settings)));
 
         using var again = Menu(matchStats: new HeldMatchStats());
         again.OnStartup();
         Assert.Single(_shown);
         menu.CancelJobs();
+    }
+
+    [Fact]
+    public async Task TheWelcomeSetsBothUpdateModesFromOneChoiceAndLeavesAMixAloneWhenItIsNotMoved()
+    {
+        var settings = _fixture.Settings.Current;
+        settings.AutoUpdateModel = false;
+        settings.CheckForNewHeroes = true;
+        using var menu = Menu(matchStats: new HeldMatchStats());
+        menu.OnStartup();
+        var welcome = Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.Equal(UpdateMode.Automatic, welcome.Mode.Mode);
+
+        await welcome.StartCommand.Execute();
+
+        Assert.Equal((UpdateMode.Automatic, UpdateMode.TellMe), (UpdateModes.MatchData(settings), UpdateModes.Formulas(settings)));
+        menu.CancelJobs();
+
+        _shown.Clear();
+        settings.WelcomeOffered = false;
+        using var again = Menu(matchStats: new HeldMatchStats());
+        again.OnStartup();
+        var second = Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        second.Mode = second.Modes.Single(option => option.Mode == UpdateMode.TellMe);
+        await second.StartCommand.Execute();
+
+        Assert.Equal((UpdateMode.TellMe, UpdateMode.TellMe), (UpdateModes.MatchData(settings), UpdateModes.Formulas(settings)));
+        again.CancelJobs();
     }
 
     [Fact]
@@ -853,7 +885,7 @@ public sealed class DataMenuTests : IDisposable
 
         Assert.Empty(_shown);
         Assert.Equal(2, _fixture.Data.Store.MatchSegments.Count);
-        Assert.Equal("Downloading match data from the shared download…", _toasts[0].Message);
+        Assert.Equal("Downloading match results from the shared download…", _toasts[0].Message);
         Assert.NotNull(_fixture.Settings.Current.MatchDataCheckedAt);
 
         _toasts.Clear();
@@ -863,7 +895,7 @@ public sealed class DataMenuTests : IDisposable
         Assert.Empty(_shown);
         Assert.Equal([MatchSnapshot.ManifestUrl], _api.Asked);
         var toast = Assert.Single(_toasts);
-        Assert.Matches(@"^Match data is up to date \(patch 09-29, fetched (just now|\d+[hd] ago)\)\.$", toast.Message);
+        Assert.Matches(@"^Match results are up to date \(patch 09-29, fetched (just now|\d+[hd] ago)\)\.$", toast.Message);
         Assert.False(menu.IsDownloadingMatchData);
     }
 
@@ -937,7 +969,7 @@ public sealed class DataMenuTests : IDisposable
         Assert.True(job.HasFailed);
         Assert.Empty(_fixture.Data.Store.MatchSegments);
         await job.OpenCommand.Execute();
-        Assert.Contains("Couldn't download match data from the shared download:", LastMessage().Body);
+        Assert.Contains("Couldn't download match results from the shared download:", LastMessage().Body);
         Assert.Contains("didn't arrive intact", LastMessage().Body);
     }
 
@@ -1010,7 +1042,7 @@ public sealed class DataMenuTests : IDisposable
 
         Assert.DoesNotContain(_shown, shown => shown is ModelUpdateViewModel);
         Assert.Equal(["mine", "newcomer"], _fixture.Data.Store.Heroes.Keys.TakeLast(2));
-        Assert.Equal("Formulas updated: New hero: Newcomer.", Assert.Single(_toasts).Message);
+        Assert.Equal("Advisor rating updated: New hero: Newcomer.", Assert.Single(_toasts).Message);
         // Taken, so the next startup has nothing to do about it.
         Assert.Equal(ModelManifest.Hash(heroes), ModelManifest.Installed(_fixture.Data.DataDir)!.Files[DataStore.HeroesFile]);
         Assert.Equal(1, download.Started);
@@ -1112,7 +1144,7 @@ public sealed class DataMenuTests : IDisposable
         await _menu.CheckModelCommand.Execute();
 
         var toast = Assert.Single(_toasts);
-        Assert.Equal("Formulas updated: Trait weights lean harder on burst. The old files are in data\\.backups.", toast.Message);
+        Assert.Equal("Advisor rating updated: Trait weights lean harder on burst. The old files are in data\\.backups.", toast.Message);
         Assert.Equal([new ModelNote("2026-10-09", "Trait weights lean harder on burst.")], ModelManifest.Installed(_fixture.Data.DataDir)!.Notes);
     }
 
@@ -1128,7 +1160,7 @@ public sealed class DataMenuTests : IDisposable
         await _menu.ResetModelCommand.Execute();
 
         var dialog = Assert.IsType<ModelUpdateViewModel>(_shown[^1]);
-        Assert.Equal("Reset formulas", dialog.Title);
+        Assert.Equal("Reset advisor rating", dialog.Title);
         Assert.Equal(["Hero trait ratings", "Item formulas"], dialog.Choices.Select(choice => choice.Title));
         Assert.All(dialog.Choices, choice => Assert.True(choice.Replace));
         dialog.Choices[0].Replace = false;
@@ -1143,9 +1175,9 @@ public sealed class DataMenuTests : IDisposable
         Assert.IsType<ConfirmationModalViewModel>(_shown[^1]).ConfirmCommand!.Execute(null);
 
         Assert.Equal(ModelUpdateTests.FirstRowEnding(published, "3"), DataBytes(DataStore.ItemCoefficientsFile));
-        Assert.Equal("Put back the item formulas from before the last formula update or reset.", _toasts[^1].Message);
+        Assert.Equal("Put back the item formulas from before the last advisor rating update or reset.", _toasts[^1].Message);
         await _menu.UndoModelUpdateCommand.Execute();
-        Assert.Contains("There's no formula update to undo", LastMessage().Body);
+        Assert.Contains("There's no advisor rating update to undo", LastMessage().Body);
     }
 
     [Fact]
@@ -1208,11 +1240,11 @@ public sealed class DataMenuTests : IDisposable
         await _menu.CheckModelCommand.Execute();
         Assert.DoesNotContain("Couldn't reach", LastMessage().Body);
         Assert.Contains("need a newer version of this app", LastMessage().Body);
-        Assert.Equal("Formula update", LastMessage().Title);
+        Assert.Equal("Advisor rating update", LastMessage().Title);
         _fixture.Modals.CloseModal();
 
         await _menu.ResetModelCommand.Execute();
-        Assert.Equal("Reset formulas", LastMessage().Title);
+        Assert.Equal("Reset advisor rating", LastMessage().Title);
         Assert.Contains("need a newer version of this app", LastMessage().Body);
         Assert.Equal(0, _replaced);
     }
@@ -1489,7 +1521,7 @@ public sealed class DataMenuTests : IDisposable
         await UntilAsync(() => !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
 
         // The match data is a few MB and comes at once; the art asks first, since it is the big one.
-        Assert.Contains(_toasts, toast => toast.Message == "Downloading match data from the shared download…");
+        Assert.Contains(_toasts, toast => toast.Message == "Downloading match results from the shared download…");
         var ask = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(_shown));
         Assert.Contains(WelcomeViewModel.ArtSize, ask.Prompt);
         Assert.Equal(0, download.Started);
@@ -1614,7 +1646,7 @@ public sealed class DataMenuTests : IDisposable
         _fixture.Clock.AdvanceBy(TimeSpan.FromHours(2));
         _menu.OnStartup();
         var chip = Assert.Single(_menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
-        Assert.Equal("available: art and match data", chip.StatusText);
+        Assert.Equal("available: art and match results", chip.StatusText);
         Assert.True(_fixture.Settings.Current.WelcomeReminded);
 
         await chip.DismissCommand.Execute();

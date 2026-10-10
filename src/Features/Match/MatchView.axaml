@@ -106,7 +106,7 @@
                                   IsEnabled="{Binding HasMatchData}"
                                   AutomationProperties.Name="Items ranked by"
                                   ToolTip.ShowOnDisabled="True"
-                                  ToolTip.Tip="What orders the list. The formula is the app's own rating, from the heroes' traits and what the item does.&#10;Match data ranks by how much more often players win with each item in real matches against these enemies,&#10;plus its hero fit: how much more your hero wins with it than everyone who builds it. 'Formula + match data' scales the two to count equally and adds them.&#10;The data never changes the formula score. Needs match data (Data → Check for Updates).">
+                                  ToolTip.Tip="What orders the list. The advisor rating is the app's own rating, from the heroes' traits and what the item does.&#10;Match results rank by how much more often players win with each item in real matches against these enemies,&#10;plus its hero fit: how much more your hero wins with it than everyone who builds it. 'Advisor rating + match results' scales the two to count equally and adds them.&#10;The match results never change the advisor rating. Needs match results (Data → Check for Updates).">
                             <!-- Gold names the formula here, so a hovered or chosen option stays plain. -->
                             <ComboBox.Resources>
                                 <StaticResource x:Key="ComboBoxItemForegroundSelected" ResourceKey="TextBrush"/>
@@ -194,7 +194,7 @@
                                                 <TextBlock Classes="section"
                                                            VerticalAlignment="Center"
                                                            Foreground="{DynamicResource DataBrush}"
-                                                           Text="MATCH DATA FROM"/>
+                                                           Text="MATCH RESULTS FROM"/>
                                                 <controls:InfoBadge VerticalAlignment="Center"
                                                                     ToolTip.Tip="{Binding InfoTip}"
                                                                     IsVisible="{Binding CanFilter}"/>

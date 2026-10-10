@@ -84,7 +84,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
     public IReadOnlyList<UpdateModeOption> MatchDataModes { get; } =
     [
         new(UpdateMode.Automatic, "Automatic",
-            "When the app starts and every few hours while it's open, refresh the match data in the background if a newer patch is out "
+            "When the app starts and every few hours while it's open, refresh the match results in the background if a newer patch is out "
             + "or the current patch's counts are a day and a half old. Finished patches are never fetched again."),
         new(UpdateMode.TellMe, "Tell me", "Check for a newer patch and say so in the status bar. Nothing downloads until you ask."),
         new(UpdateMode.Off, "Off", "Don't check. Download from here, or use Data → Check for Updates, whenever you like."),
@@ -168,7 +168,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
         ArtSummary = $"{_art.Count(ArtKind.Hero)} hero portrait(s) and {_art.Count(ArtKind.Item)} item icon(s) in {ArtFolder}";
         var patches = MatchStatsMath.PatchFacts(_data.Store.MatchMeta);
         MatchDataSummary = (MatchStatsMath.FetchedAt(_data.Store.MatchMeta) is null
-            ? "No match data yet"
+            ? "No match results yet"
             : string.Join(", ", patches.Select(patch => $"{patch.Label.ToLowerInvariant()} ({patch.Value})")))
             + $" · {CheckedText(Current.MatchDataCheckedAt)}";
 
