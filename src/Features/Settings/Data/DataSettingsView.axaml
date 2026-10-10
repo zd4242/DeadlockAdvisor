@@ -4,7 +4,13 @@
              xmlns:data="using:DeadlockAdvisor.Features.Settings.Data"
              xmlns:download="using:DeadlockAdvisor.Features.MainWindow.MatchDownload"
              x:Class="DeadlockAdvisor.Features.Settings.Data.DataSettingsView"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:DataType="data:DataSettingsViewModel">
+    <UserControl.Resources>
+        <DataTemplate x:Key="ModeLabel" x:DataType="data:UpdateModeOption">
+            <TextBlock Text="{Binding Label}"/>
+        </DataTemplate>
+    </UserControl.Resources>
     <StackPanel>
         <TextBlock Classes="section" Text="FOLDERS"/>
         <Border Classes="settings">
@@ -40,16 +46,19 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Item win rates from real matches" Description="{Binding MatchDataSummary}">
-                    <Button Content="Download…" Command="{Binding DownloadMatchDataCommand}"
-                            ToolTip.Tip="See what a download would fetch and about how long it takes"/>
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="Download…" Command="{Binding DownloadMatchDataCommand}"
+                                ToolTip.Tip="See what a download would fetch and about how long it takes"/>
+                        <Button Content="Check now" Command="{Binding CheckMatchDataCommand}"
+                                ToolTip.Tip="Take any newer match data from the shared download, or say it's up to date"/>
+                    </StackPanel>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Keep match data up to date"
-                                     Description="On startup, refresh it in the background when a newer patch is out or it's a day and a half old. Finished patches are never fetched again.">
-                    <ToggleSwitch IsChecked="{Binding AutoUpdateMatchData}" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
-                </settings:SettingRow>
-                <settings:SettingRow Title="Check for a newer patch on startup"
-                                     Description="With updates off, ask deadlock-api.com whether a patch is out that your match data predates, and say so in the status bar.">
-                    <ToggleSwitch IsChecked="{Binding CheckForNewerPatch}"/>
+                <settings:SettingRow Title="Keep match data up to date" Description="{Binding MatchDataModeDescription}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <ListBox Classes="segmented" ItemsSource="{Binding MatchDataModes}" SelectedItem="{Binding MatchDataMode}"
+                                 ItemTemplate="{StaticResource ModeLabel}"/>
+                        <controls:InfoBadge VerticalAlignment="Center" ToolTip.Tip="{x:Static download:MatchDownloadViewModel.AutoUpdateInfo}"/>
+                    </StackPanel>
                 </settings:SettingRow>
             </StackPanel>
         </Border>
@@ -69,13 +78,9 @@
                         <Button Content="Check now" Command="{Binding CheckModelCommand}"/>
                     </StackPanel>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Keep the hero ratings and item formulas up to date"
-                                     Description="On startup, take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks.">
-                    <ToggleSwitch IsChecked="{Binding AutoUpdateModel}"/>
-                </settings:SettingRow>
-                <settings:SettingRow Title="Say when new heroes are out"
-                                     Description="With updates off, ask GitHub whether the published ratings have heroes yours lack, and offer to add them from the status bar.">
-                    <ToggleSwitch IsChecked="{Binding CheckForNewHeroes}"/>
+                <settings:SettingRow Title="Keep the hero ratings and item formulas up to date" Description="{Binding FormulaModeDescription}">
+                    <ListBox Classes="segmented" ItemsSource="{Binding FormulaModes}" SelectedItem="{Binding FormulaMode}"
+                             ItemTemplate="{StaticResource ModeLabel}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>
@@ -90,9 +95,9 @@
                         <Button Content="Check now" Command="{Binding CheckAppCommand}"/>
                     </StackPanel>
                 </settings:SettingRow>
-                <settings:SettingRow Title="Say when a new version is out"
-                                     Description="On startup, ask GitHub for the newest release, and if it's newer, say so in the status bar.">
-                    <ToggleSwitch IsChecked="{Binding CheckForAppUpdates}"/>
+                <settings:SettingRow Title="Say when a new version is out" Description="{Binding AppModeDescription}">
+                    <ListBox Classes="segmented" ItemsSource="{Binding AppModes}" SelectedItem="{Binding AppMode}"
+                             ItemTemplate="{StaticResource ModeLabel}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

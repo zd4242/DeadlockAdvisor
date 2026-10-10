@@ -90,9 +90,9 @@ A hero the game releases reaches everyone without anyone touching the app, excep
 4. **Installs.** They take it with the model update at their next startup, as above, with the note. Their art
    follows at once: a hero without a portrait starts the quiet art check (for anyone who has downloaded art
    before), and one the API had no art for yet is asked about again after a day rather than a week
-   (`DataMenuViewModel.MissingArtRetryInterval`). Someone who has turned model updates off gets a "New heroes"
-   chip in the status bar naming them, and a click adds them and their art (Settings → Data, "Say when new
-   heroes are out", turns that off).
+   (`DataMenuViewModel.MissingArtRetryInterval`). Someone who has set the formulas to *Tell me* gets a "New heroes"
+   chip in the status bar naming them, and a click adds them and their art (Settings → Data, the formulas
+   choice set to *Off*, turns that off).
 
 Run it now with `gh workflow run new-heroes.yml`, or `--add-new-heroes` locally, which only edits the seed for
 you to review with `git diff`.

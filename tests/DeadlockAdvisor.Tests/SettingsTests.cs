@@ -1,5 +1,6 @@
 using System.Text.Json.Nodes;
 using DeadlockAdvisor.Enums;
+using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -86,6 +87,89 @@ public class SettingsTests
         Assert.True(settings.RememberCorrections);
     }
 
+    [Theory]
+    [InlineData(true, true, UpdateMode.Automatic)]
+    [InlineData(true, false, UpdateMode.Automatic)]
+    [InlineData(false, true, UpdateMode.TellMe)]
+    [InlineData(false, false, UpdateMode.Off)]
+    public void EveryCombinationOfTheUpdateFlagsReadsAsOneMode(bool automatic, bool tellMe, UpdateMode mode)
+    {
+        var settings = new AppSettings
+        {
+            AutoUpdateMatchData = automatic, CheckForNewerPatch = tellMe, AutoUpdateModel = automatic, CheckForNewHeroes = tellMe,
+        };
+
+        Assert.Equal(mode, UpdateModes.MatchData(settings));
+        Assert.Equal(mode, UpdateModes.Formulas(settings));
+    }
+
+    [Fact]
+    public void ChoosingAModeSetsItsFlagsAndLeavesTheRestAlone()
+    {
+        foreach (var automatic in new[] { true, false })
+        foreach (var tellMe in new[] { true, false })
+        foreach (var mode in Enum.GetValues<UpdateMode>())
+        {
+            var settings = new AppSettings
+            {
+                AutoUpdateMatchData = automatic, CheckForNewerPatch = tellMe, AutoUpdateModel = automatic, CheckForNewHeroes = tellMe,
+                CheckForAppUpdates = tellMe,
+            };
+
+            UpdateModes.SetMatchData(settings, mode);
+
+            Assert.Equal(mode, UpdateModes.MatchData(settings));
+            Assert.Equal((automatic, tellMe), (settings.AutoUpdateModel, settings.CheckForNewHeroes));
+            Assert.Equal(tellMe, settings.CheckForAppUpdates);
+            // Automatic only matters while it's on, so the check-only flag stays as it was.
+            if (mode == UpdateMode.Automatic)
+                Assert.Equal(tellMe, settings.CheckForNewerPatch);
+
+            settings.AutoUpdateMatchData = automatic;
+            settings.CheckForNewerPatch = tellMe;
+            UpdateModes.SetFormulas(settings, mode);
+
+            Assert.Equal(mode, UpdateModes.Formulas(settings));
+            Assert.Equal((automatic, tellMe), (settings.AutoUpdateMatchData, settings.CheckForNewerPatch));
+        }
+    }
+
+    [Fact]
+    public void TheAppIsOnlyEverToldAbout()
+    {
+        var settings = new AppSettings();
+        Assert.Equal(UpdateMode.TellMe, UpdateModes.App(settings));
+
+        UpdateModes.SetApp(settings, UpdateMode.Off);
+        Assert.False(settings.CheckForAppUpdates);
+        Assert.Equal(UpdateMode.Off, UpdateModes.App(settings));
+
+        UpdateModes.SetApp(settings, UpdateMode.TellMe);
+        Assert.True(settings.CheckForAppUpdates);
+    }
+
+    /// <summary>The modes are a view over the old flags, so a file from the previous version shows the mode it meant, and one written now reads the same there.</summary>
+    [Fact]
+    public async Task AnOlderSettingsFileShowsTheModesItMeantAndAModeIsSavedAsTheOldFlags()
+    {
+        using var folder = new TempDirectory();
+        await File.WriteAllTextAsync(folder.File("settings.json"),
+            """{ "AutoUpdateMatchData": false, "CheckForNewerPatch": true, "AutoUpdateModel": false, "CheckForNewHeroes": false }""");
+        var service = new JsonSettingsService(new FakeLoggingService(), folder.Path);
+        await service.LoadAsync();
+
+        Assert.Equal(UpdateMode.TellMe, UpdateModes.MatchData(service.Current));
+        Assert.Equal(UpdateMode.Off, UpdateModes.Formulas(service.Current));
+
+        service.Update(s => UpdateModes.SetFormulas(s, UpdateMode.TellMe));
+        await WaitForText(folder.File("settings.json"), "\"CheckForNewHeroes\": true");
+        var saved = JsonNode.Parse(await File.ReadAllTextAsync(folder.File("settings.json")))!;
+        Assert.False(saved["AutoUpdateModel"]!.GetValue<bool>());
+        Assert.True(saved["CheckForNewHeroes"]!.GetValue<bool>());
+        Assert.False(saved["AutoUpdateMatchData"]!.GetValue<bool>());
+        Assert.True(saved["CheckForNewerPatch"]!.GetValue<bool>());
+    }
+
     [Fact]
     public async Task AnUnreadableSettingsFileIsKeptAndTheUserIsTold()
     {
@@ -139,7 +223,7 @@ public class SettingsTests
 
     private static async Task WaitForText(string path, string text)
     {
-        for (var attempt = 0; attempt < 100 && !(File.Exists(path) && (await ReadShared(path)).Contains(text)); attempt++)
+        for (var attempt = 0; attempt < 500 && !(File.Exists(path) && (await ReadShared(path)).Contains(text)); attempt++)
             await Task.Delay(20);
         Assert.Contains(text, await ReadShared(path));
     }

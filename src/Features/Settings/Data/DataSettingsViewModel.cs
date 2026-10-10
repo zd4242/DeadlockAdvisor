@@ -1,9 +1,11 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
@@ -36,6 +38,7 @@ public class DataSettingsViewModel : SettingsPageViewModel
         ChangeDataFolderCommand = dataMenu.ChangeDataFolderCommand;
         DownloadArtCommand = dataMenu.DownloadArtCommand;
         DownloadMatchDataCommand = dataMenu.DownloadMatchDataCommand;
+        CheckMatchDataCommand = dataMenu.CheckMatchDataCommand;
         ReloadArtCommand = reloadArt;
         OpenFolderCommand = dataMenu.OpenFolderCommand;
         Refresh();
@@ -75,39 +78,58 @@ public class DataSettingsViewModel : SettingsPageViewModel
 
     public string ReleasesUrl => AppVersion.ReleasesUrl;
 
-    public bool CheckForAppUpdates
+    public IReadOnlyList<UpdateModeOption> MatchDataModes { get; } =
+    [
+        new(UpdateMode.Automatic, "Automatic",
+            "When the app starts and every few hours while it's open, refresh the match data in the background if a newer patch is out "
+            + "or the current patch's counts are a day and a half old. Finished patches are never fetched again."),
+        new(UpdateMode.TellMe, "Tell me", "Check for a newer patch and say so in the status bar. Nothing downloads until you ask."),
+        new(UpdateMode.Off, "Off", "Don't check. Download from here or the Data menu whenever you like."),
+    ];
+
+    public IReadOnlyList<UpdateModeOption> FormulaModes { get; } =
+    [
+        new(UpdateMode.Automatic, "Automatic",
+            "Take the newest published version. Files you haven't changed update quietly, with a backup; for ones you have, it asks."),
+        new(UpdateMode.TellMe, "Tell me",
+            "Say in the status bar when the published ratings have heroes yours lack, and add them when you click it. "
+            + "Everything else waits for Check now."),
+        new(UpdateMode.Off, "Off", "Don't check. Press Check now when you want the newest published version."),
+    ];
+
+    public IReadOnlyList<UpdateModeOption> AppModes { get; } =
+    [
+        new(UpdateMode.TellMe, "Tell me",
+            "Ask GitHub for the newest release when the app starts and every few hours while it's open, and say so in the status bar when there's a newer one."),
+        new(UpdateMode.Off, "Off", "Don't check. Press Check now, or look at the releases yourself."),
+    ];
+
+    public UpdateModeOption MatchDataMode
     {
-        get => Current.CheckForAppUpdates;
-        set => Change(s => s.CheckForAppUpdates = value);
+        get => OptionFor(MatchDataModes, UpdateModes.MatchData(Current));
+        set => ChangeMode(value, UpdateModes.SetMatchData, nameof(MatchDataModeDescription));
     }
 
-    public bool CheckForNewerPatch
+    public UpdateModeOption FormulaMode
     {
-        get => Current.CheckForNewerPatch;
-        set => Change(s => s.CheckForNewerPatch = value);
+        get => OptionFor(FormulaModes, UpdateModes.Formulas(Current));
+        set => ChangeMode(value, UpdateModes.SetFormulas, nameof(FormulaModeDescription));
     }
 
-    public bool AutoUpdateMatchData
+    public UpdateModeOption AppMode
     {
-        get => Current.AutoUpdateMatchData;
-        set => Change(s => s.AutoUpdateMatchData = value);
+        get => OptionFor(AppModes, UpdateModes.App(Current));
+        set => ChangeMode(value, UpdateModes.SetApp, nameof(AppModeDescription));
     }
 
-    public bool AutoUpdateModel
-    {
-        get => Current.AutoUpdateModel;
-        set => Change(s => s.AutoUpdateModel = value);
-    }
-
-    public bool CheckForNewHeroes
-    {
-        get => Current.CheckForNewHeroes;
-        set => Change(s => s.CheckForNewHeroes = value);
-    }
+    public string MatchDataModeDescription => MatchDataMode.Description;
+    public string FormulaModeDescription => FormulaMode.Description;
+    public string AppModeDescription => AppMode.Description;
 
     [Reactive] public string MatchDataSummary { get; private set; } = "";
 
     public ICommand DownloadMatchDataCommand { get; }
+    public ICommand CheckMatchDataCommand { get; }
 
     public ICommand ChangeDataFolderCommand { get; }
     public ICommand DownloadArtCommand { get; }
@@ -116,8 +138,28 @@ public class DataSettingsViewModel : SettingsPageViewModel
     /// <summary>Opens the folder given as its parameter.</summary>
     public ICommand OpenFolderCommand { get; }
 
+    private static UpdateModeOption OptionFor(IReadOnlyList<UpdateModeOption> options, UpdateMode mode) =>
+        options.FirstOrDefault(option => option.Mode == mode) ?? options[0];
+
+    private void ChangeMode(UpdateModeOption? option, Action<AppSettings, UpdateMode> write, string description,
+        [CallerMemberName] string? property = null)
+    {
+        if (option is null)
+            return;
+        Change(settings => write(settings, option.Mode), property);
+        this.RaisePropertyChanged(description);
+    }
+
     public override void Refresh()
     {
+        // The first-run offer and the download dialog change these too.
+        this.RaisePropertyChanged(nameof(MatchDataMode));
+        this.RaisePropertyChanged(nameof(MatchDataModeDescription));
+        this.RaisePropertyChanged(nameof(FormulaMode));
+        this.RaisePropertyChanged(nameof(FormulaModeDescription));
+        this.RaisePropertyChanged(nameof(AppMode));
+        this.RaisePropertyChanged(nameof(AppModeDescription));
+
         DataFolder = _data.DataRoot;
         ArtFolder = _art.AssetsDir;
         ArtSummary = $"{_art.Count(ArtKind.Hero)} hero portrait(s) and {_art.Count(ArtKind.Item)} item icon(s) in {ArtFolder}";

@@ -804,6 +804,45 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public async Task CheckNowTakesWhatIsNewerFromTheSharedDownloadWithoutAskingAndThenSaysItIsCurrent()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.AutoUpdateMatchData = false;
+        _fixture.Settings.Current.CheckForNewerPatch = false;
+        using var menu = SharedMenu(now);
+
+        await menu.CheckMatchDataCommand.Execute();
+        await MatchDataDownloadEndsAsync(menu);
+
+        Assert.Empty(_shown);
+        Assert.Equal(2, _fixture.Data.Store.MatchSegments.Count);
+        Assert.Equal("Downloading match data from the shared download…", _toasts[0].Message);
+        Assert.NotNull(_fixture.Settings.Current.MatchDataCheckedAt);
+
+        _toasts.Clear();
+        _api.Asked.Clear();
+        await menu.CheckMatchDataCommand.Execute();
+
+        Assert.Empty(_shown);
+        Assert.Equal([MatchSnapshot.ManifestUrl], _api.Asked);
+        var toast = Assert.Single(_toasts);
+        Assert.Matches(@"^Match data is up to date \(patch 09-29, fetched (just now|\d+[hd] ago)\)\.$", toast.Message);
+        Assert.False(menu.IsDownloadingMatchData);
+    }
+
+    [Fact]
+    public async Task CheckNowOpensTheDialogOnlyWhenThereIsNoSharedDownload()
+    {
+        using var menu = Menu(matchStats: new HeldMatchStats());
+
+        await menu.CheckMatchDataCommand.Execute();
+
+        Assert.IsType<MatchDownloadViewModel>(_shown[^1]);
+        Assert.False(menu.IsDownloadingMatchData);
+    }
+
+    [Fact]
     public async Task UpdatesComeFromTheSharedDownloadOnceTheCurrentPatchIsDue()
     {
         var now = SyntheticItemStatsApi.Now;

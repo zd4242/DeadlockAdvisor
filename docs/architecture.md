@@ -226,6 +226,13 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   `DataMenuViewModel.CheckAllAsync(manual: true)` and `AppUpdateViewModel.CheckAsync(manual: true)`; the footer's bytes come
   from `IDeadlockApi.BytesReceived`, read when the flyout opens or anything changes. Running downloads keep their own
   progress and cancel chips on the right, and the offline chip (with Retry) stays beside them.
+- **Settings → Data's modes** (`DataSettingsViewModel`, `UpdateModes`) are a view over the existing flags, so `settings.json` reads
+  the same in an older version: Match data *Automatic* = `AutoUpdateMatchData`, *Tell me* = it off and `CheckForNewerPatch`
+  on, *Off* = both off; Formulas the same with `AutoUpdateModel` and `CheckForNewHeroes`; App is *Tell me* (`CheckForAppUpdates`)
+  or *Off*. Choosing *Automatic* leaves the check-only flag as it was; every combination of flags reads as one mode.
+  **Check now** for match data is `DataMenuViewModel.CheckMatchDataCommand`: with the shared snapshot usable it stamps the check,
+  starts the download when the plan `HasWork` (a toast says so) or toasts "Match data is up to date (patch 10-07, fetched 3h
+  ago)"; the download dialog opens only when the snapshot isn't usable, and from the Updates row's buttons.
 - The shared snapshot is considered stale after 4 days (`MatchSnapshot.StaleAfter`) and the app then asks deadlock-api.com
   itself (about 560 calls for three patches with rank groups).
 - CI publishes: `ci.yml` (tests, then `publish-model` on `main`), `match-data.yml` (daily 06:17 UTC), `new-heroes.yml` (adds the

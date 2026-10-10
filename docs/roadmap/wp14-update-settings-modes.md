@@ -1,6 +1,6 @@
 # WP14 Settings → Data modes; manual match-data "Check now"
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium · Depends on: WP13 · Wave: D
 Touches: `src/Features/Settings/Data/DataSettingsViewModel.cs` and `DataSettingsView.axaml`, **`src/Features/MainWindow/DataMenuViewModel.cs`** (`OfferMatchDownloadAsync`), `src/Features/MainWindow/MatchDownload/*` (wording), `tests/DeadlockAdvisor.Tests` (`SettingsTests`, `Ui/SettingsPageTests`, `DataMenuTests`)
 Docs to update: `README.md` (Install, Data menu, Settings → Data), `docs/architecture.md` (section 7)

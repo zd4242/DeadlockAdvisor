@@ -101,6 +101,54 @@ public class SettingsPageTests
     }
 
     [AvaloniaFact]
+    public void TheUpdateSelectorsPickAModeAndSayWhatItDoes()
+    {
+        using var ui = new UiHarness();
+        ui.ViewModel.OpenSettingsCommand.Execute().Subscribe();
+        var settings = ui.ViewModel.Settings;
+        settings.SelectedCategory = settings.Categories.Single(category => category.Page is DataSettingsViewModel);
+        ui.Show();
+        var data = settings.Data;
+        Assert.Equal(UpdateMode.Automatic, data.MatchDataMode.Mode);
+        Assert.Equal(["Automatic", "Tell me", "Off"], SegmentsOf(ui, "Keep match data up to date"));
+        Assert.Equal(["Automatic", "Tell me", "Off"], SegmentsOf(ui, "Keep the hero ratings and item formulas up to date"));
+        Assert.Equal(["Tell me", "Off"], SegmentsOf(ui, "Say when a new version is out"));
+        ui.Screenshot("settings_data_modes.png");
+
+        Click(ui.Window, SegmentOf(ui, "Keep match data up to date", "Tell me"));
+
+        Assert.False(ui.Settings.Current.AutoUpdateMatchData);
+        Assert.True(ui.Settings.Current.CheckForNewerPatch);
+        Assert.Equal(data.MatchDataModes[1].Description, RowTitled(ui, "Keep match data up to date").Description);
+
+        Click(ui.Window, SegmentOf(ui, "Keep the hero ratings and item formulas up to date", "Off"));
+
+        Assert.False(ui.Settings.Current.AutoUpdateModel);
+        Assert.False(ui.Settings.Current.CheckForNewHeroes);
+        Assert.True(ui.Settings.Current.CheckForNewerPatch);
+
+        Click(ui.Window, SegmentOf(ui, "Say when a new version is out", "Off"));
+
+        Assert.False(ui.Settings.Current.CheckForAppUpdates);
+        ui.Screenshot("settings_data_modes_changed.png");
+    }
+
+    [AvaloniaFact]
+    public void TheSelectorsFollowSettingsChangedElsewhere()
+    {
+        using var ui = new UiHarness();
+        var data = ui.ViewModel.Settings.Data;
+        Assert.Equal(UpdateMode.Automatic, data.MatchDataMode.Mode);
+
+        // The first-run offer turns updates off.
+        ui.Settings.Update(s => s.AutoUpdateMatchData = false);
+        data.Refresh();
+
+        Assert.Equal(UpdateMode.TellMe, data.MatchDataMode.Mode);
+        Assert.Equal(data.MatchDataModes[1].Description, data.MatchDataModeDescription);
+    }
+
+    [AvaloniaFact]
     public void TheZoomStepperZoomsTheWindow()
     {
         using var ui = new UiHarness();
@@ -225,6 +273,13 @@ public class SettingsPageTests
 
     private static SettingRow RowTitled(UiHarness ui, string title) =>
         ui.Window.SettingsPage.GetVisualDescendants().OfType<SettingRow>().Single(row => row.Title == title);
+
+    private static List<string> SegmentsOf(UiHarness ui, string title) =>
+        RowTitled(ui, title).GetVisualDescendants().OfType<ListBoxItem>()
+            .Select(item => ((UpdateModeOption)item.DataContext!).Label).ToList();
+
+    private static ListBoxItem SegmentOf(UiHarness ui, string title, string label) =>
+        RowTitled(ui, title).GetVisualDescendants().OfType<ListBoxItem>().Single(item => ((UpdateModeOption)item.DataContext!).Label == label);
 
     private static List<object?> TabNames(UiHarness ui) =>
         ui.Window.PageTabs.GetVisualDescendants().OfType<ListBoxItem>().Select(item => item.Content).ToList();

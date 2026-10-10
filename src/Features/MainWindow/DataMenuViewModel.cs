@@ -100,6 +100,8 @@ public class DataMenuViewModel : ViewModelBase
         SyncGameApiCommand = ReactiveCommand.CreateFromTask(SyncGameApiAsync, idle);
         DownloadMatchDataCommand = ReactiveCommand.CreateFromTask(OfferMatchDownloadAsync,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
+        CheckMatchDataCommand = ReactiveCommand.CreateFromTask(CheckMatchDataNowAsync,
+            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         CheckModelCommand = ReactiveCommand.CreateFromTask(() => CheckModelAsync(manual: true), idle);
         ResetModelCommand = ReactiveCommand.CreateFromTask(ResetModelAsync, idle);
@@ -143,6 +145,9 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> SyncNewDataCommand { get; }
     public ReactiveCommand<Unit, Unit> SyncGameApiCommand { get; }
     public ReactiveCommand<Unit, Unit> DownloadMatchDataCommand { get; }
+
+    /// <summary>Settings → Data's "Check now" for match data: updates it from the shared download if there's anything newer, else says it's current.</summary>
+    public ReactiveCommand<Unit, Unit> CheckMatchDataCommand { get; }
     public ReactiveCommand<Unit, Unit> ModelHealthCommand { get; }
     public ReactiveCommand<Unit, Unit> CheckModelCommand { get; }
 
@@ -477,6 +482,41 @@ public class DataMenuViewModel : ViewModelBase
             : MatchFetchEstimate.Measured;
 
     private Task OfferMatchDownloadAsync() => OfferMatchDownloadAsync(_settings.Current.MatchDataIncludeRanks);
+
+    /// <summary>
+    /// Asked for, whatever the update mode: with the shared download usable, take what's newer in it, or say the data is
+    /// current; the dialog only opens when the shared download isn't there and the choices (deadlock-api.com's calls) matter.
+    /// </summary>
+    internal async Task CheckMatchDataNowAsync()
+    {
+        var store = _data.Store;
+        SnapshotPlan? shared;
+        using (_matchDataChecks.Begin())
+        {
+            shared = await _snapshots.PlanAsync(store);
+            if (shared is not null)
+            {
+                Checked(s => s.MatchDataCheckedAt = _clock.Now);
+                NewerPatch = MatchStatsMath.NewerPatch(store.MatchMeta, shared.Keep);
+            }
+        }
+        if (shared is null)
+        {
+            await OfferMatchDownloadAsync(_settings.Current.MatchDataIncludeRanks);
+            return;
+        }
+        if (shared.HasWork)
+        {
+            _notifications.ShowInformation("Downloading match data from the shared download…", _toastTime);
+            await DownloadMatchDataAsync(shared);
+            return;
+        }
+        var meta = store.MatchMeta;
+        var age = MatchStatsMath.FetchedAt(meta) is { } fetched
+            ? $", fetched {MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - fetched)}"
+            : "";
+        _notifications.ShowSuccess($"Match data is up to date (patch {MatchStatsMath.PatchLabel(meta)}{age}).", _toastTime);
+    }
 
     /// <summary>The download dialog, starting on the rank groups: what the filters ask for when there are none.</summary>
     public void OfferRankDownload() => Launch(() => OfferMatchDownloadAsync(includeRanks: true));

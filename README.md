@@ -43,10 +43,12 @@ On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,
 both downloading in the background: the art from `deadlock-api.com`, the
 match data ready-made from this repo's [shared download](#shared-match-data).
-With the match data's "keep it up to date" on (the default, and in
-Settings → Data), later startups, and the checks every six hours while the app
+With the match data set to *Automatic* (the default; Settings → Data has one
+*Automatic / Tell me / Off* choice each for the match data, the formulas and the app),
+later startups, and the checks every six hours while the app
 stays open, refresh it quietly when a newer patch is out or it's a day and a half
-old. Settings live beside it in `settings.json`.
+old. *Tell me* only says so in the status bar; *Off* never checks. Settings live
+beside it in `settings.json`.
 
 Offline, it all still works from what's saved: the starter data recommends
 items, and until the art has been downloaded heroes show as their initials
@@ -288,6 +290,10 @@ Data Folder…** is not repaired: it is refused, and left as it was.
   Updates flyout says *up to date* while a check in the last three days found
   no newer patch (otherwise how old the data is), and the chip says
   *Patch 10-07 is out* when a newer patch is out than the data covers.
+  Settings → Data also has **Check now** for the match data: with the shared
+  download available it takes anything newer in it straight away, or says the
+  data is up to date, and it opens the dialog only when it has to ask
+  `deadlock-api.com` itself.
 - **Check for Formula Updates**: takes the newest published hero ratings
   and item formulas ([formula updates](#formula-updates)), asking again
   about files you kept your own changes in.
@@ -309,7 +315,7 @@ scoring model** on, or files of yours to ask about, a status bar chip offers the
 instead of changing files under you) take the newest one published to this repo's rolling
 [`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model)
 pre-release, which CI publishes from `main` once the tests pass (Settings →
-Data turns that off; **Data → Check for Formula Updates** checks on
+Data's formulas choice turns that off; **Data → Check for Formula Updates** checks on
 demand). `model.json` lists each file's SHA-256, and a copy in the data
 folder records what was installed there, so the app can tell a file that's
 only out of date from one you've changed, by hand or with Sync from Game
@@ -320,8 +326,8 @@ Either way, the update says what changed, in the words of whoever
 published it. Heroes are the exception to asking: the ones the game adds
 reach your data folder whatever you've changed, with their ratings (and
 their art, if you've downloaded art before), and nothing already there is
-touched. With updates off, a status bar
-chip offers them instead (Settings → Data, *Say when new heroes are out*).
+touched. With the formulas set to *Tell me* in Settings → Data, a status bar
+chip offers them instead.
 
 Settings → Data shows which version is installed and when it was last
 checked for, with **What's new** (every version's notes), **Reset…** (puts
@@ -506,8 +512,8 @@ nothing else:
   [GitHub's privacy statement](https://docs.github.com/site-policy/privacy-policies/github-general-privacy-statement)
   applies.
 
-Settings → Data turns off the startup checks, and the ones every six hours,
-for match data, formulas and new versions.
+Settings → Data's *Off* turns off the startup checks, and the ones every six hours,
+for match data, formulas and new versions (*Tell me* still checks, and only says so).
 
 ## License
 
