@@ -140,6 +140,17 @@ public class StatusBarTests
     }
 
     [AvaloniaFact]
+    public void TheFlyoutLinksTheRecentMessagesWhereUpdatesSaidWhatChanged()
+    {
+        using var ui = new UiHarness(settings => settings.Current.WelcomeOffered = true);
+        ui.Show();
+        OpenFlyout(ui);
+
+        Assert.Contains("What changed recently", FlyoutTexts(ui));
+        Assert.Same(ui.ViewModel.RecentMessagesCommand, ui.ViewModel.Updates.RecentMessagesCommand);
+    }
+
+    [AvaloniaFact]
     public async Task AFreshCurrentInstallReadsUpToDateAndTheFlyoutSaysWhatWasCheckedAndWhen()
     {
         var checkedAt = DateTimeOffset.Now.AddHours(-3);

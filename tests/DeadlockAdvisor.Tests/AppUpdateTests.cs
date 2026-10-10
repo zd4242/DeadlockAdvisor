@@ -178,7 +178,7 @@ public sealed class AppUpdateTests : IDisposable
         using var dev = Check(null, out var devChecking);
         await devChecking;
         await dev.CheckNowCommand.Execute();
-        Assert.StartsWith("This build wasn't made by the release workflow", _toasts[^1].Message);
+        Assert.StartsWith("This copy isn't a release build", _toasts[^1].Message);
     }
 
     [Fact]

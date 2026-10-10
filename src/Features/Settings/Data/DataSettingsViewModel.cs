@@ -25,8 +25,9 @@ public class DataSettingsViewModel : SettingsPageViewModel
     private readonly AppUpdateViewModel _appUpdate;
 
     public DataSettingsViewModel(ISettingsService settings, IDataService data, IArtService art, DataMenuViewModel dataMenu,
-        AppUpdateViewModel appUpdate, ICommand reloadArt) : base(settings)
+        AppUpdateViewModel appUpdate, ICommand reloadArt, ICommand checkForUpdates) : base(settings)
     {
+        CheckForUpdatesCommand = checkForUpdates;
         _data = data;
         _art = art;
         _appUpdate = appUpdate;
@@ -70,6 +71,8 @@ public class DataSettingsViewModel : SettingsPageViewModel
     /// <summary>The last formula update or reset replaced files that are still as it left them.</summary>
     [Reactive] public bool CanUndoModelUpdate { get; private set; }
 
+    /// <summary>Data → Check for Updates: everything at once, as the Updates flyout's button.</summary>
+    public ICommand CheckForUpdatesCommand { get; }
     public ICommand CheckModelCommand { get; }
     public ICommand ResetModelCommand { get; }
     public ICommand UndoModelUpdateCommand { get; }
@@ -170,12 +173,12 @@ public class DataSettingsViewModel : SettingsPageViewModel
             + $" · {CheckedText(Current.MatchDataCheckedAt)}";
 
         var installed = ModelManifest.Installed(_data.DataDir);
-        ModelSummary = (installed is null ? "No record of a published version" : $"The version published {installed.Published}")
+        ModelSummary = (installed is null ? "Published version not recorded yet" : $"The version published {installed.Published}")
                        + $" · {CheckedText(Current.ModelCheckedAt)}";
         CanUndoModelUpdate = ModelUpdateService.Undoable(_data.DataDir).Count > 0;
 
         Version = AppVersion.Text + (_appUpdate.Current is null
-            ? " · made outside the release workflow, so it isn't compared with releases"
+            ? " · not a release build, so it isn't compared with the releases"
             : _appUpdate.Installed is { } update
                 ? $" · {update.Version} is downloaded, and installed when the app closes"
                 : _appUpdate.Available is { } newer

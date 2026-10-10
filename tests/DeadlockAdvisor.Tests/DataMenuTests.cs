@@ -1485,14 +1485,60 @@ public sealed class DataMenuTests : IDisposable
         var download = new HeldArtDownload();
         using var menu = Menu(artDownload: download, snapshots: new MatchSnapshotService(_api, () => now));
 
-        var checking = menu.CheckAllAsync(manual: true);
-        await UntilAsync(() => download.Started == 1 && !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
+        await menu.CheckAllAsync(manual: true);
+        await UntilAsync(() => !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
 
+        // The match data is a few MB and comes at once; the art asks first, since it is the big one.
         Assert.Contains(_toasts, toast => toast.Message == "Downloading match data from the shared download…");
-        Assert.Contains(_toasts, toast => toast.Message == $"Downloading the hero and item art ({WelcomeViewModel.ArtSize}) in the background…");
-        Assert.Empty(_shown);
+        var ask = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(_shown));
+        Assert.Contains(WelcomeViewModel.ArtSize, ask.Prompt);
+        Assert.Equal(0, download.Started);
+
+        ask.ConfirmCommand!.Execute(null);
+
+        await UntilAsync(() => download.Started == 1);
         download.Finish(new ArtDownloadReport([], new([], [])));
-        await checking;
+    }
+
+    /// <summary>A second dialog would be dropped, so the match data's (from deadlock-api.com) is the one that shows.</summary>
+    [Fact]
+    public async Task TheArtQuestionWaitsWhileTheMatchDataDialogIsUp()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        PublishModel();
+        using var menu = Menu(matchStats: new HeldMatchStats());
+
+        await menu.CheckAllAsync(manual: true);
+
+        Assert.IsType<MatchDownloadViewModel>(Assert.Single(_shown));
+    }
+
+    [Fact]
+    public async Task NotNowLeavesTheArtQuestionForTheNextCheckAndDontAskAgainEndsIt()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        PublishModel();
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download, snapshots: new MatchSnapshotService(_api, () => now));
+
+        await menu.CheckAllAsync(manual: true);
+        _shown.OfType<ConfirmationModalViewModel>().Single().CancelCommand!.Execute(null);
+        Assert.False(_fixture.Settings.Current.SkipArtOnCheck);
+        _shown.Clear();
+
+        await menu.CheckAllAsync(manual: true);
+        var ask = Assert.IsType<ConfirmationModalViewModel>(Assert.Single(_shown));
+        Assert.Equal("Not now", ask.CancelText);
+        ask.SecondaryConfirmCommand!.Execute(null);
+        Assert.True(_fixture.Settings.Current.SkipArtOnCheck);
+        _shown.Clear();
+
+        await menu.CheckAllAsync(manual: true);
+
+        Assert.DoesNotContain(_shown, shown => shown is ConfirmationModalViewModel);
+        Assert.Equal(0, download.Started);
     }
 
     /// <summary>Someone who answered the first run's offer with "not now" has asked for it by clicking; one who hasn't been offered it sees what it costs.</summary>
@@ -1535,14 +1581,16 @@ public sealed class DataMenuTests : IDisposable
         PublishModel();
         var download = new HeldArtDownload();
         using var menu = Menu(artDownload: download, snapshots: new MatchSnapshotService(_api, () => now));
-        var first = menu.CheckAllAsync(manual: true);
+        await menu.CheckAllAsync(manual: true);
+        _shown.OfType<ConfirmationModalViewModel>().Single().ConfirmCommand!.Execute(null);
         await UntilAsync(() => download.Started == 1 && !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
+        _shown.Clear();
 
         await menu.CheckAllAsync(manual: true);
 
         Assert.Equal(1, download.Started);
+        Assert.Empty(_shown);
         download.Finish(new ArtDownloadReport([], new([], [])));
-        await first;
     }
 
     // -- the reminder after a turned-down first run ----------------------------------

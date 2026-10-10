@@ -164,7 +164,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
         if (_updates.Current is not { } current)
         {
             if (manual && saysWhenCurrent)
-                _notifications.ShowInformation("This build wasn't made by the release workflow, so it has no version to compare with releases.");
+                _notifications.ShowInformation("This copy isn't a release build, so it has no version to compare with the releases.");
             return;
         }
         if (!manual && !_settings.Current.CheckForAppUpdates || State is AppUpdateState.Downloading or AppUpdateState.Ready)

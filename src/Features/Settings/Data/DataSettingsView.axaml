@@ -12,6 +12,16 @@
         </DataTemplate>
     </UserControl.Resources>
     <StackPanel>
+        <TextBlock Classes="section" Text="UPDATES"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Everything at once"
+                                     Description="Look for a newer app, formulas and match data, and offer the match data and art you don't have yet. Also Data → Check for Updates (Ctrl+U).">
+                    <Button Content="Check for updates" Command="{Binding CheckForUpdatesCommand}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
         <TextBlock Classes="section" Text="ART"/>
         <Border Classes="settings">
             <StackPanel>

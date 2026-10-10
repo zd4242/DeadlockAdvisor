@@ -107,6 +107,7 @@ Hot files, in the order their packages should run:
 | WP20 | [wp20](wp20-match-lookup-builds.md) | Import parses each player's items and net-worth curve | M | none | A |
 | WP21 | [wp21](wp21-post-match-review.md) | Post-match review: your build against the advice, and a net-worth curve | L | WP20 | C |
 | WP22 | [wp22](wp22-readme-catch-up.md) | README and docs catch-up | S | none | A, then last |
+| WP23 | [wp23](wp23-data-menu-simplify.md) | Data menu: one Check for Updates, maintainer tools in Model Tools (done) | M | WP13, WP14 | D |
 
 WP13, WP18 and WP21 list stages: stop at a stage boundary with a green commit if the session runs short.
 

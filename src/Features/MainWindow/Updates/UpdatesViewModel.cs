@@ -2,6 +2,7 @@ using System.Collections.Specialized;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Windows.Input;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Shared.BackgroundJobs;
 using DeadlockAdvisor.Scoring;
@@ -33,8 +34,9 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
 
     public UpdatesViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity, IArtService art,
         IDeadlockApi api, INotificationService notifications, IModalService modals, DataMenuViewModel dataMenu, AppUpdateViewModel app,
-        DataStatusViewModel matchData)
+        DataStatusViewModel matchData, ICommand showRecentMessages)
     {
+        RecentMessagesCommand = showRecentMessages;
         _data = data;
         _settings = settings;
         _connectivity = connectivity;
@@ -81,6 +83,9 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     }
 
     public IReadOnlyList<UpdateRowViewModel> Rows { get; }
+
+    /// <summary>The recent toasts, where an update that came by itself said what it changed (Help → Recent Messages…).</summary>
+    public ICommand RecentMessagesCommand { get; }
 
     /// <summary>What the chip says: "Up to date", "Updating match data 40%", "Patch 10-07 is out", "2 updates".</summary>
     [Reactive] public string Headline { get; private set; } = "";
@@ -167,7 +172,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     {
         var settings = _settings.Current;
         if (_app.Current is not { } running)
-            return new(UpdateState.Off, "Built outside the release workflow, so there's no version to compare with releases", "");
+            return new(UpdateState.Off, "Not a release build, so there's no version to compare with the releases", "");
 
         var version = $"Version {running}";
         switch (_app.State)
@@ -203,7 +208,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     private UpdateRowInfo FormulasRow()
     {
         var settings = _settings.Current;
-        var published = _modelPublished is { } date ? $"Published {date}" : "No record of a published version";
+        var published = _modelPublished is { } date ? $"Published {date}" : "Published version not recorded yet";
         var check = "Take the newest published hero ratings and item formulas, asking about any you've changed";
         IReadOnlyList<UpdateLink> links = [new("What's new", _dataMenu.ModelNotesCommand, "What the publisher said changed, version by version")];
 

@@ -133,6 +133,24 @@ public class SettingsPageTests
         ui.Screenshot("settings_data_modes_changed.png");
     }
 
+    /// <summary>One check for everything is the first thing on the page, and it is the flyout's and the menu's.</summary>
+    [AvaloniaFact]
+    public void TheDataPageStartsWithTheOneCheckForEverything()
+    {
+        using var ui = new UiHarness();
+        ui.ViewModel.OpenSettingsCommand.Execute().Subscribe();
+        var settings = ui.ViewModel.Settings;
+        settings.ShowData();
+        ui.Show();
+
+        Assert.Same(ui.ViewModel.Updates.CheckAllCommand, settings.Data.CheckForUpdatesCommand);
+        var button = ui.Window.SettingsPage.GetVisualDescendants().OfType<Button>().Single(candidate => Equals(candidate.Content, "Check for updates"));
+        Assert.Same(settings.Data.CheckForUpdatesCommand, button.Command);
+        var firstSection = ui.Window.SettingsPage.GetVisualDescendants().OfType<DataSettingsView>().Single()
+            .GetVisualDescendants().OfType<TextBlock>().First(text => text.Classes.Contains("section"));
+        Assert.Equal("UPDATES", firstSection.Text);
+    }
+
     [AvaloniaFact]
     public void TheSelectorsFollowSettingsChangedElsewhere()
     {

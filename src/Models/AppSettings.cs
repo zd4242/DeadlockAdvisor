@@ -21,6 +21,9 @@ public class AppSettings
     public DateTimeOffset? WelcomeOfferedAt { get; set; }
     public bool WelcomeReminded { get; set; }
 
+    // Check for Updates asks before it fetches art there is none of (about 23 MB); "Don't ask again" ends the question.
+    public bool SkipArtOnCheck { get; set; }
+
     // When the art was last checked against deadlock-api.com's, which is done about weekly.
     public DateTimeOffset? ArtCheckedAt { get; set; }
 

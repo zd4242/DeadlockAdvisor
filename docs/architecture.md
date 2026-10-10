@@ -247,7 +247,11 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   when there is none. A turned-down offer with still no art or match data is repeated once, as the "Downloads" chip,
   `DownloadsReminderAfter` (3 days) after it was made (`RemindAboutDownloads`, from the startup and scheduled checks;
   `AppSettings.WelcomeOfferedAt`, `WelcomeReminded`). Ctrl+U runs Check for Updates (a fixed key, reserved in
-  `ShortcutKeys`). A first run that was never offered the downloads gets `OfferWelcomeAsync` instead, which shows
+  `ShortcutKeys`), and so does the button at the top of Settings → Data (`DataSettingsViewModel.CheckForUpdatesCommand` is
+  `UpdatesViewModel.CheckAllCommand`). Art with none downloaded is asked about, not fetched (`CheckArtNowAsync`: Download,
+  Not now, or Don't ask again = `AppSettings.SkipArtOnCheck`), and the question waits while another dialog is up, since a
+  second would be dropped. The flyout's footer links `UpdatesViewModel.RecentMessagesCommand` (Help → Recent Messages…):
+  automatic updates say what changed in toasts, which that list keeps. A first run that was never offered the downloads gets `OfferWelcomeAsync` instead, which shows
   what they cost. Each source passes `saysWhenCurrent: false`, so a current one says nothing; a source that failed or
   did something still says so.
 - Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes

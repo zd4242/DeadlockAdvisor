@@ -317,15 +317,24 @@ public class DataMenuViewModel : ViewModelBase
         return Task.WhenAll(checks);
     }
 
-    /// <summary>The routine art check, or with no art at all (the offer was declined) the download itself, saying how big it is.</summary>
+    /// <summary>
+    /// The routine art check, or with no art at all (the offer was declined) the question whether to fetch it, since it
+    /// is the one download worth a pause on a slow or metered connection. The match data is a few MB and isn't asked about.
+    /// </summary>
     private Task CheckArtNowAsync()
     {
         if (_art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0)
             return CheckArtAsync();
-        if (IsDownloadingArt)
+        // A second dialog would be dropped, so with one already up (the match data's, from deadlock-api.com) the art waits.
+        if (IsDownloadingArt || _settings.Current.SkipArtOnCheck || _modals.IsModalOpen)
             return Task.CompletedTask;
-        _notifications.ShowInformation($"Downloading the hero and item art ({WelcomeViewModel.ArtSize}) in the background…", _toastTime);
-        return DownloadArtAsync(force: false);
+        _modals.Confirm(
+            $"Download the hero portraits and item icons ({WelcomeViewModel.ArtSize}) from deadlock-api.com? Without them heroes show as their "
+            + "initials and Detect from screen can't read the match. It downloads in the background.",
+            "Download", DownloadArt,
+            "Don't ask again", () => _settings.Update(s => s.SkipArtOnCheck = true),
+            "Not now");
+        return Task.CompletedTask;
     }
 
     /// <summary>Quietly download the art that's missing or changed, if the last check is old, a hero lacks art, or portraits were cut by an older version.</summary>

@@ -271,13 +271,16 @@ Reload from Disk** does the same for the folder in use. A folder you pick with
   the app, the newest published hero ratings and item formulas
   ([formula updates](#formula-updates), asking again about files you kept
   your own changes in), newer match data and the art. Because you asked,
-  it also downloads the match data and art you never downloaded; a first
-  run that was never offered them gets the offer instead, which shows what
-  each costs. A source that is already current says nothing, and when no
-  one has said anything by the end, it says *Everything is up to date.*
-  Offline, it asks the connection to retry and says so. The **Check for
-  updates** button of the Updates flyout (the chip at the left of the status
-  bar) is the same command.
+  it also downloads the match data you never downloaded, and asks before
+  fetching art you have none of (about 23 MB), with *Not now* and *Don't ask
+  again*; a first run that was never offered them gets the offer instead,
+  which shows what each costs. A source that is already current says
+  nothing, and when no one has said anything by the end, it says *Everything
+  is up to date.* Offline, it asks the connection to retry and says so. The
+  **Check for updates** button of the Updates flyout (the chip at the left
+  of the status bar) and the one at the top of Settings → Data are the same
+  command, and the flyout's **What changed recently** opens the recent
+  messages, where an update that came by itself said what it changed.
 - **Downloads and Updates…**: Settings → Data, with what is installed and
   when each was last checked, a button for each download, how each is kept
   up to date, and the folders.

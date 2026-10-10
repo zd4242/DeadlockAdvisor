@@ -176,7 +176,16 @@
                     </ItemsControl>
                     <Border Classes="hline"/>
                     <Grid ColumnDefinitions="*,Auto">
-                        <TextBlock Classes="faint" VerticalAlignment="Center" TextWrapping="Wrap" Text="{Binding Downloaded}"/>
+                        <StackPanel Spacing="2" VerticalAlignment="Center">
+                            <TextBlock Classes="faint" TextWrapping="Wrap" Text="{Binding Downloaded}"/>
+                            <Button x:Name="RecentMessages"
+                                    Classes="flat"
+                                    HorizontalAlignment="Left"
+                                    Command="{Binding RecentMessagesCommand}"
+                                    ToolTip.Tip="What the last updates said they changed: the app's recent messages">
+                                <TextBlock Text="What changed recently"/>
+                            </Button>
+                        </StackPanel>
                         <Button x:Name="CheckAll"
                                 Grid.Column="1"
                                 Classes="act"

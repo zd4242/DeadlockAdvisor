@@ -56,6 +56,7 @@ public sealed class UpdatesViewModelTests : IDisposable
     private readonly List<ViewModelBase> _shown = [];
     private readonly IDisposable _watchModals;
     private readonly ReactiveCommand<string, Unit> _open = ReactiveCommand.Create<string>(_ => { });
+    private readonly ReactiveCommand<Unit, Unit> _recent = ReactiveCommand.Create(() => { });
     private DataMenuViewModel _menu = null!;
     private AppUpdateViewModel _app = null!;
     private DataStatusViewModel _status = null!;
@@ -87,7 +88,7 @@ public sealed class UpdatesViewModelTests : IDisposable
             _notifications, _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _connectivity, _fixture.Clock);
         _app = new AppUpdateViewModel(_appUpdate, _fixture.Settings, _notifications, _open);
         _status = new DataStatusViewModel(_fixture.Data, _menu, _fixture.Settings);
-        _updates = new UpdatesViewModel(_fixture.Data, _fixture.Settings, _connectivity, _art, _api, _notifications, _fixture.Modals, _menu, _app, _status);
+        _updates = new UpdatesViewModel(_fixture.Data, _fixture.Settings, _connectivity, _art, _api, _notifications, _fixture.Modals, _menu, _app, _status, _recent);
         return _updates;
     }
 

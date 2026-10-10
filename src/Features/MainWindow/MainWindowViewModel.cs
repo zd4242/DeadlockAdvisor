@@ -213,7 +213,9 @@ public class MainWindowViewModel : ViewModelBase
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         Connection = new ConnectionViewModel(connectivity, art).DisposeWith(Disposables);
-        Updates = new UpdatesViewModel(data, settings, connectivity, art, api, notifications, modals, dataMenu, AppUpdate, DataStatus).DisposeWith(Disposables);
+        RecentMessagesCommand = ReactiveCommand.Create(ShowRecentMessages);
+        Updates = new UpdatesViewModel(data, settings, connectivity, art, api, notifications, modals, dataMenu, AppUpdate, DataStatus,
+            RecentMessagesCommand).DisposeWith(Disposables);
         connectivity.Reconnected
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(reconnected =>
@@ -247,7 +249,7 @@ public class MainWindowViewModel : ViewModelBase
             new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
             new ShortcutsSettingsViewModel(settings, hotkey),
             new DetectionSettingsViewModel(settings, hotkey),
-            new DataSettingsViewModel(settings, data, art, dataMenu, AppUpdate, ReloadArtCommand)).DisposeWith(Disposables);
+            new DataSettingsViewModel(settings, data, art, dataMenu, AppUpdate, ReloadArtCommand, Updates.CheckAllCommand)).DisposeWith(Disposables);
         Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
         // A new data folder, or new art, changes what the Data settings show.
         data.StoreReplaced
@@ -259,7 +261,6 @@ public class MainWindowViewModel : ViewModelBase
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         NoticesCommand = ReactiveCommand.Create(ShowNotices);
-        RecentMessagesCommand = ReactiveCommand.Create(ShowRecentMessages);
         QuitCommand = ReactiveCommand.Create(() => RequestViewAction(CloseAction));
 
         var onMatchPage = this.WhenAnyValue(vm => vm.CurrentPage, vm => vm.IsSettingsOpen, (page, settingsOpen) => page == 0 && !settingsOpen);
