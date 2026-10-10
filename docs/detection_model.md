@@ -31,15 +31,27 @@ is how each step works, why it works that way, and how to change it without maki
 
    Your lane partner's backplate is the same colour at half the brightness. A red critical backdrop
    and the spectator strip aren't team hues. On a kill streak your backplate turns teal, so you're
-   reported unknown rather than guessed.
+   reported unknown rather than guessed. Every team-hue score is then 0.00 (the two late-game captures in
+   the corpus), so the weak scores hold nothing to guess from, and the runner-up is your lane partner
+   whenever there is one. What does show is the teal itself: `Detector.StreakSlot` returns the one slot
+   whose backplate is bright teal (hue 140–185, saturation 0.3, brightness 0.9; yours read hue 159–162,
+   0.41, 0.99–1.00). It becomes `Detection.LikelyYou`, only while you're unknown, and is **only offered**:
+   the match bar tags that hero "YOU?" and asks for a click. `TheKillStreakHintPointsAtYouOrSaysNothing`
+   holds it to the labelled captures: it is you or nothing, and you wherever you were missed.
 6. **Same match** (`RosterContinuity`): heroes don't change slots mid-match. It's the same match when
    at least six confident slots agree with the match already applied and none disagrees. Then any
    slot the read couldn't settle keeps the applied hero ("kept"), and you carry over.
-7. **Apply or review** (`DetectAction`): if every slot is confident or kept and you're known, the
+7. **Apply or review** (`DetectAction`): if every slot is confident or kept (`Detection.HeroesSettled`), the
    match is applied without the review, and **Review** beside Detect reopens it. A Street Brawl's
-   blank slots count as read (below). Otherwise the review opens. Either way the run reports how it
+   blank slots count as read (below). When you weren't found, the heroes are still applied, each in its
+   slot but on no team (`MatchState.Unsided`): all the app is missing is which side is yours, and the match
+   page asks for one click on your hero, which splits the teams (the run ends as `DetectOutcome.NeedsYou`).
+   Otherwise the review opens. Either way the run reports how it
    ended (`DetectAction.Finished`); an F9 pressed in the game turns that into a sound, and the review
-   stays behind the game unless *Switch here for a review* is on.
+   (or the click on your hero) stays behind the game unless *Switch here for a review* is on.
+   The capture kept for an unsided apply has no `self_slot` and its `read.self_slot` is null; when the click
+   comes, `DetectAction.LabelSelf` writes the chosen slot into it (a note says it was picked by hand), so every
+   miss becomes a labelled capture: `read.self_slot` null with `self_slot` set.
 
 ## The reference art
 
@@ -140,5 +152,6 @@ corpus label with its states, promote, and regenerate the report.
   frame or the grid box, never through a hero-specific crop.
 - Anything that can make a read confident must keep confident-wrong at zero on the corpus. A wrong
   confident read is applied without anyone checking it.
-- Say "unknown" rather than guess, for heroes and for you alike: the review, and the match already
-  applied, handle unknowns.
+- Say "unknown" rather than guess, for heroes and for you alike: the review, the match already
+  applied, and the match page's question about which hero is you handle unknowns. A hint such as
+  `LikelyYou` is only ever pointed out for a click, never applied.

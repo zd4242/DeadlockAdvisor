@@ -50,6 +50,17 @@ public sealed class MatchState
     /// </summary>
     public void SetRole(string heroId, Role role)
     {
+        if (role != Role.None && HasUnsided)
+        {
+            if (IsUnsided(heroId))
+            {
+                TakeSides(heroId, role);
+                return;
+            }
+            // A hero from outside the read: the match is being built by hand now.
+            DropUnsided();
+        }
+
         if (role == Role.Self && SelfHero is { } formerSelf && formerSelf != heroId)
         {
             switch (RoleOf(heroId))
@@ -89,6 +100,60 @@ public sealed class MatchState
     }
 
     /// <summary>
+    /// Heroes read off the top bar whose team isn't known yet, left side first. They sit in <see cref="RoleMap"/>
+    /// unassigned, with their slot: a detection that found every hero but not which one is you. The
+    /// first role given to any of them splits the two sides (<see cref="TakeSides"/>).
+    /// </summary>
+    public List<string> Unsided => RoleMap
+        .Where(entry => entry.Value == Role.None && Slots.ContainsKey(entry.Key))
+        .Select(entry => entry.Key)
+        .OrderBy(heroId => Slots[heroId])
+        .ToList();
+
+    public bool HasUnsided => RoleMap.Any(entry => entry.Value == Role.None && Slots.ContainsKey(entry.Key));
+
+    private string? _likelyYou;
+
+    /// <summary>Which unsided hero looked like you (a kill streak's backplate): pointed out for a click, never assumed.</summary>
+    public string? LikelyYou => _likelyYou is { } heroId && IsUnsided(heroId) ? heroId : null;
+
+    public void SuggestSelf(string? heroId) => _likelyYou = heroId;
+
+    public bool IsUnsided(string heroId) => RoleMap.TryGetValue(heroId, out var role) && role == Role.None && Slots.ContainsKey(heroId);
+
+    /// <summary>Put a hero read in a top-bar slot into the match without a team.</summary>
+    public void PlaceUnsided(string heroId, int slot)
+    {
+        RoleMap[heroId] = Role.None;
+        Slots[heroId] = slot;
+    }
+
+    /// <summary>
+    /// A hero on one side of the bar takes <paramref name="role"/>: their side becomes that team and the other side
+    /// the opposite one, so clicking yourself splits a match whose heroes are all known but not whose they are.
+    /// </summary>
+    private void TakeSides(string heroId, Role role)
+    {
+        var team = role.Team();
+        var side = Slots[heroId] / TeamSize;
+        foreach (var other in Unsided)
+        {
+            var mine = Slots[other] / TeamSize == side;
+            RoleMap[other] = mine ? team : team == Role.Ally ? Role.Enemy : Role.Ally;
+        }
+        RoleMap[heroId] = role;
+    }
+
+    private void DropUnsided()
+    {
+        foreach (var heroId in Unsided)
+        {
+            RoleMap.Remove(heroId);
+            Slots.Remove(heroId);
+        }
+    }
+
+    /// <summary>
     /// Allies (you included) become enemies and enemies allies, each team keeping its order and top-bar slots.
     /// The focused enemies are allies now, so nobody is focused.
     /// </summary>
@@ -123,6 +188,7 @@ public sealed class MatchState
         Slots.Clear();
         NetWorth.Clear();
         _focused.Clear();
+        _likelyYou = null;
     }
 
     /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
@@ -188,6 +254,7 @@ public sealed class MatchState
             .Select(snapshot => new SavedNetWorth { At = snapshot.At, Souls = snapshot.Souls.ToDictionary() })
             .ToList();
         saved.Focused = Enemies.Where(_focused.Contains).ToList();
+        saved.LikelyYou = LikelyYou;
         return saved;
     }
 
@@ -206,12 +273,13 @@ public sealed class MatchState
         }
         foreach (var (heroId, slot) in saved.Slots)
         {
-            if (RoleOf(heroId) != Role.None)
+            if (RoleMap.ContainsKey(heroId))
                 Slots[heroId] = slot;
         }
         foreach (var snapshot in saved.NetWorth)
             NetWorth.Add(new NetWorthSnapshot(snapshot.At, snapshot.Souls.Where(entry => valid.Contains(entry.Key)).ToDictionary()));
         foreach (var heroId in saved.Focused)
             SetFocus(heroId, true);
+        SuggestSelf(saved.LikelyYou);
     }
 }

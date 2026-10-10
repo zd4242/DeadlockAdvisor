@@ -34,9 +34,18 @@ public sealed record Detection(IReadOnlyList<SlotReading> Slots, Geometry Geomet
 
     public int ConfidentCount => Slots.Count(slot => slot.IsConfident);
 
-    /// <summary>Every slot's hero and which one is you, known well enough to apply without anyone checking. A blank Street Brawl slot needs no hero.</summary>
-    public bool IsSettled => SelfSlot is not null && Slots.Count == Layout.SlotCount
-                             && Slots.All(slot => slot.IsSettled || BlankSlots.Contains(slot.Index));
+    /// <summary>Every slot's hero known well enough to apply without anyone checking, whether or not you were found. A blank Street Brawl slot needs no hero.</summary>
+    public bool HeroesSettled => Slots.Count == Layout.SlotCount
+                                 && Slots.All(slot => slot.IsSettled || BlankSlots.Contains(slot.Index));
+
+    /// <summary>Every slot's hero and which one is you, known well enough to apply without anyone checking.</summary>
+    public bool IsSettled => SelfSlot is not null && HeroesSettled;
+
+    /// <summary>
+    /// With <see cref="SelfSlot"/> unknown, the slot whose backplate looks like your kill streak
+    /// (<see cref="Detector.StreakSlot"/>): worth pointing out for a click, never to apply.
+    /// </summary>
+    public int? LikelyYou { get; init; }
 
     /// <summary>The slots a Street Brawl strip leaves blank, or none when it isn't one (see <see cref="StreetBrawl"/>).</summary>
     public IReadOnlyList<int> BlankSlots { get; init; } = [];
@@ -92,6 +101,13 @@ public static class Detector
     public const double SelfLead = 0.15;
     private static readonly (double From, double To)[] _teamHues = [(25, 45), (210, 230)];
 
+    // On a kill streak your backplate turns teal and bright instead: hue 159-162, saturation 0.41-0.42 and
+    // brightness 0.99-1.00 in the two late-game captures of the corpus that have one, against 0.51 brightness
+    // and 0.22 saturation for the only other greenish backplate in them.
+    public const double StreakMinSaturation = 0.3;
+    public const double StreakMinBrightness = 0.9;
+    private static readonly (double From, double To) _streakHue = (140, 185);
+
     public static Detection? Detect(RgbImage image, TemplateBank bank, Geometry? geometry = null,
         (double Min, double Max)? pitchRange = null, (double Min, double Max)? topRange = null,
         int? screenHeight = null, IProgress<double>? progress = null)
@@ -133,26 +149,52 @@ public static class Detector
 
         var values = SelfSlotScores(image, geometry);
         var (selfSlot, selfScore) = FindSelfSlot(values);
-        var detection = new Detection(readings, geometry, selfSlot, selfScore, image, values) { Heroes = bank.Heroes, Scores = scores };
+        var detection = new Detection(readings, geometry, selfSlot, selfScore, image, values)
+        {
+            Heroes = bank.Heroes,
+            Scores = scores,
+            LikelyYou = selfSlot is null ? StreakSlot(image, geometry) : null,
+        };
         return detection with { BlankSlots = StreetBrawl.BlankSlots(readings, detection.CropOf) };
     }
 
-    /// <summary>
-    /// How much each slot looks like yours: the brightness of the strip above its portrait, from the
-    /// top of the screen to a little above the art (characters overflow their box by about a tenth,
-    /// so any lower reads hair and hats), if that's a saturated team colour, and nothing otherwise.
-    /// </summary>
-    public static List<double> SelfSlotScores(RgbImage image, Geometry geometry)
-    {
-        var bottom = Math.Max(4, (int)Math.Round(geometry.Top - 0.12 * geometry.ArtHeight));
-        var half = geometry.Pitch * 0.3;
-        return geometry.Centers().Select(center =>
+    /// <summary>How much each slot looks like yours: the brightness of its backplate if that's a saturated team colour, and nothing otherwise.</summary>
+    public static List<double> SelfSlotScores(RgbImage image, Geometry geometry) =>
+        Backplates(image, geometry).Select(color =>
         {
-            if (BackplateColor(image, (int)Math.Round(center - half), (int)Math.Round(center + half), bottom) is not { } color)
+            if (color is null)
                 return 0.0;
             var (hue, saturation, value) = ImageOps.Hsv(color);
             return saturation >= SelfMinSaturation && _teamHues.Any(range => hue >= range.From && hue <= range.To) ? value : 0.0;
         }).ToList();
+
+    /// <summary>
+    /// The one slot whose backplate is the bright teal of a kill streak, which is why <see cref="FindSelfSlot"/>
+    /// can't find you then (the team hue is gone). Only a hint to offer for a click, never applied: with
+    /// more than one such slot, or none, it says nothing.
+    /// </summary>
+    public static int? StreakSlot(RgbImage image, Geometry geometry)
+    {
+        var streaking = Backplates(image, geometry)
+            .Select((color, slot) => (Slot: slot, Hsv: color is null ? default : ImageOps.Hsv(color), Seen: color is not null))
+            .Where(entry => entry.Seen && entry.Hsv.Saturation >= StreakMinSaturation && entry.Hsv.Value >= StreakMinBrightness
+                            && entry.Hsv.Hue >= _streakHue.From && entry.Hsv.Hue <= _streakHue.To)
+            .ToList();
+        return streaking.Count == 1 ? streaking[0].Slot : null;
+    }
+
+    /// <summary>
+    /// The mean colour of the strip above each slot's portrait, from the top of the screen to a little above
+    /// the art (characters overflow their box by about a tenth, so any lower reads hair and hats); null where
+    /// there's nothing to read.
+    /// </summary>
+    private static List<float[]?> Backplates(RgbImage image, Geometry geometry)
+    {
+        var bottom = Math.Max(4, (int)Math.Round(geometry.Top - 0.12 * geometry.ArtHeight));
+        var half = geometry.Pitch * 0.3;
+        return geometry.Centers()
+            .Select(center => BackplateColor(image, (int)Math.Round(center - half), (int)Math.Round(center + half), bottom))
+            .ToList();
     }
 
     /// <summary>

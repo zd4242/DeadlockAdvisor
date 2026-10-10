@@ -70,6 +70,36 @@ public class VisionTests
         Assert.Equal(5, match.Enemies.Count);
     }
 
+    [Fact]
+    public void WithoutYouEveryHeroIsPlacedInTheirSlotsOnNoTeam()
+    {
+        var match = new MatchState();
+
+        var count = VisionApply.ApplyToMatch(match, _heroes, null, _heroes!, likelySelfSlot: 8);
+
+        Assert.Equal(12, count);
+        Assert.Null(match.SelfHero);
+        Assert.Empty(match.Allies);
+        Assert.Empty(match.Enemies);
+        Assert.Equal(_heroes.OfType<string>(), match.Unsided);
+        Assert.Equal(Enumerable.Range(0, 12), _heroes.Select(hero => match.Slots[hero!]));
+        Assert.Equal("h8", match.LikelyYou);
+    }
+
+    [Fact]
+    public void DetectingAgainWithoutYouKeepsTheNetWorthHistory()
+    {
+        var match = new MatchState();
+        var souls = Enumerable.Range(0, 12).Select(slot => (int?)(10_000 + slot * 1000)).ToList();
+        var first = DateTimeOffset.UtcNow;
+
+        VisionApply.ApplyToMatch(match, _heroes, null, _heroes!, netWorth: (souls, first));
+        VisionApply.ApplyToMatch(match, _heroes, null, _heroes!, netWorth: (souls, first.AddMinutes(2)));
+
+        Assert.Equal(2, match.NetWorth.Snapshots.Count);
+        Assert.Equal(15_000, match.NetWorth.Latest("h5"));
+    }
+
     // -- assignment ------------------------------------------------------------
 
     [Fact]

@@ -32,13 +32,28 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
     /// <summary>An enemy rated on some trait, so focusing on them means something.</summary>
     [Reactive] public bool CanFocus { get; private set; } = true;
 
-    public void Fill(string heroId, string heroName, bool isSelf, int? netWorth, string? netWorthChange)
+    /// <summary>Read off the top bar with no team yet: a click says this is you, which splits the sides.</summary>
+    [Reactive] public bool IsUnsided { get; private set; }
+
+    /// <summary>An unsided hero whose backplate looked like a kill streak, so likely you.</summary>
+    [Reactive] public bool IsLikelySelf { get; private set; }
+
+    /// <summary>What an unsided hero would be if the pointer's hero were you: ally, enemy, or You for that hero.</summary>
+    [Reactive] public Role Preview { get; set; }
+
+    public void Fill(string heroId, string heroName, bool isSelf, int? netWorth, string? netWorthChange,
+        bool isUnsided = false, bool isLikelySelf = false)
     {
         HeroId = heroId;
         HeroName = heroName;
         IsSelf = isSelf;
         NetWorth = netWorth;
         NetWorthChange = netWorthChange;
+        IsUnsided = isUnsided;
+        IsLikelySelf = isLikelySelf;
+        Preview = Role.None;
+        if (isUnsided)
+            SetFocus(false, false, true);
     }
 
     /// <summary>Where the slot's hero stands with the focus: focused, dimmed while another is, and whether a click can focus them.</summary>
@@ -56,6 +71,9 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
         IsSelf = false;
         NetWorth = null;
         NetWorthChange = null;
+        IsUnsided = false;
+        IsLikelySelf = false;
+        Preview = Role.None;
         SetFocus(false, false, true);
     }
 }

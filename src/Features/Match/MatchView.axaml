@@ -136,7 +136,7 @@
                                 Classes.open="{Binding Results.IsSearchOpen}"
                                 Command="{Binding ToggleItemSearchCommand}"
                                 AutomationProperties.Name="Search items"
-                                IsEnabled="{Binding !IsMatchEmpty}"
+                                IsEnabled="{Binding CanSearchItems}"
                                 ToolTip.Tip="Search the recommended items, or put the search away (Ctrl+F)">
                             <!-- Drawn at the glyph's own 16px size, about as wide as the funnel and centred on its box, with a stroke that matches the funnel's weight. -->
                             <Path Data="M7,1.2 A5.8,5.8 0 1 1 7,12.8 A5.8,5.8 0 1 1 7,1.2 Z M11.1,11.1 L14.6,14.6"
@@ -225,9 +225,28 @@
                                         Text="{Binding Results.SearchText}"
                                         IsVisible="{Binding Results.IsSearchOpen}"/>
                     <Panel>
-                        <Panel IsVisible="{Binding !ShowsQuickStart}">
+                        <Panel IsVisible="{Binding ShowsResults}">
                             <results:ResultsView DataContext="{Binding Results}"/>
                         </Panel>
+
+                        <!-- Every hero is read but not which one is you: nothing can be scored until a click splits the teams. -->
+                        <StackPanel x:Name="PickSelf"
+                                    IsVisible="{Binding NeedsSelf}"
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    MaxWidth="460"
+                                    Spacing="12">
+                            <TextBlock Classes="h2" HorizontalAlignment="Center" Text="Which hero are you?"/>
+                            <TextBlock Classes="dim"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       Text="Every hero was read off the top bar, but not which one is yours. Click your hero on the match bar above: their side becomes your team, the other side the enemy, and the recommendations appear."/>
+                            <TextBlock Classes="faint"
+                                       TextWrapping="Wrap"
+                                       TextAlignment="Center"
+                                       Text="A hero read wrong? Review, beside Detect, lets you correct it."
+                                       IsVisible="{Binding Board.CanReviewDetection}"/>
+                        </StackPanel>
 
                         <!-- Nothing picked yet: the three ways to fill the match, in place of an empty list. -->
                         <StackPanel x:Name="QuickStart"

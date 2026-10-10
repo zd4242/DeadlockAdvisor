@@ -36,6 +36,7 @@ public class MatchBoardViewModel : ViewModelBase
         "Left click assigns a hero to the role chosen here.\nRight click picks a role for it.\nDouble click sets it as You.\n"
         + "Type a name and press Enter to assign the best match.\nEsc closes the picker.";
     public const string NoSelfHint = "You're not set yet — detect or import the match, or click an empty ally slot to pick your hero";
+    public const string PickSelfPrompt = "Which one is you?\nClick your hero.";
 
     public static readonly IReadOnlyList<Role> ModeOrder = [Role.Self, Role.Enemy, Role.Ally];
 
@@ -129,6 +130,21 @@ public class MatchBoardViewModel : ViewModelBase
     [Reactive] public string EnemyCount { get; private set; } = "";
     /// <summary>Your hero isn't set, which the match bar asks you to fix.</summary>
     [Reactive] public bool IsSelfMissing { get; private set; } = true;
+
+    /// <summary>
+    /// Every hero is on the bar as the game shows it, left side and right, but which side is yours isn't known:
+    /// the bar asks for a click on your hero, which splits the teams.
+    /// </summary>
+    [Reactive] public bool IsPickingSelf { get; private set; }
+
+    /// <summary>The header says your hero isn't set and how to fix it; while <see cref="IsPickingSelf"/> the question on the bar says it better.</summary>
+    public bool ShowsNoSelfHint => IsSelfMissing && !IsPickingSelf;
+
+    /// <summary>The hero a kill streak's backplate pointed at, when picking yourself; empty without one.</summary>
+    [Reactive] public string LikelySelfName { get; private set; } = "";
+
+    /// <summary>What the bar asks while <see cref="IsPickingSelf"/>.</summary>
+    [Reactive] public string PickSelfQuestion { get; private set; } = PickSelfPrompt;
 
     /// <summary>Whether any net worth has been read this match, which makes room for it on the bar.</summary>
     [Reactive] public bool HasNetWorth { get; private set; }
@@ -322,17 +338,61 @@ public class MatchBoardViewModel : ViewModelBase
 
     private void RefreshRosters()
     {
+        HasNetWorth = !_match.NetWorth.IsEmpty;
+        IsSelfMissing = _match.SelfHero is null;
+        IsPickingSelf = _match.HasUnsided;
+        this.RaisePropertyChanged(nameof(ShowsNoSelfHint));
+        if (IsPickingSelf)
+        {
+            RefreshUnsided();
+            return;
+        }
+
         var allies = _match.OwnTeam;
         var enemies = _match.Enemies;
 
         AllyCount = $"{allies.Count}/{MatchState.TeamSize}";
         EnemyCount = $"{enemies.Count}/{MatchState.TeamSize}";
-        HasNetWorth = !_match.NetWorth.IsEmpty;
         FillSlots(AllySlots, allies);
         FillSlots(EnemySlots, enemies);
-        IsSelfMissing = _match.SelfHero is null;
         RefreshTotals(allies, enemies);
         RefreshFocus(enemies);
+    }
+
+    /// <summary>The two sides as the game's bar lays them out, neither one yours yet: no totals or focus until the teams are split.</summary>
+    private void RefreshUnsided()
+    {
+        var heroes = _store().Heroes;
+        var unsided = _match.Unsided.Where(heroes.ContainsKey).ToList();
+        var left = unsided.Where(heroId => _match.Slots[heroId] < MatchState.TeamSize).ToList();
+        var right = unsided.Except(left).ToList();
+        AllyCount = $"{left.Count}/{MatchState.TeamSize}";
+        EnemyCount = $"{right.Count}/{MatchState.TeamSize}";
+        FillSlots(AllySlots, left, unsided: true);
+        FillSlots(EnemySlots, right, unsided: true);
+        (AllyNetWorth, EnemyNetWorth, NetWorthLead, IsBehind) = ("", "", "", false);
+        (HasFocus, FocusLabel, FocusTip) = (false, "", "");
+
+        LikelySelfName = _match.LikelyYou is { } likely && heroes.TryGetValue(likely, out var hero) ? hero.HeroName : "";
+        PickSelfQuestion = LikelySelfName.Length > 0
+            ? $"Probably {LikelySelfName}.\nClick them to confirm, or click your hero."
+            : PickSelfPrompt;
+    }
+
+    /// <summary>
+    /// The pointer is over an unsided hero (or left them): tint the bar the way a click on them would leave it, with
+    /// their side as your team and the other as the enemy.
+    /// </summary>
+    public void PreviewSelf(string? heroId)
+    {
+        var own = heroId is not null && AllySlots.Any(slot => slot.HeroId == heroId) ? AllySlots : EnemySlots;
+        foreach (var slot in AllySlots.Concat(EnemySlots))
+        {
+            slot.Preview = heroId is null || !IsPickingSelf || slot.HeroId is null ? Role.None
+                : slot.HeroId == heroId ? Role.Self
+                : own.Contains(slot) ? Role.Ally
+                : Role.Enemy;
+        }
     }
 
     private void RefreshFocus(IReadOnlyList<string> enemies)
@@ -364,7 +424,7 @@ public class MatchBoardViewModel : ViewModelBase
     }
 
     /// <summary>The team in order from the first slot, any past the sixth left off the bar.</summary>
-    private void FillSlots(IReadOnlyList<RosterSlotViewModel> slots, IEnumerable<string> heroIds)
+    private void FillSlots(IReadOnlyList<RosterSlotViewModel> slots, IEnumerable<string> heroIds, bool unsided = false)
     {
         var heroes = _store().Heroes;
         var shown = heroIds.Where(heroes.ContainsKey).ToList();
@@ -374,7 +434,8 @@ public class MatchBoardViewModel : ViewModelBase
             {
                 var heroId = shown[index];
                 slots[index].Fill(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero,
-                    _match.NetWorth.Latest(heroId), ChangeText(_match.NetWorth.Change(heroId)));
+                    _match.NetWorth.Latest(heroId), ChangeText(_match.NetWorth.Change(heroId)),
+                    unsided, unsided && heroId == _match.LikelyYou);
             }
             else
             {

@@ -281,4 +281,125 @@ public class MatchStateTests
         Assert.NotNull(match.SelfHero);
         Assert.Equal(2, match.Allies.Count);
     }
+
+    // -- heroes read off the bar before the teams are known ---------------------
+
+    private static MatchState Unsided(int count = 12)
+    {
+        var match = new MatchState();
+        for (var slot = 0; slot < count; slot++)
+            match.PlaceUnsided($"h{slot}", slot);
+        return match;
+    }
+
+    [Fact]
+    public void UnsidedHeroesAreInTheMatchButNotOnATeam()
+    {
+        var match = Unsided();
+
+        Assert.True(match.HasUnsided);
+        Assert.False(match.IsEmpty);
+        Assert.Equal(Enumerable.Range(0, 12).Select(slot => $"h{slot}"), match.Unsided);
+        Assert.Empty(match.Allies);
+        Assert.Empty(match.Enemies);
+        Assert.Null(match.SelfHero);
+    }
+
+    [Theory]
+    [InlineData(2, 0)]
+    [InlineData(8, 6)]
+    public void PickingYourselfSplitsTheSidesAndKeepsTheBarsOrder(int slot, int ownBase)
+    {
+        var match = Unsided();
+
+        match.SetRole($"h{slot}", Role.Self);
+
+        Assert.False(match.HasUnsided);
+        Assert.Equal($"h{slot}", match.SelfHero);
+        Assert.Equal(Enumerable.Range(ownBase, 6).Select(i => $"h{i}"), match.OwnTeam);
+        Assert.Equal(Enumerable.Range(6 - ownBase, 6).Select(i => $"h{i}"), match.Enemies);
+        Assert.Equal(Enumerable.Range(0, 12), Enumerable.Range(0, 12).Select(i => match.Slots[$"h{i}"]));
+    }
+
+    [Theory]
+    [InlineData(Role.Ally, "h1", "h7")]
+    [InlineData(Role.Enemy, "h7", "h1")]
+    public void AnyRoleGivenToAnUnsidedHeroSplitsTheSidesWithoutPickingYou(Role role, string ally, string enemy)
+    {
+        var match = Unsided();
+
+        match.SetRole("h1", role);
+
+        Assert.Null(match.SelfHero);
+        Assert.Equal(Role.Ally, match.RoleOf(ally));
+        Assert.Equal(Role.Enemy, match.RoleOf(enemy));
+        Assert.Equal(6, match.Allies.Count);
+        Assert.Equal(6, match.Enemies.Count);
+    }
+
+    [Fact]
+    public void AStreetBrawlSplitsTheSameWay()
+    {
+        var match = new MatchState();
+        foreach (var slot in new[] { 2, 3, 4, 5, 6, 7, 8, 9 })
+            match.PlaceUnsided($"h{slot}", slot);
+
+        match.SetRole("h7", Role.Self);
+
+        Assert.Equal(["h6", "h7", "h8", "h9"], match.OwnTeam);
+        Assert.Equal(["h2", "h3", "h4", "h5"], match.Enemies);
+    }
+
+    [Fact]
+    public void RemovingAnUnsidedHeroLeavesTheRestWaiting()
+    {
+        var match = Unsided();
+
+        match.SetRole("h3", Role.None);
+
+        Assert.Equal(11, match.Unsided.Count);
+        Assert.False(match.Slots.ContainsKey("h3"));
+        Assert.True(match.HasUnsided);
+    }
+
+    [Fact]
+    public void PickingAHeroFromOutsideTheReadDropsTheUnsidedOnes()
+    {
+        var match = Unsided();
+
+        match.SetRole("outsider", Role.Self);
+
+        Assert.False(match.HasUnsided);
+        Assert.Equal("outsider", Assert.Single(match.RoleMap).Key);
+        Assert.Empty(match.Slots);
+    }
+
+    [Fact]
+    public void UnsidedHeroesAndTheHeroThatLooksLikeYouSurviveBeingSaved()
+    {
+        var match = Unsided();
+        match.SuggestSelf("h4");
+
+        var restored = new MatchState();
+        restored.LoadSaved(match.ToSaved(), Enumerable.Range(0, 12).Select(slot => $"h{slot}"));
+
+        Assert.Equal(match.Unsided, restored.Unsided);
+        Assert.Equal(Enumerable.Range(0, 12), Enumerable.Range(0, 12).Select(i => restored.Slots[$"h{i}"]));
+        Assert.Equal("h4", restored.LikelyYou);
+    }
+
+    [Fact]
+    public void TheSuggestedHeroIsForgottenOnceTheSidesAreSplitOrTheMatchIsCleared()
+    {
+        var match = Unsided();
+        match.SuggestSelf("h4");
+        Assert.Equal("h4", match.LikelyYou);
+
+        match.SetRole("h9", Role.Self);
+        Assert.Null(match.LikelyYou);
+
+        match.Clear();
+        match.PlaceUnsided("h4", 4);
+        Assert.Null(match.LikelyYou);
+    }
 }

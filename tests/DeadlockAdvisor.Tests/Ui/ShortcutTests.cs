@@ -261,6 +261,33 @@ public class ShortcutTests
         Assert.Equal(1, ui.Attention.Flashes);
     }
 
+    /// <summary>Every hero was read and applied, but a click on yours is still needed, so it asks for a look rather than saying it's done.</summary>
+    [AvaloniaFact]
+    public async Task F9FromTheGameChimesAndFlashesWhenOnlyYouAreMissing()
+    {
+        using var ui = new UiHarness();
+
+        await PressDetectKeyAsync(ui, Support.VisionData.CaptureWithoutYou());
+
+        Assert.Equal([AttentionKind.NeedsLook], ui.Attention.Chimes);
+        Assert.Equal(1, ui.Attention.Flashes);
+        Assert.True(ui.ViewModel.Match.NeedsSelf);
+    }
+
+    [AvaloniaFact]
+    public async Task F9FromTheGameBringsTheWindowUpForAClickOnYourHeroWhenToldTo()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ComeUpForReview = true);
+        var broughtForward = 0;
+        using var _ = ui.ViewModel.ViewInteraction
+            .Subscribe(action => broughtForward += action == MainWindowViewModel.BringForwardAction ? 1 : 0);
+
+        await PressDetectKeyAsync(ui, Support.VisionData.CaptureWithoutYou());
+
+        Assert.True(ui.ViewModel.Match.NeedsSelf);
+        Assert.Equal(1, broughtForward);
+    }
+
     [AvaloniaFact]
     public async Task F9FromTheGameChimesAndFlashesWhenNothingCouldBeRead()
     {

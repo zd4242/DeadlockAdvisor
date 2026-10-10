@@ -60,7 +60,7 @@ public sealed class LabeledCapture
     /// <summary>Pregame, laning, mid, late or spectating: the top bar looks different in each.</summary>
     public string? Phase { get; init; }
 
-    public int? SelfSlot { get; init; }
+    public int? SelfSlot { get; set; }
     public int AllowWrong { get; init; }
     public Dictionary<int, string> Heroes { get; init; } = [];
     public Dictionary<int, SlotState> States { get; init; } = [];
@@ -84,7 +84,7 @@ public sealed class LabeledCapture
     /// <summary>An applied detection: what was applied, and what the detector read before it was reviewed.</summary>
     /// <param name="heroes">The hero applied to each slot, or null.</param>
     /// <param name="corrected">The slots whose hero was changed in the review.</param>
-    public static LabeledCapture FromApplied(Detection detection, IReadOnlyList<string?> heroes, int selfSlot,
+    public static LabeledCapture FromApplied(Detection detection, IReadOnlyList<string?> heroes, int? selfSlot,
         IReadOnlyCollection<int> corrected, bool reviewed, int screenWidth, int screenHeight)
     {
         var labels = new Dictionary<int, string>();

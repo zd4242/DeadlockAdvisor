@@ -23,7 +23,7 @@ public class LayoutTests
     /// around it): cut off, since a scroll viewer that only scrolls down has no way to the rest. A
     /// viewer that scrolls sideways is allowed to hold wider things.
     /// </summary>
-    private static List<string> Overflowing(Visual page)
+    internal static List<string> Overflowing(Visual page)
     {
         var window = (TopLevel)page.GetVisualRoot()!;
         double RightOf(Control control) => control.TranslatePoint(new Point(control.Bounds.Width, 0), window)!.Value.X;

@@ -34,6 +34,37 @@ public static class VisionData
     public static ScreenCapture Capture(string fixture = "screen_2560x1440_band_2") =>
         new(Image($"fixtures/{fixture}.png"), 2560, 1440);
 
+    /// <summary>
+    /// A capture whose strip above every portrait is greyed out: every hero still reads, but nobody is lit as you. A slot
+    /// can be given the bright teal a kill streak turns its backplate.
+    /// </summary>
+    public static ScreenCapture CaptureWithoutYou(string fixture = "screen_2560x1440_band", int? streakSlot = null)
+    {
+        var capture = Capture(fixture);
+        var band = capture.Band;
+        var pixels = (byte[])band.Pixels.Clone();
+        var grid = Detector.Detect(band, Bank, screenHeight: capture.ScreenHeight)!.Geometry;
+        var bottom = (int)Math.Round(grid.Top - 0.12 * grid.ArtHeight);
+
+        void Paint(int from, int to, (byte R, byte G, byte B) color)
+        {
+            for (var y = 1; y < bottom; y++)
+            {
+                for (var x = Math.Max(0, from); x < Math.Min(band.Width, to); x++)
+                    (pixels[(y * band.Width + x) * 3], pixels[(y * band.Width + x) * 3 + 1], pixels[(y * band.Width + x) * 3 + 2]) = color;
+            }
+        }
+
+        Paint(0, band.Width, (90, 90, 90));
+        if (streakSlot is { } slot)
+        {
+            var center = grid.Centers()[slot];
+            var half = grid.Pitch * 0.3;
+            Paint((int)Math.Round(center - half), (int)Math.Round(center + half), (150, 255, 220));
+        }
+        return new(new RgbImage(band.Width, band.Height, pixels), capture.ScreenWidth, capture.ScreenHeight);
+    }
+
     /// <summary>Copy the reference art into an assets folder, as the art download would.</summary>
     public static void CopyTopbarInto(string assetsDir)
     {

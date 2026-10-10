@@ -47,6 +47,7 @@ public class DetectAction
     private readonly ILoggingService _log;
     private readonly IConnectivityService _connectivity;
     private Read? _lastApplied;
+    private Unlabelled? _unlabelled;
 
     public DetectAction(IDataService data, ISettingsService settings, IModalService modals, INotificationService notifications,
         IScreenCaptureService capture, ILoggingService log, IConnectivityService connectivity)
@@ -161,7 +162,7 @@ public class DetectAction
             _settings.Update(s => s.VisionGeometry[screenKey] = detection.Geometry.ToJson());
 
         var read = new Read(detection, netWorth, capture, capturedAt, directory);
-        if (_settings.Current.AutoApplyDetect && detection.IsSettled)
+        if (_settings.Current.AutoApplyDetect && detection.HeroesSettled)
             await ApplyWithoutReviewAsync(match, applied, read);
         else
         {
@@ -181,26 +182,68 @@ public class DetectAction
     public void ForgetLast()
     {
         _lastApplied = null;
+        _unlabelled = null;
         _canReview.OnNext(false);
     }
 
     /// <summary>
+    /// Once you've been picked by hand on a match applied without knowing who you were, write that into the
+    /// kept capture's label: a strip that hid you is exactly a capture to measure the next change on.
+    /// </summary>
+    public void LabelSelf(MatchState match)
+    {
+        if (_unlabelled is not { } pending || match.SelfHero is not { } self || !match.Slots.TryGetValue(self, out var slot))
+            return;
+        if (!match.Slots.All(entry => entry.Value < pending.Heroes.Count && pending.Heroes[entry.Value] == entry.Key))
+            return;
+
+        _unlabelled = null;
+        var note = Path.ChangeExtension(pending.Image, CaptureArchive.Detections.NoteExtension);
+        if (!File.Exists(note))
+            return;
+        pending.Labels.SelfSlot = slot;
+        pending.Labels.Notes.Add("You were picked by hand on the match page: the strip's backplate didn't show which slot.");
+        try
+        {
+            File.WriteAllText(note, pending.Labels.ToJson().ToJsonString(_captureJson) + Environment.NewLine);
+            _log.Information($"Detect: labelled the kept capture with you in slot {slot}");
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+        }
+    }
+
+    /// <summary>
     /// Every slot read confidently or kept from the match, and you known: nothing for anyone to
-    /// check, so it's applied, and the review stays a click away.
+    /// check, so it's applied, and the review stays a click away. Without you, the heroes are applied
+    /// all the same and the match page asks for a click on yours, which is what splits the teams.
     /// </summary>
     private async Task ApplyWithoutReviewAsync(MatchState match, Action applied, Read read)
     {
         var heroes = read.Detection.Slots.Select(slot => slot.HeroId).ToList();
-        var self = read.Detection.SelfSlot!.Value;
-        Apply(match, new DetectReviewResult(heroes, self, [], read.NetWorth.Souls, []), read.At, read.Directory);
+        var self = read.Detection.SelfSlot;
+        var likely = self is null ? read.Detection.LikelyYou : null;
+        Apply(match, new DetectReviewResult(heroes, self, [], read.NetWorth.Souls, [], LikelySelfSlot: likely), read.At, read.Directory);
         applied();
         _lastApplied = read;
         _canReview.OnNext(true);
-        _log.Information("Detect: applied without review, every slot being settled");
-        _notifications.ShowSuccess("Read the match off the screen and applied it. Review beside Detect shows what was read.", _appliedToast);
-        _finished.OnNext(DetectOutcome.Applied);
-        await KeepCaptureAsync(read.Capture, read.At,
-            LabeledCapture.FromApplied(read.Detection, heroes, self, [], reviewed: false, read.Capture.ScreenWidth, read.Capture.ScreenHeight));
+        if (self is null)
+        {
+            _log.Information("Detect: applied the heroes without review, every slot being settled but you not found"
+                             + (likely is { } slot ? $" (slot {slot} has a kill streak's backplate)" : ""));
+            _notifications.ShowInformation("Read all twelve heroes, but not which one is you. Click your hero on the match bar.", _appliedToast);
+            _finished.OnNext(DetectOutcome.NeedsYou);
+        }
+        else
+        {
+            _log.Information("Detect: applied without review, every slot being settled");
+            _notifications.ShowSuccess("Read the match off the screen and applied it. Review beside Detect shows what was read.", _appliedToast);
+            _finished.OnNext(DetectOutcome.Applied);
+        }
+        var labels = LabeledCapture.FromApplied(read.Detection, heroes, self, [], reviewed: false, read.Capture.ScreenWidth, read.Capture.ScreenHeight);
+        var kept = await KeepCaptureAsync(read.Capture, read.At, labels);
+        if (self is null && kept is not null)
+            _unlabelled = new Unlabelled(kept, labels, heroes);
     }
 
     private void ShowReview(MatchState match, Action applied, Read read)
@@ -232,6 +275,9 @@ public class DetectAction
 
     /// <summary>A detection with everything needed to apply or review it: what was read, and off what.</summary>
     private sealed record Read(Detection Detection, NetWorthReading NetWorth, ScreenCapture Capture, DateTimeOffset At, string Directory);
+
+    /// <summary>The kept capture of a match applied without knowing who you were, and the heroes it was applied as, by slot.</summary>
+    private sealed record Unlabelled(string Image, LabeledCapture Labels, IReadOnlyList<string?> Heroes);
 
     /// <summary>What was read, for the log: each side's pills and total, and whether they added up.</summary>
     internal static string NetWorthLog(NetWorthReading reading)
@@ -286,7 +332,8 @@ public class DetectAction
     private void Apply(MatchState match, DetectReviewResult result, DateTimeOffset capturedAt, string directory)
     {
         VisionApply.ApplyToMatch(match, result.SlotHeroes, result.SelfSlot, _data.Store.Heroes.Keys,
-            netWorth: (result.SlotSouls, capturedAt));
+            netWorth: (result.SlotSouls, capturedAt), likelySelfSlot: result.LikelySelfSlot);
+        _unlabelled = null;
 
         var learned = 0;
         foreach (var (heroId, crop) in result.Corrections)
@@ -310,14 +357,16 @@ public class DetectAction
         }
     }
 
-    /// <summary>Keep an applied capture with the heroes it was applied as, the corpus detection is measured and tuned on.</summary>
-    private async Task KeepCaptureAsync(ScreenCapture capture, DateTimeOffset capturedAt, LabeledCapture labels)
+    /// <summary>Keep an applied capture with the heroes it was applied as, the corpus detection is measured and tuned on; returns where, or null if it wasn't kept.</summary>
+    private async Task<string?> KeepCaptureAsync(ScreenCapture capture, DateTimeOffset capturedAt, LabeledCapture labels)
     {
         if (!_settings.Current.KeepDetectionCaptures)
-            return;
+            return null;
         var note = labels.ToJson().ToJsonString(_captureJson);
-        if (await Task.Run(() => CaptureArchive.Detections.Save(_data.DataRoot, capture.Band, capturedAt, note)) is { } path)
+        var path = await Task.Run(() => CaptureArchive.Detections.Save(_data.DataRoot, capture.Band, capturedAt, note));
+        if (path is not null)
             _log.Information($"Detect: kept the applied capture in {path}");
+        return path;
     }
 
     private void Close(DetectReviewViewModel review)

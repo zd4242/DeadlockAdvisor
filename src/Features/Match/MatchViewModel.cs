@@ -79,6 +79,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private readonly IDataService _data;
     private readonly ISettingsService _settings;
+    private readonly DetectAction _detect;
     private readonly Func<double> _now;
 
     /// <summary>The rank option the list was last laid out for, so picking another can start on its best item.</summary>
@@ -97,6 +98,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     {
         _data = data;
         _settings = settings;
+        _detect = detect;
         _now = now;
         DataRanks = dataRanks.DisposeWith(Disposables);
 
@@ -209,6 +211,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         this.WhenAnyValue(vm => vm.IsMatchEmpty, vm => vm.Board.IsPickerOpen)
             .Subscribe(_ => ShowsQuickStart = IsMatchEmpty && !Board.IsPickerOpen)
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ShowsQuickStart, vm => vm.NeedsSelf)
+            .Subscribe(_ => ShowsResults = !ShowsQuickStart && !NeedsSelf)
+            .DisposeWith(Disposables);
 
         _data.ScoresChanged.Subscribe(_ => RefreshWhenShown()).DisposeWith(Disposables);
         _data.StoreReplaced.Subscribe(_ => Rebind()).DisposeWith(Disposables);
@@ -281,6 +286,18 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// </summary>
     [Reactive] public bool ShowsQuickStart { get; private set; }
 
+    /// <summary>
+    /// Every hero is placed from the top bar but the teams aren't split: the results panel asks which hero is
+    /// you instead of listing items nobody could score yet.
+    /// </summary>
+    [Reactive] public bool NeedsSelf { get; private set; }
+
+    /// <summary>The results list is what the panel shows: neither the quick start nor the question of who you are.</summary>
+    [Reactive] public bool ShowsResults { get; private set; }
+
+    /// <summary>There is a line-up to search the items of.</summary>
+    [Reactive] public bool CanSearchItems { get; private set; }
+
     /// <summary>Look back at a detection that was applied without review.</summary>
     public ReactiveCommand<Unit, Unit> ReviewDetectionCommand { get; }
 
@@ -293,7 +310,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// </summary>
     public void FocusSearch()
     {
-        if (IsMatchEmpty || Board.IsPickerOpen)
+        if (NeedsSelf)
+            Board.StartAssigning(Role.Self);
+        else if (IsMatchEmpty || Board.IsPickerOpen)
             Board.OpenPicker();
         else
             OpenItemSearch();
@@ -333,6 +352,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         var netWorth = NetWorth();
         HasMatchData = store.MatchLift.Count > 0;
         IsMatchEmpty = Match.IsEmpty;
+        NeedsSelf = Match.HasUnsided;
+        CanSearchItems = !IsMatchEmpty && !NeedsSelf;
         Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale);
         RefreshExplain();
     }
@@ -391,7 +412,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void OnMatchChanged()
     {
+        var pickedSelf = NeedsSelf && !Match.HasUnsided;
         Refresh();
+        // Picking yourself builds the line-up, so it opens on its best item like any new one.
+        if (pickedSelf)
+            StartOnBestItem();
+        _detect.LabelSelf(Match);
         _settings.Update(s => s.LastMatch = Match.ToSaved());
     }
 

@@ -556,11 +556,13 @@ public class MainWindowViewModel : ViewModelBase
         }
 
         ShowPage(0);
-        // Only a review or a problem needs you here, and Settings can leave even those waiting behind
-        // the game; a detection applied without review, or its progress, never pulls you out of it.
+        // Only a review, a problem or a click on your hero needs you here, and Settings can leave even those
+        // waiting behind the game; a detection applied without review, or its progress, never pulls you out of it.
         using var surface = _settings.Current.ComeUpForReview
             ? _modals.ShowModalObservable
                 .Where(modal => modal is not ProgressModalViewModel)
+                .Select(_ => Unit.Default)
+                .Merge(Match.DetectFinished.Where(outcome => outcome == DetectOutcome.NeedsYou).Select(_ => Unit.Default))
                 .Take(1)
                 .Subscribe(_ => RequestViewAction(BringForwardAction))
             : null;

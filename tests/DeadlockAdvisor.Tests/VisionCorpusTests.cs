@@ -60,6 +60,29 @@ public class VisionCorpusTests
         Assert.True(problems.Count == 0, string.Join("\n", problems) + $"\n(see {report})");
     }
 
+    /// <summary>
+    /// The hint that offers a hero as you when the strip didn't show which is you (a kill streak's backplate) is only a
+    /// click away from being wrong, so on the labelled captures it must point at you or say nothing, and at you wherever you were missed.
+    /// </summary>
+    [Fact]
+    public void TheKillStreakHintPointsAtYouOrSaysNothing()
+    {
+        var outcomes = _outcomes.Value;
+        var missed = outcomes.Where(outcome => outcome.Capture.Labels.SelfSlot is not null && outcome.Detection.SelfSlot is null).ToList();
+        Assert.NotEmpty(missed);
+
+        foreach (var outcome in outcomes)
+        {
+            var hint = Detector.StreakSlot(outcome.Capture.Image, outcome.Detection.Geometry);
+            if (outcome.Capture.Labels.SelfSlot is { } self)
+                Assert.True(hint is null || hint == self, $"{outcome.Capture.Name}: the hint is slot {hint}, you are {self}");
+            else
+                Assert.Null(hint);
+            Assert.Equal(outcome.Detection.SelfSlot is null ? hint : null, outcome.Detection.LikelyYou);
+        }
+        Assert.All(missed, outcome => Assert.Equal(outcome.Capture.Labels.SelfSlot, outcome.Detection.LikelyYou));
+    }
+
     /// <summary>A real scoreboard must never be turned away as "nothing found", Street Brawl and dead players included.</summary>
     [Fact]
     public void EveryLabelledCaptureHasAStripToFind()

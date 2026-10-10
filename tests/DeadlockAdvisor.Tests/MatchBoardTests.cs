@@ -112,4 +112,66 @@ public class MatchBoardTests
         _board.ToggleFocus("newcomer");
         Assert.False(_board.HasFocus);
     }
+
+    private (MatchBoardViewModel Board, MatchState Match, List<string> Heroes) UnsidedBoard()
+    {
+        var match = new MatchState();
+        var board = new MatchBoardViewModel(match, () => _store, new FakeSettingsService());
+        var heroes = _store.HeroesSorted().Take(12).Select(hero => hero.HeroId).ToList();
+        for (var slot = 0; slot < heroes.Count; slot++)
+            match.PlaceUnsided(heroes[slot], slot);
+        board.Refresh();
+        return (board, match, heroes);
+    }
+
+    [Fact]
+    public void HeroesReadWithoutATeamSitOnTheSidesOfTheGamesBar()
+    {
+        var (board, _, heroes) = UnsidedBoard();
+
+        Assert.True(board.IsPickingSelf);
+        Assert.True(board.IsSelfMissing);
+        Assert.False(board.ShowsNoSelfHint);
+        Assert.Equal(heroes[..6], board.AllySlots.Select(slot => slot.HeroId));
+        Assert.Equal(heroes[6..], board.EnemySlots.Select(slot => slot.HeroId));
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.True(slot.IsUnsided));
+        Assert.Equal(("", "", ""), (board.AllyNetWorth, board.EnemyNetWorth, board.NetWorthLead));
+        Assert.False(board.HasFocus);
+    }
+
+    [Fact]
+    public void HoveringAnUnsidedHeroPreviewsTheSidesAClickWouldMake()
+    {
+        var (board, _, heroes) = UnsidedBoard();
+        var all = board.AllySlots.Concat(board.EnemySlots).ToList();
+
+        board.PreviewSelf(heroes[8]);
+
+        Assert.All(board.AllySlots, slot => Assert.Equal(Role.Enemy, slot.Preview));
+        Assert.Equal([Role.Ally, Role.Ally, Role.Self, Role.Ally, Role.Ally, Role.Ally], board.EnemySlots.Select(slot => slot.Preview));
+
+        board.PreviewSelf(heroes[1]);
+        Assert.Equal([Role.Ally, Role.Self, Role.Ally, Role.Ally, Role.Ally, Role.Ally], board.AllySlots.Select(slot => slot.Preview));
+        Assert.All(board.EnemySlots, slot => Assert.Equal(Role.Enemy, slot.Preview));
+
+        board.PreviewSelf(null);
+        Assert.All(all, slot => Assert.Equal(Role.None, slot.Preview));
+
+        board.PreviewSelf(heroes[1]);
+        board.SetRole(heroes[1], Role.Self);
+        Assert.All(all, slot => Assert.Equal(Role.None, slot.Preview));
+        Assert.False(board.IsPickingSelf);
+    }
+
+    [Fact]
+    public void AHeroTheStripPointedAtIsNamedInTheQuestion()
+    {
+        var (board, match, heroes) = UnsidedBoard();
+        match.SuggestSelf(heroes[4]);
+        board.Refresh();
+
+        Assert.Equal(_store.Heroes[heroes[4]].HeroName, board.LikelySelfName);
+        Assert.Equal($"Probably {board.LikelySelfName}.\nClick them to confirm, or click your hero.", board.PickSelfQuestion);
+        Assert.Equal([false, false, false, false, true, false], board.AllySlots.Select(slot => slot.IsLikelySelf));
+    }
 }

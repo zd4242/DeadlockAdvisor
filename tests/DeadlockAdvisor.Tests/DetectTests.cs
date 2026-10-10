@@ -3,6 +3,7 @@ using Avalonia.Headless.XUnit;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.Match;
+using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Match.Explain;
 using DeadlockAdvisor.Features.Match.Import;
@@ -10,6 +11,7 @@ using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
 using DeadlockAdvisor.Services;
+using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using DeadlockAdvisor.Vision;
@@ -273,6 +275,180 @@ public sealed class DetectTests : IDisposable
 
         Assert.False(_page.Board.CanReviewDetection);
         Assert.False(await _page.ReviewDetectionCommand.CanExecute.FirstAsync());
+    }
+
+    private static List<string> CertainHeroes()
+    {
+        var spec = FixtureSpec(Certain);
+        return Enumerable.Range(0, 12).Select(slot => (string)spec["heroes"]![slot.ToString()]!).ToList();
+    }
+
+    private async Task<List<string>> DetectWithoutYouAsync(int? streakSlot = null)
+    {
+        _fixture.Settings.Current.AutoApplyDetect = true;
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        _capture.Next = CaptureWithoutYou(Certain, streakSlot);
+        await _page.DetectCommand.Execute();
+        return CertainHeroes();
+    }
+
+    [AvaloniaFact]
+    public async Task EveryHeroReadButNotYouIsAppliedAndWaitsForAClickOnYours()
+    {
+        var outcomes = new List<DetectOutcome>();
+        using var watch = _page.DetectFinished.Subscribe(outcomes.Add);
+
+        var heroes = await DetectWithoutYouAsync();
+
+        Assert.DoesNotContain(_shown, modal => modal is DetectReviewViewModel);
+        Assert.Equal([DetectOutcome.NeedsYou], outcomes);
+        var match = _page.Match;
+        Assert.Equal(heroes, match.Unsided);
+        Assert.Null(match.SelfHero);
+        Assert.True(_page.NeedsSelf);
+        Assert.False(_page.ShowsResults);
+        Assert.False(_page.CanSearchItems);
+        Assert.True(_page.Board.CanReviewDetection);
+        var board = _page.Board;
+        Assert.True(board.IsPickingSelf);
+        Assert.Equal(MatchBoardViewModel.PickSelfPrompt, board.PickSelfQuestion);
+        Assert.Equal(heroes[..6], board.AllySlots.Select(slot => slot.HeroId));
+        Assert.Equal(heroes[6..], board.EnemySlots.Select(slot => slot.HeroId));
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.True(slot.IsUnsided));
+        Assert.Equal(heroes, _fixture.Settings.Current.LastMatch!.Roles.Where(entry => entry.Value == "none").Select(entry => entry.Key));
+
+        // A click on a hero is a click on you: their side becomes your team and the list opens on its best item.
+        board.SetRole(heroes[8], Role.Self);
+
+        Assert.False(_page.NeedsSelf);
+        Assert.True(_page.ShowsResults);
+        Assert.False(board.IsPickingSelf);
+        Assert.Equal(heroes[8], match.SelfHero);
+        Assert.Equal(heroes[6..], match.OwnTeam);
+        Assert.Equal(heroes[..6], match.Enemies);
+        Assert.Equal(heroes[6..], board.AllySlots.Select(slot => slot.HeroId));
+        Assert.True(board.AllySlots[2].IsSelf);
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.False(slot.IsUnsided));
+        Assert.False(_page.Results.IsEmpty);
+        var top = _page.Results.Entries.OfType<ResultRowViewModel>().First();
+        Assert.True(top.IsSelected);
+        Assert.True(_page.Explain.HasItem);
+        Assert.Equal("self", _fixture.Settings.Current.LastMatch!.Roles[heroes[8]]);
+    }
+
+    [AvaloniaFact]
+    public async Task ARoleFromTheMenuOnAnUnsidedHeroSplitsTheSidesToo()
+    {
+        var heroes = await DetectWithoutYouAsync();
+
+        _page.Board.SetRole(heroes[2], Role.Enemy);
+
+        Assert.Null(_page.Match.SelfHero);
+        Assert.True(_page.Board.IsSelfMissing);
+        Assert.False(_page.NeedsSelf);
+        Assert.Equal(heroes[6..], _page.Match.OwnTeam);
+        Assert.Equal(heroes[..6], _page.Match.Enemies);
+    }
+
+    [AvaloniaFact]
+    public async Task DetectingAgainOnceYouAreReadableAppliesTheWholeMatch()
+    {
+        var outcomes = new List<DetectOutcome>();
+        using var watch = _page.DetectFinished.Subscribe(outcomes.Add);
+        var heroes = await DetectWithoutYouAsync();
+
+        _capture.Next = Capture(Certain);
+        await _page.DetectCommand.Execute();
+
+        Assert.Equal([DetectOutcome.NeedsYou, DetectOutcome.Applied], outcomes);
+        Assert.False(_page.NeedsSelf);
+        Assert.Equal(heroes[1], _page.Match.SelfHero);
+        Assert.Equal(heroes[6..], _page.Match.Enemies);
+    }
+
+    [AvaloniaFact]
+    public async Task DetectingAgainAfterPickingYouKeepsYouWhenTheStripStillHidesYou()
+    {
+        var outcomes = new List<DetectOutcome>();
+        using var watch = _page.DetectFinished.Subscribe(outcomes.Add);
+        var heroes = await DetectWithoutYouAsync();
+        _page.Board.SetRole(heroes[8], Role.Self);
+
+        _capture.Next = CaptureWithoutYou(Certain);
+        await _page.DetectCommand.Execute();
+
+        Assert.Equal([DetectOutcome.NeedsYou, DetectOutcome.Applied], outcomes);
+        Assert.Equal(heroes[8], _page.Match.SelfHero);
+        Assert.False(_page.NeedsSelf);
+    }
+
+    [AvaloniaFact]
+    public async Task WithoutApplyingStraightAwayAMissingYouStillOpensTheReview()
+    {
+        _fixture.Settings.Current.AutoApplyDetect = false;
+        CopyTopbarInto(_fixture.Data.AssetsDir);
+        _capture.Next = CaptureWithoutYou(Certain);
+
+        await _page.DetectCommand.Execute();
+
+        var review = Assert.IsType<DetectReviewViewModel>(_shown[^1]);
+        Assert.Null(review.SelfSlot);
+        Assert.False(_page.Match.HasUnsided);
+    }
+
+    /// <summary>A strip that hid you is the capture to measure the next change on, so the click that finds you is written into its label.</summary>
+    [AvaloniaFact]
+    public async Task PickingYouLabelsTheKeptCapture()
+    {
+        var heroes = await DetectWithoutYouAsync();
+        var note = Directory.GetFiles(Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName), "detect_*.json").Single();
+        LabeledCapture Kept() => LabeledCapture.FromJson(System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(note))!);
+        Assert.Null(Kept().SelfSlot);
+        Assert.Null(Kept().ReadSelfSlot);
+
+        _page.Board.SetRole(heroes[8], Role.Self);
+
+        var labelled = Kept();
+        Assert.Equal(8, labelled.SelfSlot);
+        Assert.Null(labelled.ReadSelfSlot);
+        Assert.False(labelled.Reviewed);
+        Assert.Contains(labelled.Notes, line => line.Contains("picked by hand"));
+
+        // Only the first click on the match it was applied to: changing you later says nothing about the strip.
+        _page.Board.SetRole(heroes[9], Role.Self);
+        Assert.Equal(8, Kept().SelfSlot);
+    }
+
+    [AvaloniaFact]
+    public async Task AMatchBuiltByHandIsNotLabelledAsTheCaptureWasRead()
+    {
+        await DetectWithoutYouAsync();
+        var note = Directory.GetFiles(Path.Combine(_fixture.Data.DataRoot, CaptureArchive.FolderName), "detect_*.json").Single();
+
+        _page.Board.SetRole("outsider", Role.Self);
+
+        Assert.Null(LabeledCapture.FromJson(System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(note))!).SelfSlot);
+        Assert.False(_page.Match.HasUnsided);
+    }
+
+    [AvaloniaFact]
+    public async Task AKillStreaksBackplateIsOfferedAsYouButNothingIsAssumed()
+    {
+        var heroes = await DetectWithoutYouAsync(streakSlot: 3);
+
+        var board = _page.Board;
+        Assert.Null(_page.Match.SelfHero);
+        Assert.Equal(heroes[3], _page.Match.LikelyYou);
+        Assert.True(board.AllySlots[3].IsLikelySelf);
+        Assert.Single(board.AllySlots.Concat(board.EnemySlots), slot => slot.IsLikelySelf);
+        Assert.Contains("Probably", board.PickSelfQuestion);
+        Assert.Contains(board.LikelySelfName, board.PickSelfQuestion);
+        Assert.Equal(heroes[3], _fixture.Settings.Current.LastMatch!.LikelyYou);
+
+        // Picking someone else is believed over the hint, and the hint goes with the question.
+        board.SetRole(heroes[8], Role.Self);
+        Assert.Null(_page.Match.LikelyYou);
+        Assert.Equal(heroes[8], _page.Match.SelfHero);
     }
 
     [AvaloniaFact]

@@ -22,6 +22,10 @@
                 </ItemsPanelTemplate>
             </Setter>
         </Style>
+        <!-- Waiting for a click on your hero: the bar is outlined so the question is hard to miss. -->
+        <Style Selector="Border.card.picking">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
     </UserControl.Styles>
 
     <UserControl.DataTemplates>
@@ -35,12 +39,15 @@
                                  ShowsNetWorth="{Binding ShowsNetWorth}"
                                  IsFocusTarget="{Binding IsFocused}"
                                  IsDimmed="{Binding IsDimmed}"
-                                 CanFocus="{Binding CanFocus}"/>
+                                 CanFocus="{Binding CanFocus}"
+                                 IsUnsided="{Binding IsUnsided}"
+                                 IsLikelySelf="{Binding IsLikelySelf}"
+                                 PreviewRole="{Binding Preview}"/>
         </DataTemplate>
     </UserControl.DataTemplates>
 
     <!-- The match as the game's top bar shows it: your team on the left, the enemy on the right. -->
-    <Border Classes="card">
+    <Border Classes="card" Classes.picking="{Binding IsPickingSelf}">
         <StackPanel Spacing="10">
             <Grid ColumnDefinitions="Auto,*,Auto">
                 <StackPanel Orientation="Horizontal" Spacing="6">
@@ -54,7 +61,7 @@
                            TextTrimming="CharacterEllipsis"
                            Text="{x:Static board:MatchBoardViewModel.NoSelfHint}"
                            ToolTip.Tip="{x:Static board:MatchBoardViewModel.NoSelfHint}"
-                           IsVisible="{Binding IsSelfMissing}"/>
+                           IsVisible="{Binding ShowsNoSelfHint}"/>
                 <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="6">
                     <Button Command="{Binding DetectCommand}"
                             ToolTip.Tip="Read the whole match off Deadlock's top bar.&#10;Applied straight away when every hero is certain; otherwise you check it first.">
@@ -110,12 +117,26 @@
                               HorizontalAlignment="Right"
                               ItemsSource="{Binding AllySlots}"/>
 
+                <!-- Every hero is on the bar but not whose side is yours: the question stands where the teams would be named. -->
+                <TextBlock Grid.Column="1"
+                           Margin="16,0"
+                           MaxWidth="150"
+                           VerticalAlignment="Center"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource AccentBrush}"
+                           Text="{Binding PickSelfQuestion}"
+                           IsVisible="{Binding IsPickingSelf}"/>
+
                 <!-- Counts, and once net worth is read, each team's total and the lead as the game shows them. -->
                 <Grid Grid.Column="1"
                       ColumnDefinitions="Auto,Auto,Auto"
                       RowDefinitions="Auto,Auto"
                       Margin="16,0"
-                      VerticalAlignment="Center">
+                      VerticalAlignment="Center"
+                      IsVisible="{Binding !IsPickingSelf}">
                     <StackPanel Spacing="2" HorizontalAlignment="Right">
                         <!-- The section style's letter spacing trails the last letter too, which would push it off the divider. -->
                         <TextBlock Classes="section ally"

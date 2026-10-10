@@ -21,6 +21,11 @@ namespace DeadlockAdvisor.Controls;
 /// you, so their items show; a click on you, or a right click, opens the role menu. Its × removes,
 /// and an empty slot starts filling this team. While any enemy is focused, the others are dimmed.
 /// </para>
+/// <para>
+/// A hero read off the bar whose team isn't known yet (<see cref="IsUnsided"/>) has a neutral ring, and a click
+/// makes them you. The match bar tints both sides as that click would leave them while the pointer is over
+/// one (<see cref="PreviewRole"/>), and tags the hero a kill streak pointed at as probably you.
+/// </para>
 /// </summary>
 public class RosterSlot : Control
 {
@@ -73,6 +78,26 @@ public class RosterSlot : Control
     public static readonly StyledProperty<bool> CanFocusProperty =
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(CanFocus), true);
 
+    /// <summary>Read off the top bar with no team yet: neutral ring, and a click says this is you.</summary>
+    public static readonly StyledProperty<bool> IsUnsidedProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsUnsided));
+
+    /// <summary>An unsided hero a kill streak's backplate pointed at, tagged as probably you.</summary>
+    public static readonly StyledProperty<bool> IsLikelySelfProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsLikelySelf));
+
+    /// <summary>What this unsided hero would be if the hero under the pointer were you: Ally or Enemy, or Self for that hero.</summary>
+    public static readonly StyledProperty<Role> PreviewRoleProperty =
+        AvaloniaProperty.Register<RosterSlot, Role>(nameof(PreviewRole));
+
+    /// <summary>The pointer came over an unsided hero.</summary>
+    public static readonly RoutedEvent<HeroEventArgs> HoverEnteredEvent =
+        RoutedEvent.Register<RosterSlot, HeroEventArgs>("HoverEntered", RoutingStrategies.Bubble);
+
+    /// <summary>The pointer left an unsided hero.</summary>
+    public static readonly RoutedEvent<RoutedEventArgs> HoverLeftEvent =
+        RoutedEvent.Register<RosterSlot, RoutedEventArgs>("HoverLeft", RoutingStrategies.Bubble);
+
     public static readonly RoutedEvent<HeroEventArgs> RemovedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("Removed", RoutingStrategies.Bubble);
 
@@ -94,7 +119,8 @@ public class RosterSlot : Control
     static RosterSlot()
     {
         AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, NetWorthProperty,
-            IsFocusTargetProperty, IsDimmedProperty, CanFocusProperty, IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
+            IsFocusTargetProperty, IsDimmedProperty, CanFocusProperty, IsUnsidedProperty, IsLikelySelfProperty, PreviewRoleProperty,
+            IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
         AffectsMeasure<RosterSlot>(ShowsNetWorthProperty);
         CursorProperty.OverrideDefaultValue<RosterSlot>(new Cursor(StandardCursorType.Hand));
     }
@@ -164,16 +190,43 @@ public class RosterSlot : Control
         set => SetValue(CanFocusProperty, value);
     }
 
+    public bool IsUnsided
+    {
+        get => GetValue(IsUnsidedProperty);
+        set => SetValue(IsUnsidedProperty, value);
+    }
+
+    public bool IsLikelySelf
+    {
+        get => GetValue(IsLikelySelfProperty);
+        set => SetValue(IsLikelySelfProperty, value);
+    }
+
+    public Role PreviewRole
+    {
+        get => GetValue(PreviewRoleProperty);
+        set => SetValue(PreviewRoleProperty, value);
+    }
+
     public bool IsEmpty => string.IsNullOrEmpty(HeroId);
 
-    private bool IsEnemy => Team == Role.Enemy;
+    private bool IsEnemy => Team == Role.Enemy && !IsUnsided;
+
+    /// <summary>Not yet you, but offered as you: the hero a click is about to make you, or the one a kill streak pointed at.</summary>
+    private bool OffersSelf => !IsSelf && (PreviewRole == Role.Self || IsLikelySelf && PreviewRole == Role.None);
+
+    /// <summary>The ring (and the net worth pill's) colour: gold for you or a hero offered as you, the team's for a hero in one, neutral until an unsided hero's side is previewed or known.</summary>
+    private Color RingColor => IsSelf || OffersSelf ? Palette.Self
+        : IsUnsided ? PreviewRole is Role.Ally or Role.Enemy ? Palette.RoleColor(PreviewRole) : Palette.BorderStrong
+        : Palette.RoleColor(Team);
 
     protected override void OnPropertyChanged(AvaloniaPropertyChangedEventArgs change)
     {
         base.OnPropertyChanged(change);
         if (change.Property == HeroIdProperty || change.Property == HeroNameProperty || change.Property == TeamProperty
             || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty
-            || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty)
+            || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty
+            || change.Property == IsUnsidedProperty || change.Property == IsLikelySelfProperty)
             UpdateToolTip();
     }
 
@@ -187,7 +240,9 @@ public class RosterSlot : Control
             var team = Team.Label().ToLowerInvariant();
             if (IsEmpty)
                 return $"Empty {team} slot";
-            var parts = new List<string> { HeroName, IsSelf ? "you" : team };
+            var parts = new List<string> { HeroName, IsSelf ? "you" : IsUnsided ? "team unknown" : team };
+            if (IsLikelySelf)
+                parts.Add("probably you");
             if (IsFocusTarget)
                 parts.Add("focused");
             if (NetWorth is { } souls)
@@ -257,11 +312,20 @@ public class RosterSlot : Control
         InvalidateVisual();
     }
 
+    protected override void OnPointerEntered(PointerEventArgs e)
+    {
+        base.OnPointerEntered(e);
+        if (IsUnsided && !IsEmpty)
+            RaiseEvent(new HeroEventArgs(HoverEnteredEvent, HeroId!));
+    }
+
     protected override void OnPointerExited(PointerEventArgs e)
     {
         base.OnPointerExited(e);
         _overRemove = false;
         UpdateToolTip();
+        if (IsUnsided)
+            RaiseEvent(new RoutedEventArgs(HoverLeftEvent));
     }
 
     protected override void OnPointerPressed(PointerPressedEventArgs e)
@@ -280,6 +344,8 @@ public class RosterSlot : Control
         var heroId = HeroId!;
         if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
             RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
+        else if (properties.IsLeftButtonPressed && IsUnsided)
+            RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
         else if (properties.IsLeftButtonPressed && IsEnemy && CanFocus)
             RaiseEvent(new HeroEventArgs(FocusRequestedEvent, heroId));
         else if (properties.IsLeftButtonPressed && !IsSelf && !IsEnemy)
@@ -295,6 +361,9 @@ public class RosterSlot : Control
             tip = $"Empty slot -- click to add an {Team.Label().ToLowerInvariant()}";
         else if (_overRemove)
             tip = $"Remove {HeroName} from the match";
+        else if (IsUnsided)
+            tip = $"{HeroName} -- {(IsLikelySelf ? "probably you: a kill streak's backplate is behind this portrait. Click to confirm" : "click if this is you")}; "
+                  + "their side becomes your team, the other side the enemy. Right click for other roles";
         else if (IsSelf)
             tip = $"{HeroName} (you) -- click to change";
         else if (IsEnemy && !CanFocus)
@@ -349,10 +418,12 @@ public class RosterSlot : Control
         var hovered = IsPointerOver;
 
         ArtPainter.Draw(context, this, ArtKind.Hero, HeroId!, HeroName, rect, _radius);
-        var ring = new Pen(new SolidColorBrush(IsSelf ? Palette.Self : Palette.RoleColor(Team)), IsSelf || IsFocusTarget || hovered ? 3 : 2);
+        var ring = new Pen(new SolidColorBrush(RingColor), IsSelf || OffersSelf || IsFocusTarget || hovered ? 3 : 2);
         context.DrawRectangle(null, ring, new RoundedRect(rect, _radius));
         if (IsSelf)
-            PaintYouTag(context, rect);
+            PaintYouTag(context, rect, "YOU");
+        else if (OffersSelf)
+            PaintYouTag(context, rect, "YOU?");
         if (IsEnemy && (IsFocusTarget || hovered && CanFocus))
             PaintFocusBadge(context);
 
@@ -386,10 +457,10 @@ public class RosterSlot : Control
             context.DrawLine(pen, center + direction * 2, center + direction * 6.5);
     }
 
-    /// <summary>A gold "YOU" tag along the bottom of your portrait, so you stand out from your team at a glance.</summary>
-    private static void PaintYouTag(DrawingContext context, Rect portrait)
+    /// <summary>A gold tag along the bottom of your portrait ("YOU?" while it's only offered), so you stand out from your team at a glance.</summary>
+    private static void PaintYouTag(DrawingContext context, Rect portrait, string label)
     {
-        var text = Fonts.Text("YOU", 9, Palette.Bg, bold: true);
+        var text = Fonts.Text(label, 9, Palette.Bg, bold: true);
         var tag = new Rect(portrait.X + (portrait.Width - (text.Width + 8)) / 2, portrait.Bottom - 3 - 13, text.Width + 8, 13);
         context.DrawRectangle(new SolidColorBrush(Palette.Self), null, new RoundedRect(tag, 3));
         context.DrawText(text, Fonts.InkCentered(text, tag));
@@ -398,7 +469,7 @@ public class RosterSlot : Control
     /// <summary>The team-coloured pill under the portrait, as the game's top bar draws it.</summary>
     private void PaintNetWorth(DrawingContext context, Rect portrait, int souls)
     {
-        var team = Palette.RoleColor(Team);
+        var team = IsUnsided ? RingColor : Palette.RoleColor(Team);
         var text = Fonts.Text(Format.Compact(souls), 11, Palette.Text, bold: true);
         var width = Math.Min(portrait.Width, Math.Max(portrait.Width * 0.6, text.Width + 12));
         var pill = new Rect(portrait.X + (portrait.Width - width) / 2, portrait.Bottom + 3, width, _pillHeight);

@@ -9,13 +9,15 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.Match.Detect;
 
 /// <param name="SlotHeroes">The hero in each of the twelve slots, left to right, or null where none was read.</param>
+/// <param name="SelfSlot">Which slot is you; null when the heroes are known but not whose they are, which the match page asks for.</param>
 /// <param name="Corrections">Crops whose hero was corrected, to keep as reference art.</param>
 /// <param name="SlotSouls">Each slot's net worth, where it was read and its side added up.</param>
 /// <param name="CorrectedSlots">Every slot whose hero was corrected, whether or not the crops are kept.</param>
 /// <param name="TooFaded">Corrections not kept as reference art because the portrait was too faded to learn from.</param>
-public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int SelfSlot,
+/// <param name="LikelySelfSlot">With no <paramref name="SelfSlot"/>, the slot that might be you.</param>
+public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int? SelfSlot,
     IReadOnlyList<(string HeroId, RgbImage Crop)> Corrections, IReadOnlyList<int?> SlotSouls, IReadOnlyList<int> CorrectedSlots,
-    int TooFaded = 0);
+    int TooFaded = 0, int? LikelySelfSlot = null);
 
 /// <summary>
 /// What was read off the screen, shown before anything lands: a dead player is a black silhouette

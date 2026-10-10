@@ -135,7 +135,16 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
 - **Match page:** `MatchViewModel` composes `MatchBoardViewModel` (the roster, picker, roles, focus), `ResultsViewModel` (the
   recommendation list), `ExplainViewModel` ("Why this item?"), `DataRanksViewModel` (rank filters), and the `DetectAction` and
   `ImportMatchAction`. `MatchState` is who is in the match (roles, top-bar slots, net-worth history, focused enemies); it is
-  saved in `AppSettings.LastMatch`. Every page stays alive, so `MainWindowViewModel` tells `MatchViewModel.SetShown` when
+  saved in `AppSettings.LastMatch`. **A detection that found every hero but not you** leaves them *unsided*: in
+  `MatchState.RoleMap` as `Role.None` with a top-bar slot (`Unsided`, `HasUnsided`; the old "former you, unassigned" `None`
+  has its slot removed, so the two don't collide), and the page shows a question instead of a list (`MatchViewModel.NeedsSelf`,
+  `MatchBoardViewModel.IsPickingSelf`: the bar mirrors the game's two sides in neutral rings, `RosterSlot.IsUnsided`). Any role
+  given to an unsided hero (`MatchState.SetRole`: a click, the role menu, the picker) splits the sides by their slot, so
+  clicking yourself makes your side the allies and the other the enemies; a role given to a hero from outside the read drops
+  the unsided ones. While the pointer is over one the bar previews that split (`MatchBoardViewModel.PreviewSelf`), the
+  hero a kill streak's backplate pointed at is tagged "YOU?" (`MatchState.LikelyYou`, saved as `SavedMatch.LikelyYou`), and
+  the click that resolves it opens the list on its best item and writes the slot into the kept capture's label
+  (`DetectAction.LabelSelf`). Every page stays alive, so `MainWindowViewModel` tells `MatchViewModel.SetShown` when
   the Match tab is on screen (Settings covers it, which counts as hidden): while hidden, `ScoresChanged` (a formula edit)
   only marks the list stale and the page rescores once when it shows again. A changed match or `StoreReplaced` still
   refreshes at once.
@@ -271,18 +280,22 @@ and may minimise the advisor first; `TemplateBank.Load` reads the reference art 
 the grid (cached per screen size in `AppSettings.VisionGeometry`), reads the twelve slots and which is you; a grid that fits
 under `Detector.MinFit` (`Detection.FoundStrip`) ends the run as "Nothing found";
 `RosterContinuity` keeps heroes already applied; `NetWorthReader` reads souls; then the match is applied
-(`VisionApply.ApplyToMatch`) or `DetectReviewViewModel` opens. Applied captures are kept in `captures/`; they are the corpus
+(`VisionApply.ApplyToMatch`) or `DetectReviewViewModel` opens. With *Apply without asking* on, every hero settled
+(`Detection.HeroesSettled`) is applied without review, with you or, when you weren't found, unsided (section 4: the match
+page asks for a click on your hero). Applied captures are kept in `captures/`; they are the corpus
 detection is measured on. Rules and numbers: detection_model.md.
 
 **The game's process is `project8.exe`** (Steam: `.../Deadlock/game/bin/win64/project8.exe`); `ScreenCaptureService` matches
 that name (and `deadlock`), preferring the foreground window when it is the game's (`ChooseGameWindow`), so the capture
 comes from the monitor the game is on. The log line says "Deadlock window" or "primary monitor (Deadlock's window not found)".
 
-`DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsReview`, `NothingFound`,
+`DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`
 (the system-wide F9) notes `IForegroundService.IsAnotherAppInFront` before capturing, and if the game was in front and
 `AppSettings.SoundOnDetect` is on, calls `IAttentionService` (`AttentionService`: `MessageBeep` and `FlashWindowEx`, no-ops
-off Windows): a `Done` chime for an applied match, a `NeedsLook` chime and a taskbar flash for anything else.
+off Windows): a `Done` chime for an applied match, a `NeedsLook` chime and a taskbar flash for anything else, `NeedsYou`
+included (it needs a click). With `AppSettings.ComeUpForReview` the window also comes forward for a review, a problem or
+`NeedsYou`.
 
 ## 9. Tests
 

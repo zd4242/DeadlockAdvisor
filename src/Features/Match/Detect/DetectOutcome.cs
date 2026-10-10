@@ -6,6 +6,9 @@ public enum DetectOutcome
     /// <summary>Read and applied without review.</summary>
     Applied,
 
+    /// <summary>Applied every hero without review, but you weren't found: the match page waits for a click on your hero.</summary>
+    NeedsYou,
+
     /// <summary>Opened the review.</summary>
     NeedsReview,
 

@@ -28,35 +28,53 @@ public static class VisionApply
     }
 
     /// <summary>
-    /// Write the roster in, in place of whatever was there, returning how many heroes were assigned.
+    /// Write the roster in, in place of whatever was there, returning how many heroes were placed.
     /// Heroes missing from heroes.csv are dropped rather than invented, as loading a saved match
-    /// drops them. The net worth history and the focus survive a detection of the same twelve heroes, so
-    /// detecting again mid-match adds to the one and keeps the other rather than starting over.
+    /// drops them. Without a self slot the heroes are placed in their slots with no team
+    /// (<see cref="MatchState.Unsided"/>) until one of them is picked as you. The net worth history and the
+    /// focus survive a detection of the same twelve heroes, so detecting again mid-match adds to the one and
+    /// keeps the other rather than starting over.
     /// </summary>
     /// <param name="netWorth">Souls per slot read off the same capture, and when it was taken.</param>
+    /// <param name="likelySelfSlot">With no <paramref name="selfSlot"/>, the slot that might be you, to point out on the match bar.</param>
     public static int ApplyToMatch(MatchState match, IReadOnlyList<string?> slotHeroes, int? selfSlot,
-        IEnumerable<string>? validHeroIds = null, (IReadOnlyList<int?> Souls, DateTimeOffset At)? netWorth = null)
+        IEnumerable<string>? validHeroIds = null, (IReadOnlyList<int?> Souls, DateTimeOffset At)? netWorth = null,
+        int? likelySelfSlot = null)
     {
         var valid = validHeroIds?.ToHashSet();
         var heroes = slotHeroes
             .Select(hero => !string.IsNullOrEmpty(hero) && (valid is null || valid.Contains(hero)) ? hero : null)
             .ToList();
 
-        var previous = match.RoleMap.Where(entry => entry.Value != Role.None).Select(entry => entry.Key).ToHashSet();
+        var previous = match.RoleMap.Where(entry => entry.Value != Role.None || match.Slots.ContainsKey(entry.Key)).Select(entry => entry.Key).ToHashSet();
         var history = match.NetWorth.Snapshots.ToList();
         var focused = match.Focused.ToList();
         match.Clear();
 
         var roles = RolesFor(heroes, selfSlot);
-        foreach (var (heroId, role) in roles)
-            match.SetRole(heroId, role);
-        for (var slot = 0; slot < heroes.Count; slot++)
+        if (roles.Count > 0)
         {
-            if (heroes[slot] is { } heroId && match.RoleOf(heroId) != Role.None)
-                match.Slots[heroId] = slot;
+            foreach (var (heroId, role) in roles)
+                match.SetRole(heroId, role);
+            for (var slot = 0; slot < heroes.Count; slot++)
+            {
+                if (heroes[slot] is { } heroId)
+                    match.Slots[heroId] = slot;
+            }
+        }
+        else
+        {
+            for (var slot = 0; slot < heroes.Count; slot++)
+            {
+                if (heroes[slot] is { } heroId)
+                    match.PlaceUnsided(heroId, slot);
+            }
+            if (likelySelfSlot is { } likely && likely >= 0 && likely < heroes.Count)
+                match.SuggestSelf(heroes[likely]);
         }
 
-        if (roles.Count > 0 && previous.SetEquals(roles.Keys))
+        var placed = match.RoleMap.Keys.ToHashSet();
+        if (placed.Count > 0 && previous.SetEquals(placed))
         {
             foreach (var snapshot in history)
                 match.NetWorth.Add(snapshot);
@@ -65,7 +83,7 @@ public static class VisionApply
         }
         if (netWorth is { } reading)
             match.NetWorth.Add(SnapshotFor(match, reading.Souls, reading.At));
-        return roles.Count;
+        return placed.Count;
     }
 
     /// <summary>Souls per top-bar slot, as souls per hero in the match.</summary>

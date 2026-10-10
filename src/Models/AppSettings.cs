@@ -124,6 +124,9 @@ public class SavedMatch
 
     /// <summary>The enemies the recommendations were focused on.</summary>
     public List<string> Focused { get; set; } = [];
+
+    /// <summary>The hero a detection thought might be you, while the teams are still unsplit.</summary>
+    public string? LikelyYou { get; set; }
 }
 
 public class SavedNetWorth

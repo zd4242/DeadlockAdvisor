@@ -434,12 +434,19 @@ HUD, or a game captured as a black screen by exclusive fullscreen or HDR),
 Detect says "Nothing found" instead of opening an empty review.
 
 **When every hero is certain, the match is applied straight away**, and
-**Review** beside Detect shows what was read. Otherwise the review opens
-first. It shows each slot's crop, what it was read as and how sure that
-was, with a dropdown to correct it. Uncertain reads are highlighted. If
-your own slot couldn't be found, press **You** on it: that's what splits
-the teams, so Apply waits for it. *Apply without asking when every hero
-is certain*, under **Settings → Detection**, turns the shortcut off.
+**Review** beside Detect shows what was read. If your own slot couldn't be
+found (your backplate changes colour on a kill streak), the heroes are
+applied all the same, on the bar as the game shows it, and the advisor asks
+which one is you: click your hero, and their side becomes your team, the
+other side the enemy, and the recommendations appear. Point at a hero first
+and the bar shows the teams a click would make; when a kill streak's
+backplate gave one away, that hero is tagged **YOU?** for you to confirm.
+Otherwise the review opens first. It shows each slot's crop, what it was
+read as and how sure that was, with a dropdown to correct it. Uncertain
+reads are highlighted. If your own slot couldn't be found there, press
+**You** on it: that's what splits the teams, so Apply waits for it. *Apply
+without asking when every hero is certain*, under **Settings → Detection**,
+turns the shortcut off.
 
 Every portrait is matched against the hero's own card, cut where the top
 bar crops it, including the critical-health and on-fire versions. Faded

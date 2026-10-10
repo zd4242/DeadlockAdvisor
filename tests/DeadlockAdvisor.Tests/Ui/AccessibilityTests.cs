@@ -147,6 +147,14 @@ public class AccessibilityTests
         Assert.Equal("Haze, you, net worth 25k", NameOf(slot));
         Assert.Equal("Empty ally slot", NameOf(new RosterSlot { Team = Role.Ally }));
 
+        // A hero read off the bar before the teams are known is neither ally nor enemy, and says what a click does.
+        var unsided = new RosterSlot { HeroId = "haze", HeroName = "Haze", Team = Role.Enemy, IsUnsided = true };
+        Assert.Equal("Haze, team unknown", NameOf(unsided));
+        Assert.Contains("click if this is you", PeerOf(unsided).GetHelpText());
+        unsided.IsLikelySelf = true;
+        Assert.Equal("Haze, team unknown, probably you", NameOf(unsided));
+        Assert.Contains("Click to confirm", PeerOf(unsided).GetHelpText());
+
         Assert.Equal("Haze, enemy", NameOf(new HeroTile { HeroName = "Haze", Role = Role.Enemy }));
         Assert.Equal("Haze", NameOf(new HeroTile { HeroName = "Haze" }));
         Assert.Equal("T3", NameOf(new Badge { Text = "T3" }));
