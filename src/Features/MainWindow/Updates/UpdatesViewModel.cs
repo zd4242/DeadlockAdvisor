@@ -91,14 +91,14 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     /// <summary>"Downloaded this session: 3.2 MB", from what the app's requests brought in.</summary>
     [Reactive] public string Downloaded { get; private set; } = "";
 
-    /// <summary>Check all is under way.</summary>
+    /// <summary>Check for updates is under way.</summary>
     [Reactive] public bool IsCheckingAll { get; private set; }
 
     /// <summary>Every check the app makes, now, with the messages a manual one gives.</summary>
     public ReactiveCommand<Unit, Unit> CheckAllCommand { get; }
 
-    /// <summary>"Check all", or "Checking…" while it runs.</summary>
-    public string CheckAllText => IsCheckingAll ? "Checking…" : "Check all";
+    /// <summary>"Check for updates", or "Checking…" while it runs.</summary>
+    public string CheckAllText => IsCheckingAll ? "Checking…" : "Check for updates";
 
     /// <summary>Works everything out again, as the flyout does on opening so the ages are current.</summary>
     public void Refresh()
@@ -252,7 +252,8 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             : _dataMenu.IsCheckingMatchData ? (UpdateState.Checking, $"{summary} · checking for a new patch…")
             : checkedAt is null ? (UpdateState.NotChecked, $"{summary} · not checked yet")
             : (UpdateState.UpToDate, $"{summary} · {CheckedText(checkedAt)}");
-        return new(state, text, "", "Download again…", _dataMenu.DownloadMatchDataCommand, download);
+        return new(state, text, "", "Check", _dataMenu.CheckMatchDataCommand, "Take any newer match data from the shared download, or say it's up to date",
+            [new("Download again…", _dataMenu.DownloadMatchDataCommand, download)]);
     }
 
     private UpdateRowInfo ArtRow()
@@ -284,7 +285,8 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             return new(UpdateState.Available, $"{summary}\nNo portrait yet for {names}", $"No art for {names}", "Download…",
                 _dataMenu.DownloadArtCommand, download);
         }
-        return new(_connectivity.IsOffline ? UpdateState.Offline : UpdateState.UpToDate, summary, "", "Download…", _dataMenu.DownloadArtCommand, download);
+        return new(_connectivity.IsOffline ? UpdateState.Offline : UpdateState.UpToDate, summary, "", "Check", _dataMenu.CheckArtCommand,
+            "Look for new or changed art: only what is new is downloaded", [new("Download…", _dataMenu.DownloadArtCommand, download)]);
     }
 
     /// <summary>A download under way, as far as its chip says.</summary>

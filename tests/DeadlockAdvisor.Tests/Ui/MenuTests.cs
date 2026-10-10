@@ -151,7 +151,7 @@ public class MenuTests
         Assert.Equal(1, reloads);
     }
 
-    /// <summary>One check, wherever it's asked for: the menu runs the Updates flyout's Check all.</summary>
+    /// <summary>One check, wherever it's asked for: the menu runs the Updates flyout's Check for updates.</summary>
     [AvaloniaFact]
     public void CheckForUpdatesRunsTheFlyoutsCheckAll()
     {

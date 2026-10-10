@@ -33,11 +33,12 @@ The **Updates** chip is the one place to ask whether everything is current. It r
 *Up to date*, *Updating match data 40%*, *Patch 10-07 is out*, *2 updates*, *Updates paused*
 (offline) or what failed. Its flyout has a row each for the app, the formulas, the match data
 and the art, saying what state each is in and when it was last checked, with that row's
-action (Update, Restart now, Apply, Download, Check), **What's new** for the app and the
-formulas, **Skip this version** for the app, and **Details…** for the match data (which
-patch, how many matches, how old). **Check all** looks for all of them now, and the
-flyout's last line says how much the app has downloaded this session. Downloads under way
-keep their own progress and cancel chips beside it.
+action (Update, Restart now, Apply, Download, or Check when it is current), **What's new**
+for the app and the formulas, **Skip this version** for the app, **Download again…** for the
+match data, **Download…** for the art, and **Details…** for the match data (which patch, how
+many matches, how old). **Check for updates** (also **Data → Check for Updates**) looks for
+all of them now, and the flyout's last line says how much the app has downloaded this
+session. Downloads under way keep their own progress and cancel chips beside it.
 
 On first run it creates `%AppData%\DeadlockAdvisor\` with a starter copy
 of the data. One dialog offers the hero and item art and the match data,
@@ -268,9 +269,9 @@ Reload from Disk** does the same for the folder in use. A folder you pick with
   run that was never offered them gets the offer instead, which shows what
   each costs. A source that is already current says nothing, and when no
   one has said anything by the end, it says *Everything is up to date.*
-  Offline, it asks the connection to retry and says so. The **Check all**
-  button of the Updates flyout (the chip at the left of the status bar) is
-  the same command.
+  Offline, it asks the connection to retry and says so. The **Check for
+  updates** button of the Updates flyout (the chip at the left of the status
+  bar) is the same command.
 - **Downloads and Updates…**: Settings → Data, with what is installed and
   when each was last checked, a button for each download, how each is kept
   up to date, and the folders.

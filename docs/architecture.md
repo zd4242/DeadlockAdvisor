@@ -268,7 +268,10 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   ("Downloads") chips the Data menu puts in the status bar stay there for the click and count as offers: their
   `OpenCommand` is the action. The Match data row's Details is `DataStatusView`, the old card: it reads "up to date" while no
   newer patch is known and `AppSettings.MatchDataCheckedAt` is under 3 days old (`DataStatusViewModel.UpToDateWindow`),
-  otherwise how old the data is, so an install that never checked doesn't claim it. **Check all** runs
+  otherwise how old the data is, so an install that never checked doesn't claim it. A current row's button is **Check**
+  (match data: `CheckMatchDataCommand`; art: `CheckArtCommand`, the quiet incremental download that says so when nothing was
+  new), with the dialog-opening download as a link beside it; a row with something waiting says what it will do (Update,
+  Download, Apply). **Check for updates** (`CheckAllCommand`, also Data → Check for Updates) runs
   `DataMenuViewModel.CheckAllAsync(manual: true)` and `AppUpdateViewModel.CheckAsync(manual: true, saysWhenCurrent: false)`
   and then says where things stand (`Status`, as a toast) unless a source already said something (the last
   `INotificationService.Recent` entry changed) or a dialog is open; while offline it only asks the connection to retry

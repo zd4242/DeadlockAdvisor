@@ -134,7 +134,7 @@ public class StatusBarTests
         var texts = FlyoutTexts(ui);
         Assert.Contains("UPDATES", texts);
         Assert.Equal(["App", "Formulas", "Match data", "Art"], texts.Where(text => text is "App" or "Formulas" or "Match data" or "Art"));
-        Assert.Contains("Check all", FlyoutButtons(ui).Select(button => button.Content as string));
+        Assert.Contains("Check for updates", FlyoutButtons(ui).Select(button => button.Content as string));
         Assert.Contains("Nothing downloaded this session", texts);
         ui.Screenshot("status_updates.png");
     }

@@ -115,8 +115,9 @@ public class DataMenuViewModel : ViewModelBase
         // A download writes into the folder it started in, so the folder stays put until they're done.
         ChangeDataFolderCommand = ReactiveCommand.CreateFromTask(ChangeDataFolderAsync,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.HasRunningJobs, (busy, running) => !busy && !running));
-        DownloadArtCommand = ReactiveCommand.Create(OfferArtDownload,
-            this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingArt, (busy, downloading) => !busy && !downloading));
+        var artIdle = this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingArt, (busy, downloading) => !busy && !downloading);
+        DownloadArtCommand = ReactiveCommand.Create(OfferArtDownload, artIdle);
+        CheckArtCommand = ReactiveCommand.CreateFromTask(() => DownloadArtAsync(force: false, quiet: true, asked: true), artIdle);
 
         this.WhenAnyValue(vm => vm.IsDownloadingMatchData, vm => vm.IsDownloadingArt)
             .Skip(1)
@@ -168,6 +169,9 @@ public class DataMenuViewModel : ViewModelBase
     public ReactiveCommand<string, Unit> OpenFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> ChangeDataFolderCommand { get; }
     public ReactiveCommand<Unit, Unit> DownloadArtCommand { get; }
+
+    /// <summary>The Updates flyout's Check for the art: only what's new or changed is fetched, and it says when there was nothing.</summary>
+    public ReactiveCommand<Unit, Unit> CheckArtCommand { get; }
 
     public string ExportPath => Path.Combine(_data.DataRoot, ExcelExportService.FileName);
 
@@ -1181,7 +1185,8 @@ public class DataMenuViewModel : ViewModelBase
             "Re-download all", () => Launch(() => DownloadArtAsync(force: true)));
 
     /// <param name="quiet">A routine check: it only speaks up if something changed.</param>
-    internal async Task DownloadArtAsync(bool force, bool quiet = false)
+    /// <param name="asked">With <paramref name="quiet"/>, for a check someone asked for: it also says when nothing was new or the site couldn't be reached.</param>
+    internal async Task DownloadArtAsync(bool force, bool quiet = false, bool asked = false)
     {
         if (IsDownloadingArt)
             return;
@@ -1202,7 +1207,7 @@ public class DataMenuViewModel : ViewModelBase
                 failure =>
                 {
                     // Like the patch check, a routine check that can't reach the site isn't worth interrupting anyone over.
-                    if (quiet)
+                    if (quiet && !asked)
                         Remove(job);
                     else
                         Failed(job, "Art download failed",
@@ -1219,6 +1224,8 @@ public class DataMenuViewModel : ViewModelBase
                 if (quiet && changes.Length == 0 && recut.Count == 0)
                 {
                     Remove(job);
+                    if (asked)
+                        _notifications.ShowSuccess("The art is up to date.", _toastTime);
                     return;
                 }
                 var toast = quiet && recut.Count > 0

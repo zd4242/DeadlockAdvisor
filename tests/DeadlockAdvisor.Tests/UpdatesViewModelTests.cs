@@ -314,6 +314,62 @@ public sealed class UpdatesViewModelTests : IDisposable
         _menu.CancelJobs();
     }
 
+    /// <summary>The same word for the same thing: a current row's button checks, and the download that opens a dialog is a link.</summary>
+    [Fact]
+    public void ACurrentRowsButtonChecksAndKeepsItsDownloadAsALink()
+    {
+        Build(EverythingIsCurrent(new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero)));
+
+        var matchData = Row(UpdateSource.MatchData);
+        Assert.Equal(UpdateState.UpToDate, matchData.State);
+        Assert.Equal("Check", matchData.ActionText);
+        Assert.Same(_menu.CheckMatchDataCommand, matchData.Action);
+        var again = Assert.Single(matchData.Links);
+        Assert.Equal("Download again…", again.Text);
+        Assert.Same(_menu.DownloadMatchDataCommand, again.Command);
+
+        var art = Row(UpdateSource.Art);
+        Assert.Equal(UpdateState.UpToDate, art.State);
+        Assert.Equal("Check", art.ActionText);
+        Assert.Same(_menu.CheckArtCommand, art.Action);
+        var download = Assert.Single(art.Links);
+        Assert.Equal("Download…", download.Text);
+        Assert.Same(_menu.DownloadArtCommand, download.Command);
+
+        Assert.Equal("Check", Row(UpdateSource.Formulas).ActionText);
+        Assert.Equal("Check", Row(UpdateSource.App).ActionText);
+    }
+
+    [Fact]
+    public async Task CheckingTheArtSaysSoWhenNothingWasNew()
+    {
+        ACurrentInstall();
+        var art = new HeldArtDownload();
+        Build(artDownload: art);
+
+        var run = _menu.CheckArtCommand.Execute().ToTask();
+        Assert.Equal(1, art.Started);
+        art.Finish(new ArtDownloadReport([new ArtGroupReport("Hero portraits", 38, 38, 0, 38, [], [])]));
+        await run;
+
+        Assert.Equal(["The art is up to date."], Said());
+        Assert.Empty(_menu.Jobs);
+    }
+
+    /// <summary>A routine check that can't reach the site says nothing, but this one was asked for.</summary>
+    [Fact]
+    public async Task CheckingTheArtSaysSoWhenTheSiteCantBeReached()
+    {
+        ACurrentInstall();
+        Build(artDownload: new FailingArtDownload());
+
+        await _menu.CheckArtCommand.Execute();
+
+        Assert.True(_menu.Jobs.Single().HasFailed);
+        Assert.Equal(["Art download failed. The status bar has the details."], Said());
+        Assert.Equal(UpdateState.Failed, Row(UpdateSource.Art).State);
+    }
+
     [Fact]
     public async Task ADownloadThatFailedReadsFailedUntilItsChipIsDismissed()
     {
