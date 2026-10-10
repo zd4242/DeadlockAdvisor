@@ -10,6 +10,11 @@ public static class AtomicFile
 {
     private const string _tempExtension = ".tmp";
 
+    // Something else (a virus scanner, the indexer, a backup, an editor) can hold the target open for a moment, and
+    // Windows won't replace a file that's open. Those holds pass, so the swap is tried again a few times, over a second or so.
+    private const int _swapAttempts = 8;
+    private static readonly TimeSpan _swapRetryDelay = TimeSpan.FromMilliseconds(50);
+
     public static async Task WriteAsync(string path, Func<Stream, Task> write)
     {
         var tempPath = path + _tempExtension;
@@ -21,7 +26,18 @@ public static class AtomicFile
                 await write(stream);
             }
 
-            File.Move(tempPath, path, overwrite: true);
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    File.Move(tempPath, path, overwrite: true);
+                    break;
+                }
+                catch (Exception ex) when (IsHold(ex) && attempt < _swapAttempts)
+                {
+                    await Task.Delay(_swapRetryDelay * attempt);
+                }
+            }
         }
         catch
         {
@@ -41,7 +57,18 @@ public static class AtomicFile
                 stream.Write(contents);
             }
 
-            File.Move(tempPath, path, overwrite: true);
+            for (var attempt = 1; ; attempt++)
+            {
+                try
+                {
+                    File.Move(tempPath, path, overwrite: true);
+                    break;
+                }
+                catch (Exception ex) when (IsHold(ex) && attempt < _swapAttempts)
+                {
+                    System.Threading.Thread.Sleep(_swapRetryDelay * attempt);
+                }
+            }
         }
         catch
         {
@@ -49,6 +76,10 @@ public static class AtomicFile
             throw;
         }
     }
+
+    /// <summary>A failure to replace the file that waiting can cure: it's open elsewhere. A missing folder or file won't get better.</summary>
+    private static bool IsHold(Exception ex) =>
+        ex is UnauthorizedAccessException || ex is IOException and not (FileNotFoundException or DirectoryNotFoundException);
 
     private static void TryDelete(string path)
     {
