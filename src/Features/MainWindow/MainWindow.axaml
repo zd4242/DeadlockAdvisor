@@ -36,6 +36,7 @@
         <KeyBinding Gesture="Ctrl+NumPad0" Command="{Binding ResetZoomCommand}"/>
         <KeyBinding Gesture="Ctrl+R" Command="{Binding ReloadCommand}"/>
         <KeyBinding Gesture="Ctrl+F" Command="{Binding FindCommand}"/>
+        <KeyBinding Gesture="Ctrl+U" Command="{Binding Updates.CheckAllCommand}"/>
         <KeyBinding Gesture="Ctrl+Q" Command="{Binding QuitCommand}"/>
         <KeyBinding Gesture="Ctrl+OemComma" Command="{Binding OpenSettingsCommand}"/>
         <!-- The Match page's own shortcuts: live whenever it's showing, wherever focus is. The
@@ -203,6 +204,7 @@
                             <Menu x:Name="MainMenu" Margin="6,0,0,0" VerticalAlignment="Center">
                                 <MenuItem Header="_Data">
                                     <MenuItem Header="Check for Updates"
+                                              InputGesture="Ctrl+U"
                                               Command="{Binding Updates.CheckAllCommand}"
                                               ToolTip.Tip="Look for a newer app, formulas and match data, and fetch the match data and art you don't have yet"/>
                                     <MenuItem Header="Downloads and Updates…"

@@ -77,6 +77,7 @@ public class ShortcutKeysTests
     [InlineData(Key.A, KeyModifiers.None, "A is for typing")]
     [InlineData(Key.D4, KeyModifiers.Shift, "Shift+4 is for typing")]
     [InlineData(Key.F, KeyModifiers.Control, "Ctrl+F is already Find")]
+    [InlineData(Key.U, KeyModifiers.Control, "Ctrl+U is already Check for Updates")]
     [InlineData(Key.D1, KeyModifiers.Alt, "Alt+1 is already picking your hero")]
     [InlineData(Key.D, KeyModifiers.Alt, "Alt+D is already the Data menu")]
     [InlineData(Key.F12, KeyModifiers.None, "F12")]

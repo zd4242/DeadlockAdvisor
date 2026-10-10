@@ -26,6 +26,7 @@ public static class ShortcutKeys
         [(Key.NumPad0, KeyModifiers.Control)] = "Reset Zoom",
         [(Key.R, KeyModifiers.Control)] = "Reload from Disk",
         [(Key.F, KeyModifiers.Control)] = "Find",
+        [(Key.U, KeyModifiers.Control)] = "Check for Updates",
         [(Key.Q, KeyModifiers.Control)] = "Quit",
         [(Key.D1, KeyModifiers.Alt)] = "picking your hero",
         [(Key.D2, KeyModifiers.Alt)] = "picking enemies",

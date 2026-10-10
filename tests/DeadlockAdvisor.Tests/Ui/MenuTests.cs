@@ -162,6 +162,17 @@ public class MenuTests
     }
 
     [AvaloniaFact]
+    public void CtrlUChecksForUpdatesAndTheMenuShowsTheKey()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        Assert.Equal(new KeyGesture(Key.U, KeyModifiers.Control), DataMenuItem(ui, "Check for Updates").InputGesture);
+        var binding = ui.Window.KeyBindings.Single(key => Equals(key.Gesture, new KeyGesture(Key.U, KeyModifiers.Control)));
+
+        Assert.Same(ui.ViewModel.Updates.CheckAllCommand, binding.Command);
+    }
+
+    [AvaloniaFact]
     public void DownloadsAndUpdatesOpensSettingsOnTheDataPageWhateverWasShowing()
     {
         using var ui = new UiHarness();
