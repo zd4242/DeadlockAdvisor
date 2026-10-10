@@ -567,8 +567,8 @@ a rule moved from one to the other gets its rate multiplied by that to keep its 
 
 ## How item stats are extracted (`Services/GameApi/GameSync.cs`)
 
-`item_stats.csv` and `item_tooltips.json` are **generated** by Data → Sync from
-Game API. Never hand-edit them; fix the extraction instead.
+`item_stats.csv` and `item_tooltips.json` are **generated** by Data → Model Tools →
+Sync from Game API. Never hand-edit them; fix the extraction instead.
 
 - **`GameSync.Stats`** maps API property names to our stat names. Several API
   names often feed one stat (for example `BonusSpirit`, `SpiritPower` and
@@ -616,7 +616,7 @@ afterwards (see "Tests and goldens" below).
 
 ## Patch workflow
 
-1. **Data → Sync from Game API** (an editor tool: it shows once Settings → General's
+1. **Data → Model Tools → Sync from Game API** (an editor tool: it shows once Settings → General's
    "Edit the scoring model" is on). Beyond the usual added-items and field-changes
    sections, the report now contains:
    - **Item stat changes**: every stat that moved, e.g. "Long Range: Weapon
@@ -638,9 +638,10 @@ afterwards (see "Tests and goldens" below).
    it in the background (`MatchDownloadPlan.IsDue`): it fetches the new patch and
    finishes the one before, and older patches are kept as they are. It also
    refreshes the current patch once its counts are a day and a half old (three days when
-   it has to ask the API itself). **Data → Download Match Data…** does the same on
-   demand. Updates never start a first download, and a failed one says nothing.
-3. **Data → Model Health Report** to check the model as a whole (next section).
+   it has to ask the API itself). **Data → Check for Updates** does the same on
+   demand. Automatic updates never start a first download (a click on Check for Updates does, since it
+   asks for one), and a failed one says nothing.
+3. **Data → Model Tools → Model Health Report** to check the model as a whole (next section).
 
 **New heroes need no step here.** The New heroes workflow adds each hero the game
 lists as active to the seed with every trait unrated (`GameSync.ApplyRoster`, run by
@@ -652,7 +653,7 @@ nothing about the other heroes' recommendations moves. [publishing.md](publishin
 
 ## Model health report (`Scoring/ModelHealth.cs`)
 
-Data → Model Health Report simulates 2,000 random full matches (seed 1, drawn
+Data → Model Tools → Model Health Report simulates 2,000 random full matches (seed 1, drawn
 from the profiled heroes) using the real scoring code, then lists:
 
 - **Recommended whatever the heroes:** items in their tier's top 3 in 80% or more
@@ -726,6 +727,6 @@ rather than what it does.
 
 - `src/Assets/SeedData/` is the starter data bundled into the executable.
 - The app actually runs on `%AppData%\DeadlockAdvisor\data\` (or the folder set in
-  Data → Change Data Folder).
+  Settings → Data → Change…).
 - The two can drift apart. When you analyse the model, check which one you're
   reading.

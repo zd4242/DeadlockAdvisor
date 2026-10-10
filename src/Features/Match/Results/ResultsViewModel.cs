@@ -405,7 +405,7 @@ public class ResultsViewModel : ViewModelBase
             return _nothingPickedHint;
         if (_scored.All(item => item.Data.Count == 0))
             return "The match data has nothing on these heroes.\n\nIt covers your enemies and your own hero, "
-                   + "never allies. Data → Download Match Data fetches it.";
+                   + "never allies. Data → Check for Updates fetches it.";
         return _rankBy == RankBy.Both
             ? "The formula and the match data together rate no item above 0 for these heroes."
             : "The match data rates no item above 0 for these heroes.";

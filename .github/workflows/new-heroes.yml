@@ -60,7 +60,7 @@ jobs:
             gh issue create --title "Rate new hero: $names" --body "$(cat <<EOF
           The New heroes workflow added $names to the seed with every trait unrated, and CI is publishing it. Until they are rated, recommendations leave them out.
 
-          - [ ] Data → Check for Formula Updates (or Sync from Game API), so your data folder has them
+          - [ ] Data → Check for Updates (or Data → Model Tools → Sync from Game API), so your data folder has them
           - [ ] Rate their traits in Hero Traits
           - [ ] \`dotnet run --project tools/PublishModel -- --note "What changed" --push\`
           EOF

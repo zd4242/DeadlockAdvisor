@@ -92,7 +92,7 @@ public sealed class WelcomeViewModel : ViewModelBase
 
     [Reactive] public bool KeepUpToDate { get; set; }
 
-    public string Offline => "Neither the shared download nor deadlock-api.com answered, so the match data waits: Data → Download Match Data… any time.";
+    public string Offline => "Neither the shared download nor deadlock-api.com answered, so the match data waits: Data → Check for Updates any time.";
 
     public ReactiveCommand<Unit, Unit> StartCommand { get; }
     public ReactiveCommand<Unit, Unit> NotNowCommand { get; }

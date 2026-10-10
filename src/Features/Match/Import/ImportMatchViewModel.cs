@@ -24,7 +24,7 @@ public sealed record ImportMatchResult(OrderedDictionary<string, Role> Roles, lo
 /// </summary>
 public class ImportMatchViewModel : ViewModelBase
 {
-    public const string SyncHint = "Data → Sync New Heroes / Items / Categories adds them.";
+    public const string SyncHint = "Data → Check for Updates adds new heroes.";
 
     private readonly IMatchLookupService _lookup;
     private readonly IReadOnlyDictionary<long, Hero> _heroes;

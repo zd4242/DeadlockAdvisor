@@ -176,7 +176,7 @@ public class HeroItemsPageTests
         Assert.True(ui.ViewModel.IsHeroItemsPage);
         var texts = ui.Window.HeroItemsPage.GetVisualDescendants().OfType<TextBlock>().Where(text => text.IsEffectivelyVisible)
             .Select(text => text.Text).ToList();
-        Assert.Contains(texts, text => text?.Contains("Data → Download Match Data") == true);
+        Assert.Contains(texts, text => text?.Contains("Data → Check for Updates") == true);
         ui.Screenshot("hero_items_empty.png");
     }
 

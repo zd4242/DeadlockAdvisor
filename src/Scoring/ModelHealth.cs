@@ -110,7 +110,7 @@ public sealed record ModelHealthReport(
         lines.Add("");
         if (!HasMatchData)
         {
-            lines.Add("No match data yet: Data → Download Match Data adds a comparison with real match results.");
+            lines.Add("No match data yet: Data → Check for Updates adds a comparison with real match results.");
             return lines;
         }
         lines.AddRange(DataSource);

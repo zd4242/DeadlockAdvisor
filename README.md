@@ -174,7 +174,7 @@ an item a bad buy: it only means the hero gains less from it than from its usual
 Wiki page, or its formula while the model editors are shown. **Min
 usage** hides the items bought in only a few of the hero's matches, whose
 win rates rest on too few matches, and on who buys them, to mean much. It
-reads the downloaded match data, so it needs **Data → Download Match Data**.
+reads the downloaded match data, so it needs **Data → Check for Updates**.
 
 **Hero Traits** — the hero × trait grid, edited in place.
 
@@ -224,10 +224,10 @@ a key, press the new one.
 ## Data folder
 
 Everything lives under one folder holding `data/` and `assets/`: by
-default `%AppData%\DeadlockAdvisor`. **Data → Change Data Folder…** points
+default `%AppData%\DeadlockAdvisor`. **Settings → Data → Change…** points
 the app somewhere else, such as a synced folder shared between machines.
 Nothing locks the files, so don't edit them from two places at once.
-**Data → Open Data Folder** opens it in Explorer.
+**Open** beside it (or **Data → Model Tools → Open Data Folder**) opens it in Explorer.
 
 | File | Shape | Notes |
 |---|---|---|
@@ -240,7 +240,7 @@ Nothing locks the files, so don't edit them from two places at once.
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
 | `item_stats.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
 | `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
-| `match_counts/<patch date>.json` | | **generated** by Download Match Data: one patch's raw totals, every match and per rank; no backups |
+| `match_counts/<patch date>.json` | | **generated** by the match data download: one patch's raw totals, every match and per rank; no backups |
 | `model.json` | | which published version of the model each file came from ([formula updates](#formula-updates)) |
 
 The CSVs are the source of truth and stay hand-editable. Every write
@@ -254,55 +254,69 @@ A file that can't be read when the app starts (a typo in a row, a half-synced
 copy, an empty `heroes.csv`, `items.csv` or `categories.csv`) doesn't stop it.
 The app keeps the damaged file next to the others as `<file>.bad-<date>-<time>`
 (the newest 3 per file), puts the newest backup that loads in its place (or the copy bundled with the
-app), and tells you which file it replaced and from what. **Data → Reload from
-Disk** does the same for the folder in use. A folder you pick with **Change
-Data Folder…** is not repaired: it is refused, and left as it was.
+app), and tells you which file it replaced and from what. **Data → Model Tools →
+Reload from Disk** does the same for the folder in use. A folder you pick with
+**Settings → Data → Change…** is not repaired: it is refused, and left as it was.
 
 ## Data menu
 
-- **Sync New Heroes / Items / Categories**: after adding rows to the CSVs
-  by hand. Drops rows for deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
-  no rows), and lists unrated heroes and items with no rules.
-- **Sync from Game API**: an editor tool, shown with *Edit the scoring
-  model* on (Settings → General) like the items above it. It pulls heroes and the shop from
-  `deadlock-api.com`, following patches (costs, tiers, new items), and
-  rewrites the item stats and tooltips. It also re-measures the Has High
-  Max HP and Durability traits from the game's numbers. Only changed files are written.
-  Everyone else gets the same data through the published model, and running it
-  makes your files differ from it, so every later formula update asks about them.
-  The maintainer runs it after each patch: the report lists each item stat that moved,
-  items with hand-typed rules whose tooltip changed, stats it doesn't know
-  how to map, and per-item overrides that no longer match the game. New
-  heroes don't need it: a workflow adds them to the published model, rated
-  at 0 until they're rated ([formula updates](#formula-updates)).
-- **Download Match Data…**: item win rates against, with and as each hero,
-  shown beside each recommendation as "data": a second opinion, not part
-  of the score. A dialog first shows the patches stored, what the download
-  will fetch, and about how long it takes and how big it is. It comes from
-  the [shared download](#shared-match-data) in a few seconds, with the
-  rank groups that let the Match page lean the data toward a range of
-  ranks. When that isn't available it asks `deadlock-api.com` directly:
-  every match (under a minute a patch), or with the rank groups too
-  (about 3 minutes a patch), with each phase behind its chip in the status
-  bar. Either way a finished patch is never fetched again, each patch's
-  numbers are in use as soon as they arrive. The Match data row of the
-  Updates flyout says *up to date* while a check in the last three days found
-  no newer patch (otherwise how old the data is), and the chip says
-  *Patch 10-07 is out* when a newer patch is out than the data covers.
-  Settings → Data also has **Check now** for the match data: with the shared
-  download available it takes anything newer in it straight away, or says the
-  data is up to date, and it opens the dialog only when it has to ask
-  `deadlock-api.com` itself.
-- **Check for Formula Updates**: takes the newest published hero ratings
-  and item formulas ([formula updates](#formula-updates)), asking again
-  about files you kept your own changes in.
-- **Model Health Report**: simulates 2,000 random matches and lists items
-  recommended whatever the heroes, items never recommended (and why),
-  traits no hero is scored on, and where real match data disagrees with
-  the hand model.
-- **Reload from Disk** (Ctrl+R), **Export Snapshot to Excel** (a read-only
-  `deadlock_advisor_data.xlsx`, never read back), **Open / Change Data
-  Folder**, **Download Art…**.
+- **Check for Updates**: asks for everything at once: a newer version of
+  the app, the newest published hero ratings and item formulas
+  ([formula updates](#formula-updates), asking again about files you kept
+  your own changes in), newer match data and the art. Because you asked,
+  it also downloads the match data and art you never downloaded; a first
+  run that was never offered them gets the offer instead, which shows what
+  each costs. A source that is already current says nothing, and when no
+  one has said anything by the end, it says *Everything is up to date.*
+  Offline, it asks the connection to retry and says so. The **Check all**
+  button of the Updates flyout (the chip at the left of the status bar) is
+  the same command.
+- **Downloads and Updates…**: Settings → Data, with what is installed and
+  when each was last checked, a button for each download, how each is kept
+  up to date, and the folders.
+- **Model Tools**, shown with *Edit the scoring model* on (Settings →
+  General):
+  - **Sync from Game API** pulls heroes and the shop from
+    `deadlock-api.com`, following patches (costs, tiers, new items), and
+    rewrites the item stats and tooltips. It also re-measures the Has High
+    Max HP and Durability traits from the game's numbers. Only changed files are written.
+    Everyone else gets the same data through the published model, and running it
+    makes your files differ from it, so every later formula update asks about them.
+    The maintainer runs it after each patch: the report lists each item stat that moved,
+    items with hand-typed rules whose tooltip changed, stats it doesn't know
+    how to map, and per-item overrides that no longer match the game. New
+    heroes don't need it: a workflow adds them to the published model, rated
+    at 0 until they're rated ([formula updates](#formula-updates)).
+  - **Sync New Heroes / Items / Categories**: after adding rows to the CSVs
+    by hand. Drops rows for deleted ids (never while `heroes.csv`, `items.csv` or `categories.csv` has
+    no rows), and lists unrated heroes and items with no rules.
+  - **Model Health Report** simulates 2,000 random matches and lists items
+    recommended whatever the heroes, items never recommended (and why),
+    traits no hero is scored on, and where real match data disagrees with
+    the hand model.
+  - **Reload from Disk** (Ctrl+R), **Export Snapshot to Excel** (a read-only
+    `deadlock_advisor_data.xlsx`, never read back) and **Open Data Folder**.
+
+### Match data downloads
+
+Item win rates against, with and as each hero are shown beside each
+recommendation as "data": a second opinion, not part of the score. Check for
+Updates fetches them when there are none, and keeps them current. Settings →
+Data's **Download…** (and the Match data row of the Updates flyout) first shows
+a dialog with the patches stored, what the download will fetch, and about how
+long it takes and how big it is. It comes from the
+[shared download](#shared-match-data) in a few seconds, with the rank groups
+that let the Match page lean the data toward a range of ranks. When that isn't
+available it asks `deadlock-api.com` directly: every match (under a minute a
+patch), or with the rank groups too (about 3 minutes a patch), with each phase
+behind its chip in the status bar. Either way a finished patch is never fetched
+again, and each patch's numbers are in use as soon as they arrive. The Match
+data row of the Updates flyout says *up to date* while a check in the last three
+days found no newer patch (otherwise how old the data is), and the chip says
+*Patch 10-07 is out* when a newer patch is out than the data covers. Settings →
+Data also has **Check now** for the match data: with the shared download
+available it takes anything newer in it straight away, or says the data is up to
+date, and it opens the dialog only when it has to ask `deadlock-api.com` itself.
 
 ## Formula updates
 
@@ -314,7 +328,7 @@ scoring model** on, or files of yours to ask about, a status bar chip offers the
 instead of changing files under you) take the newest one published to this repo's rolling
 [`model`](https://github.com/zd4242/DeadlockAdvisor/releases/tag/model)
 pre-release, which CI publishes from `main` once the tests pass (Settings →
-Data's formulas choice turns that off; **Data → Check for Formula Updates** checks on
+Data's formulas choice turns that off; **Data → Check for Updates** checks on
 demand). `model.json` lists each file's SHA-256, and a copy in the data
 folder records what was installed there, so the app can tell a file that's
 only out of date from one you've changed, by hand or with Sync from Game
@@ -393,7 +407,7 @@ shows both side by side, with the arithmetic in the tooltip.
 
 ## Art
 
-**Data → Download Art…** fetches hero portraits, item icons, the rank badges
+**Data → Check for Updates** (or **Download…** under Settings → Data, or the Art row of the Updates flyout) fetches hero portraits, item icons, the rank badges
 that dress the rank pickers, and the art detection matches against, into
 `assets/heroes`, `assets/items`, `assets/ranks` and `assets/topbar`. It matches
 by name, lists anything it couldn't match, and keeps what's already there,

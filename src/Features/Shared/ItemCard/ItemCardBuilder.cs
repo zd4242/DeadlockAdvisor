@@ -13,7 +13,7 @@ namespace DeadlockAdvisor.Features.Shared.ItemCard;
 /// <summary>
 /// The in-game item card: cost and tier up top, the item's innate stats, then each passive and
 /// active with its description and numbers, laid out the way the shop shows them. The numbers come
-/// from item_tooltips.json (written by Data → Sync from Game API); without it the card still shows
+/// from item_tooltips.json (written by Data → Model Tools → Sync from Game API); without it the card still shows
 /// its header and says where the rest comes from.
 /// </summary>
 public static class ItemCardBuilder

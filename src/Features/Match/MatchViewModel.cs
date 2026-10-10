@@ -51,7 +51,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public static readonly string HideRarelyBuiltTip =
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
-        + "Needs your hero picked and match data downloaded (Data → Download Match Data).";
+        + "Needs your hero picked and match data downloaded (Data → Check for Updates).";
 
     public const string HideDisagreedLabel = "Hide items the formula and data disagree on";
 

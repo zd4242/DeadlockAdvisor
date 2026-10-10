@@ -34,7 +34,7 @@ public static class FormulaText
         + "from-stats coefficients alike; never 'as', which is one hero.";
 
     public const string BestTargetFromCastTip =
-        "Cast on one hero at a time (found by Data → Sync from Game API),\n"
+        "Cast on one hero at a time (found by Data → Model Tools → Sync from Game API),\n"
         + "so every rule on this side already counts its best targets.";
 
     public const string BestTargetAsOnlyTip = "Only 'against' and 'with' can count best targets: 'as' is one hero.";

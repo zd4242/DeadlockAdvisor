@@ -35,7 +35,7 @@
             <TextBlock Classes="warning" TextWrapping="Wrap" Text="{Binding Offline}" IsVisible="{Binding !CanDownloadMatchData}"/>
         </StackPanel>
 
-        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Both are in the Data menu any time, and the Settings page can turn the updates off."/>
+        <TextBlock Classes="faint" TextWrapping="Wrap" Text="Data → Check for Updates brings both any time, and Settings → Data can turn the updates off."/>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10" Margin="0,8,0,0">
             <Button Classes="primary"

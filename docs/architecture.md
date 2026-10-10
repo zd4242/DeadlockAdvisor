@@ -161,7 +161,7 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   (`match_item_lift.csv` + `.meta.json`); `Hero Items` builds its table from the segments (`HeroItemTable`, `HeroFits`). `HeroItemsViewModel` keeps the last table
   it built, keyed by hero, mode, rank range and the picked patches, so sorting, tier toggles and the usage slider only
   reshape its rows; a different pick, or `StoreReplaced` (every download ends in one), builds it again.
-- **Game data:** `Data → Sync from Game API` (`GameApiService` → `GameSync`; the menu item shows only with the model editors on)
+- **Game data:** `Data → Model Tools → Sync from Game API` (`GameApiService` → `GameSync`; the submenu shows only with the model editors on)
   rewrites heroes, items, item stats and tooltips and
   measures the max-HP and durability traits (scoring_model.md). Everyone else gets those files through the model update.
 
@@ -213,7 +213,12 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
 
 ## 7. Updates and downloads
 
-Four things stay current and one is manual. Settings flags are in `AppSettings`; Settings → Data and the Data menu are the UI.
+Four things stay current and one is manual. Settings flags are in `AppSettings`; the Updates chip and flyout, Settings → Data and
+the Data menu are the UI. The Data menu is only **Check for Updates** (`UpdatesViewModel.CheckAllCommand`, the flyout's
+button), **Downloads and Updates…** (`MainWindowViewModel.OpenDataSettingsCommand`: Settings on the Data page, which has every
+per-source button, the modes and the folders), Settings and Quit; the maintainer tools (Sync from Game API, Sync New, Model Health
+Report, Reload, Export, Open Data Folder) are its **Model Tools** submenu, shown with `ShowsEditors`. A new download or check
+belongs in the flyout row and Settings → Data, not as a menu item of its own.
 
 | What | Service (view model) | Source | Checked | Automation |
 |---|---|---|---|---|
@@ -221,7 +226,7 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
 | Formulas (the model) | `ModelUpdateService`, `ModelManifest`, `ModelUpdatePlan` (`DataMenuViewModel.CheckModelAsync`) | the `model` release, published by CI from `main` | startup, reconnect, every 6 h | automatic; files the user changed are asked about (while open: offered as a chip) |
 | Match data | `MatchSnapshotService` / `SnapshotPlan` (shared snapshot) then `MatchStatsService` / `MatchFetchPlan` (deadlock-api.com) | the `match-data` release, built daily by `tools/MatchSnapshot` | startup, reconnect, every 6 h | automatic when a patch is new or the current one is 36 h old (3 days via the API) |
 | Art | `ArtDownloadService`, `ArtManifest`, `TopbarDerivation` (`DataMenuViewModel.DownloadArtAsync`); `ArtService` serves it to the UI | deadlock-api.com asset API and CDN | startup, every 6 h (it downloads weekly, daily while a hero lacks art, and at once after a model update, Add heroes or Sync from Game API adds one; the row names heroes still without a portrait and waits as "available") | automatic after the first-run consent |
-| Game data | `GameApiService`, `GameSync` | deadlock-api.com | **manual**, editors only: Data → Sync from Game API | none; users get it when the model is published |
+| Game data | `GameApiService`, `GameSync` | deadlock-api.com | **manual**, editors only: Data → Model Tools → Sync from Game API | none; users get it when the model is published |
 
 - `DeadlockApi` is the one `HttpClient` for deadlock-api.com and GitHub: timeouts, ETag conditional requests, brotli/gzip,
   `BytesReceived`, the `UserAgent` every request carries (`deadlock-advisor/<AppVersion.Release as x.y.z, or dev> (+repo URL)`;

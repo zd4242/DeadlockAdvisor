@@ -552,9 +552,9 @@ public class HeroItemsViewModel : ViewModelBase, ISearchablePage
         var theirs = picked.Count == 1 ? "this patch's" : "these patches'";
         EmptyHint = !HasMatchData
             ? _connectivity.IsOffline
-                ? "No match counts to show yet, and you're offline. Data → Download Match Data brings them, with the items each hero's players buy, "
+                ? "No match counts to show yet, and you're offline. Data → Check for Updates brings them, with the items each hero's players buy, "
                   + "once you're connected."
-                : "No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy."
+                : "No match counts to show yet. Data → Check for Updates brings them, with the items each hero's players buy."
             : table is null
                 ? $"{(picked.Count == 1 ? "This patch's" : "These patches'")} match data has no rank groups. "
                   + "Download the match data again with them to narrow it to ranks."

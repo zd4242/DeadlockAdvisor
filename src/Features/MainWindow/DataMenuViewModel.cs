@@ -26,10 +26,11 @@ using ReactiveUI.Fody.Helpers;
 namespace DeadlockAdvisor.Features.MainWindow;
 
 /// <summary>
-/// The Data menu: syncing with the game, fetching match stats, reloading, exporting, and where the
-/// data and art live. The long downloads, match stats and art, run in the background as
-/// <see cref="Jobs"/> the status bar shows and can cancel; the quick game sync runs behind a progress
-/// modal. Nothing is written until a job has everything it needs.
+/// What the Data menu, the Updates flyout and Settings → Data run: syncing with the game, fetching match stats
+/// and art, checking for formula updates, reloading, exporting, and where the data and art live. The long
+/// downloads, match stats and art, run in the background as <see cref="Jobs"/> the status bar shows and can
+/// cancel; the quick game sync runs behind a progress modal. Nothing is written until a job has everything
+/// it needs.
 /// </summary>
 public class DataMenuViewModel : ViewModelBase
 {
@@ -700,7 +701,6 @@ public class DataMenuViewModel : ViewModelBase
     /// The published model against this data folder's: files unchanged here update quietly, and ones
     /// changed here are asked about. On startup, a failed check or a version already turned down says nothing.
     /// </summary>
-    /// <param name="manual">From the Data menu: says how it went, and asks again about files kept over this version.</param>
     /// <param name="manual">Asked for: says when it can't check, asks again about files kept over this version, and says when they're current.</param>
     /// <param name="saysWhenCurrent">False inside Check for Updates, which sums up for every source.</param>
     internal async Task CheckModelAsync(bool manual, bool saysWhenCurrent = true)
@@ -872,7 +872,7 @@ public class DataMenuViewModel : ViewModelBase
 
     private const string NeedsNewerApp =
         "The hero ratings and item formulas published on GitHub need a newer version of this app than the one you have. "
-        + "Settings → Data checks for a new version; then check for formula updates again.";
+        + "Settings → Data checks for a new version; then check for updates again.";
 
     private static string Unavailable(PublishedModel answer) => answer.NeedsNewerApp ? NeedsNewerApp : Unreachable;
 

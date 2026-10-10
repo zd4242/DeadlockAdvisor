@@ -54,8 +54,9 @@ public class MainWindowViewModel : ViewModelBase
         + "good in every match.\n\n"
         + "Each coefficient is:\n"
         + "    trait weight × (the number you typed + the part from item stats)\n"
-        + "where item stats come from Data → Sync from Game API, and\n"
-        + "data/stat_rules.csv says what each point of a stat is worth.\n"
+        + "where item stats come from the game's data (Data → Model Tools →\n"
+        + "Sync from Game API), and data/stat_rules.csv says what each point\n"
+        + "of a stat is worth.\n"
         + "Item stats include the item's share of its shop's investment\n"
         + "bonus (weapon damage, spirit power or base health for its cost).\n\n"
         + "Its score in a match is that weight summed over everyone selected,\n"
@@ -82,7 +83,7 @@ public class MainWindowViewModel : ViewModelBase
         + "Click any recommendation to see exactly which hero and which trait\n"
         + "produced its score.\n\n"
         + "The small 'data' numbers are a separate second opinion from real\n"
-        + "matches (Data → Download Match Data): win-rate points the item gains\n"
+        + "matches (Data → Check for Updates): win-rate points the item gains\n"
         + "against your enemies, and on your own hero ('hero fit': how much more\n"
         + "your hero wins with it than everyone who builds it). They're never added\n"
         + "into the score, but ranking by 'Match data' orders the list by them\n"
@@ -254,6 +255,7 @@ public class MainWindowViewModel : ViewModelBase
             .Subscribe(_ => Settings.Refresh())
             .DisposeWith(Disposables);
         OpenSettingsCommand = ReactiveCommand.Create(OpenSettings);
+        OpenDataSettingsCommand = ReactiveCommand.Create(OpenDataSettings);
         FindCommand = ReactiveCommand.Create(Find);
         HelpCommand = ReactiveCommand.Create(() => _modals.ShowMessage("How scoring works", HowScoringWorks));
         NoticesCommand = ReactiveCommand.Create(ShowNotices);
@@ -363,6 +365,9 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> NoticesCommand { get; }
     public ReactiveCommand<Unit, Unit> RecentMessagesCommand { get; }
     public ReactiveCommand<Unit, Unit> OpenSettingsCommand { get; }
+
+    /// <summary>Data → Downloads and Updates…: Settings, on the Data page.</summary>
+    public ReactiveCommand<Unit, Unit> OpenDataSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
     /// <summary>Alt+1/2/3 (which open the hero picker), Random and Detect, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
@@ -497,6 +502,12 @@ public class MainWindowViewModel : ViewModelBase
             return;
         Settings.Refresh();
         IsSettingsOpen = true;
+    }
+
+    private void OpenDataSettings()
+    {
+        Settings.ShowData();
+        OpenSettings();
     }
 
     private void ShowFormula(string itemId)

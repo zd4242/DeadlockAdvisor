@@ -12,22 +12,6 @@
         </DataTemplate>
     </UserControl.Resources>
     <StackPanel>
-        <TextBlock Classes="section" Text="FOLDERS"/>
-        <Border Classes="settings">
-            <StackPanel>
-                <settings:SettingRow Title="Data folder" Description="{Binding DataFolder}">
-                    <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding DataFolder}"/>
-                        <Button Content="Change…" Command="{Binding ChangeDataFolderCommand}"
-                                ToolTip.Tip="Use another folder holding data/ and assets/"/>
-                    </StackPanel>
-                </settings:SettingRow>
-                <settings:SettingRow Title="Settings and log" Description="{Binding AppFolder}">
-                    <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AppFolder}"/>
-                </settings:SettingRow>
-            </StackPanel>
-        </Border>
-
         <TextBlock Classes="section" Text="ART"/>
         <Border Classes="settings">
             <StackPanel>
@@ -98,6 +82,22 @@
                 <settings:SettingRow Title="Say when a new version is out" Description="{Binding AppModeDescription}">
                     <ListBox Classes="segmented" ItemsSource="{Binding AppModes}" SelectedItem="{Binding AppMode}"
                              ItemTemplate="{StaticResource ModeLabel}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="FOLDERS"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Data folder" Description="{Binding DataFolder}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding DataFolder}"/>
+                        <Button Content="Change…" Command="{Binding ChangeDataFolderCommand}"
+                                ToolTip.Tip="Use another folder holding data/ and assets/"/>
+                    </StackPanel>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Settings and log" Description="{Binding AppFolder}">
+                    <Button Classes="ghost" Content="Open" Command="{Binding OpenFolderCommand}" CommandParameter="{Binding AppFolder}"/>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

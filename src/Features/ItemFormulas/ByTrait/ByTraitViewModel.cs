@@ -36,7 +36,7 @@ public class ByTraitViewModel : ViewModelBase
     public const string StatRulesTip =
         "Coefficients worked out from each item's real numbers, added to the\n"
         + "ones you type. Saved to data/stat_rules.csv. Item stats come from\n"
-        + "Data → Sync from Game API.";
+        + "Data → Model Tools → Sync from Game API.";
 
     public const string FromStatsTip =
         "What this item gets from its stats via data/stat_rules.csv.\n"

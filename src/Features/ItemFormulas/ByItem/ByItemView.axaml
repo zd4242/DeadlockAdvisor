@@ -244,7 +244,7 @@
                                     <TextBlock Classes="section"
                                                Text="FROM ITEM STATS"
                                                IsVisible="{Binding HasDerivedRules}"
-                                               ToolTip.Tip="Added on top of the rules above, from data/stat_rules.csv and the&#10;item's numbers (Data → Sync from Game API). Edit the stat rule to change these."/>
+                                               ToolTip.Tip="Added on top of the rules above, from data/stat_rules.csv and the&#10;item's numbers (Data → Model Tools → Sync from Game API). Edit the stat rule to change these."/>
                                     <ItemsControl ItemsSource="{Binding DerivedRules}">
                                         <ItemsControl.ItemsPanel>
                                             <ItemsPanelTemplate>

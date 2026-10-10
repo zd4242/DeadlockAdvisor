@@ -30,7 +30,7 @@ public sealed class HeroItemsViewModelTests : IDisposable
 
         Assert.True(page.IsEmpty);
         Assert.False(page.HasMatchData);
-        Assert.Contains("Data → Download Match Data", page.EmptyHint);
+        Assert.Contains("Data → Check for Updates", page.EmptyHint);
         Assert.Empty(page.Rows);
 
         await DownloadAsync();
@@ -52,11 +52,11 @@ public sealed class HeroItemsViewModelTests : IDisposable
         _connectivity.GoOffline();
         using var page = Page();
 
-        Assert.Equal("No match counts to show yet, and you're offline. Data → Download Match Data brings them, with the items "
+        Assert.Equal("No match counts to show yet, and you're offline. Data → Check for Updates brings them, with the items "
                      + "each hero's players buy, once you're connected.", page.EmptyHint);
 
         _connectivity.Reconnect();
-        Assert.Equal("No match counts to show yet. Data → Download Match Data brings them, with the items each hero's players buy.",
+        Assert.Equal("No match counts to show yet. Data → Check for Updates brings them, with the items each hero's players buy.",
             page.EmptyHint);
 
         _connectivity.GoOffline();

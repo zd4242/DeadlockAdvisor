@@ -52,7 +52,7 @@ public static class ModelPublisher
         {
             throw new InvalidOperationException(
                 $"The seed has {string.Join(", ", missing.Select(hero => hero.HeroName))} and {dataDir} doesn't, so publishing would drop "
-                + "them: take the published model (Data → Check for Formula Updates) or Sync from Game API first, "
+                + "them: take the published model (Data → Check for Updates) or Data → Model Tools → Sync from Game API first, "
                 + "or delete the rows from the seed if the game removed the hero.");
         }
 

@@ -110,6 +110,12 @@ public class MenuTests
         Assert.Equal(Core.ThirdPartyNotices.Text(), copied);
     }
 
+    private static MenuItem DataMenu(UiHarness ui) =>
+        ui.Window.MainMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "_Data"));
+
+    private static MenuItem DataMenuItem(UiHarness ui, string header) =>
+        DataMenu(ui).Items.OfType<MenuItem>().Single(item => Equals(item.Header, header));
+
     [AvaloniaFact]
     public void TheDataMenusModelToolsAndCtrlRComeWithTheEditors()
     {
@@ -117,12 +123,13 @@ public class MenuTests
         var reloads = 0;
         using var watchReloads = ui.Data.StoreReplaced.Subscribe(_ => reloads++);
         ui.Show();
-        var data = ui.Window.MainMenu.Items.OfType<MenuItem>().Single(item => Equals(item.Header, "_Data"));
-        List<string> Shown() => data.Items.OfType<MenuItem>().Where(item => item.IsVisible).Select(item => (string)item.Header!).ToList();
-        string[] modelTools = ["Sync New Heroes / Items / Categories", "Sync from Game API", "Model Health Report", "Reload from Disk", "Export Snapshot to Excel"];
+        List<string> Shown() => DataMenu(ui).Items.OfType<MenuItem>().Where(item => item.IsVisible).Select(item => (string)item.Header!).ToList();
 
-        Assert.Empty(Shown().Intersect(modelTools));
-        Assert.Contains("Download Match Data…", Shown());
+        Assert.Equal(["Check for Updates", "Downloads and Updates…", "Settings…", "Quit"], Shown());
+        DataMenu(ui).Open();
+        UiHarness.Settle();
+        ui.Screenshot("menu_data.png");
+        DataMenu(ui).Close();
         ui.Window.KeyPressQwerty(PhysicalKey.R, RawInputModifiers.Control);
         UiHarness.Settle();
         Assert.Equal(0, reloads);
@@ -130,10 +137,51 @@ public class MenuTests
         ui.ViewModel.Settings.General.ShowModelEditors = true;
         UiHarness.Settle();
 
-        Assert.Equal(modelTools, Shown().Intersect(modelTools));
+        Assert.Equal(["Check for Updates", "Downloads and Updates…", "Model Tools", "Settings…", "Quit"], Shown());
+        Assert.Equal(
+            ["Sync from Game API", "Sync New Heroes / Items / Categories", "Model Health Report", "Reload from Disk", "Export Snapshot to Excel", "Open Data Folder"],
+            DataMenuItem(ui, "Model Tools").Items.OfType<MenuItem>().Select(item => (string)item.Header!));
+        DataMenu(ui).Open();
+        DataMenuItem(ui, "Model Tools").Open();
+        UiHarness.Settle();
+        ui.Screenshot("menu_data_editors.png");
+        DataMenu(ui).Close();
         ui.Window.KeyPressQwerty(PhysicalKey.R, RawInputModifiers.Control);
         UiHarness.Settle();
         Assert.Equal(1, reloads);
+    }
+
+    /// <summary>One check, wherever it's asked for: the menu runs the Updates flyout's Check all.</summary>
+    [AvaloniaFact]
+    public void CheckForUpdatesRunsTheFlyoutsCheckAll()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+
+        Assert.Same(ui.ViewModel.Updates.CheckAllCommand, DataMenuItem(ui, "Check for Updates").Command);
+    }
+
+    [AvaloniaFact]
+    public void DownloadsAndUpdatesOpensSettingsOnTheDataPageWhateverWasShowing()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var settings = ui.ViewModel.Settings;
+        var command = DataMenuItem(ui, "Downloads and Updates…").Command!;
+        Assert.False(ui.ViewModel.IsSettingsOpen);
+
+        command.Execute(null);
+        UiHarness.Settle();
+
+        Assert.True(ui.ViewModel.IsSettingsOpen);
+        Assert.Same(settings.Data, settings.SelectedCategory.Page);
+
+        settings.SelectedCategory = settings.Categories[0];
+        command.Execute(null);
+        UiHarness.Settle();
+
+        Assert.True(ui.ViewModel.IsSettingsOpen);
+        Assert.Same(settings.Data, settings.SelectedCategory.Page);
     }
 
     /// <summary>The role menu's presses bubble up to the tile it was opened on, which mustn't take them as a click of its own.</summary>

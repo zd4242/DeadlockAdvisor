@@ -94,7 +94,7 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="Edit the scoring model"
-                                     Description="Show the Hero Traits and Item Formulas tabs, where you rate heroes and write the rules items score by, and Go to Item Formula when you right-click a recommendation.">
+                                     Description="Show the Hero Traits and Item Formulas tabs, where you rate heroes and write the rules items score by, Go to Item Formula when you right-click a recommendation, and the Model Tools in the Data menu.">
                     <ToggleSwitch IsChecked="{Binding ShowModelEditors}"/>
                 </settings:SettingRow>
             </StackPanel>

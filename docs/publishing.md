@@ -52,7 +52,7 @@ that release, and compare each file with what they installed:
 
 - Files they haven't changed are replaced quietly, the old copy kept in `data\.backups`, with a notice
   giving the notes they haven't seen yet (or the files updated, without any).
-- Files they have changed (by hand, or with Sync from Game API) are listed in a dialog, unticked, under
+- Files they have changed (by hand, or with Model Tools → Sync from Game API) are listed in a dialog, unticked, under
   the notes: they tick the ones to replace and keep the rest, and aren't asked about that version again.
   The exception is heroes: whatever they changed, the heroes the published model has and their folder lacks
   are added to `heroes.csv` and the ratings first (`ModelUpdateService.AddNewHeroes`), with every row already
@@ -60,7 +60,7 @@ that release, and compare each file with what they installed:
   own ratings.
 - New installs start from the seed built into their copy of the app, then update the same way.
 
-They can turn this off in Settings → Data, or check on demand with Data → Check for Formula Updates.
+They can turn this off in Settings → Data, or check on demand with Data → Check for Updates (which also checks the app, the match data and the art).
 Settings → Data also shows the version installed and when it was last checked, every version's notes,
 **Reset…** to put files back to the published version, and **Undo update**, which puts back what the
 last update or reset replaced (kept in `data\.model-previous` until the next one), and then doesn't
@@ -84,7 +84,7 @@ A hero the game releases reaches everyone without anyone touching the app, excep
 2. **Why that's safe to publish unattended.** A hero with no trait rated is unprofiled
    (`DataStore.IsProfiled`): it's left out of the baselines and out of scoring, so no recommendation changes. It
    just makes the hero pickable and detectable.
-3. **You rate it.** Data → Check for Formula Updates puts the new hero in your data folder, then rate it in Hero
+3. **You rate it.** Data → Check for Updates puts the new hero in your data folder, then rate it in Hero
    Traits and publish as usual. `PublishModel` refuses to publish from a data folder that lacks a hero the seed
    has, since copying its `heroes.csv` over the seed would drop the hero for everyone.
 4. **Installs.** They take it with the model update at their next startup, as above, with the note. Their art

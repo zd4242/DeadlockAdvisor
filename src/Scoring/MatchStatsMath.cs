@@ -1090,7 +1090,7 @@ public static partial class MatchStatsMath
         var lines = new List<string>();
         if (RankLabel(meta) is { } rank)
             lines.Add($"Leaning toward {rank} where it plays differently.");
-        lines.Add($"Fetched {Age(now - Number(meta["fetched_at"])!.Value)} (Data → Download Match Data).");
+        lines.Add($"Fetched {Age(now - Number(meta["fetched_at"])!.Value)} (Data → Check for Updates).");
         return string.Join("\n", lines);
     }
 

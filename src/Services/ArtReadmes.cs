@@ -6,8 +6,9 @@ public static class ArtReadmes
     public const string Heroes = """
         Hero portraits go here.
 
-        The easy way to fill this folder is Data -> Download Art..., which pulls
-        them from the community asset API and names them correctly.
+        The easy way to fill this folder is Data -> Check for Updates (or the Art
+        row of the Updates chip), which pulls them from the community asset API
+        and names them correctly.
 
         To add one by hand, name the file after the hero_id column in
         data/heroes.csv, e.g.
@@ -29,8 +30,9 @@ public static class ArtReadmes
     public const string Items = """
         Item icons go here.
 
-        The easy way to fill this folder is Data -> Download Art..., which pulls
-        them from the community asset API and names them correctly.
+        The easy way to fill this folder is Data -> Check for Updates (or the Art
+        row of the Updates chip), which pulls them from the community asset API
+        and names them correctly.
 
         To add one by hand, name the file after the item_id column in
         data/items.csv, e.g.
@@ -50,7 +52,7 @@ public static class ArtReadmes
     public const string Ranks = """
         Rank badges go here.
 
-        Data -> Download Art... pulls them from the community asset API, named
+        Data -> Check for Updates pulls them from the community asset API, named
         after the rank's tier to two digits:
 
             01.png    Initiate
@@ -71,7 +73,7 @@ public static class ArtReadmes
     public const string Topbar = """
         Reference art for screen detection.
 
-        Data -> Download Art... fetches each hero's cards into _cards/ and cuts
+        Data -> Check for Updates fetches each hero's cards into _cards/ and cuts
         them where the top bar crops them, into the hero's folder:
 
             haze/card_normal.png       the portrait as usually drawn

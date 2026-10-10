@@ -54,7 +54,7 @@ public sealed class ModelUpdateViewModel : ViewModelBase
             $"A newer version of the hero ratings and item formulas was published on {update.Published.Published}. "
             + "You've changed some of the files it replaces since they were installed, by editing them or with Sync from Game API.",
             "REPLACE YOUR CHANGES?", "Update",
-            "Unticked files keep your changes, and this version won't ask about them again (Data → Check for Formula Updates does). "
+            "Unticked files keep your changes, and this version won't ask about them again (Data → Check for Updates does). "
             + "Every replaced file keeps a backup in data\\.backups.",
             ticked: false);
 
