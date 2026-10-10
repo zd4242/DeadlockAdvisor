@@ -158,11 +158,12 @@ public sealed class AppUpdateViewModel : ViewModelBase
     /// worth interrupting anyone over.
     /// </summary>
     /// <param name="manual">Asked for: says how it went, and shows a version that was dismissed.</param>
-    public async Task CheckAsync(bool manual = false)
+    /// <param name="saysWhenCurrent">False inside Check for Updates, which sums up for every source: having the newest version says nothing.</param>
+    public async Task CheckAsync(bool manual = false, bool saysWhenCurrent = true)
     {
         if (_updates.Current is not { } current)
         {
-            if (manual)
+            if (manual && saysWhenCurrent)
                 _notifications.ShowInformation("This build wasn't made by the release workflow, so it has no version to compare with releases.");
             return;
         }
@@ -193,7 +194,7 @@ public sealed class AppUpdateViewModel : ViewModelBase
             CanInstall = _updates.CanInstall(latest);
             Show(AppUpdateState.Available);
         }
-        else if (manual)
+        else if (manual && saysWhenCurrent)
         {
             _notifications.ShowSuccess($"You have the newest version, {current}.", _toastTime);
         }

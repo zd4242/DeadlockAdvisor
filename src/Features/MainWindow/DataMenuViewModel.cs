@@ -100,7 +100,7 @@ public class DataMenuViewModel : ViewModelBase
         SyncGameApiCommand = ReactiveCommand.CreateFromTask(SyncGameApiAsync, idle);
         DownloadMatchDataCommand = ReactiveCommand.CreateFromTask(OfferMatchDownloadAsync,
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
-        CheckMatchDataCommand = ReactiveCommand.CreateFromTask(CheckMatchDataNowAsync,
+        CheckMatchDataCommand = ReactiveCommand.CreateFromTask(() => CheckMatchDataNowAsync(saysWhenCurrent: true),
             this.WhenAnyValue(vm => vm.IsBusy, vm => vm.IsDownloadingMatchData, (busy, fetching) => !busy && !fetching));
         ModelHealthCommand = ReactiveCommand.CreateFromTask(ShowModelHealthAsync, idle);
         CheckModelCommand = ReactiveCommand.CreateFromTask(() => CheckModelAsync(manual: true), idle);
@@ -246,16 +246,52 @@ public class DataMenuViewModel : ViewModelBase
     /// Every check the app makes on startup: the formulas, the match data against the patch list, and the art. Left to
     /// itself it never opens a dialog over someone, and a first-run offer waits for its own chip.
     /// </summary>
-    /// <param name="manual">Asked for: the formula check says how it went and asks again about files kept over this version.</param>
+    /// <param name="manual">Asked for, as <see cref="CheckForUpdatesAsync"/>: also fetches what was never downloaded.</param>
     internal Task CheckAllAsync(bool manual)
     {
-        var checks = new List<Task> { manual ? CheckModelAsync(manual: true) : CheckModelWhileOpenAsync() };
+        if (manual)
+            return CheckForUpdatesAsync();
+        var checks = new List<Task> { CheckModelWhileOpenAsync() };
         if (!NeedsWelcome())
         {
             checks.Add(CheckMatchDataAsync());
             checks.Add(CheckArtAsync());
         }
         return Task.WhenAll(checks);
+    }
+
+    /// <summary>
+    /// Check for Updates: the formulas, the match data and the art brought current, and what was never downloaded
+    /// fetched, since the click asks for it. A first run that hasn't been offered the downloads gets the offer, which
+    /// shows what they cost. A source that is already current says nothing: <see cref="UpdatesViewModel"/> sums up.
+    /// </summary>
+    private Task CheckForUpdatesAsync()
+    {
+        var checks = new List<Task> { CheckModelAsync(manual: true, saysWhenCurrent: false) };
+        if (NeedsWelcome())
+        {
+            // The offer made now replaces the chip that held it; one that can't be made yet comes back with the connection.
+            foreach (var chip in Jobs.Where(job => job.Title == WelcomeChipTitle).ToList())
+                Remove(chip);
+            checks.Add(OfferWelcomeAsync());
+        }
+        else
+        {
+            checks.Add(CheckMatchDataNowAsync(saysWhenCurrent: false));
+            checks.Add(CheckArtNowAsync());
+        }
+        return Task.WhenAll(checks);
+    }
+
+    /// <summary>The routine art check, or with no art at all (the offer was declined) the download itself, saying how big it is.</summary>
+    private Task CheckArtNowAsync()
+    {
+        if (_art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0)
+            return CheckArtAsync();
+        if (IsDownloadingArt)
+            return Task.CompletedTask;
+        _notifications.ShowInformation($"Downloading the hero and item art ({WelcomeViewModel.ArtSize}) in the background…", _toastTime);
+        return DownloadArtAsync(force: false);
     }
 
     /// <summary>Quietly download the art that's missing or changed, if the last check is old, a hero lacks art, or portraits were cut by an older version.</summary>
@@ -485,8 +521,14 @@ public class DataMenuViewModel : ViewModelBase
     /// Asked for, whatever the update mode: with the shared download usable, take what's newer in it, or say the data is
     /// current; the dialog only opens when the shared download isn't there and the choices (deadlock-api.com's calls) matter.
     /// </summary>
-    internal async Task CheckMatchDataNowAsync()
+    /// <param name="saysWhenCurrent">
+    /// False inside Check for Updates, which sums up for every source: current data says nothing, and data that is there
+    /// is brought current by the routine check rather than by a dialog with nothing to choose.
+    /// </param>
+    internal async Task CheckMatchDataNowAsync(bool saysWhenCurrent)
     {
+        if (!saysWhenCurrent && IsDownloadingMatchData)
+            return;
         var store = _data.Store;
         SnapshotPlan? shared;
         using (_matchDataChecks.Begin())
@@ -500,7 +542,10 @@ public class DataMenuViewModel : ViewModelBase
         }
         if (shared is null)
         {
-            await OfferMatchDownloadAsync(_settings.Current.MatchDataIncludeRanks);
+            if (!saysWhenCurrent && store.MatchSegments.Count > 0)
+                await CheckMatchDataAsync();
+            else
+                await OfferMatchDownloadAsync(_settings.Current.MatchDataIncludeRanks);
             return;
         }
         if (shared.HasWork)
@@ -509,6 +554,8 @@ public class DataMenuViewModel : ViewModelBase
             await DownloadMatchDataAsync(shared);
             return;
         }
+        if (!saysWhenCurrent)
+            return;
         var meta = store.MatchMeta;
         var age = MatchStatsMath.FetchedAt(meta) is { } fetched
             ? $", fetched {MatchStatsMath.Age(DateTimeOffset.UtcNow.ToUnixTimeSeconds() - fetched)}"
@@ -654,18 +701,24 @@ public class DataMenuViewModel : ViewModelBase
     /// changed here are asked about. On startup, a failed check or a version already turned down says nothing.
     /// </summary>
     /// <param name="manual">From the Data menu: says how it went, and asks again about files kept over this version.</param>
-    internal async Task CheckModelAsync(bool manual)
+    /// <param name="manual">Asked for: says when it can't check, asks again about files kept over this version, and says when they're current.</param>
+    /// <param name="saysWhenCurrent">False inside Check for Updates, which sums up for every source.</param>
+    internal async Task CheckModelAsync(bool manual, bool saysWhenCurrent = true)
     {
         using var checking = _modelChecks.Begin();
         var answer = await _models.PublishedAsync();
         if (answer.Manifest is not { } published)
         {
-            if (manual)
-                ShowMessage("Formula update", [Unavailable(answer)]);
+            if (!manual)
+                return;
+            if (answer.NeedsNewerApp)
+                ShowMessage("Formula update", [NeedsNewerApp]);
+            else
+                _notifications.ShowError(Unreachable, _toastTime);
             return;
         }
         Checked(s => s.ModelCheckedAt = _clock.Now);
-        await TakeModelAsync(published, manual);
+        await TakeModelAsync(published, manual, saysWhenCurrent);
     }
 
     /// <summary>
@@ -699,7 +752,7 @@ public class DataMenuViewModel : ViewModelBase
         Show(job);
     }
 
-    private async Task TakeModelAsync(ModelManifest published, bool manual)
+    private async Task TakeModelAsync(ModelManifest published, bool manual, bool saysWhenCurrent = true)
     {
         if (!_data.FlushSaves())
             return;
@@ -721,8 +774,8 @@ public class DataMenuViewModel : ViewModelBase
             WriteModelRecord(dataDir, update);
             if (added.Count > 0)
                 ShowNewHeroes(update, added, withNews: true);
-            else if (manual)
-                ShowMessage("Formula update", [$"The hero ratings and item formulas are up to date: the version published {published.Published}."]);
+            else if (manual && saysWhenCurrent)
+                _notifications.ShowSuccess($"The hero ratings and item formulas are up to date: the version published {published.Published}.", _toastTime);
         }
     }
 

@@ -1185,12 +1185,17 @@ public sealed class DataMenuTests : IDisposable
     public async Task CheckingForFormulaUpdatesSaysWhenThereAreNoneOrGitHubIsDown()
     {
         await _menu.CheckModelCommand.Execute();
-        Assert.Contains("Couldn't reach GitHub", LastMessage().Body);
-        _fixture.Modals.CloseModal();
+        var unreachable = Assert.Single(_toasts);
+        Assert.Contains("Couldn't reach GitHub", unreachable.Message);
+        Assert.Equal(NotificationSeverity.Error, unreachable.Severity);
+        _toasts.Clear();
 
         PublishModel();
         await _menu.CheckModelCommand.Execute();
-        Assert.Contains("up to date: the version published 2026-10-09", LastMessage().Body);
+        var current = Assert.Single(_toasts);
+        Assert.Contains("up to date: the version published 2026-10-09", current.Message);
+        Assert.Equal(NotificationSeverity.Success, current.Severity);
+        Assert.Empty(_shown);
         Assert.Equal(0, _replaced);
     }
 
@@ -1439,13 +1444,111 @@ public sealed class DataMenuTests : IDisposable
         Assert.NotNull(_fixture.Settings.Current.ModelCheckedAt);
     }
 
+    // -- check for updates -----------------------------------------------------------
+
+    /// <summary>The model published and installed, art and match data as current as the shared download.</summary>
+    private async Task<DataMenuViewModel> ACurrentInstallAsync()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        foreach (var segment in await SegmentsAsync(now.AddHours(-1)))
+            _fixture.Data.Store.PutMatchSegment(segment);
+        HavePortraits();
+        PublishModel();
+        return Menu(snapshots: new MatchSnapshotService(_api, () => now));
+    }
+
     [Fact]
-    public async Task CheckingEverythingOnDemandSaysHowTheFormulaCheckWent()
+    public async Task CheckingForUpdatesSaysNothingOfSourcesThatAreCurrent()
+    {
+        using var menu = await ACurrentInstallAsync();
+
+        await menu.CheckAllAsync(manual: true);
+
+        Assert.Empty(_shown);
+        Assert.Empty(_toasts);
+        Assert.Empty(menu.Jobs);
+        Assert.Contains(ModelManifest.ManifestUrl, _api.Asked);
+        Assert.Contains(MatchSnapshot.ManifestUrl, _api.Asked);
+        Assert.NotNull(_fixture.Settings.Current.ModelCheckedAt);
+        Assert.NotNull(_fixture.Settings.Current.MatchDataCheckedAt);
+    }
+
+    [Fact]
+    public async Task CheckingForUpdatesFetchesTheMatchDataAndArtThatWereNeverDownloaded()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        PublishModel();
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download, snapshots: new MatchSnapshotService(_api, () => now));
+
+        var checking = menu.CheckAllAsync(manual: true);
+        await UntilAsync(() => download.Started == 1 && !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
+
+        Assert.Contains(_toasts, toast => toast.Message == "Downloading match data from the shared download…");
+        Assert.Contains(_toasts, toast => toast.Message == $"Downloading the hero and item art ({WelcomeViewModel.ArtSize}) in the background…");
+        Assert.Empty(_shown);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+        await checking;
+    }
+
+    /// <summary>Someone who answered the first run's offer with "not now" has asked for it by clicking; one who hasn't been offered it sees what it costs.</summary>
+    [Fact]
+    public async Task CheckingForUpdatesBeforeTheFirstRunsOfferMakesTheOfferInsteadOfDownloading()
     {
         PublishModel();
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download, matchStats: new HeldMatchStats());
 
-        await _menu.CheckAllAsync(manual: true);
+        await menu.CheckAllAsync(manual: true);
 
-        Assert.Contains("up to date: the version published 2026-10-09", LastMessage().Body);
+        Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.Equal(0, download.Started);
+        Assert.True(_fixture.Settings.Current.WelcomeOffered);
+    }
+
+    /// <summary>The dialog's choices only exist for a first download; data that's there is brought current without asking.</summary>
+    [Fact]
+    public async Task CheckingForUpdatesWithMatchDataFromTheApiChecksThePatchListInsteadOfOpeningTheDialog()
+    {
+        var now = new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        using var menu = MenuWithData(now.AddHours(-2), now);
+        HavePortraits();
+        PublishModel();
+
+        await menu.CheckAllAsync(manual: true);
+
+        Assert.Empty(_shown);
+        Assert.Empty(menu.Jobs);
+        Assert.Contains(MatchStatsService.Patches, _api.Asked);
+    }
+
+    [Fact]
+    public async Task CheckingForUpdatesDuringADownloadDoesNotStartASecondOne()
+    {
+        var now = SyntheticItemStatsApi.Now;
+        await ServeSnapshotAsync(now.AddHours(-1), now.AddHours(-1));
+        _fixture.Settings.Current.WelcomeOffered = true;
+        PublishModel();
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download, snapshots: new MatchSnapshotService(_api, () => now));
+        var first = menu.CheckAllAsync(manual: true);
+        await UntilAsync(() => download.Started == 1 && !menu.IsDownloadingMatchData && _fixture.Data.Store.MatchSegments.Count == 2);
+
+        await menu.CheckAllAsync(manual: true);
+
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+        await first;
+    }
+
+    private static async Task UntilAsync(Func<bool> condition)
+    {
+        using var patience = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        while (!condition())
+            await Task.Delay(5, patience.Token);
     }
 }

@@ -236,7 +236,12 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   `IsDownloadingArt`) stop a second one. The formula check of a tick (`CheckModelWhileOpenAsync`) installs quietly only
   when the model editors are hidden and none of the user's own files are in the way; otherwise it offers a "Formulas"
   chip whose click runs `CheckModelAsync(manual: true)`, so nothing changes under someone editing and no dialog opens
-  over a match. `CheckAllAsync(manual: true)` is the same set with the formula check's own messages.
+  over a match. `CheckAllAsync(manual: true)` is Check for Updates (`CheckForUpdatesAsync`): the same checks, and the click
+  is also the consent to fetch what was never downloaded: match data through `CheckMatchDataNowAsync` (the shared
+  snapshot; with match data already there and no snapshot, the routine patch-list check rather than the dialog) and art
+  when there is none. A first run that was never offered the downloads gets `OfferWelcomeAsync` instead, which shows
+  what they cost. Each source passes `saysWhenCurrent: false`, so a current one says nothing; a source that failed or
+  did something still says so.
 - Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes
   or no shop items, and `MatchStatsService` throws it for an empty "every match" baseline over a window longer than 6 hours.
   Both reach the user as a failure ("Nothing was changed"), and in CI as a failed job, so nothing is published. Analytics
@@ -259,7 +264,10 @@ Four things stay current and one is manual. Settings flags are in `AppSettings`;
   `OpenCommand` is the action. The Match data row's Details is `DataStatusView`, the old card: it reads "up to date" while no
   newer patch is known and `AppSettings.MatchDataCheckedAt` is under 3 days old (`DataStatusViewModel.UpToDateWindow`),
   otherwise how old the data is, so an install that never checked doesn't claim it. **Check all** runs
-  `DataMenuViewModel.CheckAllAsync(manual: true)` and `AppUpdateViewModel.CheckAsync(manual: true)`; the footer's bytes come
+  `DataMenuViewModel.CheckAllAsync(manual: true)` and `AppUpdateViewModel.CheckAsync(manual: true, saysWhenCurrent: false)`
+  and then says where things stand (`Status`, as a toast) unless a source already said something (the last
+  `INotificationService.Recent` entry changed) or a dialog is open; while offline it only asks the connection to retry
+  and says so, without a request. The footer's bytes come
   from `IDeadlockApi.BytesReceived`, read when the flyout opens or anything changes. Running downloads keep their own
   progress and cancel chips on the right, and the offline chip (with Retry) stays beside them.
 - **Settings → Data's modes** (`DataSettingsViewModel`, `UpdateModes`) are a view over the existing flags, so `settings.json` reads

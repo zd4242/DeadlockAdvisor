@@ -212,7 +212,7 @@ public class MainWindowViewModel : ViewModelBase
         DataStatus = new DataStatusViewModel(data, dataMenu, settings).DisposeWith(Disposables);
         AppUpdate = new AppUpdateViewModel(appUpdates, settings, notifications, dataMenu.OpenFolderCommand).DisposeWith(Disposables);
         Connection = new ConnectionViewModel(connectivity, art).DisposeWith(Disposables);
-        Updates = new UpdatesViewModel(data, settings, connectivity, art, api, dataMenu, AppUpdate, DataStatus).DisposeWith(Disposables);
+        Updates = new UpdatesViewModel(data, settings, connectivity, art, api, notifications, modals, dataMenu, AppUpdate, DataStatus).DisposeWith(Disposables);
         connectivity.Reconnected
             .ObserveOn(RxApp.MainThreadScheduler)
             .Subscribe(reconnected =>

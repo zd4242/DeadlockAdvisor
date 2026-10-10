@@ -6,6 +6,7 @@ using System.Text.Json.Nodes;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.MainWindow;
 using DeadlockAdvisor.Features.MainWindow.Updates;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
@@ -86,7 +87,7 @@ public sealed class UpdatesViewModelTests : IDisposable
             _notifications, _fixture.Settings, new NoFolderPicker(), new FakeLoggingService(), _connectivity, _fixture.Clock);
         _app = new AppUpdateViewModel(_appUpdate, _fixture.Settings, _notifications, _open);
         _status = new DataStatusViewModel(_fixture.Data, _menu, _fixture.Settings);
-        _updates = new UpdatesViewModel(_fixture.Data, _fixture.Settings, _connectivity, _art, _api, _menu, _app, _status);
+        _updates = new UpdatesViewModel(_fixture.Data, _fixture.Settings, _connectivity, _art, _api, _notifications, _fixture.Modals, _menu, _app, _status);
         return _updates;
     }
 
@@ -426,6 +427,69 @@ public sealed class UpdatesViewModelTests : IDisposable
         Assert.Contains(MatchStatsService.Patches, _api.Asked);
         Assert.Equal(1, _appUpdate.Checks);
         Assert.False(updates.IsCheckingAll);
+    }
+
+    private static readonly List<Patch> _patches = MatchStatsMath.ParsePatches(["09-29-2026", "09-16-2026 Update"]);
+
+    /// <summary>The model published is the one installed, and match data from both patches was fetched two hours before <paramref name="now"/>.</summary>
+    private MatchStatsService EverythingIsCurrent(DateTimeOffset now)
+    {
+        ACurrentInstall();
+        var dataDir = _fixture.Data.DataDir;
+        var published = ModelManifest.Of(dataDir, "2026-10-02") with { Notes = [] };
+        foreach (var file in ModelManifest.ModelFiles)
+            _api.Bytes[published.UrlOf(file)] = File.ReadAllBytes(Path.Combine(dataDir, file));
+        _api.Bytes[ModelManifest.ManifestUrl] = published.ToJsonBytes();
+
+        _api.Json[MatchStatsService.Patches] = () => JsonNode.Parse("""[{"title": "09-29-2026"}, {"title": "09-16-2026 Update"}]""");
+        var fetched = now.AddHours(-2).ToUnixTimeSeconds();
+        var store = _fixture.Data.Store;
+        store.PutMatchSegment(new MatchSegment(_patches[0], _patches[0].Start, fetched, false, fetched, SliceCounts.Empty, [], []));
+        store.PutMatchSegment(new MatchSegment(_patches[1], _patches[1].Start, _patches[0].Start - 1, true, fetched, SliceCounts.Empty, [], []));
+        store.MatchMeta["latest_patch"] = new JsonObject { ["label"] = _patches[0].Label, ["start"] = _patches[0].Start };
+        return new MatchStatsService(_api, () => now, (_, _) => Task.CompletedTask);
+    }
+
+    private List<string> Said() => _notifications.Recent.Select(notification => notification.Message).ToList();
+
+    [Fact]
+    public async Task CheckAllSaysOnceThatEverythingIsUpToDateWhenNothingElseWasSaid()
+    {
+        var updates = Build(EverythingIsCurrent(new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero)));
+
+        await updates.CheckAllCommand.Execute();
+
+        Assert.Equal(["Everything is up to date."], Said());
+        Assert.Empty(_shown);
+    }
+
+    /// <summary>"Everything is up to date" after "couldn't reach GitHub" would contradict it.</summary>
+    [Fact]
+    public async Task CheckAllLeavesTheSumUpOutWhenASourceSaidSomething()
+    {
+        var now = new DateTimeOffset(2026, 10, 1, 12, 0, 0, TimeSpan.Zero);
+        var updates = Build(EverythingIsCurrent(now));
+        _api.Bytes.Remove(ModelManifest.ManifestUrl);
+
+        await updates.CheckAllCommand.Execute();
+
+        var said = Assert.Single(Said());
+        Assert.Contains("Couldn't reach GitHub", said);
+    }
+
+    [Fact]
+    public async Task CheckAllWhileOfflineChecksTheConnectionAndSaysSoWithoutAskingAnyone()
+    {
+        ACurrentInstall();
+        var updates = Build();
+        _connectivity.GoOffline();
+
+        await updates.CheckAllCommand.Execute();
+
+        Assert.Equal(1, _connectivity.Retries);
+        Assert.Equal(["No internet connection: everything works from what's saved."], Said());
+        Assert.Empty(_api.Asked);
+        Assert.Equal(0, _appUpdate.Checks);
     }
 
     [Fact]

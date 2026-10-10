@@ -24,19 +24,24 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     private readonly IConnectivityService _connectivity;
     private readonly IArtService _art;
     private readonly IDeadlockApi _api;
+    private readonly INotificationService _notifications;
+    private readonly IModalService _modals;
     private readonly DataMenuViewModel _dataMenu;
     private readonly AppUpdateViewModel _app;
     private readonly DataStatusViewModel _matchData;
     private string? _modelPublished;
 
     public UpdatesViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity, IArtService art,
-        IDeadlockApi api, DataMenuViewModel dataMenu, AppUpdateViewModel app, DataStatusViewModel matchData)
+        IDeadlockApi api, INotificationService notifications, IModalService modals, DataMenuViewModel dataMenu, AppUpdateViewModel app,
+        DataStatusViewModel matchData)
     {
         _data = data;
         _settings = settings;
         _connectivity = connectivity;
         _art = art;
         _api = api;
+        _notifications = notifications;
+        _modals = modals;
         _dataMenu = dataMenu;
         _app = app;
         _matchData = matchData;
@@ -121,19 +126,39 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
             : "Nothing downloaded this session";
     }
 
+    /// <summary>
+    /// Check for Updates, from the flyout and the Data menu. The sources only speak up when something happened or went
+    /// wrong, so when nobody has said anything by the end (no toast, no dialog left open), this says how things stand.
+    /// </summary>
     private async Task CheckAllAsync()
     {
+        if (_connectivity.IsOffline)
+        {
+            _connectivity.Retry();
+            _notifications.ShowInformation(StatusFor(UpdateState.Offline, 0));
+            return;
+        }
+
+        var lastSaid = _notifications.Recent.LastOrDefault()?.Id;
         IsCheckingAll = true;
         this.RaisePropertyChanged(nameof(CheckAllText));
         try
         {
-            await Task.WhenAll(_dataMenu.CheckAllAsync(manual: true), _app.CheckAsync(manual: true));
+            await Task.WhenAll(_dataMenu.CheckAllAsync(manual: true), _app.CheckAsync(manual: true, saysWhenCurrent: false));
         }
         finally
         {
             IsCheckingAll = false;
             this.RaisePropertyChanged(nameof(CheckAllText));
         }
+
+        Recompute();
+        if (_notifications.Recent.LastOrDefault()?.Id != lastSaid || _modals.IsModalOpen)
+            return;
+        if (State == UpdateState.UpToDate)
+            _notifications.ShowSuccess(Status);
+        else
+            _notifications.ShowInformation(Status);
     }
 
     // -- rows -----------------------------------------------------------------------
