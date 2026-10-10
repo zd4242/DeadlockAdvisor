@@ -108,11 +108,13 @@ public sealed class UiHarness : IDisposable
     /// <summary>
     /// Wait for something on a real-time timer, such as the item card's show delay. The dispatcher
     /// only fires timers from its own loop, so this awaits (handing the loop back) rather than
-    /// sleeping. False if the condition never held within the timeout.
+    /// sleeping. False if the condition never held within the timeout, which is generous because a wait that
+    /// succeeds ends at once, and a CI runner can take ten times as long as a desk machine to get there; a test that
+    /// expects nothing to happen gives a short one.
     /// </summary>
     public static async Task<bool> WaitUntilAsync(Func<bool> condition, TimeSpan? timeout = null)
     {
-        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(3));
+        var deadline = DateTime.UtcNow + (timeout ?? TimeSpan.FromSeconds(30));
         while (true)
         {
             Settle();

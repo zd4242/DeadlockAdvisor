@@ -631,7 +631,7 @@ public class StatusBarTests
         Assert.Equal(reached, drawing.ScaleX);
 
         hold.Leave();
-        Assert.True(await UiHarness.WaitUntilAsync(() => drawing.ScaleX == 1, TimeSpan.FromSeconds(5)));
+        Assert.True(await UiHarness.WaitUntilAsync(() => drawing.ScaleX == 1, TimeSpan.FromSeconds(30)));
         window.Close();
     }
 

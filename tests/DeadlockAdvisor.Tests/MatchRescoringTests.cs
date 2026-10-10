@@ -117,11 +117,14 @@ public sealed class MatchRescoringTests : IDisposable
         ui.Show();
         var match = ui.ViewModel.Match;
 
+        // Waits for the rescore itself rather than guessing how long its timer takes on a busy machine.
         async Task<string> ListedAfterEditingAsync(double score)
         {
+            var rescored = false;
+            using var watch = ui.Data.ScoresChanged.Subscribe(_ => rescored = true);
             RateHaze(ui.Data, score);
             ui.Data.MarkEdited(DataFiles.HeroScores);
-            await Task.Delay(DataService.RescoreThrottle * 3);
+            Assert.True(await UiHarness.WaitUntilAsync(() => rescored));
             UiHarness.Settle();
             return Listed(match);
         }
