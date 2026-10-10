@@ -2,6 +2,7 @@ using System.IO;
 using Avalonia.Controls.ApplicationLifetimes;
 using Avalonia.Markup.Xaml;
 using Avalonia.Threading;
+using DeadlockAdvisor.Behaviors;
 using DeadlockAdvisor.Features.HeroItems;
 using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Features.ItemFormulas;
@@ -25,6 +26,7 @@ public partial class App : Application
     public override void Initialize()
     {
         AvaloniaXamlLoader.Load(this);
+        PopupsFollowZoom.Enable();
         ConfigureServices();
     }
 

@@ -1,6 +1,6 @@
 # WP19 Zoom reaches dialogs (and tooltips and flyouts if feasible)
 
-Status: todo
+Status: done
 Effort: M (two stages) · Risk: medium (popups sit outside the window's visual tree) · Depends on: none · Wave: D
 Touches: `src/Features/Shared/Modals/Base/Modal.axaml`, `ModalViewModel.cs`, `ModalWindow.axaml.cs`, `src/Features/MainWindow/MainWindow.axaml.cs` (`OpenModalWindow`, `SyncModalBounds`), `src/Features/Shared/ItemCard/ItemCardPresenter.cs` (the existing hand-made scaling, as the model), `Themes/Styles.axaml` (stage 2), `tests/DeadlockAdvisor.Tests/Ui/*`
 Docs to update: `docs/architecture.md` (section 6), `README.md` (Zoom: what it covers)

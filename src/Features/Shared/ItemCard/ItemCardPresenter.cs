@@ -39,6 +39,8 @@ public class ItemCardPresenter : Control
             OverlayInputPassThroughElement = null,
             IsHitTestVisible = false,
         };
+        // It scales its own card by Zoom, which is the same zoom the other popups take from their target.
+        _popup.InheritsTransform = false;
         LogicalChildren.Add(_popup);
         VisualChildren.Add(_popup);
 

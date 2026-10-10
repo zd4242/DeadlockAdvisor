@@ -65,7 +65,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
 | `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, image ops and PNG codec |
 | `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
-| `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls, behaviours (middle-click autoscroll), converters, palette and fonts, enums |
+| `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls, behaviours (middle-click autoscroll, popups following the zoom), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
 | `Themes/` | XAML resource dictionaries (brushes, shared styles) |
 | `tools/MatchSnapshot`, `tools/PublishModel` | the CI programs (publishing.md); both reference the app project |
@@ -170,6 +170,13 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   whichever is open). `MainWindow` shows each in a borderless `ModalWindow` laid over the main window and kept in step with its
   bounds; if another app is in front (`IForegroundService`) it waits until you switch back. `Confirm`, `ShowMessage` and a
   progress dialog are helpers in `Features/Shared/Modals`. Content is found by `ViewLocator`.
+- **Zoom** is one `LayoutTransformControl` around the main window's content (`MainWindowViewModel.UiScale`). A dialog is a
+  window of its own, so `MainWindow.OpenModalWindow` copies `UiScale` into `ModalViewModel.UiScale` for as long as it is
+  open and `Modal.axaml` wraps its card in a `LayoutTransformControl` (a panel between the two, since the control sets its
+  child's `RenderTransform`, which the card's entrance animation uses). Popups (tooltips, flyouts, menus, drop-down lists)
+  also sit outside that transform: `PopupsFollowZoom.Enable()` (from `App.Initialize`) sets `Popup.InheritsTransform` on every
+  popup as it gets its content, so each takes its placement target's scale. `ItemCardPresenter` scales its own card by
+  `Zoom` and opts out, or it would scale twice.
 - `INotificationService` raises toasts (`NotificationOverlayViewModel`): 3 seconds by default, 10 for an error, and a click
   dismisses one. `Recent` keeps the last 20 with their time, which Help → Recent Messages lists. Startup runs before the
   overlay exists, so `NotificationService` holds what is sent while nobody listens (the newest 8 from the last minute) and

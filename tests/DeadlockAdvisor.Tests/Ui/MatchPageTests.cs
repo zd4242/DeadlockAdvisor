@@ -26,7 +26,7 @@ namespace DeadlockAdvisor.Tests.Ui;
 public class MatchPageTests
 {
     /// <summary>The line-up the screenshots use.</summary>
-    private static void SetUpMatch(UiHarness ui)
+    internal static void SetUpMatch(UiHarness ui)
     {
         var board = ui.ViewModel.Match.Board;
         foreach (var hero in new[] { "haze", "infernus", "vindicta", "abrams", "lash", "seven" })

@@ -369,7 +369,8 @@ public partial class MainWindow : Window
                 .Merge(Observable.FromEventPattern<PixelPointEventArgs>(
                     h => PositionChanged += h, h => PositionChanged -= h)
                     .Select(_ => Unit.Default))
-                .Subscribe(_ => SyncModalBounds()));
+                .Subscribe(_ => SyncModalBounds()),
+            ((MainWindowViewModel)DataContext!).WhenAnyValue(vm => vm.UiScale).Subscribe(scale => modalVm.UiScale = scale));
 
         _modalWindow.Show(this);
 

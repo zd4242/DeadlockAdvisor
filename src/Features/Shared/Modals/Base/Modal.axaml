@@ -54,26 +54,35 @@
                Classes.visible="{Binding IsVisible}"
                Background="Black" />
 
-        <Border Name="ModalBorder"
-                Classes="modal"
-                Classes.visible="{Binding IsVisible}"
-                Background="{DynamicResource ModalBackground}"
-                BorderBrush="{DynamicResource BorderStrongBrush}"
-                BorderThickness="1"
-                CornerRadius="8"
-                BoxShadow="0 4 8 0 #40000000"
-                VerticalAlignment="Center"
-                HorizontalAlignment="Center"
-                Margin="24"
-                MinWidth="400"
-                MaxWidth="800">
-            <Border.RenderTransform>
-                <ScaleTransform/>
-            </Border.RenderTransform>
+        <!-- Zooms with the app; the card's sizes stay in unscaled units, and the layout transform
+             hands it only the room left at this zoom, so it never outgrows the window. The control
+             sets its child's RenderTransform, which the card uses for its entrance, hence the panel. -->
+        <LayoutTransformControl VerticalAlignment="Center" HorizontalAlignment="Center">
+            <LayoutTransformControl.LayoutTransform>
+                <ScaleTransform ScaleX="{Binding UiScale}" ScaleY="{Binding UiScale}"/>
+            </LayoutTransformControl.LayoutTransform>
 
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-                <ContentControl Content="{Binding Content}"/>
-            </ScrollViewer>
-        </Border>
+            <Panel>
+                <Border Name="ModalBorder"
+                        Classes="modal"
+                        Classes.visible="{Binding IsVisible}"
+                        Background="{DynamicResource ModalBackground}"
+                        BorderBrush="{DynamicResource BorderStrongBrush}"
+                        BorderThickness="1"
+                        CornerRadius="8"
+                        BoxShadow="0 4 8 0 #40000000"
+                        Margin="24"
+                        MinWidth="400"
+                        MaxWidth="800">
+                    <Border.RenderTransform>
+                        <ScaleTransform/>
+                    </Border.RenderTransform>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto">
+                        <ContentControl Content="{Binding Content}"/>
+                    </ScrollViewer>
+                </Border>
+            </Panel>
+        </LayoutTransformControl>
     </Panel>
 </UserControl>
