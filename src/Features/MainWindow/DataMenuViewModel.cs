@@ -229,6 +229,34 @@ public class DataMenuViewModel : ViewModelBase
     {
         Launch(CheckMatchDataAsync);
         Launch(CheckArtAsync);
+        RemindAboutDownloads();
+    }
+
+    /// <summary>How long after the first run's offer was turned down the one reminder comes.</summary>
+    public static readonly TimeSpan DownloadsReminderAfter = TimeSpan.FromDays(3);
+
+    /// <summary>
+    /// Someone who turned down the first run's offer, and has neither art nor match data, gets it again once as the
+    /// "Downloads" chip, a few days later: by then they may have seen what the app is like without them. A chip
+    /// that's closed isn't offered again, and an install that predates the date starts counting at its next check.
+    /// </summary>
+    private void RemindAboutDownloads()
+    {
+        var settings = _settings.Current;
+        if (!settings.WelcomeOffered || settings.WelcomeReminded || _connectivity.IsOffline
+            || _art.Count(ArtKind.Hero) > 0 || _art.Count(ArtKind.Item) > 0 || _data.Store.MatchSegments.Count > 0)
+        {
+            return;
+        }
+        if (settings.WelcomeOfferedAt is not { } offeredAt)
+        {
+            _settings.Update(s => s.WelcomeOfferedAt = _clock.Now);
+            return;
+        }
+        if (_clock.Now - offeredAt < DownloadsReminderAfter)
+            return;
+        _settings.Update(s => s.WelcomeReminded = true);
+        OfferWelcomeAsChip();
     }
 
     /// <summary>Whether the app can make its routine checks now: there's a connection, no dialog is up, and no job holds the data.</summary>
@@ -261,6 +289,7 @@ public class DataMenuViewModel : ViewModelBase
         {
             checks.Add(CheckMatchDataAsync());
             checks.Add(CheckArtAsync());
+            RemindAboutDownloads();
         }
         return Task.WhenAll(checks);
     }
@@ -355,7 +384,11 @@ public class DataMenuViewModel : ViewModelBase
             OfferWelcomeAsChip();
             return;
         }
-        _settings.Update(s => s.WelcomeOffered = true);
+        _settings.Update(s =>
+        {
+            s.WelcomeOffered = true;
+            s.WelcomeOfferedAt = _clock.Now;
+        });
         _modals.ShowModal(new WelcomeViewModel(_modals, shared, everyMatch, withRanks, Estimate, _settings.Current.MatchDataIncludeRanks,
             _settings.Current.AutoUpdateMatchData, choice =>
         {

@@ -60,7 +60,10 @@ Updates chip, *Updates paused*);
 clicking it checks again, and it checks by itself every half minute. When the
 connection returns, the startup checks that couldn't be made are made then. A
 first run that starts offline offers its downloads, as a status bar chip, once
-you're back online.
+you're back online. Someone who turns that offer down, and still has no art or
+match data three days later, gets it once more as the same chip; closing it
+ends the reminders, and **Data → Check for Updates** (<kbd>Ctrl</kbd>+<kbd>U</kbd>)
+brings the downloads whenever you like.
 
 To build it yourself (.NET 10 SDK):
 
@@ -214,6 +217,7 @@ the Match page rescores as you go.
 | <kbd>Ctrl</kbd>+<kbd>+</kbd> / <kbd>-</kbd> / <kbd>0</kbd>, <kbd>Ctrl</kbd>+wheel, or the wheel over the status bar's zoom buttons | zoom: the pages, dialogs, tooltips, menus and drop-down lists (remembered, along with the window and your last match) |
 | <kbd>Ctrl</kbd>+<kbd>Tab</kbd> / <kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>Tab</kbd> | next / previous page |
 | <kbd>Ctrl</kbd>+<kbd>F</kbd> | focus the current page's search (on Hero Items, the hero picker) |
+| <kbd>Ctrl</kbd>+<kbd>U</kbd> | check for updates (Data → Check for Updates) |
 | <kbd>Ctrl</kbd>+<kbd>R</kbd> | reload the data from disk |
 | <kbd>Ctrl</kbd>+<kbd>,</kbd> / <kbd>Ctrl</kbd>+<kbd>Q</kbd> | open Settings / quit |
 | <kbd>F9</kbd> | detect the match from the screen, from the game too (see below) |

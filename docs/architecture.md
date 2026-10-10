@@ -244,7 +244,10 @@ belongs in the flyout row and Settings → Data, not as a menu item of its own.
   over a match. `CheckAllAsync(manual: true)` is Check for Updates (`CheckForUpdatesAsync`): the same checks, and the click
   is also the consent to fetch what was never downloaded: match data through `CheckMatchDataNowAsync` (the shared
   snapshot; with match data already there and no snapshot, the routine patch-list check rather than the dialog) and art
-  when there is none. A first run that was never offered the downloads gets `OfferWelcomeAsync` instead, which shows
+  when there is none. A turned-down offer with still no art or match data is repeated once, as the "Downloads" chip,
+  `DownloadsReminderAfter` (3 days) after it was made (`RemindAboutDownloads`, from the startup and scheduled checks;
+  `AppSettings.WelcomeOfferedAt`, `WelcomeReminded`). Ctrl+U runs Check for Updates (a fixed key, reserved in
+  `ShortcutKeys`). A first run that was never offered the downloads gets `OfferWelcomeAsync` instead, which shows
   what they cost. Each source passes `saysWhenCurrent: false`, so a current one says nothing; a source that failed or
   did something still says so.
 - Bad answers don't replace good data: `GameApiService.SyncAsync` throws `InvalidDataException` for an answer with no heroes

@@ -1545,6 +1545,73 @@ public sealed class DataMenuTests : IDisposable
         await first;
     }
 
+    // -- the reminder after a turned-down first run ----------------------------------
+
+    private bool Reminded() => _menu.Jobs.Any(job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+
+    [Fact]
+    public async Task ATurnedDownFirstRunsOfferIsRemindedOfOnceAfterAFewDays()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        WithoutModelChecks();
+
+        _menu.OnStartup();
+        Assert.NotNull(_fixture.Settings.Current.WelcomeOfferedAt);
+        Assert.False(Reminded());
+
+        _fixture.Clock.AdvanceBy(DataMenuViewModel.DownloadsReminderAfter - TimeSpan.FromHours(1));
+        _menu.OnStartup();
+        Assert.False(Reminded());
+
+        _fixture.Clock.AdvanceBy(TimeSpan.FromHours(2));
+        _menu.OnStartup();
+        var chip = Assert.Single(_menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+        Assert.Equal("available: art and match data", chip.StatusText);
+        Assert.True(_fixture.Settings.Current.WelcomeReminded);
+
+        await chip.DismissCommand.Execute();
+        _fixture.Clock.AdvanceBy(TimeSpan.FromDays(30));
+        _menu.OnStartup();
+        Assert.False(Reminded());
+    }
+
+    [Fact]
+    public void NoReminderComesToSomeoneWhoHasArtOrIsOffline()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        _fixture.Settings.Current.WelcomeOfferedAt = _fixture.Clock.Now;
+        WithoutModelChecks();
+        _fixture.Clock.AdvanceBy(TimeSpan.FromDays(10));
+
+        _connectivity.GoOffline();
+        _menu.OnStartup();
+        Assert.False(Reminded());
+        Assert.False(_fixture.Settings.Current.WelcomeReminded);
+
+        _connectivity.Reconnect();
+        HavePortraits();
+        _menu.OnStartup();
+        Assert.False(Reminded());
+        Assert.False(_fixture.Settings.Current.WelcomeReminded);
+    }
+
+    [Fact]
+    public void ARemindersChipOpensTheOfferAgain()
+    {
+        _fixture.Settings.Current.WelcomeOffered = true;
+        _fixture.Settings.Current.WelcomeOfferedAt = _fixture.Clock.Now;
+        WithoutModelChecks();
+        _fixture.Clock.AdvanceBy(DataMenuViewModel.DownloadsReminderAfter);
+        using var menu = Menu(matchStats: new HeldMatchStats());
+        menu.OnStartup();
+
+        var chip = Assert.Single(menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+        chip.OpenCommand.Execute().Subscribe();
+
+        Assert.IsType<WelcomeViewModel>(Assert.Single(_shown));
+        Assert.DoesNotContain(menu.Jobs, job => job.Title == DataMenuViewModel.WelcomeChipTitle);
+    }
+
     private static async Task UntilAsync(Func<bool> condition)
     {
         using var patience = new CancellationTokenSource(TimeSpan.FromSeconds(30));

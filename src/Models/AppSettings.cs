@@ -16,6 +16,11 @@ public class AppSettings
     [JsonPropertyName("ArtDownloadOffered")]
     public bool WelcomeOffered { get; set; }
 
+    // When that offer was made (or first noticed to have been), and whether the one reminder that follows a turned-down
+    // offer has been given.
+    public DateTimeOffset? WelcomeOfferedAt { get; set; }
+    public bool WelcomeReminded { get; set; }
+
     // When the art was last checked against deadlock-api.com's, which is done about weekly.
     public DateTimeOffset? ArtCheckedAt { get; set; }
 
