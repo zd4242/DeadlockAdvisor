@@ -276,7 +276,7 @@ public class DataMenuViewModel : ViewModelBase
     /// (art can't come with it) or one the API didn't have art for at the last check.
     /// </summary>
     private bool HeroesMissingArt() =>
-        _art.Count(ArtKind.Hero) > 0 && _data.Store.Heroes.Keys.Any(heroId => !_art.Has(ArtKind.Hero, heroId));
+        _art.Count(ArtKind.Hero) > 0 && _art.HeroesWithoutArt(_data.Store).Count > 0;
 
     /// <summary>Download what art is missing or changed, in the background: what Detect asks for when it has nothing to match.</summary>
     public void DownloadArt() => Launch(() => DownloadArtAsync(force: false));
@@ -468,6 +468,8 @@ public class DataMenuViewModel : ViewModelBase
         var coverage = _data.Store.Coverage();
         lines.Add($"\n{coverage.DerivedRules} coefficient(s) now come from item stats, via {_data.Store.StatRules.Count} line(s) in stat_rules.csv.");
         ShowMessage("Synced from game API", lines);
+        if (report.AddedHeroes.Count > 0 && HeroesMissingArt())
+            Launch(() => DownloadArtAsync(force: false, quiet: true));
     }
 
     // -- match stats ----------------------------------------------------------------

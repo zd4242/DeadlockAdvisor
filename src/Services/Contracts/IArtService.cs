@@ -1,4 +1,5 @@
 using Avalonia.Media.Imaging;
+using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Services.Contracts;
 
@@ -33,4 +34,11 @@ public interface IArtService
     /// near the top, where the face is), or null when there's no usable file. Cached per size.
     /// </summary>
     Bitmap? Get(ArtKind kind, string id, int pixelSize);
+}
+
+public static class ArtServiceExtensions
+{
+    /// <summary>The ids of the store's heroes that have no portrait.</summary>
+    public static List<string> HeroesWithoutArt(this IArtService art, DataStore store) =>
+        store.Heroes.Keys.Where(heroId => !art.Has(ArtKind.Hero, heroId)).ToList();
 }

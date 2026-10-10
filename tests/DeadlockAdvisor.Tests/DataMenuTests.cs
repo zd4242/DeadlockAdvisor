@@ -93,6 +93,42 @@ public sealed class DataMenuTests : IDisposable
     }
 
     [Fact]
+    public async Task ASyncThatAddsAHeroFetchesItsArtWhenArtWasDownloadedBefore()
+    {
+        HavePortraits();
+        ServeTheSnapshot();
+        _api.Json[$"{GameSync.Api}/heroes?only_active=true"] = () =>
+        {
+            var heroes = Json("game_api/heroes.json")!.AsArray();
+            heroes.Add(JsonNode.Parse("""{"id": 9001, "class_name": "hero_newcomer", "name": "Newcomer"}"""));
+            return heroes;
+        };
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        await menu.SyncGameApiCommand.Execute();
+
+        Assert.Contains("Added 1 hero(es): Newcomer", LastMessage().Body);
+        Assert.Equal(1, download.Started);
+        download.Finish(new ArtDownloadReport([], new([], [])));
+    }
+
+    [Fact]
+    public async Task ASyncThatAddsNoHeroLeavesTheArtAlone()
+    {
+        HavePortraits();
+        ServeTheSnapshot();
+        await _menu.SyncGameApiCommand.Execute();
+        var download = new HeldArtDownload();
+        using var menu = Menu(artDownload: download);
+
+        await menu.SyncGameApiCommand.Execute();
+
+        Assert.DoesNotContain("Added ", LastMessage().Body);
+        Assert.Equal(0, download.Started);
+    }
+
+    [Fact]
     public async Task ModelHealthReportSimulatesMatchesAndComparesWithTheData()
     {
         await _menu.ModelHealthCommand.Execute();

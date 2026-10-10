@@ -155,6 +155,23 @@ public sealed class UpdatesViewModelTests : IDisposable
     }
 
     [Fact]
+    public void AHeroWithoutAPortraitIsNamedAndMakesTheArtRowWaiting()
+    {
+        ACurrentInstall();
+        var heroes = _fixture.Data.Store.Heroes;
+        File.Delete(Path.Combine(_art.FolderOf(ArtKind.Hero), heroes.Keys.First() + ".png"));
+        _art.Refresh();
+
+        var updates = Build();
+
+        var row = Row(UpdateSource.Art);
+        Assert.Equal(UpdateState.Available, row.State);
+        Assert.Equal($"No art for {heroes.Values.First().HeroName}", row.Headline);
+        Assert.Contains($"No portrait yet for {heroes.Values.First().HeroName}", row.Summary);
+        Assert.Equal(UpdateState.Available, updates.State);
+    }
+
+    [Fact]
     public void NothingThatWasNeverCheckedIsCalledUpToDate()
     {
         var updates = Build();

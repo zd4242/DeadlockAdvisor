@@ -19,6 +19,7 @@ namespace DeadlockAdvisor.Features.MainWindow.Updates;
 /// </summary>
 public sealed class UpdatesViewModel : UpdateStatusViewModel
 {
+    private readonly IDataService _data;
     private readonly ISettingsService _settings;
     private readonly IConnectivityService _connectivity;
     private readonly IArtService _art;
@@ -31,6 +32,7 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
     public UpdatesViewModel(IDataService data, ISettingsService settings, IConnectivityService connectivity, IArtService art,
         IDeadlockApi api, DataMenuViewModel dataMenu, AppUpdateViewModel app, DataStatusViewModel matchData)
     {
+        _data = data;
         _settings = settings;
         _connectivity = connectivity;
         _art = art;
@@ -250,6 +252,13 @@ public sealed class UpdatesViewModel : UpdateStatusViewModel
 
         var checkedAt = _settings.Current.ArtCheckedAt;
         var summary = $"{heroes} portraits, {items} icons" + (checkedAt is null ? "" : $" · {CheckedText(checkedAt)}");
+        var missing = _art.HeroesWithoutArt(_data.Store).Select(id => _data.Store.Heroes[id].HeroName).ToList();
+        if (missing.Count > 0)
+        {
+            var names = Listed(missing);
+            return new(UpdateState.Available, $"{summary}\nNo portrait yet for {names}", $"No art for {names}", "Download…",
+                _dataMenu.DownloadArtCommand, download);
+        }
         return new(_connectivity.IsOffline ? UpdateState.Offline : UpdateState.UpToDate, summary, "", "Download…", _dataMenu.DownloadArtCommand, download);
     }
 
