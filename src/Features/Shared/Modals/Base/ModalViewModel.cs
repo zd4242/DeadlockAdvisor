@@ -10,4 +10,7 @@ public class ModalViewModel : ViewModelBase
 
     /// <summary>The main window's zoom: a dialog is a window of its own, outside the transform that zooms the app.</summary>
     [Reactive] public double UiScale { get; set; } = 1.0;
+
+    /// <summary>How far the card may shrink to fit a short window before it scrolls; 1 means not at all.</summary>
+    [Reactive] public double MinFitScale { get; set; } = 1.0;
 }

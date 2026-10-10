@@ -383,7 +383,7 @@ public partial class MainWindow : Window
 
     private void OpenModalWindow(ViewModelBase content)
     {
-        var modalVm = new ModalViewModel();
+        var modalVm = new ModalViewModel { MinFitScale = (content as IShrinksToFit)?.MinFitScale ?? 1 };
         _modalWindow = new ModalWindow { DataContext = modalVm };
         _modalWindow.BackdropPressed += OnModalBackdropPressed;
         // The modal is its own visual root, so the art service isn't inherited into it.

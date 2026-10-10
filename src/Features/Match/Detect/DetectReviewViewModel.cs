@@ -2,6 +2,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DeadlockAdvisor.Core;
+using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Vision;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -26,7 +27,7 @@ public sealed record DetectReviewResult(IReadOnlyList<string?> SlotHeroes, int? 
 /// you're known, since that's what splits the teams; each slot's portrait and "This is me" button
 /// cover the captures where the backplate couldn't be read.
 /// </summary>
-public class DetectReviewViewModel : ViewModelBase
+public class DetectReviewViewModel : ViewModelBase, IShrinksToFit
 {
     private readonly Detection _detection;
     private readonly NetWorthReading _netWorth;
@@ -52,6 +53,9 @@ public class DetectReviewViewModel : ViewModelBase
         ApplyCommand = ReactiveCommand.CreateFromTask(() => apply(Result()), this.WhenAnyValue(vm => vm.SelfSlot).Select(self => self is not null));
         CancelCommand = ReactiveCommand.Create(cancel);
     }
+
+    /// <summary>Twelve rows with their portraits are tall: a short window or a high zoom shrinks the dialog rather than scrolling it.</summary>
+    public double MinFitScale => 0.6;
 
     public IReadOnlyList<SlotReviewViewModel> Slots { get; }
 

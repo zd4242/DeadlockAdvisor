@@ -203,6 +203,9 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   also sit outside that transform: `PopupsFollowZoom.Enable()` (from `App.Initialize`) sets `Popup.InheritsTransform` on every
   popup as it gets its content, so each takes its placement target's scale. `ItemCardPresenter` scales its own card by
   `Zoom` and opts out, or it would scale twice.
+- A dialog whose view model implements `IShrinksToFit` (the detect review, twelve tall rows) is shown through `ShrinkToFit`,
+  inside the card: when the window leaves less height than it wants, it is scaled down to `MinFitScale` before the card's
+  `ScrollViewer` takes over. Popups inside follow the scale like the zoom.
 - `INotificationService` raises toasts (`NotificationOverlayViewModel`): 3 seconds by default, 10 for an error, and a click
   dismisses one. `Recent` keeps the last 20 with their time, which Help → Recent Messages lists. Startup runs before the
   overlay exists, so `NotificationService` holds what is sent while nobody listens (the newest 8 from the last minute) and

@@ -1,3 +1,5 @@
+using Avalonia;
+using Avalonia.Controls;
 using Avalonia.Headless;
 using Avalonia.Headless.XUnit;
 using Avalonia.Input;
@@ -5,6 +7,7 @@ using Avalonia.Interactivity;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Art;
+using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using static DeadlockAdvisor.Tests.Support.VisionData;
@@ -16,21 +19,8 @@ public class DetectReviewTests
     [AvaloniaFact]
     public async Task F9DetectsAndTheReviewRenders()
     {
-        // Every hero in the laning capture reads confidently, which would apply it without a review.
-        using var ui = new UiHarness(settings => settings.Current.AutoApplyDetect = false);
-        CopyTopbarInto(ui.Data.AssetsDir);
-        ui.Capture.Next = Capture("laning_2560x1440_band");
-        ui.Show();
-
-        ui.ViewModel.Match.FocusSearch();
-        UiHarness.Settle();
-        ui.Window.KeyPressQwerty(PhysicalKey.F9, RawInputModifiers.None);
-
-        DetectReviewViewModel? Review() =>
-            ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: DetectReviewViewModel review } ? review : null;
-        // Detection takes a few seconds here, but several times longer on a slow CI runner.
-        Assert.True(await UiHarness.WaitUntilAsync(() => Review() is not null, TimeSpan.FromSeconds(60)));
-        var review = Review()!;
+        using var ui = OpenHarness();
+        var review = await OpenReviewAsync(ui);
         Assert.Equal(1, ui.Capture.Captures);
         Assert.Equal(1, review.SelfSlot);
         Assert.DoesNotContain(review.Slots, slot => slot.IsUncertain);
@@ -84,5 +74,56 @@ public class DetectReviewTests
         Assert.True(view.Bounds.Height <= heightBeforeCorrecting, $"{view.Bounds.Height} > {heightBeforeCorrecting}");
         review.ToggleSelf(1);
         ui.ScreenshotModal("detect_review_no_self.png");
+    }
+
+    // Every hero in the laning capture reads confidently, which would apply it without a review.
+    private static UiHarness OpenHarness(int? zoomIndex = null)
+    {
+        var ui = new UiHarness(settings =>
+        {
+            settings.Current.AutoApplyDetect = false;
+            if (zoomIndex is { } index)
+                settings.Current.ZoomIndex = index;
+        });
+        CopyTopbarInto(ui.Data.AssetsDir);
+        ui.Capture.Next = Capture("laning_2560x1440_band");
+        return ui;
+    }
+
+    private static async Task<DetectReviewViewModel> OpenReviewAsync(UiHarness ui)
+    {
+        ui.Show();
+        ui.ViewModel.Match.FocusSearch();
+        UiHarness.Settle();
+        ui.Window.KeyPressQwerty(PhysicalKey.F9, RawInputModifiers.None);
+
+        // Detection takes a few seconds here, but several times longer on a slow CI runner.
+        Assert.True(await UiHarness.WaitUntilAsync(() => Review(ui) is not null, TimeSpan.FromSeconds(60)));
+        return Review(ui)!;
+    }
+
+    private static DetectReviewViewModel? Review(UiHarness ui) =>
+        ui.Window.OwnedWindows.OfType<ModalWindow>().SingleOrDefault()?.DataContext is ModalViewModel { Content: DetectReviewViewModel review } ? review : null;
+
+    [AvaloniaTheory]
+    [InlineData(2, 700)]
+    [InlineData(5, 700)]
+    [InlineData(5, 900)]
+    [InlineData(7, 700)]
+    public async Task TheReviewShrinksToTheWindowRatherThanScrolling(int zoomIndex, int height)
+    {
+        using var ui = OpenHarness(zoomIndex);
+        ui.Window.Width = 1600;
+        ui.Window.Height = height;
+        await OpenReviewAsync(ui);
+        UiHarness.Settle();
+
+        var modal = ui.Window.OwnedWindows.OfType<ModalWindow>().Single();
+        var scroller = modal.GetVisualDescendants().OfType<ScrollViewer>().First();
+        var card = modal.GetVisualDescendants().OfType<DetectReviewView>().Single();
+        Assert.True(scroller.Extent.Height <= scroller.Viewport.Height + 1, $"Scrolls: {scroller.Extent.Height} in {scroller.Viewport.Height}");
+        var bounds = card.TranslatePoint(new Point(0, card.Bounds.Height), modal);
+        Assert.True(bounds is { } corner && corner.Y <= modal.ClientSize.Height, $"Runs off the window: {bounds}");
+        ui.ScreenshotModal($"detect_review_{ZoomLevels.Steps[zoomIndex] * 100:0}_{height}.png");
     }
 }

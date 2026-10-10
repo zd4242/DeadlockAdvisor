@@ -1,6 +1,7 @@
 <UserControl xmlns="https://github.com/avaloniaui"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:base="clr-namespace:DeadlockAdvisor.Features.Shared.Modals.Base"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.Shared.Modals.Base.Modal"
              x:DataType="base:ModalViewModel">
 
@@ -78,9 +79,11 @@
                         <ScaleTransform/>
                     </Border.RenderTransform>
 
-                    <ScrollViewer VerticalScrollBarVisibility="Auto">
-                        <ContentControl Content="{Binding Content}"/>
-                    </ScrollViewer>
+                    <controls:ShrinkToFit MinScale="{Binding MinFitScale}">
+                        <ScrollViewer VerticalScrollBarVisibility="Auto">
+                            <ContentControl Content="{Binding Content}"/>
+                        </ScrollViewer>
+                    </controls:ShrinkToFit>
                 </Border>
             </Panel>
         </LayoutTransformControl>
