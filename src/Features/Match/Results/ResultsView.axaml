@@ -52,6 +52,13 @@
                                   CommandParameter="{Binding ItemId}"
                                   IsVisible="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).ShowsEditors}"/>
                         <controls:WikiMenuItem Page="{Binding Name}"/>
+                        <Separator IsVisible="{Binding OffersHide}"/>
+                        <MenuItem Header="{x:Static results:ResultsViewModel.HideDisagreedMenuText}"
+                                  Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).HideDisagreedCommand}"
+                                  IsVisible="{Binding Disagrees}"/>
+                        <MenuItem Header="{x:Static results:ResultsViewModel.HideRarelyBuiltMenuText}"
+                                  Command="{Binding $parent[results:ResultsView].((results:ResultsViewModel)DataContext).HideRarelyBuiltCommand}"
+                                  IsVisible="{Binding IsRarelyBuilt}"/>
                     </ContextMenu>
                 </Template>
             </Setter>

@@ -792,4 +792,21 @@ public class MatchPageTests
         Assert.False(match.RanksByBoth);
         Assert.False(match.HasActiveFilters);
     }
+
+    [AvaloniaFact]
+    public void ARowsContextMenuCanTurnOnTheHideFilters()
+    {
+        using var ui = new UiHarness();
+        var match = ui.ViewModel.Match;
+        SetUpMatch(ui);
+
+        match.Results.HideDisagreedCommand.Execute().Subscribe();
+        Assert.True(match.HideDisagreed);
+        Assert.False(match.HideRarelyBuilt);
+        Assert.True(ui.Settings.Current.ResultsHideDisagreed);
+
+        match.Results.HideRarelyBuiltCommand.Execute().Subscribe();
+        Assert.True(match.HideRarelyBuilt);
+        Assert.True(ui.Settings.Current.ResultsHideRarelyBuilt);
+    }
 }

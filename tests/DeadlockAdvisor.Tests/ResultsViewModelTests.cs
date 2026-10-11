@@ -203,8 +203,10 @@ public class ResultsViewModelTests
         Assert.EndsWith("Filters → \"Hide items the advisor rating and results disagree on\" leaves these items out of the list.", rows["c"].DisagreeTip);
         Assert.Null(rows["a"].DisagreeTip);
 
+        Assert.Equal(["c"], rows.Values.Where(row => row.OffersHide).Select(row => row.ItemId));
+
         results.SetDisplay(RankBy.Formula, false, null);
-        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.Disagrees);
+        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.Disagrees || row.OffersHide);
     }
 
     [Fact]
@@ -230,8 +232,10 @@ public class ResultsViewModelTests
                      + "they mostly come from other heroes' players.\n"
                      + "Filters → \"Hide items your hero rarely builds\" leaves these items out of the list.", rows[0].RarelyBuiltTip);
         Assert.Equal("note", rows[0].DataTip);
+        Assert.True(rows[0].OffersHide);
         // Without data there's nothing that counts for less.
         Assert.False(rows[2].IsRarelyBuilt);
+        Assert.False(rows[2].OffersHide);
         Assert.Null(rows[2].RarelyBuiltTip);
     }
 

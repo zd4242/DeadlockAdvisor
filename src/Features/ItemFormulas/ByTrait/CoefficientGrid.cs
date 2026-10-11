@@ -162,7 +162,7 @@ public class CoefficientGrid : ScrollingGrid
         {
             SetCurrentValue(CurrentRowProperty, Rows[row]);
             Focus();
-            WikiMenuItem.ShowMenu(this, Rows[row].Name);
+            WikiMenuItem.ShowMenu(this, Rows[row].Name, WikiKind.Item);
             e.Handled = true;
             return;
         }

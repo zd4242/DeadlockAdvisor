@@ -38,7 +38,7 @@ public static class RoleMenu
             items.Add(MenuItem("Remove from match", null, () => vm.SetRole(heroId, Role.None)));
         }
         items.Add(new Separator());
-        items.Add(new WikiMenuItem(vm.HeroName(heroId)));
+        items.Add(new WikiMenuItem(vm.HeroName(heroId), WikiKind.Hero));
 
         PointerMenu.Show(target, items);
     }

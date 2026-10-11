@@ -61,7 +61,7 @@ public partial class HeroTraitsView : ReactiveUserControl<HeroTraitsViewModel>
             new MenuItem { Header = "Copy traits from...", Command = vm.CopyFromCommand },
             new MenuItem { Header = "Clear all traits...", Command = vm.ClearHeroCommand },
             new Separator(),
-            new WikiMenuItem(vm.Heroes[row].HeroName),
+            new WikiMenuItem(vm.Heroes[row].HeroName, WikiKind.Hero),
         ];
         PointerMenu.Show(Grid, items);
     }

@@ -293,16 +293,16 @@ public class MenuTests
         List<Border> Rows() => ui.Window.GetVisualDescendants().OfType<Border>().Where(border => border.Classes.Contains("result")).Take(2).ToList();
         List<string> Shown(Control owner) => RightClick(ui.Window, owner).Select(item => (string)item.Header!).ToList();
 
-        Assert.Equal([WikiMenuItem.Text], Shown(header));
-        Assert.All(Rows(), row => Assert.Equal([WikiMenuItem.Text], Shown(row)));
+        Assert.Equal([WikiMenuItem.ItemText], Shown(header));
+        Assert.All(Rows(), row => Assert.Equal([WikiMenuItem.ItemText], Shown(row)));
         Assert.False(((System.Windows.Input.ICommand)results.OpenFormulaCommand).CanExecute(results.SelectedItemId));
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
         UiHarness.Settle();
 
         var rows = Rows();
-        Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(header));
-        Assert.All(rows, row => Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], Shown(row)));
+        Assert.Equal(["Go to Item Formula", WikiMenuItem.ItemText], Shown(header));
+        Assert.All(rows, row => Assert.Equal(["Go to Item Formula", WikiMenuItem.ItemText], Shown(row)));
         Assert.NotSame(rows[0].ContextMenu, rows[1].ContextMenu);
     }
 
@@ -393,7 +393,7 @@ public class MenuTests
         var nameOfSecond = new Point(40, grid.HeaderHeight + Features.HeroTraits.TraitGrid.RowHeight * 1.5);
         var shown = RightClick(ui.Window, grid, nameOfSecond);
 
-        Assert.Equal(["Copy traits from...", "Clear all traits...", WikiMenuItem.Text], shown.Select(item => item.Header));
+        Assert.Equal(["Copy traits from...", "Clear all traits...", WikiMenuItem.HeroText], shown.Select(item => item.Header));
         Assert.Equal(page.Heroes[page.VisibleRows[1]].HeroName, shown.OfType<WikiMenuItem>().Single().Page);
         Assert.Equal(page.VisibleRows[1], page.CurrentRow);
     }
@@ -409,7 +409,7 @@ public class MenuTests
             .Single(candidate => candidate.ItemsSource == formulas.ByItem.Items);
         var listed = list.ContainerFromIndex(1)!;
         var shown = RightClick(ui.Window, listed);
-        Assert.Equal(["Copy rules from...", "Clear rules...", WikiMenuItem.Text], shown.Select(item => item.Header));
+        Assert.Equal(["Copy rules from...", "Clear rules...", WikiMenuItem.ItemText], shown.Select(item => item.Header));
         Assert.Equal(formulas.ByItem.Items[1].HasRules, shown[1].IsEnabled);
         Assert.Equal(formulas.ByItem.Items[1].Name, shown.OfType<WikiMenuItem>().Single().Page);
 

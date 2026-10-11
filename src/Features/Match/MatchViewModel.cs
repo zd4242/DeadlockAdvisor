@@ -149,6 +149,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         Board.RandomizeCommand.Subscribe(_ => StartOnBestItem()).DisposeWith(Disposables);
 
         Results.RowClicked.Subscribe(ShowExplain).DisposeWith(Disposables);
+        Results.HideDisagreedRequested.Subscribe(_ => HideDisagreed = true).DisposeWith(Disposables);
+        Results.HideRarelyBuiltRequested.Subscribe(_ => HideRarelyBuilt = true).DisposeWith(Disposables);
         settings.SettingsChanged
             .Select(s => s.ShowModelEditors)
             .DistinctUntilChanged()

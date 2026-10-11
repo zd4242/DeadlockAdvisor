@@ -192,12 +192,12 @@ public class HeroItemsPageTests
         var item = (HeroItemRowViewModel)row.DataContext!;
 
         var plain = RightClick(ui.Window, row);
-        Assert.Equal([WikiMenuItem.Text], plain.Select(entry => entry.Header));
+        Assert.Equal([WikiMenuItem.ItemText], plain.Select(entry => entry.Header));
         Assert.Equal(item.Name, plain.OfType<WikiMenuItem>().Single().Page);
 
         ui.ViewModel.Settings.General.ShowModelEditors = true;
         UiHarness.Settle();
-        Assert.Equal(["Go to Item Formula", WikiMenuItem.Text], RightClick(ui.Window, row).Select(entry => entry.Header));
+        Assert.Equal(["Go to Item Formula", WikiMenuItem.ItemText], RightClick(ui.Window, row).Select(entry => entry.Header));
         Assert.NotSame(Rows(ui).First().ContextMenu, Rows(ui).Skip(1).First().ContextMenu);
 
         var at = row.TranslatePoint(new Point(row.Bounds.Width / 2, row.Bounds.Height / 2), ui.Window)!.Value;

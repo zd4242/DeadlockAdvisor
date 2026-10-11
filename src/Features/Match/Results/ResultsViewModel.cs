@@ -26,6 +26,9 @@ public class ResultsViewModel : ViewModelBase
     public const string DataPicksNote = "Advisor rating 0 or less, but a standout in real matches for this line-up.";
     public const string DataPicksEditorNote = DataPicksNote + " Worth a look for a missing rule.";
 
+    public const string HideDisagreedMenuText = "Hide all items that disagree";
+    public const string HideRarelyBuiltMenuText = "Hide all rarely built items";
+
     private readonly string _nothingPickedHint;
     private readonly Dictionary<string, ResultRowViewModel> _rows = [];
     private readonly Dictionary<string, SectionHeaderViewModel> _headers = [];
@@ -51,6 +54,8 @@ public class ResultsViewModel : ViewModelBase
         _itemMatches = itemMatches ?? ((item, needle) => FuzzyMatch.Score(needle, item.ItemName) is not null);
         EmptyHint = emptyHint;
         OpenFormulaCommand = ReactiveCommand.Create<string>(_formulaRequested.OnNext, this.WhenAnyValue(vm => vm.ShowsEditors));
+        HideDisagreedCommand = ReactiveCommand.Create(() => _hideDisagreedRequested.OnNext(Unit.Default));
+        HideRarelyBuiltCommand = ReactiveCommand.Create(() => _hideRarelyBuiltRequested.OnNext(Unit.Default));
         this.WhenAnyValue(vm => vm.SearchText)
             .Skip(1)
             .Subscribe(_ => OnSearchChanged())
@@ -104,6 +109,17 @@ public class ResultsViewModel : ViewModelBase
     private readonly Subject<string> _formulaRequested = new();
 
     public ReactiveCommand<string, Unit> OpenFormulaCommand { get; }
+
+    /// <summary>A row's context menu asked to leave out every item the advisor rating and the match results disagree on.</summary>
+    public IObservable<Unit> HideDisagreedRequested => _hideDisagreedRequested;
+    private readonly Subject<Unit> _hideDisagreedRequested = new();
+
+    /// <summary>A row's context menu asked to leave out every item the hero rarely builds.</summary>
+    public IObservable<Unit> HideRarelyBuiltRequested => _hideRarelyBuiltRequested;
+    private readonly Subject<Unit> _hideRarelyBuiltRequested = new();
+
+    public ReactiveCommand<Unit, Unit> HideDisagreedCommand { get; }
+    public ReactiveCommand<Unit, Unit> HideRarelyBuiltCommand { get; }
 
     /// <summary>
     /// The model editors are shown: rows offer Go to Item Formula on right-click, and the data picks

@@ -89,6 +89,9 @@ public class ResultRowViewModel : ViewModelBase
     /// <summary>Your hero rarely builds the item, so its gains against the enemies count for less.</summary>
     [Reactive] public bool IsRarelyBuilt { get; private set; }
     [Reactive] public string? RarelyBuiltTip { get; private set; }
+
+    /// <summary>The row wears a badge a Filters option can hide, so its context menu offers to.</summary>
+    [Reactive] public bool OffersHide { get; private set; }
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
 
@@ -114,6 +117,7 @@ public class ResultRowViewModel : ViewModelBase
         HasData = scored.Data.Count > 0;
         IsRarelyBuilt = HasData && scored.RarelyBuilt;
         RarelyBuiltTip = IsRarelyBuilt ? ExplainText.RarelyBuilt("Your hero", scored.BuildRatio!.Value) + "\n" + HideRarelyBuiltHint : null;
+        OffersHide = Disagrees || IsRarelyBuilt;
         DataTip = string.IsNullOrEmpty(dataTip) ? null : dataTip;
     }
 }
