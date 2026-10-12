@@ -26,7 +26,8 @@ re-checked, **(est.)** an estimate.
 
 No notion of what you already have: the list is "best items for this line-up" at any point of a match ✔ (search the source for `owned`/`inventory`: nothing). Add per-match "already built"
 and "hide" marks (saved beside `Focused` in `SavedMatch`) so the list answers "what next", and an optional souls-to-spend box that orders and filters by cost and tier. Net worth is
-read for every hero, but not what you have spent. Presentation and filtering only: no flat bonuses in scoring.
+read for every hero, but not what you have spent. Presentation and filtering only: no flat bonuses in scoring. *The "already built" half is now planned: the Tab scoreboard shows every hero's items, so
+[WP27](wp27-builds-in-the-match.md) marks and hides owned items from a read (WP24 to WP26). The souls-to-spend box and the per-match marks by hand stay here.*
 
 ## B03 Undo across the editors
 
@@ -84,7 +85,7 @@ Art decodes to full-size images that are never evicted, about 49 MB (agent; `Art
 - The corpus is 20 captures from one machine at 2560×1440 and one HUD scale; other scales are synthetic (agent), so "any resolution" is unproven. An "export my kept captures" flow
   (`CaptureArchive` already stores them) and ultrawide and tone-map tests would widen it. A slot's box size as a suggestion-only second cue for "you".
 - Unused screen data: the game clock (the net-worth ink pipeline with a new glyph set), the lane partner (its half-brightness backplate is computed in `Detector` already), items owned
-  (needs the bottom HUD and a new corpus).
+  (planned as [WP24](wp24-tab-view-spike.md) to [WP26](wp26-scoreboard-item-reader.md): the Tab scoreboard is a better source than the bottom HUD, since it shows every hero's items).
 - Corrupt art: `TemplateBank` catches only I/O and invalid-data errors while `Png` slices unvalidated lengths (agent); and a damaged local file is never repaired because the art refresh only asks
   "not modified".
 - The top-bar vertical images (about 1.5 MB, 40 requests a week) are only a fallback for heroes with no cut portraits; dropping them needs `VisionCorpusTests` unchanged.

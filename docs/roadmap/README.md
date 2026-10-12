@@ -61,18 +61,21 @@ once; separate git worktrees avoid that.
 
 | Wave | Packages |
 |---|---|
-| A (no dependencies) | WP01, WP02, WP05, WP06, WP15, WP20, WP22 (its part that documents existing features) |
-| B | WP03 (after WP01), WP04 (after WP01), WP07, WP08, WP16 |
-| C | WP09 (after WP08), WP10, WP11 (after WP08), WP12 (after WP03), WP21 (after WP20) |
-| D | WP13 (after WP09 and WP10), WP14 (after WP13), WP18 (after WP16), WP19 |
-| E | WP17 (after WP13), then WP22's final sweep |
+| A (no dependencies) | WP01, WP02, WP05, WP06, WP15, WP20, WP22 (its part that documents existing features), WP24 |
+| B | WP03 (after WP01), WP04 (after WP01), WP07, WP08, WP16, WP25 and WP26 (after WP24) |
+| C | WP09 (after WP08), WP10, WP11 (after WP08), WP12 (after WP03), WP21 (after WP20), WP27 (after WP25 and WP26) |
+| D | WP13 (after WP09 and WP10), WP14 (after WP13), WP18 (after WP16), WP19, WP28 (after WP27), then WP29 (after WP28) |
+| E | WP17 (after WP13), WP30 (after WP29, optional), then WP22's final sweep |
 
 Hot files, in the order their packages should run:
 
 | File | Packages |
 |---|---|
 | `src/Features/MainWindow/DataMenuViewModel.cs` | WP07 → WP10 → WP11 → WP13 → WP14 |
-| `src/Features/MainWindow/MainWindowViewModel.cs` | WP02, WP03, WP12, WP13, WP15 (different methods; not at the same moment) |
+| `src/Features/MainWindow/MainWindowViewModel.cs` | WP02, WP03, WP12, WP13, WP15, WP25 (different methods; not at the same moment) |
+| `src/Models/AppSettings.cs`, `src/Models/MatchState.cs` | WP25 → WP27 → WP28 → WP29 |
+| `src/Scoring/ItemScoring.cs`, `ScoringTypes.cs`, `WeightMatrix.cs` | WP28 → WP29 → WP30 |
+| `src/Features/Match/MatchViewModel.cs` | WP12, WP27, WP28, WP29 (WP12 first) |
 | `src/Features/MainWindow/MainWindow.axaml` | WP03 → WP09 → WP13 → WP17 |
 | `src/Features/MainWindow/MainWindow.axaml.cs` | WP07, WP19 |
 | `src/Services/NotificationService.cs` | WP01 → WP03 |
@@ -108,8 +111,15 @@ Hot files, in the order their packages should run:
 | WP21 | [wp21](wp21-post-match-review.md) | Post-match review: your build against the advice, and a net-worth curve | L | WP20 | C |
 | WP22 | [wp22](wp22-readme-catch-up.md) | README and docs catch-up | S | none | A, then last |
 | WP23 | [wp23](wp23-data-menu-simplify.md) | Data menu: one Check for Updates, maintainer tools in Model Tools (done) | M | WP13, WP14 | D |
+| WP24 | [wp24](wp24-tab-view-spike.md) | Tab-view spike: can the scoreboard's items be read, and what do they say? (needs the user's Tab captures) | M | none | A |
+| WP25 | [wp25](wp25-scoreboard-key-and-silent-read.md) | Scoreboard key observer and the silent Tab read (net worth refresh included) | M | WP24 | B |
+| WP26 | [wp26](wp26-scoreboard-item-reader.md) | The item and bar reader, with its corpus | L | WP24 | B |
+| WP27 | [wp27](wp27-builds-in-the-match.md) | Builds in the match: owned marks, roster bars, settings | M | WP25, WP26 | C |
+| WP28 | [wp28](wp28-team-overlap.md) | Overlap: an effect your team already has counts for less | M | WP27 | D |
+| WP29 | [wp29](wp29-build-adjusted-traits.md) | Build-adjusted traits: what a hero built shifts their damage mix | L | WP27, after WP28 | D |
+| WP30 | [wp30](wp30-build-extras.md) | Build extras: real HP and durability, enemy counters, sell hints (optional) | M | WP29 | E |
 
-WP13, WP18 and WP21 list stages: stop at a stage boundary with a green commit if the session runs short.
+WP13, WP18, WP21 and WP26 list stages: stop at a stage boundary with a green commit if the session runs short. WP24 decides whether WP25 to WP30 go ahead as written, so run it first.
 
 ## Where this came from
 
