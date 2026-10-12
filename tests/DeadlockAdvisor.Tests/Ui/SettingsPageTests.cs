@@ -14,6 +14,8 @@ using DeadlockAdvisor.Features.Settings.Detection;
 using DeadlockAdvisor.Features.Settings.General;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services.Contracts;
+using DeadlockAdvisor.Vision;
+using Microsoft.Extensions.DependencyInjection;
 using static DeadlockAdvisor.Tests.Support.VisionData;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -273,6 +275,70 @@ public class SettingsPageTests
 
         detection.DetectFromAnywhere = false;
         Assert.False(ui.Settings.Current.DetectFromAnywhere);
+    }
+
+    [AvaloniaFact]
+    public void TheScoreboardIsOffByDefaultAndItsKeyCanBeMovedToAnythingWatchable()
+    {
+        using var ui = new UiHarness();
+        var detection = ui.ViewModel.Settings.Detection;
+        Assert.False(detection.ReadBuildsOnTab);
+        Assert.Equal(new KeyGesture(Key.Tab), detection.ScoreboardKey);
+        Assert.Contains("hold Tab", detection.ScoreboardDescription);
+
+        detection.ReadBuildsOnTab = true;
+        Assert.True(ui.Settings.Current.ReadBuildsOnTab);
+
+        detection.RecordScoreboardKeyCommand.Execute(new KeyGesture(Key.F3)).Subscribe();
+        Assert.Equal("F3", ui.Settings.Current.ScoreboardKey);
+        Assert.Equal(new KeyGesture(Key.F3), detection.ScoreboardKey);
+        Assert.Contains("hold F3", detection.ScoreboardDescription);
+
+        // Something that can't be watched is refused with a reason, and the old key stays.
+        detection.RecordScoreboardKeyCommand.Execute(new KeyGesture(Key.Escape)).Subscribe();
+        Assert.Equal("F3", ui.Settings.Current.ScoreboardKey);
+        Assert.Contains("can't be the scoreboard key", detection.ScoreboardKeyNote);
+        detection.RecordScoreboardKeyCommand.Execute(new KeyGesture(Key.G, KeyModifiers.Control)).Subscribe();
+        Assert.Contains("without Ctrl", detection.ScoreboardKeyNote);
+
+        // Delete (null) and Reset both go back to Tab.
+        detection.RecordScoreboardKeyCommand.Execute(null).Subscribe();
+        Assert.Equal(new KeyGesture(Key.Tab), detection.ScoreboardKey);
+        Assert.DoesNotContain("can't", detection.ScoreboardKeyNote);
+        Assert.False(((System.Windows.Input.ICommand)detection.ResetScoreboardKeyCommand).CanExecute(null));
+    }
+
+    [AvaloniaFact]
+    public void TheScoreboardRowsShowOnTheDetectionPage()
+    {
+        using var ui = new UiHarness();
+        ui.Show();
+        var settings = ui.ViewModel.Settings;
+        ui.ViewModel.OpenSettingsCommand.Execute().Subscribe();
+        settings.SelectedCategory = settings.Categories.Single(category => category.Page is DetectionSettingsViewModel);
+        UiHarness.Settle();
+
+        var view = Assert.Single(ui.Window.SettingsPage.GetVisualDescendants().OfType<DetectionSettingsView>());
+        Assert.Contains(view.GetVisualDescendants().OfType<DeadlockAdvisor.Controls.ShortcutRecorder>(), recorder => recorder.Gesture == new KeyGesture(Key.Tab));
+        ui.Screenshot("settings_detection");
+    }
+
+    [AvaloniaFact]
+    public async Task HoldingTheScoreboardKeyInTheGameReadsItQuietlyThroughTheWindow()
+    {
+        using var ui = new UiHarness(settings => settings.Current.ReadBuildsOnTab = true);
+        CopyTopbarInto(ui.Data.AssetsDir);
+        ui.Capture.Next = Capture();
+        string[] heroes = ["apollo", "ivy", "wraith", "bebop", "silver", "doorman", "celeste", "lash", "venator", "paige", "mirage", "mo_and_krill"];
+        VisionApply.ApplyToMatch(ui.ViewModel.Match.Match, heroes, 0);
+
+        ui.ScoreboardKey.Press();
+        Assert.True(await UiHarness.WaitUntilAsync(() => ui.ViewModel.Match.Match.NetWorth.Latest("apollo") is not null));
+
+        Assert.Equal(16_000, ui.ViewModel.Match.Match.NetWorth.Latest("apollo"));
+        Assert.False(ui.Services.GetRequiredService<IModalService>().IsModalOpen);
+        Assert.Null(ui.Capture.Minimized);
+        Assert.Single(ui.Capture.Tall);
     }
 
     [AvaloniaFact]

@@ -53,6 +53,11 @@ is how each step works, why it works that way, and how to change it without maki
    comes, `DetectAction.LabelSelf` writes the chosen slot into it (a note says it was picked by hand), so every
    miss becomes a labelled capture: `read.self_slot` null with `self_slot` set.
 
+**The scoreboard read** shares steps 2 to 6 and the net worth with the pipeline above (`ScoreboardReader.Read`, which `DetectAction` calls
+too) but starts from a capture of the top 52% of the window, taken while the player holds the scoreboard key (`ScoreboardAction`), and ends not in
+a review but in a net worth snapshot, and only when the read is the match already applied (`RosterContinuity.IsSameMatch`); anything else is dropped
+silently. The grid comes from the same per-screen cache, so a read that fits under 0.7 searches afresh as Detect does.
+
 ## The reference art
 
 **The top bar crops every hero's card the same way**: x 0.164, y 0.148, width 0.661 of the card

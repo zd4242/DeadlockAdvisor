@@ -17,4 +17,22 @@ public sealed class FakeScreenCapture : IScreenCaptureService
         Minimized = minimize;
         return Next is { } capture ? Task.FromResult(capture) : throw new CaptureException("No screen in tests.");
     }
+
+    /// <summary>The fractions asked for by taller captures, which never minimize anything.</summary>
+    public List<double> Tall { get; } = [];
+
+    /// <summary>Captures handed out, one per taller capture, before <see cref="Next"/> is used again.</summary>
+    public Queue<ScreenCapture> Sequence { get; } = [];
+
+    /// <summary>Run after each taller capture was taken, as the player might let go of a key in between.</summary>
+    public Action? Captured { get; set; }
+
+    public Task<ScreenCapture> CaptureTopAsync(double fraction)
+    {
+        Captures++;
+        Tall.Add(fraction);
+        var capture = Sequence.Count > 0 ? Sequence.Dequeue() : Next;
+        Captured?.Invoke();
+        return capture is not null ? Task.FromResult(capture) : throw new CaptureException("No screen in tests.");
+    }
 }

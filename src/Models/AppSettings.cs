@@ -71,6 +71,10 @@ public class AppSettings
     public bool RememberCorrections { get; set; } = true;
     public bool AutoApplyDetect { get; set; } = true;
 
+    // Reads each hero's net worth (and, later, items) off the game's scoreboard while its key is held; see ScoreboardKeys.
+    public bool ReadBuildsOnTab { get; set; }
+    public string ScoreboardKey { get; set; } = "Tab";
+
     // Your Steam account ID (SteamID3's number), which picks you out of an imported match.
     public long? SteamAccountId { get; set; }
 

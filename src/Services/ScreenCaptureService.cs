@@ -24,7 +24,11 @@ public class ScreenCaptureService : IScreenCaptureService
     // Long enough for Windows' minimise animation to finish, so the window isn't caught mid-fade.
     private static readonly TimeSpan _minimiseDelay = TimeSpan.FromMilliseconds(350);
 
-    public async Task<ScreenCapture> CaptureTopBandAsync(bool minimize)
+    public Task<ScreenCapture> CaptureTopBandAsync(bool minimize) => CaptureAsync(BandFraction, minimize);
+
+    public Task<ScreenCapture> CaptureTopAsync(double fraction) => CaptureAsync(fraction, minimize: false);
+
+    private static async Task<ScreenCapture> CaptureAsync(double fraction, bool minimize)
     {
         if (!OperatingSystem.IsWindows())
             throw new CaptureException("Screen capture is only supported on Windows.");
@@ -33,7 +37,7 @@ public class ScreenCaptureService : IScreenCaptureService
         var foundGame = game != IntPtr.Zero;
         var area = foundGame ? GameArea(game) : PrimaryMonitor();
         var height = area.Bottom - area.Top;
-        var band = area with { Bottom = area.Top + Math.Min(height, Math.Max(MinBandHeight, (int)(height * BandFraction))) };
+        var band = area with { Bottom = area.Top + Math.Min(height, Math.Max(MinBandHeight, (int)(height * fraction))) };
 
         var window = (Application.Current?.ApplicationLifetime as IClassicDesktopStyleApplicationLifetime)?.MainWindow;
         var restoreTo = minimize && window is { IsVisible: true } && window.WindowState != WindowState.Minimized && Covers(window, game, band)
@@ -126,7 +130,7 @@ public class ScreenCaptureService : IScreenCaptureService
         }
     }
 
-    private static string? ForegroundProcessName(IntPtr foreground)
+    internal static string? ForegroundProcessName(IntPtr foreground)
     {
         if (foreground == IntPtr.Zero || Native.GetWindowThreadProcessId(foreground, out var id) == 0)
             return null;

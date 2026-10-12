@@ -20,4 +20,11 @@ public interface IScreenCaptureService
     /// captured. Throws <see cref="CaptureException"/> when the screen can't be read.
     /// </summary>
     Task<ScreenCapture> CaptureTopBandAsync(bool minimize);
+
+    /// <summary>
+    /// Grab the top <paramref name="fraction"/> of the game's window, taller than Detect's band, without minimizing or
+    /// activating this app's window: what the scoreboard read does while the game has focus. Throws
+    /// <see cref="CaptureException"/> when the screen can't be read.
+    /// </summary>
+    Task<ScreenCapture> CaptureTopAsync(double fraction);
 }

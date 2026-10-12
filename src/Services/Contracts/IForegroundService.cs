@@ -4,4 +4,7 @@ namespace DeadlockAdvisor.Services.Contracts;
 public interface IForegroundService
 {
     bool IsAnotherAppInFront { get; }
+
+    /// <summary>Whether the game's own window has focus: cheap enough to ask many times a second.</summary>
+    bool IsGameInFront { get; }
 }

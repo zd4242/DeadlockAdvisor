@@ -6,4 +6,5 @@ namespace DeadlockAdvisor.Tests.Fakes;
 public sealed class FakeForeground : IForegroundService
 {
     public bool IsAnotherAppInFront { get; set; }
+    public bool IsGameInFront { get; set; }
 }

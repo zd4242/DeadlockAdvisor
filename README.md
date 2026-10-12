@@ -463,6 +463,16 @@ sound off, or make the advisor come up for a review instead. While it's
 running, other apps don't get F9; turn that off under **Settings →
 Detection** and F9 only works while the advisor has focus.
 
+**Holding the scoreboard key** (Tab unless you moved it in the game) can
+refresh the match's net worth without Detect: turn on *Read the scoreboard
+while you hold its key* under **Settings → Detection**. While Deadlock is in
+front and you hold the key, the advisor reads the board it shows into the match
+you've already applied, and does nothing visible: no window, no sound, no
+focus change. A board that isn't your match's (or no match applied yet) is
+ignored. It's off until you turn it on; if you moved the scoreboard key in the
+game, set the same key there. The key still reaches the game, since the advisor
+only watches it.
+
 If there's no scoreboard on screen (a lobby, a loading screen, a hidden
 HUD, or a game captured as a black screen by exclusive fullscreen or HDR),
 Detect says "Nothing found" instead of opening an empty review.

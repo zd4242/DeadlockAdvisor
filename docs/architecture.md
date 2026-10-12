@@ -63,7 +63,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 - **Style** is in `.claude/CLAUDE.md` ("Guidelines"): private fields are `_camelCase` (statics too), a single-statement
   `if` puts its statement on the next line, comments only where something isn't obvious. `GlobalUsings.cs` has
   `Avalonia`, `Avalonia.Controls`, `System`, `System.Collections.Generic`, `System.Linq`, `System.Threading.Tasks`.
-- **Windows-only code** (the F9 hotkey, screen capture, foreground window, self-install) stays behind
+- **Windows-only code** (the F9 hotkey, the scoreboard key's polling, screen capture, foreground window, self-install) stays behind
   `OperatingSystem.IsWindows()`.
 - **Files are written safely**: `AtomicFile` (temp file, then swap) and `BackedUpFile` (a timestamped copy of the old file
   under `.backups/`, then an atomic write). Per file it keeps the newest 12 copies, the newest of each hour for 24 hours and
@@ -79,8 +79,8 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `NetWorthHistory`, `AppSettings` |
 | `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
-| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, image ops and PNG codec |
-| `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
+| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec |
+| `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Scoreboard`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
 | `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls and their automation peers, behaviours (middle-click autoscroll, popups following the zoom, the `narrow` class), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
 | `Themes/` | XAML resource dictionaries (brushes, shared styles) |
@@ -325,6 +325,18 @@ detection is measured on. Rules and numbers: detection_model.md.
 that name (and `deadlock`), preferring the foreground window when it is the game's (`ChooseGameWindow`), so the capture
 comes from the monitor the game is on. The log line says "Deadlock window" or "primary monitor (Deadlock's window not found)".
 
+**The scoreboard read** (`Features/Match/Scoreboard/ScoreboardAction`, off by default: `AppSettings.ReadBuildsOnTab`) is Detect's front half run
+quietly while the player holds the game's scoreboard key. `ScoreboardKeyService` (`IScoreboardKeyService`; the key is `AppSettings.ScoreboardKey`,
+Tab unless moved, read through `ScoreboardKeys`) does not register it with Windows, which would keep it from the game: it polls `GetAsyncKeyState`
+every 30 ms on the UI scheduler, only while the setting is on, `IForegroundService.IsGameInFront` and Alt isn't held (nothing is polled otherwise),
+and raises `Pressed` once per press. `MainWindowViewModel` passes each press to `ScoreboardAction.OnPressedAsync`, which, with a match applied and
+no dialog open, waits 250 ms for the board to fade in, captures the top 52% of the window (`IScreenCaptureService.CaptureTopAsync`: it never
+minimises or activates anything), reads it off the UI thread through `ScoreboardReader.Read` (the same grid, heroes, `RosterContinuity` and
+`NetWorthReader` as Detect, which calls it too) and, only when `RosterContinuity.IsSameMatch`, adds a net worth snapshot and calls
+`MatchViewModel.MatchUpdated`. A board not found is looked for once more 350 ms later; a key let go, another match, no match, a dialog or a
+read still running end it with one log line (`ScoreboardOutcome`). It shows nothing and plays nothing; `ScoreboardAction.OnRead` is where the
+item reader plugs in (roadmap WP26). The hero art is kept between presses until a folder under `assets/topbar` changes.
+
 `DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`
 (the system-wide F9) notes `IForegroundService.IsAnotherAppInFront` before capturing, and if the game was in front and
@@ -347,7 +359,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   fails for anything painted past the edge of the window or its scroll viewer. It can't see one control drawn over
   another, so look at the PNGs after a layout change.
 - `Fakes/` (`FakeDeadlockApi` and the other fake services in `FakeServices.cs`, `FakeConnectivity`, `FakeScreenCapture`,
-  `FakeGlobalHotkey`, `FakeForeground`, `HeldDownloads`, `SyntheticItemStatsApi`), `Support/` (`DataFixture`, `TestStore`,
+  `FakeGlobalHotkey`, `FakeScoreboardKey`, `FakeForeground`, `HeldDownloads`, `SyntheticItemStatsApi`), `Support/` (`DataFixture`, `TestStore`,
   `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
@@ -362,6 +374,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
 - **A page:** a view model and view with matching names; register the view model in `App.RegisterServices`; in
   `MainWindowViewModel` add it to `Pages`, `_allPageNames`, the page constants and `IsXPage` flags and their change
   notifications (editor-only pages go last, `_editorPages`); add its panel to `MainWindow.axaml`.
+- **A key the game owns** (watched, not taken, so it still reaches the game): `ScoreboardKeys` and `ScoreboardKeyService`, which a `ShortcutRecorder` row in Settings → Detection sets.
 - **A shortcut:** a `ShortcutAction` value, an entry in `ShortcutKeys.Defaults` (mind `_reserved`), a case in
   `MainWindowViewModel.ShortcutBindingFor` and its command; Settings → Shortcuts lists the defaults.
 - **A background download:** build a `BackgroundJobViewModel`, run it through `DataMenuViewModel.RunInBackgroundAsync` with an

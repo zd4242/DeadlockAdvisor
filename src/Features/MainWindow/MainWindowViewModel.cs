@@ -12,6 +12,7 @@ using DeadlockAdvisor.Features.ItemFormulas;
 using DeadlockAdvisor.Features.Match;
 using DeadlockAdvisor.Features.MainWindow.Updates;
 using DeadlockAdvisor.Features.Match.Detect;
+using DeadlockAdvisor.Features.Match.Scoreboard;
 using DeadlockAdvisor.Features.Settings;
 using DeadlockAdvisor.Features.Settings.Data;
 using DeadlockAdvisor.Features.Settings.Detection;
@@ -126,7 +127,9 @@ public class MainWindowViewModel : ViewModelBase
         IConnectivityService connectivity,
         IForegroundService foreground,
         IAttentionService attention,
-        IDeadlockApi api)
+        IDeadlockApi api,
+        IScoreboardKeyService scoreboardKey,
+        ScoreboardAction scoreboard)
     {
         _foreground = foreground;
         _attention = attention;
@@ -249,7 +252,7 @@ public class MainWindowViewModel : ViewModelBase
         Settings = new SettingsViewModel(
             new GeneralSettingsViewModel(settings, ZoomInCommand, ZoomOutCommand, ResetZoomCommand),
             new ShortcutsSettingsViewModel(settings, hotkey),
-            new DetectionSettingsViewModel(settings, hotkey),
+            new DetectionSettingsViewModel(settings, hotkey, scoreboardKey),
             new DataSettingsViewModel(settings, data, art, dataMenu, AppUpdate, ReloadArtCommand, Updates.CheckAllCommand)).DisposeWith(Disposables);
         Settings.CloseRequested.Subscribe(_ => IsSettingsOpen = false).DisposeWith(Disposables);
         // A new data folder, or new art, changes what the Data settings show.
@@ -272,6 +275,10 @@ public class MainWindowViewModel : ViewModelBase
             onMatchPage.CombineLatest(Match.Board.RandomizeCommand.CanExecute, (onPage, canRandomize) => onPage && canRandomize));
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
+        // Holding the game's scoreboard key reads it quietly; nothing here ever shows a thing.
+        scoreboardKey.Pressed
+            .Subscribe(press => _ = scoreboard.OnPressedAsync(Match.Match, Match.MatchUpdated))
+            .DisposeWith(Disposables);
         Match.ArtWanted.Subscribe(_ => DataMenu.DownloadArt()).DisposeWith(Disposables);
         Match.DataRanks.RanksWanted.Subscribe(_ => DataMenu.OfferRankDownload()).DisposeWith(Disposables);
         settings.SettingsChanged

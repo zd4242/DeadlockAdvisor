@@ -21,12 +21,8 @@ namespace DeadlockAdvisor.Features.Match.Detect;
 /// </summary>
 public class DetectAction
 {
-    /// <summary>
-    /// A cached grid fitting worse than this (<see cref="Detection.Fit"/>) is searched for afresh and
-    /// the better read kept: it has stopped fitting, say after a change of HUD scale. Counting
-    /// confident slots instead paid for a five-second search whenever a few players were dead.
-    /// </summary>
-    public const double CacheTrustFit = 0.7;
+    /// <summary>A cached grid fitting worse than this is searched for afresh; see <see cref="ScoreboardReader.CacheTrustFit"/>.</summary>
+    public const double CacheTrustFit = ScoreboardReader.CacheTrustFit;
 
     // A read with a cached grid is quick; only a search is worth putting a progress modal up for.
     private static readonly TimeSpan _progressDelay = TimeSpan.FromMilliseconds(250);
@@ -117,19 +113,9 @@ public class DetectAction
         var screenKey = $"{capture.ScreenWidth}x{capture.ScreenHeight}";
         var cached = _settings.Current.VisionGeometry.TryGetValue(screenKey, out var saved) ? Geometry.FromJson(saved) : null;
         var clock = System.Diagnostics.Stopwatch.StartNew();
-        var detection = await DetectWithProgressAsync(progress => Detect(capture, bank, cached, progress));
-        var rejectedFit = detection is { FoundStrip: false } ? detection.Fit : (double?)null;
-        if (rejectedFit is not null)
-            detection = null;
-        if (detection is not null)
-        {
-            var roster = match.Slots.ToDictionary(pair => pair.Value, pair => pair.Key);
-            int? rosterSelf = match.SelfHero is { } self && match.Slots.TryGetValue(self, out var selfSlot) ? selfSlot : null;
-            detection = RosterContinuity.Apply(detection, roster, rosterSelf);
-        }
-        var netWorth = detection is null
-            ? NetWorthReading.Empty
-            : await Task.Run(() => NetWorthReader.Read(capture.Band, detection.Geometry, NetWorthGlyphs.Bundled));
+        var roster = match.Slots.ToDictionary(pair => pair.Value, pair => pair.Key);
+        int? rosterSelf = match.SelfHero is { } self && match.Slots.TryGetValue(self, out var selfSlot) ? selfSlot : null;
+        var (detection, rejectedFit, netWorth) = await ReadWithProgressAsync(progress => ScoreboardReader.Read(capture, bank, cached, roster, rosterSelf, progress));
         var source = capture.FoundGame ? "Deadlock window" : "primary monitor (Deadlock's window not found)";
         _log.Information($"Detect: {capture.Band.Width}x{capture.Band.Height} band of a {screenKey} {source} at {capture.Origin.X},{capture.Origin.Y}, "
                          + $"{bank.Vectors.Count} reference image(s), {(cached is null ? "searched for the grid" : "cached grid")}: "
@@ -294,27 +280,15 @@ public class DetectAction
         return $"net worth {Side(0)} | {Side(1)}";
     }
 
-    internal static Detection? Detect(ScreenCapture capture, TemplateBank bank, Geometry? cached, IProgress<double>? progress = null)
-    {
-        // The band is only the top of the screen; the search sizes itself against the whole screen's height.
-        var detection = Detector.Detect(capture.Band, bank, cached, screenHeight: capture.ScreenHeight, progress: progress);
-        if (cached is not null && detection is not null && detection.Fit < CacheTrustFit)
-        {
-            // The HUD scale changed, or the cached grid was never as good as it looked: pay for a fresh
-            // search and keep whichever fits better.
-            var fresh = Detector.Detect(capture.Band, bank, screenHeight: capture.ScreenHeight, progress: progress);
-            if (fresh is not null && fresh.Fit > detection.Fit)
-                detection = fresh;
-        }
-        return detection;
-    }
+    internal static Detection? Detect(ScreenCapture capture, TemplateBank bank, Geometry? cached, IProgress<double>? progress = null) =>
+        ScoreboardReader.Detect(capture, bank, cached, progress);
 
-    private async Task<Detection?> DetectWithProgressAsync(Func<IProgress<double>, Detection?> detect)
+    private async Task<ScoreboardRead> ReadWithProgressAsync(Func<IProgress<double>, ScoreboardRead> read)
     {
         using var progress = new ProgressModalViewModel("Detect from screen", "Reading the match off the top bar…", canCancel: false);
         var reporter = new Progress<double>(fraction =>
             progress.Report(new FetchProgress((int)Math.Round(fraction * 100), 100, "Searching for the hero strip")));
-        var job = Task.Run(() => detect(reporter));
+        var job = Task.Run(() => read(reporter));
         var shown = await Task.WhenAny(job, Task.Delay(_progressDelay)) != job;
         if (shown)
             _modals.ShowModal(progress);

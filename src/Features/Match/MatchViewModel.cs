@@ -384,6 +384,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// What to do once a detection or an import writes the match from outside the board. A new
     /// line-up starts on its best item; re-reading the same one, say for net worth, keeps your pick.
     /// </summary>
+    /// <summary>The match changed outside the page (the scoreboard read added a net worth reading): show it.</summary>
+    public void MatchUpdated() => WhenReplaced()();
+
     private Action WhenReplaced()
     {
         var before = LineUp();

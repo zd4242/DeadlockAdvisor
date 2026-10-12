@@ -1,6 +1,6 @@
 # WP25 Scoreboard key observer and the silent Tab read
 
-Status: todo
+Status: done
 Effort: M · Risk: medium (a global key poll, a taller capture, a refactor of Detect's front half) · Depends on: WP24 · Wave: B
 Touches: new `src/Services/Contracts/IScoreboardKeyService.cs` and `src/Services/ScoreboardKeyService.cs`, `src/Services/Contracts/IScreenCaptureService.cs` and `ScreenCaptureService.cs`, new `src/Vision/ScoreboardReader.cs`, `src/Features/Match/Detect/DetectAction.cs` (uses the shared reader), new `src/Features/Match/Scoreboard/ScoreboardAction.cs`, `src/Models/AppSettings.cs`, `App.axaml.cs` (`RegisterServices`), `src/Features/MainWindow/MainWindowViewModel.cs`, `src/Features/Settings/Detection/*`, `tests/DeadlockAdvisor.Tests` (fakes, `ScoreboardActionTests`, `ScoreboardKeyTests`, settings tests)
 Docs to update: `docs/architecture.md` (sections 2, 8, 10), `docs/detection_model.md` (pipeline), `README.md` (Detect and Settings)

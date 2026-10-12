@@ -2,8 +2,24 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:settings="using:DeadlockAdvisor.Features.Settings"
              xmlns:detection="using:DeadlockAdvisor.Features.Settings.Detection"
+             xmlns:controls="using:DeadlockAdvisor.Controls"
              x:Class="DeadlockAdvisor.Features.Settings.Detection.DetectionSettingsView"
              x:DataType="detection:DetectionSettingsViewModel">
+    <UserControl.Styles>
+        <!-- By class: the recorder is styled as the Button it is, so a type selector wouldn't reach it. -->
+        <Style Selector="Button.key">
+            <Setter Property="MinWidth" Value="128"/>
+            <Setter Property="HorizontalContentAlignment" Value="Center"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+        </Style>
+        <Style Selector="Button.key:recording">
+            <Setter Property="Foreground" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+        <Style Selector="Button.key:recording /template/ ContentPresenter#PART_ContentPresenter">
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}"/>
+        </Style>
+    </UserControl.Styles>
+
     <StackPanel>
         <TextBlock Classes="section" Text="SHORTCUT"/>
         <Border Classes="settings">
@@ -18,6 +34,28 @@
                 <settings:SettingRow Title="Sound when Detect from the game finishes"
                                      Description="A short system sound after you press Detect's key in the game: one tone when the match was read and applied, another when it needs a look or nothing could be read, which also flashes this window's taskbar button. Silent when this window is in front.">
                     <ToggleSwitch IsChecked="{Binding SoundOnDetect}"/>
+                </settings:SettingRow>
+            </StackPanel>
+        </Border>
+
+        <TextBlock Classes="section" Text="SCOREBOARD"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="Read the scoreboard while you hold its key" Description="{Binding ScoreboardDescription}">
+                    <ToggleSwitch IsChecked="{Binding ReadBuildsOnTab}"/>
+                </settings:SettingRow>
+                <settings:SettingRow Title="Scoreboard key" Description="{Binding ScoreboardKeyNote}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button Classes="ghost"
+                                Content="Reset"
+                                Command="{Binding ResetScoreboardKeyCommand}"
+                                ToolTip.Tip="Back to Tab"/>
+                        <controls:ShortcutRecorder Classes="key"
+                                                   Gesture="{Binding ScoreboardKey}"
+                                                   RecordedCommand="{Binding RecordScoreboardKeyCommand}"
+                                                   IsRecording="{Binding IsRecordingScoreboardKey, Mode=OneWayToSource}"
+                                                   ToolTip.Tip="Click, then press the key the game's scoreboard is on. Delete goes back to Tab; Esc keeps it."/>
+                    </StackPanel>
                 </settings:SettingRow>
             </StackPanel>
         </Border>

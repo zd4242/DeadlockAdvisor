@@ -13,7 +13,7 @@ namespace DeadlockAdvisor.Features.Settings.Detection;
 /// <summary>Where Detect's key works, how Detect from screen captures, and the hero strip it remembers per screen size.</summary>
 public class DetectionSettingsViewModel : SettingsPageViewModel
 {
-    public DetectionSettingsViewModel(ISettingsService settings, IGlobalHotkeyService hotkey) : base(settings)
+    public DetectionSettingsViewModel(ISettingsService settings, IGlobalHotkeyService hotkey, IScoreboardKeyService scoreboardKey) : base(settings)
     {
         settings.SettingsChanged
             .Select(s => s.Gesture(ShortcutAction.Detect))
@@ -32,6 +32,21 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
                                     + (HasRememberedLayouts ? $"Remembered for {screens}." : "None remembered yet.");
             })
             .DisposeWith(Disposables);
+
+        settings.SettingsChanged
+            .Select(s => s.Get())
+            .DistinctUntilChanged()
+            .CombineLatest(scoreboardKey.Status, DescribeScoreboard)
+            .Subscribe(description => ScoreboardDescription = description)
+            .DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.Get())
+            .DistinctUntilChanged()
+            .Subscribe(key => ScoreboardKey = new KeyGesture(key))
+            .DisposeWith(Disposables);
+        RecordScoreboardKeyCommand = ReactiveCommand.Create<KeyGesture?>(RecordScoreboardKey);
+        ResetScoreboardKeyCommand = ReactiveCommand.Create(() => RecordScoreboardKey(new KeyGesture(ScoreboardKeys.Default)),
+            settings.SettingsChanged.Select(s => s.Get() != ScoreboardKeys.Default));
 
         ForgetLayoutsCommand = ReactiveCommand.Create(() => Settings.Update(s => s.VisionGeometry.Clear()),
             this.WhenAnyValue(vm => vm.HasRememberedLayouts));
@@ -87,10 +102,56 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         set => Change(s => s.RememberCorrections = value);
     }
 
+    public bool ReadBuildsOnTab
+    {
+        get => Current.ReadBuildsOnTab;
+        set => Change(s => s.ReadBuildsOnTab = value);
+    }
+
+    private const string _scoreboardKeyHelp = "The key the game's scoreboard is on. Click, then press it; Delete goes back to Tab.";
+
+    /// <summary>What reading the scoreboard does.</summary>
+    [Reactive] public string ScoreboardDescription { get; private set; } = "";
+
+    /// <summary>What the scoreboard key is, or while there's something to say about the last key pressed for it, that.</summary>
+    [Reactive] public string ScoreboardKeyNote { get; private set; } = _scoreboardKeyHelp;
+
+    [Reactive] public KeyGesture? ScoreboardKey { get; private set; }
+
+    /// <summary>Set by the view while it waits for a key.</summary>
+    [Reactive] public bool IsRecordingScoreboardKey { get; set; }
+
+    /// <summary>A key pressed for the scoreboard, or null (Delete) to go back to Tab.</summary>
+    public ReactiveCommand<KeyGesture?, Unit> RecordScoreboardKeyCommand { get; }
+
+    public ReactiveCommand<Unit, Unit> ResetScoreboardKeyCommand { get; }
+
     [Reactive] public bool HasRememberedLayouts { get; private set; }
     [Reactive] public string RememberedLayouts { get; private set; } = "";
 
     public ReactiveCommand<Unit, Unit> ForgetLayoutsCommand { get; }
+
+    private void RecordScoreboardKey(KeyGesture? gesture)
+    {
+        gesture ??= new KeyGesture(ScoreboardKeys.Default);
+        if (ScoreboardKeys.Problem(gesture) is { } problem)
+        {
+            ScoreboardKeyNote = problem;
+            return;
+        }
+        ScoreboardKeyNote = _scoreboardKeyHelp;
+        Change(s => s.ScoreboardKey = gesture.Key.ToString(), nameof(ScoreboardKey));
+    }
+
+    public static string DescribeScoreboard(Key key, ScoreboardKeyStatus status)
+    {
+        if (status == ScoreboardKeyStatus.Unsupported)
+            return "Only available on Windows.";
+        var label = ScoreboardKeys.Label(key);
+        return $"While the game is in front and you hold {label} (its scoreboard key: move it here if you moved it in the game), quietly read the board into the match you've applied: "
+               + "each hero's net worth now. Nothing is shown, played or focused, and a board that isn't your match's is ignored. "
+               + "Press Detect first so there is a match. The game has to be borderless or windowed, as for Detect.";
+    }
 
     public static string AnywhereDescription(KeyGesture? gesture, HotkeyStatus status)
     {
