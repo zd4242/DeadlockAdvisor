@@ -16,6 +16,7 @@ What each hero has built is part of the match: kept, saved, shown on the match b
 2. `NetWorthHistory` is the pattern for per-match readings: kept per match, saved in `SavedMatch`, kept across a re-detect of the same twelve heroes (`VisionApply.ApplyToMatch`) ✔.
 3. `SavedMatch` loads older saves by ignoring what they lack, so a new optional field is safe ✔ (check `LoadSaved` and the JSON options).
 4. Hero cards already show items elsewhere (`ItemCardPresenter`), so chips can reuse it ✔.
+5. WP24: a bar is a saturating share of the souls in its category (about 0.45 at 4k, 0.75 at 10-12k, 0.9 at 18k, full only past about 28k), correlating 0.9 with the cost sums at full size and worse at 1080p and below. Show it as "how invested", not as a count of souls.
 
 ## Read first
 

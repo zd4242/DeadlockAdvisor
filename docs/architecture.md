@@ -350,7 +350,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   `FakeGlobalHotkey`, `FakeForeground`, `HeldDownloads`, `SyntheticItemStatsApi`), `Support/` (`DataFixture`, `TestStore`,
   `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
-  variables (detection_model.md).
+  variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
 
 ## 10. Recipes
 

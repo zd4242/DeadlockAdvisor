@@ -13,7 +13,8 @@ It never opens a window, takes focus or makes a sound, and it is off until the p
 ## Why / premise check
 
 1. F9 uses `RegisterHotKey`, which delivers the key to the app **instead of** the game. Tab must reach the game, so it can't be registered ✔ (`GlobalHotkeyService`; check `ShortcutKeys` too).
-2. The capture is the top 22% of the game window (`ScreenCaptureService.BandFraction`); the item cells reach about 7 pitches down, roughly the top 58-60% ✔ (WP24 gives the number).
+2. The capture is the top 22% of the game window (`ScreenCaptureService.BandFraction`); the item cells reach 6.1 pitches down, so the top **52%** is enough (WP24 measured it; the earlier 58-60% was an estimate). The dead player's view has its portraits 12 px lower, and a grid fitting under 0.7 (most of a team dead) is searched afresh, as Detect does.
+2b. A team total can read wrong as well as unread on soft frames (a lost leading digit, 3k for 273k); WP24 saw it at full size on two of ten captures. Don't let a total that disagrees with its team's pills into the snapshot.
 3. `DetectAction.RunAsync` mixes UI (modals, review) with the pure front half (grid, detect, continuity, net worth) ✔; the front half is what Tab needs.
 4. A Tab press that finds no applied match, or a different roster, must do nothing visible. Decided: **ignore silently** (logged only).
 

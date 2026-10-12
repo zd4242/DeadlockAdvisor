@@ -111,7 +111,7 @@ Hot files, in the order their packages should run:
 | WP21 | [wp21](wp21-post-match-review.md) | Post-match review: your build against the advice, and a net-worth curve | L | WP20 | C |
 | WP22 | [wp22](wp22-readme-catch-up.md) | README and docs catch-up | S | none | A, then last |
 | WP23 | [wp23](wp23-data-menu-simplify.md) | Data menu: one Check for Updates, maintainer tools in Model Tools (done) | M | WP13, WP14 | D |
-| WP24 | [wp24](wp24-tab-view-spike.md) | Tab-view spike: can the scoreboard's items be read, and what do they say? (needs the user's Tab captures) | M | none | A |
+| WP24 | [wp24](wp24-tab-view-spike.md) | Tab-view spike: can the scoreboard's items be read, and what do they say? (done: Go) | M | none | A |
 | WP25 | [wp25](wp25-scoreboard-key-and-silent-read.md) | Scoreboard key observer and the silent Tab read (net worth refresh included) | M | WP24 | B |
 | WP26 | [wp26](wp26-scoreboard-item-reader.md) | The item and bar reader, with its corpus | L | WP24 | B |
 | WP27 | [wp27](wp27-builds-in-the-match.md) | Builds in the match: owned marks, roster bars, settings | M | WP25, WP26 | C |
@@ -119,7 +119,7 @@ Hot files, in the order their packages should run:
 | WP29 | [wp29](wp29-build-adjusted-traits.md) | Build-adjusted traits: what a hero built shifts their damage mix | L | WP27, after WP28 | D |
 | WP30 | [wp30](wp30-build-extras.md) | Build extras: real HP and durability, enemy counters, sell hints (optional) | M | WP29 | E |
 
-WP13, WP18, WP21 and WP26 list stages: stop at a stage boundary with a green commit if the session runs short. WP24 decides whether WP25 to WP30 go ahead as written, so run it first.
+WP13, WP18, WP21 and WP26 list stages: stop at a stage boundary with a green commit if the session runs short. WP24 (done) decided **Go**: WP25 to WP30 go ahead with the corrections in its Findings (capture the top 52%, category from the tier corner, identity about 75% confident and never wrong on soft video frames, so native captures are WP26's first test).
 
 ## Where this came from
 

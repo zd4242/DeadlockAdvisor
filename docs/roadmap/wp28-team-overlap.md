@@ -19,6 +19,7 @@ to buy another, and a notice says when two teammates hold the same non-stacking 
    `applies_spirit_damage_easily` as 2) ✔.
 3. An aura's effect is **not** unscored: Heroic Aura's 17% Bullet Resist is in `item_stats.csv` and scores through the `BulletResist` stat rule, so a discount of "typed rows only" would miss it ✔
    (`item_stats.csv`: heroic_aura, BulletResist 17). `StatPart.Stat` names the stat each part came from ✔.
+3b. WP24: about one filled cell in four reads as an unknown item at first (never wrongly identified); an unknown cell must leave the hero's overlap unchanged, and the "your team has it" notice names only confident reads.
 4. `WeightMatrix` already splits each weight into a summed and a best-target part for some items ✔; a third part, "overlapping", for the few items in a group follows that pattern.
 
 ## Read first

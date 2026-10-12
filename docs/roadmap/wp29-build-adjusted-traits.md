@@ -21,7 +21,7 @@ every game barely moves, a flexible one moves a lot.
    ranking, as net worth is ✔ (`ItemScoring.Total`, `BestTargets`).
 4. **Not** a valid shortcut: inverting `stat_rules.csv` to turn owned stats into trait scores. A rule says what a trait values, not what a build makes of a hero (`BonusHealth → max_hp` is
    negative because flat health helps low-HP heroes). Don't revisit it.
-5. The response of damage mix to investment (the number α below) has to be **measured** from matches, not typed. WP24 checked that the match metadata splits damage by kind; re-read its note.
+5. The response of damage mix to investment (the number α below) has to be **measured** from matches, not typed. WP24 checked that the match metadata splits damage by kind: `GET /v1/matches/{id}/metadata`'s `damage_matrix` has per-dealer, per-target cumulative series for the source rows `Bullet`, `Ability` and `Melee` (target slot 0 is not a hero, so count targets 1 to 12), and the player's `items[]` with buy and sell times. The bulk `/v1/matches/metadata` has players and items but no damage matrix, so this needs one request per match (about 1.1 MB each).
 
 ## Read first
 

@@ -14,7 +14,7 @@ hero detection: never confidently wrong, unknown is an answer.
 
 Read WP24's findings first. This package builds the reader its numbers justify; if WP24 chose Plan B, do stage 1 and 3 only and drop identity. Re-check:
 
-1. Cell positions hold in pitches at the resolutions WP24 measured.
+1. Cell positions hold in pitches at the resolutions WP24 measured (WP24's Findings have them: columns -0.185 and +0.213, rows 3.82 + 0.396 × row below the **grid's top**, cells 0.31 square, at most 12 cells; slide each hero's cells ±0.06 pitch vertically, ±0.05 horizontally). WP24 chose **Go** with identity at about 75% confident and zero wrong on soft video frames; native captures are what this package must still test.
 2. `assets/items` holds one icon per `Item` (the art download's "Item icons" group; `Owned: false` means it is the app's own download) ✔ (`ArtDownloadService`).
 3. `Item.Cost` and `Item.Category` are in `items.csv`, so investment can be worked out from identified items ✔.
 
@@ -26,7 +26,7 @@ the reference art the way the game crops it); `Matcher` (one-per-slot assignment
 ## Scope
 
 In (stages; stop at a boundary with a green commit if the session runs short):
-1. **Cells and category.** `ItemGrid` places the cells for a slot from the geometry; each cell reads empty or occupied with a category from its frame colour, and a state (normal, dimmed for a
+1. **Cells and category.** `ItemGrid` places the cells for a slot from the geometry; each cell reads empty or occupied with a category from the colour of the tier corner at its top right (WP24: orange weapon, green vitality, purple spirit; the cell's background is the item's own art), and a state (normal, dimmed for a
    dead hero, streak backplate). Rows beyond the last occupied one read empty. Blank Street Brawl slots are skipped.
 2. **Identity.** `ItemTemplates` frames each `assets/items` icon as the game draws it (its own `Version`, and a test that the game frames every icon the same way, like
    `TheGameCropsEveryCardTheSameWay`); `ItemReader` scores a cell by the high-passed descriptor against the icons of its own category, with a score and a lead over the runner-up. Above both
@@ -64,4 +64,5 @@ version), `BarReaderTests`. Corpus captures are the user's own, **with the playe
 ## Notes
 
 - A new item arrives with a patch and its icon with the next art download; until then it reads category-only, which is correct.
-- Skins or cosmetic variants of an icon, if the game has them, are handled like hero variants: learn from a correction, never from a guess.
+- Skins or cosmetic variants of an icon, if the game has them, are handled like hero variants: learn from a correction, never from a guess. WP24 found one already: Tankbuster is drawn dark in game where the API's art is cream, so it never matched.
+- WP24's first-cut matcher (a correlation on colour at the cell's own pixel size, candidates limited to the corner's category, each item once per hero; confident at 0.70 with a lead of 0.08) is `tests/DeadlockAdvisor.Tests/TabViewSpike.cs`; loosening it to 0.55 was not safe. Mask the corner and the "ACTIVE" strip along the bottom, which only active items carry.
