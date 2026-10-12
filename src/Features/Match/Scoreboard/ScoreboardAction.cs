@@ -61,8 +61,12 @@ public sealed class ScoreboardAction
     /// <summary>A second look, if the first found no board, about 600 ms after the key went down.</summary>
     public static readonly TimeSpan RetryDelay = TimeSpan.FromMilliseconds(350);
 
+    /// <summary>Boards are kept at most this often: a hand on Tab all game makes hundreds of near-identical ones.</summary>
+    public static readonly TimeSpan KeepEvery = TimeSpan.FromSeconds(30);
+
     private static readonly JsonSerializerOptions _noteJson = new() { WriteIndented = true };
 
+    private DateTimeOffset? _lastKept;
     private readonly IScoreboardKeyService _key;
     private readonly IScreenCaptureService _capture;
     private readonly ISettingsService _settings;
@@ -168,8 +172,11 @@ public sealed class ScoreboardAction
         changed();
         OnRead?.Invoke(match, read);
         _log.Information($"Scoreboard: read the board, net worth for {snapshot.Souls.Count} of 12 heroes");
-        if (_settings.Current.KeepScoreboardCaptures)
+        if (_settings.Current.KeepScoreboardCaptures && (_lastKept is not { } last || _scheduler.Now - last >= KeepEvery))
+        {
+            _lastKept = _scheduler.Now;
             await KeepCaptureAsync(capture, detection);
+        }
         return ScoreboardOutcome.Read;
     }
 

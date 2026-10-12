@@ -114,6 +114,26 @@ public sealed class ScoreboardActionTests : IDisposable
     }
 
     [Fact]
+    public async Task BoardsAreKeptNoMoreOftenThanEveryThirtySeconds()
+    {
+        WithArt();
+        _fixture.Settings.Current.KeepScoreboardCaptures = true;
+        _capture.Next = Capture();
+        var match = Applied(_heroes);
+
+        await PressAsync(match);
+        await PressAsync(match);
+        Assert.Single(KeptCaptures());
+
+        // The net worth is still refreshed by the press that kept nothing.
+        Assert.Equal(2, _changed);
+
+        _clock.AdvanceBy(ScoreboardAction.KeepEvery);
+        await PressAsync(match);
+        Assert.Equal(2, KeptCaptures().Length);
+    }
+
+    [Fact]
     public async Task ABoardThatIsntTheMatchesIsNotKept()
     {
         WithArt();
