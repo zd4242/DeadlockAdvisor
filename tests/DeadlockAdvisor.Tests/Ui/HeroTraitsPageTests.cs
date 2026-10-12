@@ -6,6 +6,7 @@ using Avalonia.Input;
 using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Controls.Art;
+using DeadlockAdvisor.Features.HeroTraits;
 using DeadlockAdvisor.Services;
 
 namespace DeadlockAdvisor.Tests.Ui;
@@ -131,9 +132,45 @@ public class HeroTraitsPageTests
         UiHarness.Settle();
 
         Assert.Equal((2, true), (page.SortColumn, page.SortDescending));
-        Assert.Equal((page.VisibleRows[0], 2), (page.CurrentRow, page.CurrentColumn));
+        Assert.Equal((page.RowOrder[0], 2), (page.CurrentRow, page.CurrentColumn));
         Assert.True(grid.IsFocused);
         ui.Screenshot("hero_traits_sorted.png");
+    }
+
+    /// <summary>The roster stays on the grid: a search scrolls to its first match only when none is showing.</summary>
+    [AvaloniaFact]
+    public void SearchingScrollsToTheFirstMatchOnlyWhenNoneIsOnScreen()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings, 2));
+        var page = ui.ViewModel.HeroTraits;
+        ui.Show();
+        var scroller = ui.Window.HeroTraitsPage.Scroller;
+        var grid = ui.Window.HeroTraitsPage.Grid;
+        Assert.True(scroller.Extent.Height > scroller.Viewport.Height);
+        Assert.Equal(0, scroller.Offset.Y);
+
+        // Well down the roster, so the scroll isn't clamped at the bottom.
+        var position = page.RowOrder.Count - 6;
+        var below = page.Heroes[page.RowOrder[position]].HeroName;
+        page.FilterText = below;
+        UiHarness.Settle();
+        var row = grid.TranslatePoint(new Point(0, grid.HeaderHeight + TraitGrid.RowHeight * position), scroller)!.Value;
+        Assert.InRange(row.Y, grid.HeaderHeight, scroller.Viewport.Height);
+        Assert.Equal(page.RowOrder.Count, grid.RowOrder.Count);
+        ui.Screenshot("hero_traits_search.png");
+
+        // A match already showing leaves the scroll where it is, and so does clearing the search.
+        var offset = scroller.Offset.Y;
+        page.FilterText = below[..3];
+        UiHarness.Settle();
+        Assert.Equal(offset, scroller.Offset.Y);
+        page.FilterText = "";
+        UiHarness.Settle();
+        Assert.Equal(offset, scroller.Offset.Y);
+
+        page.FilterText = page.Heroes[page.RowOrder[0]].HeroName;
+        UiHarness.Settle();
+        Assert.Equal(0, scroller.Offset.Y);
     }
 
     private static double TraitGridColumnCenter(int column) =>

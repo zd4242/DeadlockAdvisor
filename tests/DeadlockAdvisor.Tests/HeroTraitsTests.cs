@@ -132,10 +132,10 @@ public sealed class HeroTraitsTests : IDisposable
         _vm.SetValue(1, 0, 0);
 
         _vm.SortCommand.Execute(0).Subscribe();
-        Assert.True(_vm.VisibleRows.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
+        Assert.True(_vm.RowOrder.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
         _vm.SortCommand.Execute(0).Subscribe();
-        Assert.True(_vm.VisibleRows.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
-        Assert.Contains(_vm.VisibleRows, row => Score(row, 0) is null);
+        Assert.True(_vm.RowOrder.SkipWhile(row => Score(row, 0) is not null).All(row => Score(row, 0) is null));
+        Assert.Contains(_vm.RowOrder, row => Score(row, 0) is null);
     }
 
     [Fact]
@@ -184,23 +184,45 @@ public sealed class HeroTraitsTests : IDisposable
     }
 
     [Fact]
-    public void TheFilterHidesHeroesAndEntrySkipsThem()
+    public void TheSearchPicksOutHeroesWithoutHidingAnyAndEntryStillWalksAllOfThem()
     {
+        List<string> Matched() => _vm.MatchedRows!.Select(row => _vm.Heroes[row].HeroName).ToList();
+        var everyone = _vm.RowOrder.ToList();
+        Assert.Null(_vm.MatchedRows);
+
         // A fuzzy match: a run of letters or the starts of words.
         _vm.FilterText = "  LG ";
-        Assert.Equal(["Lady Geist"], _vm.VisibleRows.Select(row => _vm.Heroes[row].HeroName));
+        Assert.Equal(["Lady Geist"], Matched());
         _vm.FilterText = "  LA ";
-        var shown = _vm.VisibleRows.Select(row => _vm.Heroes[row].HeroName).ToList();
-        Assert.Contains("Lash", shown);
-        Assert.Contains("Lady Geist", shown);
-        Assert.DoesNotContain("Holliday", shown);
+        var matched = Matched();
+        Assert.Contains("Lash", matched);
+        Assert.Contains("Lady Geist", matched);
+        Assert.DoesNotContain("Holliday", matched);
+        Assert.Equal(everyone, _vm.RowOrder);
 
-        _vm.CurrentRow = _vm.VisibleRows[0];
+        _vm.CurrentRow = _vm.RowOrder[0];
         Type("33");
-        Assert.Equal(_vm.VisibleRows[1], _vm.CurrentRow);
+        Assert.Equal(_vm.RowOrder[1], _vm.CurrentRow);
+
+        _vm.FilterText = "   ";
+        Assert.Null(_vm.MatchedRows);
     }
 
-    private List<double?> ShownScores(int column) => _vm.VisibleRows.Select(row => Score(row, column)).ToList();
+    [Fact]
+    public void OpeningACellTheSearchHasFadedClearsTheSearch()
+    {
+        _vm.FilterText = "LG";
+        var faded = _vm.Heroes.First(hero => hero.HeroName == "Haze");
+        _vm.OpenCell(new TraitCell(faded.HeroId, _vm.Categories[1].CategoryId));
+        Assert.Equal("", _vm.FilterText);
+        Assert.Equal(("Haze", 1), (_vm.Heroes[_vm.CurrentRow].HeroName, _vm.CurrentColumn));
+
+        _vm.FilterText = "Haze";
+        _vm.OpenCell(new TraitCell(faded.HeroId, _vm.Categories[2].CategoryId));
+        Assert.Equal("Haze", _vm.FilterText);
+    }
+
+    private List<double?> ShownScores(int column) => _vm.RowOrder.Select(row => Score(row, column)).ToList();
 
     /// <summary>The scores that are rated, the unrated heroes having gathered after them.</summary>
     private static List<double> Rated(List<double?> scores)
@@ -214,14 +236,14 @@ public sealed class HeroTraitsTests : IDisposable
     public void SortingCyclesHighestFirstThenLowestFirstThenByName()
     {
         _vm.CurrentColumn = 3;
-        var byName = _vm.VisibleRows.ToList();
+        var byName = _vm.RowOrder.ToList();
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
         var descending = Rated(ShownScores(SignedColumn));
         Assert.Equal(descending.OrderDescending(), descending);
-        Assert.Equal((_vm.VisibleRows[0], SignedColumn), (_vm.CurrentRow, _vm.CurrentColumn));
+        Assert.Equal((_vm.RowOrder[0], SignedColumn), (_vm.CurrentRow, _vm.CurrentColumn));
         // Ties keep name order.
-        Assert.All(_vm.VisibleRows.Zip(_vm.VisibleRows.Skip(1)), pair =>
+        Assert.All(_vm.RowOrder.Zip(_vm.RowOrder.Skip(1)), pair =>
             Assert.True(Score(pair.First, SignedColumn) != Score(pair.Second, SignedColumn) || pair.First < pair.Second));
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
@@ -230,18 +252,18 @@ public sealed class HeroTraitsTests : IDisposable
 
         _vm.SortCommand.Execute(SignedColumn).Subscribe();
         Assert.Equal(-1, _vm.SortColumn);
-        Assert.Equal(byName, _vm.VisibleRows);
+        Assert.Equal(byName, _vm.RowOrder);
     }
 
     [Fact]
     public void EntryFollowsTheSortedOrderAndEditsDoNotReSort()
     {
         _vm.SortCommand.Execute(0).Subscribe();
-        var order = _vm.VisibleRows.ToList();
+        var order = _vm.RowOrder.ToList();
 
         Type("0");
         Assert.Equal(order[1], _vm.CurrentRow);
-        Assert.Equal(order, _vm.VisibleRows);
+        Assert.Equal(order, _vm.RowOrder);
 
         Press(Key.Up);
         Assert.Equal(order[0], _vm.CurrentRow);
@@ -250,13 +272,13 @@ public sealed class HeroTraitsTests : IDisposable
     }
 
     [Fact]
-    public void TheFilterKeepsTheSortedOrder()
+    public void TheSearchLeavesTheSortedOrderAlone()
     {
         _vm.SortCommand.Execute(0).Subscribe();
+        var order = _vm.RowOrder.ToList();
         _vm.FilterText = "a";
-        var shown = Rated(ShownScores(0));
-        Assert.NotEmpty(shown);
-        Assert.Equal(shown.OrderDescending(), shown);
+        Assert.NotEmpty(_vm.MatchedRows!);
+        Assert.Equal(order, _vm.RowOrder);
     }
 
     [Fact]

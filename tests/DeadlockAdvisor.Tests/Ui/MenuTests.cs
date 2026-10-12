@@ -337,7 +337,7 @@ public class MenuTests
         Assert.Equal(cell.CategoryId, traits.Categories[traits.CurrentColumn].CategoryId);
         var scroller = ui.Window.HeroTraitsPage.Scroller;
         var grid = ui.Window.HeroTraitsPage.Grid;
-        var row = grid.TranslatePoint(new Point(0, TraitGrid.RowHeight * traits.VisibleRows.ToList().IndexOf(traits.CurrentRow)), scroller)!.Value;
+        var row = grid.TranslatePoint(new Point(0, TraitGrid.RowHeight * traits.RowOrder.ToList().IndexOf(traits.CurrentRow)), scroller)!.Value;
         Assert.InRange(row.Y, 0, scroller.Viewport.Height);
     }
 
@@ -394,8 +394,8 @@ public class MenuTests
         var shown = RightClick(ui.Window, grid, nameOfSecond);
 
         Assert.Equal(["Copy traits from...", "Clear all traits...", WikiMenuItem.HeroText], shown.Select(item => item.Header));
-        Assert.Equal(page.Heroes[page.VisibleRows[1]].HeroName, shown.OfType<WikiMenuItem>().Single().Page);
-        Assert.Equal(page.VisibleRows[1], page.CurrentRow);
+        Assert.Equal(page.Heroes[page.RowOrder[1]].HeroName, shown.OfType<WikiMenuItem>().Single().Page);
+        Assert.Equal(page.RowOrder[1], page.CurrentRow);
     }
 
     [AvaloniaFact]

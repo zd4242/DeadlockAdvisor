@@ -72,11 +72,14 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     [Reactive] public IReadOnlyList<Hero> Heroes { get; private set; } = [];
     [Reactive] public IReadOnlyList<Category> Categories { get; private set; } = [];
 
-    /// <summary>Every index into <see cref="Heroes"/> in the sorted order, hidden ones included; the stripes follow it.</summary>
+    /// <summary>Every index into <see cref="Heroes"/> in the sorted order, top to bottom.</summary>
     [Reactive] public IReadOnlyList<int> RowOrder { get; private set; } = [];
 
-    /// <summary>Indices into <see cref="Heroes"/> the filter lets through, in the sorted order.</summary>
-    [Reactive] public IReadOnlyList<int> VisibleRows { get; private set; } = [];
+    /// <summary>
+    /// The indices the search matches, which the grid picks out while the rest fade; null while
+    /// the search is empty. Every hero stays on the grid either way.
+    /// </summary>
+    [Reactive] public IReadOnlySet<int>? MatchedRows { get; private set; }
 
     /// <summary>The trait the heroes are sorted by, or -1 for by name.</summary>
     [Reactive] public int SortColumn { get; private set; } = -1;
@@ -115,14 +118,14 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     public void FocusSearch() => RequestViewAction(FocusSearchAction);
 
-    /// <summary>Select a cell from outside the grid, first clearing the filter if it's hiding the hero.</summary>
+    /// <summary>Select a cell from outside the grid, first clearing the search if it's faded the hero out.</summary>
     public void OpenCell(TraitCell cell)
     {
         var row = Heroes.ToList().FindIndex(hero => hero.HeroId == cell.HeroId);
         var column = Categories.ToList().FindIndex(category => category.CategoryId == cell.CategoryId);
         if (row < 0 || column < 0)
             return;
-        if (Position(row) < 0)
+        if (MatchedRows?.Contains(row) == false)
             FilterText = "";
         MoveTo(row, column);
     }
@@ -254,7 +257,7 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         {
             CommitPending();
             // Enter drops to the next hero, same trait, without wrapping.
-            if (NextVisibleRow(row) is { } below)
+            if (NextRow(row) is { } below)
                 CurrentRow = below;
             return true;
         }
@@ -272,10 +275,10 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         switch (key)
         {
             case Key.Up:
-                MoveTo(PreviousVisibleRow(row) ?? row, column);
+                MoveTo(PreviousRow(row) ?? row, column);
                 return true;
             case Key.Down:
-                MoveTo(NextVisibleRow(row) ?? row, column);
+                MoveTo(NextRow(row) ?? row, column);
                 return true;
             case Key.Left:
                 MoveTo(row, Math.Max(0, column - 1));
@@ -284,25 +287,25 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
                 MoveTo(row, Math.Min(last, column + 1));
                 return true;
             case Key.Home:
-                MoveTo(control ? VisibleRows.FirstOrDefault(row) : row, 0);
+                MoveTo(control ? RowOrder.FirstOrDefault(row) : row, 0);
                 return true;
             case Key.End:
-                MoveTo(control ? VisibleRows.LastOrDefault(row) : row, last);
+                MoveTo(control ? RowOrder.LastOrDefault(row) : row, last);
                 return true;
             case Key.PageUp:
             case Key.PageDown:
-                MoveTo(StepVisibleRows(row, key == Key.PageDown ? PageRows : -PageRows), column);
+                MoveTo(StepRows(row, key == Key.PageDown ? PageRows : -PageRows), column);
                 return true;
             case Key.Tab when shift:
                 if (column > 0)
                     MoveTo(row, column - 1);
-                else if (PreviousVisibleRow(row) is { } above)
+                else if (PreviousRow(row) is { } above)
                     MoveTo(above, last);
                 return true;
             case Key.Tab:
                 if (column < last)
                     MoveTo(row, column + 1);
-                else if (NextVisibleRow(row) is { } below)
+                else if (NextRow(row) is { } below)
                     MoveTo(below, 0);
                 return true;
             default:
@@ -318,10 +321,10 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
     /// </summary>
     private void Advance(int row, int column)
     {
-        if (NextVisibleRow(row) is { } below)
+        if (NextRow(row) is { } below)
             MoveTo(below, column);
-        else if (column + 1 < Categories.Count && VisibleRows.Count > 0)
-            MoveTo(VisibleRows[0], column + 1);
+        else if (column + 1 < Categories.Count && RowOrder.Count > 0)
+            MoveTo(RowOrder[0], column + 1);
     }
 
     /// <summary>True once another digit could only overshoot the trait's scale: the moment a number commits itself.</summary>
@@ -356,35 +359,34 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     // -- rows ---------------------------------------------------------------------
 
-    /// <summary>Where <paramref name="row"/> sits on screen, or -1 if the filter hides it.</summary>
+    /// <summary>Where <paramref name="row"/> sits on screen, or -1 if it isn't a hero.</summary>
     private int Position(int row)
     {
-        for (var position = 0; position < VisibleRows.Count; position++)
+        for (var position = 0; position < RowOrder.Count; position++)
         {
-            if (VisibleRows[position] == row)
+            if (RowOrder[position] == row)
                 return position;
         }
         return -1;
     }
 
-    /// <summary>The row shown below <paramref name="row"/>, or the top one when the filter hides it.</summary>
-    private int? NextVisibleRow(int row)
+    private int? NextRow(int row)
     {
         var below = Position(row) + 1;
-        return below < VisibleRows.Count ? VisibleRows[below] : null;
+        return below < RowOrder.Count ? RowOrder[below] : null;
     }
 
-    private int? PreviousVisibleRow(int row)
+    private int? PreviousRow(int row)
     {
         var above = Position(row) - 1;
-        return above >= 0 ? VisibleRows[above] : null;
+        return above >= 0 ? RowOrder[above] : null;
     }
 
-    private int StepVisibleRows(int row, int step)
+    private int StepRows(int row, int step)
     {
-        if (VisibleRows.Count == 0)
+        if (RowOrder.Count == 0)
             return row;
-        return VisibleRows[Math.Clamp(Math.Max(0, Position(row)) + step, 0, VisibleRows.Count - 1)];
+        return RowOrder[Math.Clamp(Math.Max(0, Position(row)) + step, 0, RowOrder.Count - 1)];
     }
 
     /// <summary>Highest first, then lowest first, then a third click on the same trait clears back to by name.</summary>
@@ -399,10 +401,9 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
         else
             (SortColumn, SortDescending) = (-1, false);
         Reorder();
-        ApplyFilter();
         // Straight to the top of the sorted trait, ready to read or rate down it.
-        if (VisibleRows.Count > 0)
-            MoveTo(VisibleRows[0], column);
+        if (RowOrder.Count > 0)
+            MoveTo(RowOrder[0], column);
     }
 
     /// <summary>
@@ -426,7 +427,9 @@ public class HeroTraitsViewModel : ViewModelBase, ISearchablePage
 
     private void ApplyFilter()
     {
-        VisibleRows = RowOrder.Where(row => FuzzyMatch.Score(FilterText, Heroes[row].HeroName) is not null).ToList();
+        MatchedRows = string.IsNullOrWhiteSpace(FilterText)
+            ? null
+            : Enumerable.Range(0, Heroes.Count).Where(row => FuzzyMatch.Score(FilterText, Heroes[row].HeroName) is not null).ToHashSet();
     }
 
     // -- toolbar ------------------------------------------------------------------

@@ -39,15 +39,17 @@ public class RowMenuRequestedEventArgs(RoutedEvent routedEvent, int row) : Route
 /// </summary>
 public class TraitGrid : ScrollingGrid
 {
-    public const double ColumnWidth = 44;
-    public const double RowHeight = 30;
-    public const double RowHeaderWidth = 160;
+    public const double ColumnWidth = 40;
+    public const double RowHeight = 28;
+    public const double RowHeaderWidth = 122;
     private const double _headerFontSize = 12;
     private const double _maxHeaderHeight = 150;
     // Distance along the slant from the column's foot to the text: half a line at least, so the
     // text's lower corner clears the bottom edge.
-    private const double _textPad = 10;
+    private const double _textPad = 8;
     private const double _portrait = 18;
+    // How far the rows a search doesn't match fade into the background.
+    private const byte _dimAlpha = 190;
     // Along the slant, between the end of the sorted trait's label and its arrow.
     private const double _arrowGap = 5;
     private static readonly double _sin45 = Math.Sqrt(0.5);
@@ -62,8 +64,8 @@ public class TraitGrid : ScrollingGrid
     public static readonly StyledProperty<IReadOnlyList<int>> RowOrderProperty =
         AvaloniaProperty.Register<TraitGrid, IReadOnlyList<int>>(nameof(RowOrder), []);
 
-    public static readonly StyledProperty<IReadOnlyList<int>> VisibleRowsProperty =
-        AvaloniaProperty.Register<TraitGrid, IReadOnlyList<int>>(nameof(VisibleRows), []);
+    public static readonly StyledProperty<IReadOnlySet<int>?> MatchedRowsProperty =
+        AvaloniaProperty.Register<TraitGrid, IReadOnlySet<int>?>(nameof(MatchedRows));
 
     public static readonly StyledProperty<Func<string, string, double?>?> ValueOfProperty =
         AvaloniaProperty.Register<TraitGrid, Func<string, string, double?>?>(nameof(ValueOf));
@@ -88,16 +90,17 @@ public class TraitGrid : ScrollingGrid
         RoutedEvent.Register<TraitGrid, RowMenuRequestedEventArgs>("RowMenuRequested", RoutingStrategies.Bubble);
 
     private Dictionary<int, int> _displayIndex = [];
-    private Dictionary<int, int> _orderIndex = [];
     private double _headerHeight = 60;
+    // How far the last labels lean past the last column.
+    private double _overhang;
     private int _hoverColumn = -1;
     private int _hoverRow = -1;
     private object? _tipKey;
 
     static TraitGrid()
     {
-        AffectsMeasure<TraitGrid>(HeroesProperty, CategoriesProperty, VisibleRowsProperty);
-        AffectsRender<TraitGrid>(RowOrderProperty, ValueOfProperty, CurrentRowProperty, CurrentColumnProperty, PendingTextProperty,
+        AffectsMeasure<TraitGrid>(HeroesProperty, CategoriesProperty, RowOrderProperty);
+        AffectsRender<TraitGrid>(MatchedRowsProperty, ValueOfProperty, CurrentRowProperty, CurrentColumnProperty, PendingTextProperty,
             RevisionProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
     }
 
@@ -113,18 +116,21 @@ public class TraitGrid : ScrollingGrid
         set => SetValue(CategoriesProperty, value);
     }
 
-    /// <summary>Every index into <see cref="Heroes"/> in the sorted order, hidden ones included; the stripes follow it.</summary>
+    /// <summary>Every index into <see cref="Heroes"/>, top to bottom.</summary>
     public IReadOnlyList<int> RowOrder
     {
         get => GetValue(RowOrderProperty);
         set => SetValue(RowOrderProperty, value);
     }
 
-    /// <summary>Indices into <see cref="Heroes"/> to show, in order.</summary>
-    public IReadOnlyList<int> VisibleRows
+    /// <summary>
+    /// The heroes a search matches, which stand out while the rest fade back; null when there's no
+    /// search. A change scrolls to the first match if none is on screen.
+    /// </summary>
+    public IReadOnlySet<int>? MatchedRows
     {
-        get => GetValue(VisibleRowsProperty);
-        set => SetValue(VisibleRowsProperty, value);
+        get => GetValue(MatchedRowsProperty);
+        set => SetValue(MatchedRowsProperty, value);
     }
 
     /// <summary>(hero id, category id) → stored score, or null when the hero isn't rated on the trait.</summary>
@@ -166,19 +172,21 @@ public class TraitGrid : ScrollingGrid
     {
         base.OnPropertyChanged(change);
         if (change.Property == RowOrderProperty)
-            _orderIndex = IndexOf(RowOrder);
-        else if (change.Property == VisibleRowsProperty)
-            _displayIndex = IndexOf(VisibleRows);
+            _displayIndex = IndexOf(RowOrder);
         else if (change.Property == CategoriesProperty)
-            _headerHeight = FitHeaderHeight();
+            FitHeader();
 
-        // A sort or filter moves the current cell as surely as the keys do.
-        if (change.Property == CurrentRowProperty || change.Property == CurrentColumnProperty || change.Property == VisibleRowsProperty)
+        // A sort moves the current cell as surely as the keys do.
+        if (change.Property == CurrentRowProperty || change.Property == CurrentColumnProperty || change.Property == RowOrderProperty)
         {
             ScrollIntoView(() => CellRect(CurrentRow, CurrentColumn) is { } cell
                 // Grown by the pinned headers, so the cell lands clear of them rather than under them.
                 ? new Rect(cell.X - RowHeaderWidth, cell.Y - _headerHeight, cell.Width + RowHeaderWidth, cell.Height + _headerHeight)
                 : null);
+        }
+        else if (change.Property == MatchedRowsProperty)
+        {
+            ScrollIntoView(FirstMatchOffScreen);
         }
     }
 
@@ -186,26 +194,56 @@ public class TraitGrid : ScrollingGrid
     private static Dictionary<int, int> IndexOf(IReadOnlyList<int> rows) =>
         rows.Select((row, index) => (row, index)).ToDictionary(pair => pair.row, pair => pair.index);
 
+    /// <summary>The first match's row, grown by the pinned header, unless a match is already showing.</summary>
+    private Rect? FirstMatchOffScreen()
+    {
+        if (MatchedRows is not { Count: > 0 } matched)
+            return null;
+        var view = ViewRect;
+        var shown = new Rect(view.X, view.Y + _headerHeight, view.Width, Math.Max(0, view.Height - _headerHeight));
+        Rect? first = null;
+        for (var display = 0; display < RowOrder.Count; display++)
+        {
+            if (!matched.Contains(RowOrder[display]))
+                continue;
+            var rect = new Rect(view.X, RowY(display), 1, RowHeight);
+            if (rect.Intersects(shown))
+                return null;
+            first ??= new Rect(rect.X, rect.Y - _headerHeight, rect.Width, rect.Height + _headerHeight);
+        }
+        return first;
+    }
+
     // -- geometry -------------------------------------------------------------------
 
+    private static double HeaderLineHeight() => Fonts.Text("Ag", _headerFontSize, Palette.Text, bold: true).Height;
+
     /// <summary>
-    /// Along the slant: padding, the longest label and room for a sort arrow after it, half a line
-    /// for the far top corner, a little air. At 45° that run rises by run × sin 45°.
+    /// Sizes the slanted header to the longest label, then the grid's width to how far the labels
+    /// actually lean past the last column, so there's no empty triangle beyond the data.
     /// </summary>
-    private double FitHeaderHeight()
+    private void FitHeader()
     {
-        var longest = Categories.Select(category => Fonts.Text(Label(category), _headerFontSize, Palette.Text, bold: true).Width)
-            .DefaultIfEmpty(80).Max();
-        var line = Fonts.Text("Ag", _headerFontSize, Palette.Text, bold: true).Height;
-        var run = _textPad + longest + _arrowGap + SortArrowSize + line / 2 + 6;
-        return Math.Min(_maxHeaderHeight, Math.Ceiling(run * _sin45));
+        var line = HeaderLineHeight();
+        var widths = Categories.Select(category => Fonts.Text(Label(category), _headerFontSize, Palette.Text, bold: true).Width).ToList();
+        // Along the slant: padding, the label and room for a sort arrow after it, half a line for the far top corner, a little air.
+        double Run(double text) => _textPad + text + _arrowGap + SortArrowSize + line / 2 + 4;
+        _headerHeight = Math.Min(_maxHeaderHeight, Math.Ceiling(Run(widths.DefaultIfEmpty(80).Max()) * _sin45));
+
+        var room = TextRoom(_headerHeight, line);
+        var reach = widths
+            .Select((width, column) => ColumnX(column) + ColumnWidth / 2 + Run(Math.Min(width, room)) * _sin45)
+            .DefaultIfEmpty(0).Max();
+        _overhang = Math.Max(0, Math.Ceiling(reach - ColumnX(Categories.Count)));
     }
+
+    /// <summary>The longest text along the slant that still ends inside a strip <paramref name="height"/> tall.</summary>
+    private static double TextRoom(double height, double line) => height / _sin45 - _textPad - line / 2;
 
     private static string Label(Category category) => category.ShortName + (category.IsSigned ? " ±" : "");
 
     protected override Size MeasureGrid(Size availableSize) =>
-        // The last labels lean past the last column, so the width leaves room for their overhang.
-        new(RowHeaderWidth + Categories.Count * ColumnWidth + _headerHeight, _headerHeight + VisibleRows.Count * RowHeight);
+        new(ColumnX(Categories.Count) + _overhang, _headerHeight + RowOrder.Count * RowHeight);
 
     private static double ColumnX(int column) => RowHeaderWidth + column * ColumnWidth;
 
@@ -243,9 +281,9 @@ public class TraitGrid : ScrollingGrid
         }
 
         var display = (int)Math.Floor((point.Y - _headerHeight) / RowHeight);
-        if (display < 0 || display >= VisibleRows.Count)
+        if (display < 0 || display >= RowOrder.Count)
             return (Region.None, -1, -1);
-        var row = VisibleRows[display];
+        var row = RowOrder[display];
         if (inRowHeader)
             return (Region.RowHeader, row, -1);
 
@@ -397,7 +435,7 @@ public class TraitGrid : ScrollingGrid
         var cells = new Rect(view.X + RowHeaderWidth, view.Y + _headerHeight,
             Math.Max(0, view.Width - RowHeaderWidth), Math.Max(0, view.Height - _headerHeight));
         var firstDisplay = Math.Max(0, (int)Math.Floor((cells.Top - _headerHeight) / RowHeight));
-        var lastDisplay = Math.Min(VisibleRows.Count - 1, (int)Math.Floor((cells.Bottom - _headerHeight) / RowHeight));
+        var lastDisplay = Math.Min(RowOrder.Count - 1, (int)Math.Floor((cells.Bottom - _headerHeight) / RowHeight));
         var firstColumn = Math.Max(0, (int)Math.Floor((cells.Left - RowHeaderWidth) / ColumnWidth));
         var lastColumn = Math.Min(Categories.Count - 1, (int)Math.Floor((cells.Right - RowHeaderWidth) / ColumnWidth));
 
@@ -406,21 +444,49 @@ public class TraitGrid : ScrollingGrid
             for (var display = firstDisplay; display <= lastDisplay; display++)
             {
                 for (var column = firstColumn; column <= lastColumn; column++)
-                    PaintCell(context, VisibleRows[display], display, column);
+                    PaintCell(context, RowOrder[display], display, column);
             }
         }
 
         using (context.PushClip(new Rect(view.X, cells.Y, RowHeaderWidth, cells.Height)))
         {
             for (var display = firstDisplay; display <= lastDisplay; display++)
-                PaintRowHeader(context, VisibleRows[display], new Rect(view.X, RowY(display), RowHeaderWidth, RowHeight));
+                PaintRowHeader(context, RowOrder[display], new Rect(view.X, RowY(display), RowHeaderWidth, RowHeight));
         }
 
-        using (context.PushClip(new Rect(cells.X, view.Y, cells.Width, _headerHeight)))
+        if (MatchedRows is { } matched)
+            PaintSearchFocus(context, view, cells, firstDisplay, lastDisplay, matched);
+
+        // The strips lean past the last column's label, so the right-hand edge is cut at the grid's own width.
+        var headerRight = Math.Min(view.Right, Bounds.Width);
+        using (context.PushClip(new Rect(cells.X, view.Y, Math.Max(0, headerRight - cells.X), _headerHeight)))
             PaintColumnHeader(context, view);
 
         var border = new Pen(new SolidColorBrush(Palette.Border), 1);
         context.DrawLine(border, new Point(view.X, view.Y + _headerHeight - 0.5), new Point(view.Right, view.Y + _headerHeight - 0.5));
+    }
+
+    /// <summary>Fade the rows a search doesn't match, and frame the ones it does, the hero's name included.</summary>
+    private void PaintSearchFocus(DrawingContext context, Rect view, Rect cells, int firstDisplay, int lastDisplay, IReadOnlySet<int> matched)
+    {
+        var right = Math.Min(view.Right, ColumnX(Categories.Count));
+        var dim = new SolidColorBrush(Palette.WithAlpha(Palette.Surface, _dimAlpha));
+        var frame = new Pen(new SolidColorBrush(Palette.Accent), 1.5);
+        var bar = new SolidColorBrush(Palette.Accent);
+        using (context.PushClip(new Rect(view.X, cells.Y, Math.Max(0, right - view.X), cells.Height)))
+        {
+            for (var display = firstDisplay; display <= lastDisplay; display++)
+            {
+                var row = new Rect(view.X, RowY(display), right - view.X, RowHeight);
+                if (!matched.Contains(RowOrder[display]))
+                {
+                    context.FillRectangle(dim, row);
+                    continue;
+                }
+                context.DrawRectangle(frame, row.Deflate(0.75));
+                context.FillRectangle(bar, new Rect(row.X, row.Y, 4, row.Height));
+            }
+        }
     }
 
     private void PaintCell(DrawingContext context, int row, int display, int column)
@@ -433,8 +499,7 @@ public class TraitGrid : ScrollingGrid
         var limit = Math.Max(Math.Abs(category.ScaleMin), Math.Abs(category.ScaleMax));
         var current = row == CurrentRow && column == CurrentColumn;
 
-        // Alternate by the hero's place in the full sorted list, not on screen, so stripes don't jump as rows hide.
-        HeatCell.Paint(context, rect, value, limit, alternate: _orderIndex.GetValueOrDefault(row) % 2 == 1, selected: current);
+        HeatCell.Paint(context, rect, value, limit, alternate: display % 2 == 1, selected: current);
 
         var border = new Pen(new SolidColorBrush(Palette.Border), 1);
         context.DrawLine(border, new Point(rect.Right - 0.5, rect.Top), new Point(rect.Right - 0.5, rect.Bottom));
@@ -466,7 +531,8 @@ public class TraitGrid : ScrollingGrid
         ArtPainter.Draw(context, this, ArtKind.Hero, hero.HeroId, hero.HeroName, portrait, radius: 4);
         left += _portrait + 8;
 
-        var name = Fonts.Text(hero.HeroName, 11, selected ? Palette.Accent : hovered ? Palette.Text : Palette.TextDim, bold: selected);
+        var matched = MatchedRows?.Contains(row) == true;
+        var name = Fonts.Text(hero.HeroName, 11, selected ? Palette.Accent : hovered || matched ? Palette.Text : Palette.TextDim, bold: selected || matched);
         name.MaxTextWidth = Math.Max(1, rect.Right - left - 6);
         name.MaxLineCount = 1;
         name.Trimming = TextTrimming.CharacterEllipsis;
@@ -478,9 +544,7 @@ public class TraitGrid : ScrollingGrid
         var height = _headerHeight;
         var top = view.Y;
         var bottom = top + height;
-        var line = Fonts.Text("Ag", _headerFontSize, Palette.Text, bold: true).Height;
-        // Longest text that still ends inside the strip.
-        var room = height / _sin45 - _textPad - line / 2;
+        var room = TextRoom(height, HeaderLineHeight());
         var edge = new Pen(new SolidColorBrush(Palette.Border), 1);
 
         for (var column = 0; column < Categories.Count; column++)

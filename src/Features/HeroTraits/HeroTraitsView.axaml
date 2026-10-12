@@ -14,7 +14,7 @@
             <controls:SearchBox Grid.Column="1"
                                 x:Name="SearchBox"
                                 Width="200"
-                                Watermark="Filter heroes..."
+                                Watermark="Find heroes..."
                                 Text="{Binding FilterText}"/>
             <Button Grid.Column="2"
                     Margin="8,0,0,0"
@@ -53,7 +53,7 @@
                                       Heroes="{Binding Heroes}"
                                       Categories="{Binding Categories}"
                                       RowOrder="{Binding RowOrder}"
-                                      VisibleRows="{Binding VisibleRows}"
+                                      MatchedRows="{Binding MatchedRows}"
                                       SortColumn="{Binding SortColumn}"
                                       SortDescending="{Binding SortDescending}"
                                       ValueOf="{Binding ValueOf}"
