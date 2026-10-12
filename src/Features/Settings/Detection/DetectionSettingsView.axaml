@@ -57,6 +57,10 @@
                                                    ToolTip.Tip="Click, then press the key the game's scoreboard is on. Delete goes back to Tab; Esc keeps it."/>
                     </StackPanel>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Keep the scoreboard captures"
+                                     Description="Save each scoreboard read of your match, the whole board down to the items, in the captures folder of your data folder, the latest 30 kept, as material for reading items. They show every player's name, so don't share them.">
+                    <ToggleSwitch IsChecked="{Binding KeepScoreboardCaptures}"/>
+                </settings:SettingRow>
             </StackPanel>
         </Border>
 

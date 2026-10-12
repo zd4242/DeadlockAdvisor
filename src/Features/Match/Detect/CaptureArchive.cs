@@ -21,6 +21,9 @@ public sealed record CaptureArchive(string Prefix, int Keep, string NoteExtensio
     /// <summary>Every applied detection, labelled with the heroes that were applied: the corpus detection is measured on.</summary>
     public static CaptureArchive Detections { get; } = new("detect", 60, ".json");
 
+    /// <summary>Every scoreboard read of the match being played, the whole 52% band (a few megabytes each), with the grid and heroes it was read as.</summary>
+    public static CaptureArchive Scoreboards { get; } = new("scoreboard", 30, ".json");
+
     /// <summary>Save the band and its note; returns the image's path, or null if it couldn't be written.</summary>
     public string? Save(string dataRoot, RgbImage band, DateTimeOffset at, string note)
     {

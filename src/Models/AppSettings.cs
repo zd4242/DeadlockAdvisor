@@ -75,6 +75,9 @@ public class AppSettings
     public bool ReadBuildsOnTab { get; set; }
     public string ScoreboardKey { get; set; } = "Tab";
 
+    // Keeps each scoreboard read's capture, the whole band, as material for reading items (they hold player names).
+    public bool KeepScoreboardCaptures { get; set; }
+
     // Your Steam account ID (SteamID3's number), which picks you out of an imported match.
     public long? SteamAccountId { get; set; }
 

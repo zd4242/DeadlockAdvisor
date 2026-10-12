@@ -114,7 +114,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 Where the user's files live: `%AppData%\DeadlockAdvisor` (or the folder in `DEADLOCK_ADVISOR_HOME`) holds `settings.json` and
 the logs (`deadlock-advisor.log`, `.previous.log`, `startup-error.log`); the **data root** (the same folder by default, or
 Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_counts/`, `model.json`), `assets/` (`heroes`, `items`,
-`ranks`, `topbar`, `art_manifest.json`) and `captures/` (kept Detect captures).
+`ranks`, `topbar`, `art_manifest.json`) and `captures/` (kept Detect and scoreboard captures).
 
 ## 4. Data and scoring flow
 
@@ -335,7 +335,7 @@ minimises or activates anything), reads it off the UI thread through `Scoreboard
 `NetWorthReader` as Detect, which calls it too) and, only when `RosterContinuity.IsSameMatch`, adds a net worth snapshot and calls
 `MatchViewModel.MatchUpdated`. A board not found is looked for once more 350 ms later; a key let go, another match, no match, a dialog or a
 read still running end it with one log line (`ScoreboardOutcome`). It shows nothing and plays nothing; `ScoreboardAction.OnRead` is where the
-item reader plugs in (roadmap WP26). The hero art is kept between presses until a folder under `assets/topbar` changes.
+item reader plugs in (roadmap WP26). With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, the latest 30): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
 
 `DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`

@@ -1,7 +1,10 @@
 using System.IO;
 using System.Reactive.Concurrency;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
+using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Vision;
@@ -57,6 +60,8 @@ public sealed class ScoreboardAction
 
     /// <summary>A second look, if the first found no board, about 600 ms after the key went down.</summary>
     public static readonly TimeSpan RetryDelay = TimeSpan.FromMilliseconds(350);
+
+    private static readonly JsonSerializerOptions _noteJson = new() { WriteIndented = true };
 
     private readonly IScoreboardKeyService _key;
     private readonly IScreenCaptureService _capture;
@@ -163,7 +168,25 @@ public sealed class ScoreboardAction
         changed();
         OnRead?.Invoke(match, read);
         _log.Information($"Scoreboard: read the board, net worth for {snapshot.Souls.Count} of 12 heroes");
+        if (_settings.Current.KeepScoreboardCaptures)
+            await KeepCaptureAsync(capture, detection);
         return ScoreboardOutcome.Read;
+    }
+
+    /// <summary>Keep the board as captured beside the grid and heroes it was read as: the material the item reader is built and measured on.</summary>
+    private async Task KeepCaptureAsync(ScreenCapture capture, Detection detection)
+    {
+        var note = new JsonObject
+        {
+            ["screen_width"] = capture.ScreenWidth,
+            ["screen_height"] = capture.ScreenHeight,
+            ["grid"] = detection.Geometry.ToJson(),
+            ["fit"] = detection.Fit,
+            ["heroes"] = new JsonArray(detection.Slots.Select(slot => (JsonNode?)slot.HeroId).ToArray()),
+        };
+        var at = DateTimeOffset.UtcNow;
+        var path = await Task.Run(() => CaptureArchive.Scoreboards.Save(_data.DataRoot, capture.Band, at, note.ToJsonString(_noteJson)));
+        _log.Information(path is null ? "Scoreboard: couldn't keep the capture" : $"Scoreboard: kept the capture in {path}");
     }
 
     /// <summary>The reference art, kept from one press to the next until something under the folder changes (a download, a learned portrait).</summary>

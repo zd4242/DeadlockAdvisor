@@ -471,7 +471,9 @@ you've already applied, and does nothing visible: no window, no sound, no
 focus change. A board that isn't your match's (or no match applied yet) is
 ignored. It's off until you turn it on; if you moved the scoreboard key in the
 game, set the same key there. The key still reaches the game, since the advisor
-only watches it.
+only watches it. *Keep the scoreboard captures* (also off) saves each board it
+read, down to the items, in the captures folder of your data folder (the latest
+30), for improving item reading; they show every player's name.
 
 If there's no scoreboard on screen (a lobby, a loading screen, a hidden
 HUD, or a game captured as a black screen by exclusive fullscreen or HDR),

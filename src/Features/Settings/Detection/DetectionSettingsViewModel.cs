@@ -126,6 +126,12 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
 
     public ReactiveCommand<Unit, Unit> ResetScoreboardKeyCommand { get; }
 
+    public bool KeepScoreboardCaptures
+    {
+        get => Current.KeepScoreboardCaptures;
+        set => Change(s => s.KeepScoreboardCaptures = value);
+    }
+
     [Reactive] public bool HasRememberedLayouts { get; private set; }
     [Reactive] public string RememberedLayouts { get; private set; } = "";
 

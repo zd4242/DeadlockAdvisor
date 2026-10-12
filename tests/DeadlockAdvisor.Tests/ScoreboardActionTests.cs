@@ -88,6 +88,44 @@ public sealed class ScoreboardActionTests : IDisposable
         Assert.False(_fixture.Modals.IsModalOpen);
     }
 
+    private string[] KeptCaptures() =>
+        Directory.Exists(Path.Combine(_fixture.Data.DataRoot, "captures"))
+            ? Directory.GetFiles(Path.Combine(_fixture.Data.DataRoot, "captures"), "scoreboard_*.png")
+            : [];
+
+    [Fact]
+    public async Task TheBoardIsKeptWithWhatWasReadOnlyWhenTheSettingIsOn()
+    {
+        WithArt();
+        _capture.Next = Capture();
+
+        await PressAsync(Applied(_heroes));
+        Assert.Empty(KeptCaptures());
+
+        _fixture.Settings.Update(s => s.KeepScoreboardCaptures = true);
+        Assert.Equal(ScoreboardOutcome.Read, await PressAsync(Applied(_heroes)));
+
+        var image = Assert.Single(KeptCaptures());
+        var note = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(Path.ChangeExtension(image, ".json")))!;
+        Assert.Equal(2560, (int)note["screen_width"]!);
+        Assert.Equal(_heroes, note["heroes"]!.AsArray().Select(hero => (string?)hero));
+        Assert.NotNull(Geometry.FromJson(note["grid"]!.AsObject()));
+        Assert.Equal(Capture().Band.Width, ImageFile.Load(image).Width);
+    }
+
+    [Fact]
+    public async Task ABoardThatIsntTheMatchesIsNotKept()
+    {
+        WithArt();
+        _fixture.Settings.Current.KeepScoreboardCaptures = true;
+        _capture.Next = Capture();
+
+        await PressAsync(Applied([.. _heroes.Reverse()]));
+        await PressAsync(new MatchState());
+
+        Assert.Empty(KeptCaptures());
+    }
+
     [Fact]
     public async Task ItWaitsForTheBoardToFadeInBeforeTakingTheCapture()
     {
