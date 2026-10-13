@@ -217,28 +217,54 @@ A copy of a **single-target** debuff can still buy uptime across the enemy team;
 ## What a hero has built
 
 A hero's `deals_bullet_damage_general` and `deals_spirit_damage_general` are their damage mix at their usual build ("Hero scores
-measured from match data"). A hero who has built mostly weapon items in this match is more of a bullet-damage hero than that, and one
-who has built spirit items more of a spirit-damage one, so the items that answer each follow (fire-rate and bullet-resist items against
-the first, spirit resist against the second). It needs no per-hero rule: it is measured against what the hero usually builds, so a hero
+measured from match data"). A hero who has built mostly items that push toward bullet damage in this match is more of a bullet-damage
+hero than that, and one who has built items that push toward spirit damage more of a spirit-damage one, so the items that answer each
+follow (fire-rate and bullet-resist items against the first, spirit resist against the second). It needs no per-hero rule: it is measured against what the hero usually builds, so a hero
 who builds the same every game barely moves and a flexible one moves a lot.
 
 ```
-usual(shop)  = share of the hero's item souls in the shop, from the downloaded purchase counts (HeroTypicalBuild)
-built(shop)  = share of the souls in the cells the scoreboard showed (a cell counts at its tier's cost: 800, 1600, 3200, 6400)
-lean         = (built − usual)(weapon) − (built − usual)(spirit)
+item lean    = what the item pushes its holder toward, -1 (spirit damage) to +1 (bullet damage)      (below)
+usual lean   = Σ cost × lean over what the hero usually buys ÷ Σ cost, from the downloaded purchase counts (HeroTypicalBuild)
+built lean   = the same over the cells the scoreboard showed (a cell counts at its tier's cost: 800, 1600, 3200, 6400)
+lean         = built lean − usual lean
 ramp         = clamp(souls in the cells ÷ FullRampSouls, 0, 1)
 bullet      += Alpha × ramp × lean            spirit −= Alpha × ramp × lean      (each kept inside the trait's scale)
 ```
 
+### What an item pushes toward (item leans)
+
+A lean is **worked out from the item's stats**, never typed per item (`DataStore.LeanOf`), so it follows patches:
+
+```
+lean(item) = clamp( Σ over the item's distinct stats and enemy debuffs: vote(key) × (conditional ? conditional_factor : 1),  −1, +1 )
+```
+
+- **The votes** are `stat_leans.csv` (`stat, lean, conditional_factor, note`; the sync never touches it): `BaseAttackDamagePercent`, fire rate and
+  bullet lifesteal vote toward bullet, spirit power, ability range and ability lifesteal toward spirit, the shop's own investment bonus
+  (`ShopWeaponDamage`, `ShopSpiritPower`) a quarter either way, and an enemy debuff on the other side of the shop: Bullet Resist reduction
+  votes bullet, Spirit Resist reduction spirit (`item_effects.csv`, once the sync has written it). A stat counts **once** however many times the
+  item has it, by presence and not size, so a patch that changes a number never moves an item and one that adds or removes a stat does. A stat
+  with no pointing (health, resists, movement, melee) has an explicit row of 0: a missing row means nobody has decided.
+- **The shop's colour** (weapon +1, spirit −1, vitality 0) stands in for an item the table has no vote on, and for every item when there is no table, so
+  an install without the file counts as before. A cell whose item the scoreboard didn't identify counts at the mean lean of its shop's items of
+  its tier (`CellScale`).
+- **An override** (`item_lean_overrides.csv`: `item_id, lean, reason`) replaces what the stats say, for an item whose stats mislead. Edit it on
+  Item Formulas → By Item (the *Damage lean* section: the value the stats give and which stats voted, *Auto / Bullet / Neither / Spirit* and the reason,
+  which is required); the stat table is edited in the file, then Data → Model Tools → Reload.
+- **Review** (Model Health report): the items whose stats send them away from their shop's damage type, with the votes that did it, the overrides with
+  their reasons (and the ones the stats now agree with), and the stats with no row in the table (`LeanReview`). `ItemLeanTests` checks that every stat
+  of the golden shop has a row.
+
 - **The usual build** counts each purchase at its tier's cost, over every match, each patch by its share of the weight in the lifts, as the
   build ratios do (a rank range doesn't change how a hero is built, and a thin one only adds noise). A hero with under
   `HeroTypicalBuild.MinPurchases` purchases has none, and with no counts the effect is off: never a guess.
-- **The built shares** come from `HeroBuild`'s cells: a cell with a category and a tier counts at that tier's cost, a cell whose tier wasn't
-  read at the median cost of its shop (`BuildShifts.MedianCosts`), a hidden or unseen cell not at all. The bars are not used.
+- **The built lean** comes from `HeroBuild`'s cells: a cell with a category and a tier counts at that tier's cost, a cell whose tier wasn't
+  read at the median cost of its shop (`CellScale`), a hidden or unseen cell not at all. The bars are not used.
 - **The ramp** keeps a small early inventory from swinging a score: the usual build is a whole match's average, and a hero with two items
   says little of where their damage will come from. `FullRampSouls` is typed (12,000, a third of a full late-game build).
 - **Alpha** is measured, not typed: how many points of damage share a player's mix moves per unit of lean, from finished matches
-  (`BuildShiftFit`, below). It is one number for every hero, a constant in `BuildShifts`. It isn't a model file: a changed number would
+  (`BuildShiftFit`, below). It is one number for every hero, a constant in `BuildShifts`; a change to the votes changes how big a lean is,
+  so re-measure it then. It isn't a model file: a changed number would
   reach installs only with a release or a published seed, and it should move with the measurement, not between them.
 - **Applying it.** The weight is linear in a hero's score, so the shifted weight is the matrix's plus `points × coefficient(item, trait,
   relation)` per shifted trait (`ItemScoring.Total`, using `WeightMatrix.Line`, which keeps whether the line is summed or a best-target one
@@ -265,13 +291,19 @@ bullet share (and the ability share) of their damage against their lean, with a 
 `mockups/build_shift_fit/report.md` and the rows (a match, a hero, damage by kind and item ids: no account), nothing else, and nothing is
 committed.
 
-**Result (2026-10-13, 120 matches of at least 20 minutes from the last week, 1,440 players, 41 heroes):** the bullet share of a player's damage
-to the other team moves **24.4 points** per unit of lean (95% interval 21.8 to 26.8) and the ability share **−27.3** (−29.4 to −25.1), so the
-damage mix does follow the investment, and the two measure the same thing from either side. `Alpha` is 26, inside both intervals. A player at
-the 5th to 95th percentile of lean (−0.43 to 0.57) moves their mix by about −11 to +15 points. Players who spent 12k to 24k by the end (102 of
-them) show a smaller slope (16.6, interval 8.7 to 28.0); the fit can't test the ramp itself, which is about a half-built inventory partway
-through a match, while the sample is final builds (1,335 of the 1,440 spent over 24k). `FullRampSouls` is therefore a judgement, to look at
-again when real scoreboard reads exist. Damage by kind is the matrix's `Bullet`, `Ability` and `Melee` rows to enemy heroes (they run 5% to
+**Result (2026-10-13, 400 matches of at least 20 minutes from the last week, 4,800 players, 41 heroes):** with the lean of each item from the
+stat table, the bullet share of a player's damage to the other team moves **32.9 points** per unit of lean (95% interval 31.3 to 34.6) and the
+ability share **−38.5** (−39.9 to −37.0), so the damage mix does follow what the build does. `Alpha` is 36, the mean of the two, since leans are
+smaller than the shop's ±1 (the same fit by shop colour alone gives 23.5 and −27.1). A player at the 5th to 95th percentile of lean (−0.28 to
+0.43) moves their mix by about −10 to +15 points. **Item leans against shop colour:** the lean accounts for 40.5% of the within-hero variance of the
+bullet share against 39.2% by colour, a gain of 0.014 (95% interval 0.000 to 0.029): better, but not by much, and the sample can't rule out no
+gain. Item leans are kept for what they can do that the colour can't (a spirit item that lowers Bullet Resist counts toward bullets), and
+fall back to the colour where the table has no vote. The report's *items whose buyers' damage mix runs against their lean* are the leads to
+work through (melee items such as Crushing Fists and Melee Charge, whose stats look like weapon items but whose buyers are melee heroes, and
+Colossus, Capacitor, Healing Tempo, Tesla Bullets): each is a vote to adjust or an override to write, then Alpha measured again. Players who
+spent 12k to 24k by the end (369 of the 4,800) show a smaller slope (25.2, interval 20.5 to 30.8); the fit can't test the ramp itself, which is
+about a half-built inventory partway through a match, while the sample is final builds (4,414 spent over 24k). `FullRampSouls` is therefore a
+judgement, to look at again when real scoreboard reads exist. Damage by kind is the matrix's `Bullet`, `Ability` and `Melee` rows to enemy heroes (they run 5% to
 30% over the match's own `player_damage` figure, which the source rows don't explain), and builds are every shop item bought, sold or not.
 Re-measure after a patch that reworks the shops or the heroes' damage, the way the hero scores are.
 

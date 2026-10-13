@@ -161,16 +161,18 @@ public sealed class DataStore
     {
         _itemLeans ??= [];
         if (!_itemLeans.TryGetValue(itemId, out var lean))
-            _itemLeans[itemId] = lean = WorkOutLean(itemId);
+        {
+            _itemLeans[itemId] = lean = ItemLeanOverrides.TryGetValue(itemId, out var fixedLean)
+                ? new ItemLean(Math.Clamp(fixedLean.Lean, -1.0, 1.0), LeanSource.Override, [])
+                : DerivedLeanOf(itemId);
+        }
         return lean;
     }
     private Dictionary<string, ItemLean>? _itemLeans;
 
-    private ItemLean WorkOutLean(string itemId)
+    /// <summary>What the stats and debuffs say, or the shop's colour; whatever an override says (<see cref="LeanOf"/>).</summary>
+    public ItemLean DerivedLeanOf(string itemId)
     {
-        if (ItemLeanOverrides.TryGetValue(itemId, out var fixedLean))
-            return new ItemLean(Math.Clamp(fixedLean.Lean, -1.0, 1.0), LeanSource.Override, []);
-
         var votes = new List<LeanVote>();
         var voted = new HashSet<string>();
         foreach (var stat in (ItemStats.GetValueOrDefault(itemId) ?? []).OrderBy(stat => stat.Conditional))
@@ -219,9 +221,9 @@ public sealed class DataStore
     /// How each hero usually divides their item souls among the shops (<see cref="HeroTypicalBuild"/>), from the same counts and patch
     /// weights as <see cref="BuildRatios"/>; empty without <see cref="MatchSegments"/>. Worked out when first asked for.
     /// </summary>
-    public IReadOnlyDictionary<string, IReadOnlyDictionary<ShopCategory, double>> TypicalBuilds =>
-        _typicalBuilds ??= HeroTypicalBuild.For(MatchSegments, Items.Values, MatchStatsMath.SegmentShares(MatchMeta));
-    private Dictionary<string, IReadOnlyDictionary<ShopCategory, double>>? _typicalBuilds;
+    public IReadOnlyDictionary<string, TypicalBuild> TypicalBuilds =>
+        _typicalBuilds ??= HeroTypicalBuild.For(MatchSegments, Items.Values, itemId => LeanOf(itemId).Lean, MatchStatsMath.SegmentShares(MatchMeta));
+    private Dictionary<string, TypicalBuild>? _typicalBuilds;
 
     /// <summary>The stat parts making up each stat-derived coefficient. Computed by <see cref="RebuildDerived"/>, never saved.</summary>
     public OrderedDictionary<CoefficientKey, List<StatPart>> Derived { get; set; } = [];

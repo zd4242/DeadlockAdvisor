@@ -32,10 +32,14 @@ public class ItemRowViewModel : ViewModelBase
     /// <summary>Any hand-typed rules, the ones clearing the item would delete.</summary>
     [Reactive] public bool HasRules { get; private set; }
 
+    /// <summary>The item's damage lean is fixed by hand rather than read off its stats.</summary>
+    [Reactive] public bool HasLeanOverride { get; private set; }
+
     public void RefreshRules(DataStore store)
     {
         var count = store.RuleCount(ItemId);
         (RulesText, RulesColor) = FormulaText.RulesBadge(count, store.DerivedRuleCount(ItemId));
         HasRules = count > 0;
+        HasLeanOverride = store.ItemLeanOverrides.ContainsKey(ItemId);
     }
 }

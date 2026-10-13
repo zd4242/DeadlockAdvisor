@@ -85,7 +85,7 @@
                     </ListBox.Styles>
                     <ListBox.ItemTemplate>
                         <DataTemplate x:DataType="byItem:ItemRowViewModel">
-                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto" Height="22">
+                            <Grid ColumnDefinitions="Auto,Auto,*,Auto,Auto,Auto" Height="22">
                                 <art:ArtImage Width="20"
                                               Height="20"
                                               Kind="Item"
@@ -103,6 +103,12 @@
                                            Text="{Binding Name}"/>
                                 <controls:Badge Grid.Column="3" Text="{Binding ShopText}" Color="{Binding ShopColor}"/>
                                 <controls:Badge Grid.Column="4" Margin="6,0,0,0" Text="{Binding RulesText}" Color="{Binding RulesColor}"/>
+                                <controls:Badge Grid.Column="5"
+                                                Margin="6,0,0,0"
+                                                Text="LEAN"
+                                                Color="{x:Static theme:Palette.Accent}"
+                                                IsVisible="{Binding HasLeanOverride}"
+                                                ToolTip.Tip="Its damage lean is fixed by hand"/>
                             </Grid>
                         </DataTemplate>
                     </ListBox.ItemTemplate>
@@ -287,6 +293,8 @@
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
+
+                                    <ContentControl Content="{Binding Lean}"/>
                                 </StackPanel>
                             </ScrollViewer>
                         </DockPanel>

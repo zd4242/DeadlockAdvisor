@@ -1,4 +1,5 @@
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Support;
 
@@ -190,6 +191,61 @@ public class ItemLeanTests
 
         Assert.Empty(store.StatLeans);
         Assert.Equal(1.0, store.LeanOf("hollow_point").Lean);
+    }
+
+    [Fact]
+    public void TheReviewListsItemsWhoseStatsSendThemAwayFromTheirShop()
+    {
+        var store = Store();
+        store.Items[Shredder] = store.Items[Shredder] with { Tier = 2 };
+
+        var lines = LeanReview.Lines(store);
+
+        Assert.Contains(lines, line => line.Contains("Items whose stats send them away from their shop", StringComparison.Ordinal));
+        Assert.Contains("  T2 Shredder (spirit): +0.50 from ShopSpiritPower label -0.25, BulletResistReduction +0.75", lines);
+        Assert.DoesNotContain(lines, line => line.Contains("Orb", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void TheReviewSaysWhichOverridesTheStatsNowAgreeWith()
+    {
+        var store = Store();
+        store.SetItemLean(Shredder, 0.5, "was needed before the effects were synced");
+        store.SetItemLean(Gun, -1.0, "its stats mislead");
+
+        var lines = LeanReview.Lines(store);
+
+        Assert.Contains("  Shredder: +0.50, \"was needed before the effects were synced\" (the stats say the same now: remove it)", lines);
+        Assert.Contains("  Gun: -1.00, \"its stats mislead\" (the stats say +0.50)", lines);
+    }
+
+    [Fact]
+    public void TheReviewNamesTheStatsNobodyHasVotedOn()
+    {
+        var store = Store();
+        store.ItemStats[Gun] = [.. store.ItemStats[Gun], Stat(Gun, "BrandNewStat")];
+        store.ItemStats[Orb] = [.. store.ItemStats[Orb], Stat(Orb, "BrandNewStat")];
+        store.ItemEffects[Orb] = [new ItemEffect(Orb, "NewDebuff", EffectScope.EnemyDebuff, 5), new ItemEffect(Orb, "NewAura", EffectScope.Aura, 5)];
+
+        var line = Assert.Single(LeanReview.Lines(store), line => line.StartsWith("Stats and debuffs with no row", StringComparison.Ordinal));
+
+        Assert.EndsWith(": BrandNewStat (2 items), NewDebuff (1 item)", line, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void WithNoTableAtAllTheReviewHasNothingToSay()
+    {
+        Assert.Empty(LeanReview.Lines(Store(withTable: false)));
+    }
+
+    [Fact]
+    public void TheModelHealthReportCarriesTheReview()
+    {
+        var store = Golden.LoadStore();
+
+        var lines = ModelHealth.Build(store, ItemScoring.BuildWeightMatrix(store)).Lines();
+
+        Assert.Contains(lines, line => line.Contains("damage type", StringComparison.Ordinal));
     }
 
     /// <summary>The golden shop, like a patch's: every stat an item has, or debuff it puts on enemies, has a vote in the table, even a vote of 0.</summary>

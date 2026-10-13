@@ -58,6 +58,7 @@ public class ByItemViewModel : ViewModelBase
         _data = data;
         _modals = modals;
         _settings = settings;
+        Lean = new ItemLeanViewModel(data, OnLeanChanged);
         TierPills = Enumerable.Range(0, 5).Select(tier => new TierPill(tier)).ToList();
         TierPills[0].Set(true);
 
@@ -94,6 +95,9 @@ public class ByItemViewModel : ViewModelBase
     // -- item list ------------------------------------------------------------------
 
     public ReadOnlyObservableCollection<ItemRowViewModel> Items => _items;
+
+    /// <summary>What the open item pushes its holder's damage toward, and the override that fixes it.</summary>
+    public ItemLeanViewModel Lean { get; }
     public IReadOnlyList<TierPill> TierPills { get; }
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public int TierFilter { get; private set; }
@@ -231,6 +235,7 @@ public class ByItemViewModel : ViewModelBase
             RulesHint = null;
             DerivedRules = [];
             Preview = null;
+            Lean.Show(null);
             return;
         }
         RenderDetail();
@@ -277,7 +282,14 @@ public class ByItemViewModel : ViewModelBase
                 store.OnBestTargets(itemId, rule.CategoryId, rule.Relation)))
             .ToList();
 
+        Lean.Show(item);
         RenderPreview();
+    }
+
+    private void OnLeanChanged(string itemId)
+    {
+        if (_rows.Lookup(itemId) is { HasValue: true } row)
+            row.Value.RefreshRules(_data.Store);
     }
 
     /// <summary>Outline the card the last add or edit landed on and ask the view to scroll to it; any later rebuild clears it.</summary>

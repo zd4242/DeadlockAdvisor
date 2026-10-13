@@ -81,9 +81,9 @@ public class BuildShiftTests
         var usual = WithCounts().TypicalBuilds;
 
         Assert.Equal(3, usual.Count);
-        AssertEx.Close(1.0 / 3, usual["generic"][ShopCategory.Weapon]);
-        AssertEx.Close(2.0 / 3, usual["heavy_spirit"][ShopCategory.Spirit]);
-        AssertEx.Close(1.0 / 6, usual["heavy_spirit"][ShopCategory.Vitality]);
+        AssertEx.Close(1.0 / 3, usual["generic"].Shares[ShopCategory.Weapon]);
+        AssertEx.Close(2.0 / 3, usual["heavy_spirit"].Shares[ShopCategory.Spirit]);
+        AssertEx.Close(1.0 / 6, usual["heavy_spirit"].Shares[ShopCategory.Vitality]);
     }
 
     [Fact]
@@ -110,7 +110,7 @@ public class BuildShiftTests
                 new System.Text.Json.Nodes.JsonObject { ["start"] = older.Patch.Start, ["share"] = 0.25 }),
         };
 
-        AssertEx.Close(0.75 * 0.25 + 0.25 * 0.5, store.TypicalBuilds["generic"][ShopCategory.Weapon]);
+        AssertEx.Close(0.75 * 0.25 + 0.25 * 0.5, store.TypicalBuilds["generic"].Shares[ShopCategory.Weapon]);
     }
 
     [Fact]
@@ -177,15 +177,15 @@ public class BuildShiftTests
     {
         var store = WithCounts();
         // Two tier 4 weapon cells are 12,800 souls: the whole ramp.
-        var full = BuildShifts.Shift(store, "generic", Cells(ShopCategory.Weapon, 4, 2), store.TypicalBuilds["generic"], BuildShifts.MedianCosts(store))!;
+        var full = BuildShifts.Shift(store, "generic", Cells(ShopCategory.Weapon, 4, 2), store.TypicalBuilds["generic"], CellScale.Of(store))!;
         Assert.Equal(1.0, full.Ramp);
         AssertEx.Close(BuildShifts.Alpha, full.PointsOn(Bullet));
 
         // A hero who usually builds none of either: a lean of 2 would be twice Alpha, and spirit can't go below its scale's 0 from 30.
-        var usual = new Dictionary<ShopCategory, double> { [ShopCategory.Weapon] = 0, [ShopCategory.Spirit] = 1, [ShopCategory.Vitality] = 0 };
-        var past = BuildShifts.Shift(store, "generic", Cells(ShopCategory.Weapon, 4, 2), usual, BuildShifts.MedianCosts(store))!;
+        var usual = new TypicalBuild(new Dictionary<ShopCategory, double> { [ShopCategory.Weapon] = 0, [ShopCategory.Spirit] = 1, [ShopCategory.Vitality] = 0 }, -1.0);
+        var past = BuildShifts.Shift(store, "generic", Cells(ShopCategory.Weapon, 4, 2), usual, CellScale.Of(store))!;
         AssertEx.Close(2.0, past.Lean);
-        AssertEx.Close(2 * BuildShifts.Alpha, past.PointsOn(Bullet));
+        AssertEx.Close(Math.Min(70, 2 * BuildShifts.Alpha), past.PointsOn(Bullet)); // 30 + 2 Alpha, or the scale's 100
         AssertEx.Close(-30, past.PointsOn(Spirit));
     }
 
@@ -206,7 +206,7 @@ public class BuildShiftTests
         var store = WithCounts();
         var unread = new HeroBuild([new BuildCell(0, CellKind.Item, ShopCategory.Weapon, null, null)], null, DateTimeOffset.UnixEpoch);
 
-        var shift = BuildShifts.Shift(store, "generic", unread, store.TypicalBuilds["generic"], BuildShifts.MedianCosts(store))!;
+        var shift = BuildShifts.Shift(store, "generic", unread, store.TypicalBuilds["generic"], CellScale.Of(store))!;
 
         // The store's weapon items are two of tier 1 (the irrelevant one and the gun) and two of tier 2: the upper median is 1,600.
         Assert.Equal(1600, shift.Spent);
@@ -239,6 +239,79 @@ public class BuildShiftTests
         // The explanation adds up to the score.
         var total = ItemScoring.ExplainItem(store, match, Counter, shifts: shifts).Sum(contribution => contribution.Amount);
         AssertEx.Close(Score(store, match, Counter, shifts), total);
+    }
+
+    private const string Shred = "shred_t1";
+
+    /// <summary>A spirit item whose stats say it lowers Bullet Resist (so +0.5 with the spirit shop's -0.25) and one whose spirit power is -0.5.</summary>
+    private static DataStore WithLeans()
+    {
+        var store = WithCounts();
+        store.Items[Shred] = new Item(Shred, "Shredder", "spirit", 1, GameId: 14);
+        store.ItemStats[Shred] = [new ItemStat(Shred, "ShopSpiritPower", "Spirit Power", 10, "", false)];
+        store.ItemEffects[Shred] = [new ItemEffect(Shred, "BulletResistReduction", EffectScope.EnemyDebuff, 10)];
+        store.ItemStats["orb_t1"] = [new ItemStat("orb_t1", "TechPower", "Spirit Power", 10, "", false)];
+        store.StatLeans["ShopSpiritPower"] = new StatLean("ShopSpiritPower", -0.25);
+        store.StatLeans["BulletResistReduction"] = new StatLean("BulletResistReduction", 0.75);
+        store.StatLeans["TechPower"] = new StatLean("TechPower", -0.5);
+        store.RebuildDerived();
+        return store;
+    }
+
+    private static HeroBuild Holding(string itemId, int tier, int count) => new(
+        Enumerable.Range(0, count).Select(cell => new BuildCell(cell, CellKind.Item, ShopCategory.Spirit, itemId, tier)).ToList(), null, DateTimeOffset.UnixEpoch);
+
+    [Fact]
+    public void TheUsualBuildLeansByWhatTheItemsDoNotTheirShop()
+    {
+        var store = WithLeans();
+
+        // A third of the souls each: weapon +1 (no stats: its shop), spirit -0.5 (its spirit power), vitality 0.
+        AssertEx.Close(1.0 / 6, store.TypicalBuilds["generic"].Lean);
+        // Without the table it is the shops' colour alone: +1 and -1 cancel.
+        Assert.Equal(0.0, WithCounts().TypicalBuilds["generic"].Lean, 12);
+    }
+
+    [Fact]
+    public void ASpiritItemThatLowersBulletResistMovesTheHeroTowardBulletDamage()
+    {
+        var store = WithLeans();
+        var match = Match(Holding(Shred, 1, 6));
+
+        var shift = BuildShifts.For(store, match).Of("generic")!;
+
+        // Six tier 1 cells of lean +0.5 against a usual lean of 1/6 (0.4 up the ramp): the colour alone would have read them as -1.
+        AssertEx.Close(0.5 - 1.0 / 6, shift.Lean);
+        AssertEx.Close(BuildShifts.Alpha * 0.4 * (0.5 - 1.0 / 6), shift.PointsOn(Bullet));
+        Assert.True(shift.PointsOn(Bullet) > 0 && shift.PointsOn(Spirit) < 0);
+        store.StatLeans.Clear();
+        store.RebuildDerived();
+        Assert.True(BuildShifts.For(store, Match(Holding(Shred, 1, 6))).Of("generic")!.PointsOn(Bullet) < 0);
+    }
+
+    [Fact]
+    public void AnOverrideMovesTheShiftToo()
+    {
+        var store = WithLeans();
+        store.SetItemLean(Shred, -1.0, "test");
+
+        var shift = BuildShifts.For(store, Match(Holding(Shred, 1, 6))).Of("generic")!;
+
+        AssertEx.Close(-1.0 - 1.0 / 6, shift.Lean);
+    }
+
+    [Fact]
+    public void ACellWhoseItemWasntReadLeansByTheMeanOfItsShopsItemsOfItsTier()
+    {
+        var scale = CellScale.Of(WithLeans());
+        var unread = new BuildCell(0, CellKind.Item, ShopCategory.Spirit, null, 1);
+        var noTier = new BuildCell(1, CellKind.Item, ShopCategory.Spirit, null, null);
+
+        // Tier 1 spirit items: the orb (-0.5) and the shredder (+0.5). Across tiers the percent-damage item (no stats: its shop, -1) joins them, and the median cost is 800.
+        AssertEx.Close(0.0, scale.LeanOf(unread));
+        AssertEx.Close((-0.5 + 0.5 - 1) / 3, scale.LeanOf(noTier));
+        Assert.Equal(800, scale.CostOf(unread));
+        Assert.Equal(800, scale.CostOf(noTier));
     }
 
     [Fact]

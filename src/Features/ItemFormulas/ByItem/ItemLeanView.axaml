@@ -1,0 +1,63 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:byItem="using:DeadlockAdvisor.Features.ItemFormulas.ByItem"
+             xmlns:sys="using:System"
+             x:Class="DeadlockAdvisor.Features.ItemFormulas.ByItem.ItemLeanView"
+             x:DataType="byItem:ItemLeanViewModel">
+    <StackPanel Spacing="6" IsVisible="{Binding HasItem}">
+        <TextBlock Classes="section" Text="DAMAGE LEAN" ToolTip.Tip="{x:Static byItem:ItemLeanViewModel.SectionTip}"/>
+        <Border Classes="inset" Padding="8,6">
+            <StackPanel Spacing="6">
+                <DockPanel>
+                    <TextBlock DockPanel.Dock="Right"
+                               Classes="faint"
+                               VerticalAlignment="Center"
+                               TextTrimming="CharacterEllipsis"
+                               Text="{Binding Source}"/>
+                    <TextBlock FontWeight="Bold" VerticalAlignment="Center" Text="{Binding Summary}"/>
+                </DockPanel>
+                <ItemsControl ItemsSource="{Binding Votes}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="sys:String">
+                            <TextBlock Classes="faint" Text="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                <StackPanel Orientation="Horizontal" Spacing="3">
+                    <ToggleButton Classes="pill"
+                                  Content="Auto"
+                                  IsChecked="{Binding IsAuto, Mode=OneWay}"
+                                  Command="{Binding ChooseCommand}"
+                                  CommandParameter="{x:Static byItem:LeanChoice.Auto}"
+                                  ToolTip.Tip="Let its stats decide."/>
+                    <ToggleButton Classes="pill"
+                                  Content="Bullet"
+                                  IsChecked="{Binding IsBullet, Mode=OneWay}"
+                                  Command="{Binding ChooseCommand}"
+                                  CommandParameter="{x:Static byItem:LeanChoice.Bullet}"
+                                  ToolTip.Tip="Fix it at +1: it pushes its holder toward bullet damage."/>
+                    <ToggleButton Classes="pill"
+                                  Content="Neither"
+                                  IsChecked="{Binding IsNeutral, Mode=OneWay}"
+                                  Command="{Binding ChooseCommand}"
+                                  CommandParameter="{x:Static byItem:LeanChoice.Neutral}"
+                                  ToolTip.Tip="Fix it at 0: it pushes toward neither."/>
+                    <ToggleButton Classes="pill"
+                                  Content="Spirit"
+                                  IsChecked="{Binding IsSpirit, Mode=OneWay}"
+                                  Command="{Binding ChooseCommand}"
+                                  CommandParameter="{x:Static byItem:LeanChoice.Spirit}"
+                                  ToolTip.Tip="Fix it at -1: it pushes its holder toward spirit damage."/>
+                </StackPanel>
+                <TextBox Watermark="Why the stats are wrong about this item"
+                         AutomationProperties.Name="Why the damage lean is fixed by hand"
+                         Text="{Binding Reason}"
+                         ToolTip.Tip="{x:Static byItem:ItemLeanViewModel.ReasonTip}"/>
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           Text="{Binding Hint}"
+                           IsVisible="{Binding Hint, Converter={x:Static ObjectConverters.IsNotNull}}"/>
+            </StackPanel>
+        </Border>
+    </StackPanel>
+</UserControl>

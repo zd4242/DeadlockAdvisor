@@ -68,7 +68,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         "A hero who has built mostly weapon items counts as more of a bullet-damage hero in this match, and one who has built mostly spirit items\n"
         + "as more of a spirit-damage one, so the items that answer them follow. It is measured against what that hero usually builds, so a hero\n"
         + "who always builds the same barely moves. Needs the scoreboard read (Settings → Detection) and the match results downloaded.\n"
-        + "For now it goes by the shop an item is in (its colour), not by what the item does.";
+        + "What an item pushes toward comes from its stats and the debuffs it puts on enemies, so a spirit item that lowers Bullet Resist counts toward bullets.";
 
     public const string FiltersTip ="Filters: which items are listed, how they're laid out, and which matches the results come from";
 

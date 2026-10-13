@@ -147,8 +147,10 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   the explanation notes it (`ExplainViewModel.IsOwned`). The same builds feed **overlap**: `TeamOverlap.For(store, match)` (you and your allies' held items
   that have a shared effect in `DataStore.ItemEffects`) goes on the `LineUp` as `Overlap` when `AppSettings.ResultsByOverlap` is on, and `ItemScoring.Total` takes the covered share
   off the part of each weight that is the shared effect (scoring_model.md, "What your team already has"); `MatchViewModel.OverlapNotices` raises one sentence when a read first
-  shows two teammates on one build, which `MainWindowViewModel.TellOverlap` toasts (with the chime and flash while the game has the screen, as Detect does). The builds also move two traits: `BuildShifts.For(store, match)` (a hero's cells against their usual build, `DataStore.TypicalBuilds`, which
-  `HeroTypicalBuild` works out from the downloaded purchase counts and the store clears with the build ratios) goes on the `LineUp` as `Shifts` when
+  shows two teammates on one build, which `MainWindowViewModel.TellOverlap` toasts (with the chime and flash while the game has the screen, as Detect does). The builds also move two traits: `BuildShifts.For(store, match)` (what a hero's cells push toward against what their usual build does, `DataStore.TypicalBuilds`, which
+  `HeroTypicalBuild` works out from the downloaded purchase counts and the store clears with the build ratios; what an item pushes toward is `DataStore.LeanOf`, from its
+  stats through the hand-kept `stat_leans.csv`, an override in `item_lean_overrides.csv` (edited on By Item, `ItemLeanViewModel`, `DataFiles.ItemLeanOverrides`), or its shop's colour,
+  and `LeanReview` lists what to check in the Model Health report) goes on the `LineUp` as `Shifts` when
   `AppSettings.ResultsByBuilds` is on and `MatchViewModel.CanLeanOnBuilds` (builds read, counts downloaded), and `ItemScoring.Total` adds each shifted trait's points
   times the item's coefficient (`WeightMatrix.Line`) to the hero's weight (scoring_model.md, "What a hero has built"); the explanation shows the moved score
   (`TraitPart.Shift`, `ExplainText.Shifted`). Both the marks and the roster's bars (`RosterSlotViewModel.Build`, `BuildSummaries`, painted by
@@ -390,7 +392,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
 - The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, read as captured and at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
-  `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `OverlapTests` and `Ui/TeamOverlapTests` cover the team-overlap discount; `BuildShiftTests`, `Ui/BuildShiftUiTests` and `ModelHealthTests` the build shifts, and `BuildShiftFit` is the
+  `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `OverlapTests` and `Ui/TeamOverlapTests` cover the team-overlap discount; `BuildShiftTests`, `ItemLeanTests`, `Ui/BuildShiftUiTests`, `Ui/ItemLeanUiTests` and `ModelHealthTests` the build shifts and item leans, and `BuildShiftFit` is the
   env-driven measurement of their `Alpha` (`DEADLOCK_BUILD_FIT`, scoring_model.md). `Support/ItemEval`, `ItemBoardLabel`,
   `ItemData` (which also composes a whole scoreboard capture, `ScoreboardOf`: the 1440p fixture's hero strip over a labelled board's items, for `ScoreboardActionTests`) and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
 

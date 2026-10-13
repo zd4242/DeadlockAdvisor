@@ -51,7 +51,8 @@ public sealed record ModelHealthReport(
     IReadOnlyList<DataOnlyPair> DataOnly,
     IReadOnlyList<string> DataSource,
     IReadOnlyList<Agreement> Agreements,
-    IReadOnlyList<Suggestion> Suggestions)
+    IReadOnlyList<Suggestion> Suggestions,
+    IReadOnlyList<string>? Leans = null)
 {
     public IEnumerable<ItemShare> AlwaysOn =>
         Shares.Where(share => share.TopShare >= ModelHealth.AlwaysOnShare)
@@ -106,6 +107,8 @@ public sealed record ModelHealthReport(
             lines.Add("");
             lines.Add($"Traits rules use but every hero scores 0 on: {string.Join(", ", EmptyTraits)}");
         }
+
+        lines.AddRange(Leans ?? []);
 
         lines.Add("");
         if (!HasMatchData)
@@ -217,7 +220,8 @@ public static class ModelHealth
             DataOnlyPairs(store, matrix),
             DataSource(store.MatchMeta),
             agreements,
-            Suggestions(store, pairs[Relation.Against], profiled));
+            Suggestions(store, pairs[Relation.Against], profiled),
+            LeanReview.Lines(store));
     }
 
     /// <summary>"Match data: patch 09-29 (2 days so far · 18%), patch 09-16 (13 days · 82%), every match", then the drift between patches.</summary>

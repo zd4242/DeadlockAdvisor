@@ -257,12 +257,20 @@ public class ModelHealthTests
         var matrix = ItemScoring.BuildWeightMatrix(store);
         var pool = store.Heroes.Keys.Where(store.IsProfiled).ToArray();
         var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
-        var costs = BuildShifts.MedianCosts(store);
+        var costs = CellScale.Of(store);
+        var shop = store.Items.Values.Where(item => item.Tier is >= 1 and <= 4 && ItemTemplates.CategoryOf(item.Category) is not null)
+            .GroupBy(item => ItemTemplates.CategoryOf(item.Category)!.Value)
+            .ToDictionary(group => group.Key, group => group.ToArray());
+        // A cell is a random item of its shop, so a shop's cell is worth the mean cost of its items and leans by the cost-weighted mean of theirs.
+        var meanCost = shop.ToDictionary(pair => pair.Key, pair => pair.Value.Average(item => (double)HeroBuild.TierCost(item.Tier)));
+        var meanPush = shop.ToDictionary(pair => pair.Key, pair => pair.Value.Average(item => HeroBuild.TierCost(item.Tier) * store.LeanOf(item.ItemId).Lean));
         var usual = pool.ToDictionary(heroId => heroId, heroId =>
         {
             var weights = new Random(heroId.Sum(letter => letter) * 31 + 7);
             var raw = Enum.GetValues<ShopCategory>().ToDictionary(category => category, _ => 0.2 + weights.NextDouble());
-            return (IReadOnlyDictionary<ShopCategory, double>)raw.ToDictionary(pair => pair.Key, pair => pair.Value / raw.Values.Sum());
+            var cells = raw.ToDictionary(pair => pair.Key, pair => pair.Value / raw.Values.Sum());
+            var souls = cells.Sum(pair => pair.Value * meanCost[pair.Key]);
+            return new TypicalBuild(cells, cells.Sum(pair => pair.Value * meanPush[pair.Key]) / souls);
         });
         var (sums, squares, plain) = (new double[items.Count], new double[items.Count], new double[items.Count]);
         var (random, building) = (new Random(1), new Random(2));
@@ -272,7 +280,7 @@ public class ModelHealthTests
         {
             var drawn = LineUpShape.FullMatch.Draw(random, pool);
             var shifts = BuildShifts.Of(drawn.Enemies.Concat(drawn.Allies).Append(drawn.Self!)
-                .Select(heroId => BuildShifts.Shift(store, heroId, Inventory(building, usual[heroId]), usual[heroId], costs))
+                .Select(heroId => BuildShifts.Shift(store, heroId, Inventory(building, usual[heroId].Shares, shop), usual[heroId], costs))
                 .OfType<HeroShift>());
             foreach (var shift in shifts.All)
             {
@@ -312,23 +320,24 @@ public class ModelHealthTests
         Assert.InRange(grown.Average(), 1.0, 1.15);
     }
 
-    /// <summary>Six to twelve cells, each of a shop in the hero's usual proportions and any tier, as a scoreboard read would show.</summary>
-    private static HeroBuild Inventory(Random random, IReadOnlyDictionary<ShopCategory, double> usual)
+    /// <summary>Six to twelve cells, each a random item of a shop in the hero's usual proportions, as a scoreboard read would show.</summary>
+    private static HeroBuild Inventory(Random random, IReadOnlyDictionary<ShopCategory, double> usual, IReadOnlyDictionary<ShopCategory, Item[]> shop)
     {
         var cells = new List<BuildCell>();
         for (var cell = 0; cell < 6 + random.Next(7); cell++)
         {
             var pick = random.NextDouble();
             var category = ShopCategory.Spirit;
-            foreach (var (shop, share) in usual)
+            foreach (var (candidate, share) in usual)
             {
                 pick -= share;
                 if (pick > 0)
                     continue;
-                category = shop;
+                category = candidate;
                 break;
             }
-            cells.Add(new BuildCell(cell, CellKind.Item, category, null, 1 + random.Next(4)));
+            var item = shop[category][random.Next(shop[category].Length)];
+            cells.Add(new BuildCell(cell, CellKind.Item, category, item.ItemId, item.Tier));
         }
         return new HeroBuild(cells, null, DateTimeOffset.UnixEpoch);
     }

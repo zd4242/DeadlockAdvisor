@@ -179,8 +179,8 @@ turn it off. When a read first shows two teammates repeating an effect, a messag
 The builds also move how the advisor sees a hero's damage. A hero's bullet and spirit damage ratings are their mix at their usual build, so
 an enemy who has built mostly weapon items counts as more of a bullet-damage hero in this match, and one who has built spirit items as more of
 a spirit-damage one, and the items that answer each follow. It's measured against what that hero usually builds (from the downloaded match
-results), so a hero who builds the same every game barely moves, and a small early inventory counts for little. For now it goes by the shop an item is
-in, not by what the item does. The "why" panel shows the moved score ("Deals Bullet Damage 62 → 71 (built weapon)"). Untick **Lean toward what
+results), so a hero who builds the same every game barely moves, and a small early inventory counts for little. What an item pushes toward comes from its
+stats and the debuffs it puts on enemies, so a spirit item that lowers Bullet Resist counts toward bullet damage. The "why" panel shows the moved score ("Deals Bullet Damage 62 → 71 (built weapon)"). Untick **Lean toward what
 heroes have built** under Filters to turn it off; it's greyed out until builds are read and match results are downloaded.
 
 Click any recommendation to see **why** it scored what it did, per hero
