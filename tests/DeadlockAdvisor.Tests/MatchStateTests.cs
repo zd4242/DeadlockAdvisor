@@ -108,6 +108,107 @@ public class MatchStateTests
         Assert.Empty(match.Slots);
     }
 
+    private static readonly string?[] _topBar = ["me", "a", "b", "c", null, null, "x", "y", "z", null, null, null];
+
+    private static List<(string, int)> SlotsOf(MatchState match) => match.Slots.Select(entry => (entry.Key, entry.Value)).ToList();
+
+    [Fact]
+    public void AHeroDraggedOntoAnotherTakesTheirPlaceAndTheRestShift()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _topBar, 0);
+        var slots = SlotsOf(match);
+        match.Builds.Apply("c", Holding(("active_reload", ShopCategory.Weapon, 1)), _readAt);
+
+        Assert.True(match.MoveOnto("c", "me"));
+        Assert.Equal(["c", "me", "a", "b"], match.OwnTeam);
+        Assert.True(match.MoveOnto("c", "a"));
+        Assert.Equal(["me", "a", "c", "b"], match.OwnTeam);
+        Assert.True(match.MoveOnto("x", "z"));
+        Assert.Equal(["y", "z", "x"], match.Enemies);
+        Assert.Equal("me", match.SelfHero);
+
+        // The top-bar slots are where the heroes were read, whatever order they're shown in.
+        Assert.Equal(slots, SlotsOf(match));
+        Assert.Equal("c", match.HeroInSlot(3));
+        Assert.Equal(["active_reload"], match.BuildOf("c")!.ItemIds);
+    }
+
+    [Fact]
+    public void HeroesDontMoveOntoThemselvesOrOtherTeamsOrWhileTheirSideIsUnknown()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _topBar, 0);
+
+        Assert.False(match.MoveOnto("a", "a"));
+        Assert.False(match.MoveOnto("a", "x"));
+        Assert.False(match.MoveOnto("a", "nobody"));
+        Assert.False(match.MoveOnto("nobody", "a"));
+        Assert.Equal(["me", "a", "b", "c"], match.OwnTeam);
+
+        VisionApply.ApplyToMatch(match, _topBar, null);
+        Assert.True(match.HasUnsided);
+        Assert.False(match.MoveOnto("a", "b"));
+    }
+
+    [Fact]
+    public void ANetWorthReadAfterReorderingStillLandsOnEachHerosOwnSlot()
+    {
+        var at = new DateTimeOffset(2026, 10, 13, 20, 0, 0, TimeSpan.Zero);
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _topBar, 0);
+        match.MoveOnto("c", "me");
+        match.MoveOnto("z", "x");
+
+        var snapshot = VisionApply.SnapshotFor(match, [1_000, 2_000, 3_000, 4_000, null, null, 7_000, 8_000, 9_000, null, null, null], at);
+
+        Assert.Equal([("a", 2_000), ("b", 3_000), ("c", 4_000), ("me", 1_000), ("x", 7_000), ("y", 8_000), ("z", 9_000)],
+            snapshot.Souls.OrderBy(entry => entry.Key).Select(entry => (entry.Key, entry.Value)));
+    }
+
+    [Fact]
+    public void ADetectionOfTheSameHeroesKeepsTheirOrderButTakesTheSlotsAsRead()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _topBar, 0);
+        match.MoveOnto("c", "me");
+        match.MoveOnto("z", "x");
+        match.SetFocus("y", true);
+
+        // The same twelve, read again with the game's own order: shown as arranged, but each hero's slot is the one just read.
+        VisionApply.ApplyToMatch(match, ["me", "b", "a", "c", null, null, "x", "z", "y", null, null, null], 0);
+        Assert.Equal(["c", "me", "a", "b"], match.OwnTeam);
+        Assert.Equal(["z", "x", "y"], match.Enemies);
+        Assert.Equal([("me", 0), ("b", 1), ("a", 2), ("c", 3), ("x", 6), ("z", 7), ("y", 8)], match.Slots.Select(entry => (entry.Key, entry.Value)).OrderBy(entry => entry.Item2));
+        Assert.Equal("b", match.HeroInSlot(1));
+        Assert.Equal(["y"], match.Focused);
+
+        // A different line-up starts over in the game's order.
+        VisionApply.ApplyToMatch(match, ["me", "a", "b", "q", null, null, "x", "y", "z", null, null, null], 0);
+        Assert.Equal(["me", "a", "b", "q"], match.OwnTeam);
+        Assert.Equal(["x", "y", "z"], match.Enemies);
+    }
+
+    [Fact]
+    public void TheOrderIsSavedWithTheMatchAndUndoStepsBackThroughIt()
+    {
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, _topBar, 0);
+        var history = new MatchHistory(match.Picks());
+        match.MoveOnto("c", "me");
+        history.Record(match.Picks());
+
+        var restored = new MatchState();
+        restored.LoadSaved(match.ToSaved(), _topBar.OfType<string>());
+        Assert.Equal(["c", "me", "a", "b"], restored.OwnTeam);
+        Assert.Equal(SlotsOf(match), SlotsOf(restored));
+
+        match.Restore(history.Undo()!, _topBar.OfType<string>());
+        Assert.Equal(["me", "a", "b", "c"], match.OwnTeam);
+        match.Restore(history.Redo()!, _topBar.OfType<string>());
+        Assert.Equal(["c", "me", "a", "b"], match.OwnTeam);
+    }
+
     [Fact]
     public void OnlyEnemiesCanBeFocusedAndLeavingTheEnemyTeamDropsIt()
     {

@@ -133,7 +133,9 @@ the search, then closes the picker.
 
 In the roster, right-click a portrait to change its role or remove it (so does
 a click on yours, or on an enemy not rated on any trait yet); the × on a
-portrait removes it. Clicking an ally plays as them. Clicking an enemy
+portrait removes it. Drag a portrait along its team's row to put it in another
+place (undoable; detection still matches net worth and items to the right hero).
+Clicking an ally plays as them. Clicking an enemy
 **focuses** the recommendations on them: a focused enemy counts 5× as much as
 each of the others, and the enemies together still count as much as before, so
 the list leans toward items good against whoever you focused, and the match

@@ -170,7 +170,14 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   passes through, `OnMatchChanged`: it hands `MatchState.Picks()` (the roles, slots, focus and likely-you, not the net
   worth) to `MatchHistory`, which keeps the line-up before each change, so the board, Detect, Import and Clear are all covered
   without each saying so. A step is `MatchState.Restore` and then the same refresh a detection does (`WhenReplaced`); a
-  `StoreReplaced` starts the history over.
+  `StoreReplaced` starts the history over. **Drag to reorder:** a left press on a portrait that moves past a few pixels drags it along its
+  row (`RosterSlot`, which captures the pointer; a press that doesn't move is the click it always was, now raised on release), `RosterRow` finds
+  the cell under the pointer and has it mark an edge (`RosterSlot.DropEdge`), and `RosterSlot.MovedEvent` reaches `MatchBoardViewModel.MoveHero`
+  → `MatchState.MoveOnto`. That changes only the order in `RoleMap` (what `OwnTeam`/`Enemies` and the bar show, and what undo and the saved match
+  keep); **`MatchState.Slots` is where the top bar had each hero and never moves**, so Detect and the Scoreboard read (`HeroInSlot`,
+  `SnapshotFor`, `RosterContinuity`) still put net worth and builds on the right hero whatever order the bar shows. A re-detect of the same twelve
+  heroes keeps the arranged order (`MatchState.KeepOrder` in `VisionApply.ApplyToMatch`) and takes the slots as read; any other line-up starts in
+  the game's order. Unsided heroes can't be dragged (their order is the bar's).
 - **Match lookup:** `MatchLookupService.LookUpAsync` reads a finished match's `/v1/matches/{id}/metadata` into a
   `LookedUpMatch`: when it started, how long it ran, who won, and per player the account, hero, team and slot plus
   `Items` (`PurchasedItem`: the game's item id, when bought, when sold or null; ability upgrades that have no shop item are

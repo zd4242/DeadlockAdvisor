@@ -31,9 +31,10 @@ public static class VisionApply
     /// Write the roster in, in place of whatever was there, returning how many heroes were placed.
     /// Heroes missing from heroes.csv are dropped rather than invented, as loading a saved match
     /// drops them. Without a self slot the heroes are placed in their slots with no team
-    /// (<see cref="MatchState.Unsided"/>) until one of them is picked as you. The net worth history, the builds
-    /// and the focus survive a detection of the same twelve heroes, so detecting again mid-match adds to the first
-    /// and keeps the others rather than starting over.
+    /// (<see cref="MatchState.Unsided"/>) until one of them is picked as you. The net worth history, the builds,
+    /// the focus and the order the heroes were arranged in survive a detection of the same twelve heroes, so detecting
+    /// again mid-match adds to the first and keeps the others rather than starting over. Each hero's slot is always
+    /// the one just read, whatever order they're shown in.
     /// </summary>
     /// <param name="netWorth">Souls per slot read off the same capture, and when it was taken.</param>
     /// <param name="likelySelfSlot">With no <paramref name="selfSlot"/>, the slot that might be you, to point out on the match bar.</param>
@@ -50,6 +51,7 @@ public static class VisionApply
         var history = match.NetWorth.Snapshots.ToList();
         var builds = match.Builds.All.ToList();
         var focused = match.Focused.ToList();
+        var order = match.RoleMap.Keys.ToList();
         match.Clear();
 
         var roles = RolesFor(heroes, selfSlot);
@@ -83,6 +85,7 @@ public static class VisionApply
                 match.Builds.Set(heroId, build);
             foreach (var heroId in focused)
                 match.SetFocus(heroId, true);
+            match.KeepOrder(order);
         }
         if (netWorth is { } reading)
             match.NetWorth.Add(SnapshotFor(match, reading.Souls, reading.At));
