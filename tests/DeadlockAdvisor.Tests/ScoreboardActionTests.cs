@@ -89,6 +89,23 @@ public sealed class ScoreboardActionTests : IDisposable
         Assert.False(_fixture.Modals.IsModalOpen);
     }
 
+    [Fact]
+    public async Task HeroesReorderedOnTheMatchBarStillGetTheirOwnNetWorth()
+    {
+        WithArt();
+        _capture.Next = Capture();
+        var match = Applied(_heroes);
+        match.MoveOnto("wraith", "apollo");
+        match.MoveOnto("mo_and_krill", "celeste");
+        match.MoveOnto("lash", "venator");
+        Assert.Equal(["wraith", "apollo", "ivy", "bebop", "silver", "doorman"], match.OwnTeam);
+
+        Assert.Equal(ScoreboardOutcome.Read, await PressAsync(match));
+
+        Assert.Equal(_souls, _heroes.Select(hero => match.NetWorth.Latest(hero) ?? 0));
+        Assert.Equal(Enumerable.Range(0, 12), _heroes.Select(hero => match.Slots[hero]));
+    }
+
     private string[] KeptCaptures() =>
         Directory.Exists(Path.Combine(_fixture.Data.DataRoot, "captures"))
             ? Directory.GetFiles(Path.Combine(_fixture.Data.DataRoot, "captures"), "scoreboard_*.png")

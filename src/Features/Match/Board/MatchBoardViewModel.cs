@@ -30,6 +30,7 @@ public class MatchBoardViewModel : ViewModelBase
     public const string RosterHint =
         "Click an enemy to focus the recommendations on items good against them; click again to stop.\n"
         + "Click an ally to set them as You and see their items.\n"
+        + "Drag a portrait along its row to reorder the team.\n"
         + "Right click a portrait to change its role.\n"
         + "× on a portrait removes the hero.\nAn empty slot adds a hero to that team.";
     public const string PickerHint =
@@ -270,6 +271,13 @@ public class MatchBoardViewModel : ViewModelBase
     {
         _match.SetRole(heroId, role);
         AfterChange();
+    }
+
+    /// <summary>A portrait dragged onto another on the same team's row: the hero takes that place and the rest shift along.</summary>
+    public void MoveHero(string heroId, string ontoHeroId)
+    {
+        if (_match.MoveOnto(heroId, ontoHeroId))
+            AfterChange();
     }
 
     public Role RoleOf(string heroId) => _match.RoleOf(heroId);

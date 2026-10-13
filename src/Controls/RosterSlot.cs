@@ -2,6 +2,7 @@ using Avalonia.Automation.Peers;
 using Avalonia.Input;
 using Avalonia.Interactivity;
 using Avalonia.Media;
+using Avalonia.VisualTree;
 using DeadlockAdvisor.Controls.Art;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
@@ -20,6 +21,7 @@ namespace DeadlockAdvisor.Controls;
 /// A click on an enemy focuses the recommendations on them, or stops; a click on an ally makes them
 /// you, so their items show; a click on you, or a right click, opens the role menu. Its × removes,
 /// and an empty slot starts filling this team. While any enemy is focused, the others are dimmed.
+/// A hero dragged along the row takes the place of the one it's dropped on (<see cref="MovedEvent"/>).
 /// </para>
 /// <para>
 /// A hero read off the bar whose team isn't known yet (<see cref="IsUnsided"/>) has a neutral ring, and a click
@@ -40,6 +42,9 @@ public class RosterSlot : Control
     // The round badges in the portrait's corners: × top right, focus bottom left.
     private const double _badge = 18;
     private const double _badgeInset = 3;
+    // How far a press has to move before it's a drag rather than a slightly unsteady click.
+    private const double _dragThreshold = 6;
+    private const double _dropMarkerWidth = 3;
 
     public static readonly StyledProperty<string?> HeroIdProperty =
         AvaloniaProperty.Register<RosterSlot, string?>(nameof(HeroId));
@@ -118,11 +123,21 @@ public class RosterSlot : Control
     public static readonly RoutedEvent<HeroEventArgs> FocusRequestedEvent =
         RoutedEvent.Register<RosterSlot, HeroEventArgs>("FocusRequested", RoutingStrategies.Bubble);
 
+    /// <summary>The hero was dragged onto another's place on the row.</summary>
+    public static readonly RoutedEvent<HeroMoveEventArgs> MovedEvent =
+        RoutedEvent.Register<RosterSlot, HeroMoveEventArgs>("Moved", RoutingStrategies.Bubble);
+
     public static readonly RoutedEvent<RoutedEventArgs> EmptyClickedEvent =
         RoutedEvent.Register<RosterSlot, RoutedEventArgs>("EmptyClicked", RoutingStrategies.Bubble);
 
     private double _portrait = _maxPortrait;
     private bool _overRemove;
+    private bool _pressing;
+    private bool _dragging;
+    private Point _pressedAt;
+    private int _dragFrom;
+    private int _dropCell;
+    private int _dropEdge;
 
     static RosterSlot()
     {
@@ -328,6 +343,9 @@ public class RosterSlot : Control
     protected override void OnPointerMoved(PointerEventArgs e)
     {
         base.OnPointerMoved(e);
+        if (_pressing)
+            FollowDrag(e);
+
         var overRemove = !IsEmpty && RemoveBounds.Contains(e.GetPosition(this));
         if (overRemove == _overRemove)
             return;
@@ -352,6 +370,7 @@ public class RosterSlot : Control
             RaiseEvent(new RoutedEventArgs(HoverLeftEvent));
     }
 
+    // A left press waits to be told apart: released in place it's a click, moved past a few pixels it drags the hero along the row.
     protected override void OnPointerPressed(PointerPressedEventArgs e)
     {
         base.OnPointerPressed(e);
@@ -365,17 +384,112 @@ public class RosterSlot : Control
             return;
         }
 
-        var heroId = HeroId!;
         if (properties.IsLeftButtonPressed && RemoveBounds.Contains(e.GetPosition(this)))
-            RaiseEvent(new HeroEventArgs(RemovedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && IsUnsided)
+        {
+            RaiseEvent(new HeroEventArgs(RemovedEvent, HeroId!));
+        }
+        else if (properties.IsLeftButtonPressed)
+        {
+            _pressedAt = e.GetPosition(this);
+            _pressing = true;
+            e.Pointer.Capture(this);
+        }
+        else if (properties.IsRightButtonPressed)
+        {
+            RaiseEvent(new HeroEventArgs(MenuRequestedEvent, HeroId!));
+        }
+    }
+
+    protected override void OnPointerReleased(PointerReleasedEventArgs e)
+    {
+        base.OnPointerReleased(e);
+        if (!_pressing || e.InitialPressMouseButton != MouseButton.Left)
+            return;
+
+        var dragged = _dragging;
+        var onto = dragged ? Row?.SlotAt(_dropCell)?.HeroId : null;
+        var inside = new Rect(Bounds.Size).Contains(e.GetPosition(this));
+        EndPress(e.Pointer);
+        e.Handled = true;
+
+        if (dragged)
+        {
+            if (onto is not null && onto != HeroId)
+                RaiseEvent(new HeroMoveEventArgs(MovedEvent, HeroId!, onto));
+        }
+        else if (inside && !IsEmpty)
+        {
+            RaiseClick(HeroId!);
+        }
+    }
+
+    protected override void OnPointerCaptureLost(PointerCaptureLostEventArgs e)
+    {
+        base.OnPointerCaptureLost(e);
+        if (_pressing)
+            EndPress(null);
+    }
+
+    private void RaiseClick(string heroId)
+    {
+        if (IsUnsided)
             RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && IsEnemy && CanFocus)
+        else if (IsEnemy && CanFocus)
             RaiseEvent(new HeroEventArgs(FocusRequestedEvent, heroId));
-        else if (properties.IsLeftButtonPressed && !IsSelf && !IsEnemy)
+        else if (!IsSelf && !IsEnemy)
             RaiseEvent(new HeroEventArgs(SelfRequestedEvent, heroId));
-        else if (properties.IsLeftButtonPressed || properties.IsRightButtonPressed)
+        else
             RaiseEvent(new HeroEventArgs(MenuRequestedEvent, heroId));
+    }
+
+    /// <summary>Which edge of this cell a dragged hero would land against: -1 left, 1 right, 0 neither; set by the row.</summary>
+    internal int DropEdge
+    {
+        get => _dropEdge;
+        set
+        {
+            if (value == _dropEdge)
+                return;
+            _dropEdge = value;
+            InvalidateVisual();
+        }
+    }
+
+    private RosterRow? Row => this.FindAncestorOfType<RosterRow>();
+
+    /// <summary>Whether this hero can be dragged: once their side is known, and not alone on the row.</summary>
+    private bool CanDrag => !IsUnsided && Row is { FilledCells: > 1 };
+
+    private void FollowDrag(PointerEventArgs e)
+    {
+        if (Row is not { } row)
+            return;
+        if (!_dragging)
+        {
+            var moved = e.GetPosition(this);
+            if (new Vector(moved.X - _pressedAt.X, moved.Y - _pressedAt.Y).Length < _dragThreshold || !CanDrag)
+                return;
+            _dragging = true;
+            _dragFrom = row.CellOf(this);
+            Cursor = new Cursor(StandardCursorType.DragMove);
+            InvalidateVisual();
+        }
+        _dropCell = row.CellAt(e.GetPosition(row));
+        row.ShowDrop(_dragFrom, _dropCell);
+    }
+
+    private void EndPress(IPointer? pointer)
+    {
+        _pressing = false;
+        if (_dragging)
+        {
+            _dragging = false;
+            Row?.ShowDrop(-1, -1);
+            ClearValue(CursorProperty);
+            InvalidateVisual();
+        }
+        if (pointer?.Captured == this)
+            pointer.Capture(null);
     }
 
     private void UpdateToolTip()
@@ -415,9 +529,9 @@ public class RosterSlot : Control
         {
             PaintEmpty(context);
         }
-        else if (IsDimmed && !IsPointerOver)
+        else if (_dragging || IsDimmed && !IsPointerOver)
         {
-            // The whole slot fades, net worth and all; hovering lifts it, so you see who a click would focus.
+            // The whole slot fades, net worth and all; hovering lifts it, so you see who a click would focus. A hero being dragged fades too.
             using (context.PushOpacity(0.4))
                 PaintHero(context);
         }
@@ -425,6 +539,17 @@ public class RosterSlot : Control
         {
             PaintHero(context);
         }
+        if (_dropEdge != 0)
+            PaintDropMarker(context);
+    }
+
+    /// <summary>A bar down the edge of the cell a dragged hero would take: it sits between portraits, in the gap.</summary>
+    private void PaintDropMarker(DrawingContext context)
+    {
+        var portrait = PortraitRect;
+        var edge = _dropEdge < 0 ? 0 : Bounds.Width;
+        var marker = new Rect(edge - _dropMarkerWidth / 2, portrait.Top, _dropMarkerWidth, portrait.Height);
+        context.DrawRectangle(new SolidColorBrush(Palette.Accent), null, new RoundedRect(marker, _dropMarkerWidth / 2));
     }
 
     private void PaintEmpty(DrawingContext context)

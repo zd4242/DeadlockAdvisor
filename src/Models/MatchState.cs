@@ -222,6 +222,38 @@ public sealed class MatchState
         SuggestSelf(picks.LikelyYou);
     }
 
+    /// <summary>
+    /// Put a hero in the place another on their team holds, the rest shifting along: the match bar's drag to reorder.
+    /// Only the order changes. <see cref="Slots"/> stay where the top bar had each hero, which is how a detection
+    /// finds them again, so reading net worth and builds still lands on the right hero. Returns whether anything moved.
+    /// </summary>
+    public bool MoveOnto(string heroId, string ontoHeroId)
+    {
+        var team = RoleOf(heroId).Team();
+        if (heroId == ontoHeroId || team == Role.None || RoleOf(ontoHeroId).Team() != team)
+            return false;
+
+        var role = RoleMap[heroId];
+        var target = RoleMap.IndexOf(ontoHeroId);
+        RoleMap.Remove(heroId);
+        // The target's old index puts the hero after it when they came from before it, and before it otherwise.
+        RoleMap.Insert(target, heroId, role);
+        return true;
+    }
+
+    /// <summary>Lay the heroes out in the order <paramref name="order"/> had them, so a match read again keeps the order it was arranged in.</summary>
+    public void KeepOrder(IReadOnlyList<string> order)
+    {
+        var place = new Dictionary<string, int>();
+        foreach (var heroId in order)
+            place.TryAdd(heroId, place.Count);
+
+        var arranged = RoleMap.OrderBy(entry => place.GetValueOrDefault(entry.Key, int.MaxValue)).ToList();
+        RoleMap.Clear();
+        foreach (var (heroId, role) in arranged)
+            RoleMap[heroId] = role;
+    }
+
     /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
     public string? HeroInSlot(int slot) => Slots.FirstOrDefault(entry => entry.Value == slot).Key;
 
