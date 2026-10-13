@@ -8,6 +8,7 @@
 .vscode/*
 !.vscode/launch.json
 !.vscode/tasks.json
+TestScreenshots/*
 
 # Build results
 [Dd]ebug/
