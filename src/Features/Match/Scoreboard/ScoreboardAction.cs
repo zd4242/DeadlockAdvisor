@@ -57,14 +57,14 @@ public sealed class ScoreboardAction
     /// <summary>The top of the screen the items on the board reach (WP24: 6.1 pitches, 50% of the height), with a little over.</summary>
     public const double CaptureFraction = 0.52;
 
-    /// <summary>The board takes a moment to fade in after the key goes down.</summary>
-    public static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(250);
+    /// <summary>How long the key must stay down before anything is read: the board takes a moment to fade in, and a tap (an Alt+Tab, a flick) is not a look at it.</summary>
+    public static readonly TimeSpan SettleDelay = TimeSpan.FromMilliseconds(500);
 
-    /// <summary>A second look, if the first found no board, about 600 ms after the key went down.</summary>
+    /// <summary>A second look, if the first found no board, about 850 ms after the key went down.</summary>
     public static readonly TimeSpan RetryDelay = TimeSpan.FromMilliseconds(350);
 
     /// <summary>Boards are kept at most this often: a hand on Tab all game makes hundreds of near-identical ones.</summary>
-    public static readonly TimeSpan KeepEvery = TimeSpan.FromSeconds(30);
+    public static readonly TimeSpan KeepEvery = TimeSpan.FromSeconds(10);
 
     private static readonly JsonSerializerOptions _noteJson = new() { WriteIndented = true };
 
@@ -118,7 +118,11 @@ public sealed class ScoreboardAction
         _running = true;
         try
         {
-            await Wait(SettleDelay);
+            // Looked at partway too, so a tap and a second press inside the delay don't pass for one hold.
+            await Wait(SettleDelay / 2);
+            if (!_key.IsHeld)
+                return Ignored(ScoreboardOutcome.Released, "the key wasn't held long enough");
+            await Wait(SettleDelay / 2);
             for (var attempt = 0; attempt < 2; attempt++)
             {
                 if (!_key.IsHeld)

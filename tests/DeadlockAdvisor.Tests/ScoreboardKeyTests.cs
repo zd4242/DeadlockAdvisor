@@ -100,6 +100,25 @@ public sealed class ScoreboardKeyTests : IDisposable
     }
 
     [Fact]
+    public void LettingGoOfAltBeforeTabIsStillTheSwitcherNotAPress()
+    {
+        if (!OperatingSystem.IsWindows())
+            return;
+        _down.Add(Alt);
+        _down.Add(Tab);
+        Wait(3);
+        _down.Remove(Alt);
+        Wait(5);
+        Assert.Equal(0, _presses);
+
+        _down.Remove(Tab);
+        Wait(2);
+        _down.Add(Tab);
+        Wait(2);
+        Assert.Equal(1, _presses);
+    }
+
+    [Fact]
     public void AMovedKeyIsTheOneWatched()
     {
         if (!OperatingSystem.IsWindows())

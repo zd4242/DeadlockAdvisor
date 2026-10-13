@@ -362,7 +362,7 @@ quietly while the player holds the game's scoreboard key. `ScoreboardKeyService`
 Tab unless moved, read through `ScoreboardKeys`) does not register it with Windows, which would keep it from the game: it polls `GetAsyncKeyState`
 every 30 ms on the UI scheduler, only while the setting is on, `IForegroundService.IsGameInFront` and Alt isn't held (nothing is polled otherwise),
 and raises `Pressed` once per press. `MainWindowViewModel` passes each press to `ScoreboardAction.OnPressedAsync`, which, with a match applied and
-no dialog open, waits 250 ms for the board to fade in, captures the top 52% of the window (`IScreenCaptureService.CaptureTopAsync`: it never
+no dialog open, waits 500 ms (checking the key is still held halfway and at the end, so a tap or an Alt+Tab reads nothing) for the board to fade in, captures the top 52% of the window (`IScreenCaptureService.CaptureTopAsync`: it never
 minimises or activates anything), reads it off the UI thread through `ScoreboardReader.Read` (the same grid, heroes, `RosterContinuity` and
 `NetWorthReader` as Detect, which calls it too) and, only when `RosterContinuity.IsSameMatch`, adds a net worth snapshot and calls
 `MatchViewModel.MatchUpdated`. A board not found is looked for once more 350 ms later; a key let go, another match, no match, a dialog or a
@@ -370,7 +370,7 @@ read still running end it with one log line (`ScoreboardOutcome`). It shows noth
 `Vision/Items/ItemReader` (how it works is in detection_model.md, "The scoreboard's items") off the UI thread on the same capture and grid, with
 `ItemTemplates.Load(<assets>/items, store.Items)` (which `ArtDownloadService`'s "Item icons" group fills; kept between presses until that folder or the store
 changes, and with no item art the net worth is still read and no build is kept), then adds each hero's read to `MatchState.Builds` (section 4) on the UI thread
-beside the net worth snapshot, and raises one `changed`, so the match bar, the owned marks and the saved match follow. A failing item reader is logged and costs only the items. With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 30 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
+beside the net worth snapshot, and raises one `changed`, so the match bar, the owned marks and the saved match follow. A failing item reader is logged and costs only the items. With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 10 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
 
 `DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`

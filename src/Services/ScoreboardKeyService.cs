@@ -64,7 +64,7 @@ public sealed class ScoreboardKeyService : IScoreboardKeyService, IDisposable
 
     public IObservable<ScoreboardKeyStatus> Status => _status.DistinctUntilChanged();
 
-    public bool IsHeld => OperatingSystem.IsWindows() && ConfiguredKey() is { } key && _isDown(key);
+    public bool IsHeld => OperatingSystem.IsWindows() && ConfiguredKey() is { } key && _isDown(key) && !_isDown(Native.VkMenu);
 
     private static ScoreboardKeyStatus Initial(AppSettings settings) => settings.ReadBuildsOnTab ? ScoreboardKeyStatus.Watching : ScoreboardKeyStatus.Off;
 
@@ -72,10 +72,21 @@ public sealed class ScoreboardKeyService : IScoreboardKeyService, IDisposable
 
     private void Poll()
     {
-        // Not the game's key while the game isn't looked at, so the edge starts again from "up" when it comes back.
-        if (!_foreground.IsGameInFront || _isDown(Native.VkMenu) || ConfiguredKey() is not { } key)
+        if (ConfiguredKey() is not { } key)
         {
             _wasDown = false;
+            return;
+        }
+        // Not the game's key while the game isn't looked at, so the edge starts again from "up" when it comes back.
+        if (!_foreground.IsGameInFront)
+        {
+            _wasDown = false;
+            return;
+        }
+        // Alt+Tab usually lets go of Alt first: a Tab still down then is the switcher's, not a fresh press.
+        if (_isDown(Native.VkMenu))
+        {
+            _wasDown = _isDown(key);
             return;
         }
         var down = _isDown(key);

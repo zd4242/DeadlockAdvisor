@@ -203,7 +203,7 @@ the cells at their tiers' costs, and where a cell may hold more (hidden, unseen,
 corrected for, so an estimate there runs high. Nothing here is confidence-gated beyond the reader's own: only cells the reader gave an item for count as owned. With no item art the read is skipped and the
 net worth still lands.
 
-**To add item boards:** turn on *Keep the boards it reads* (`AppSettings.KeepScoreboardCaptures`) and hold the scoreboard key in a match; the boards are kept in `<data>/captures/scoreboard_*`, at most one every 30 seconds,
+**To add item boards:** turn on *Keep the boards it reads* (`AppSettings.KeepScoreboardCaptures`) and hold the scoreboard key in a match; the boards are kept in `<data>/captures/scoreboard_*`, at most one every 10 seconds,
 and the newest 300 only (move the ones you want to keep elsewhere). Draft them, look at **every** confident read on the sheets (a wrong item can look right: the numeral caught two that did), copy the label into the corpus
 with its `match` and `phase`, name the cells you checked (`weapon:active_reload`; one you couldn't tell stays `weapon`), promote, and regenerate the report with
 `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~ItemCorpusTests|FullyQualifiedName~ItemDerivationTests"`. `ItemCorpusTests.NoCellIsReadConfidentlyWrong` fails for a confident read of a cell the label

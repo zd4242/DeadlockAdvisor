@@ -508,7 +508,7 @@ net worth doesn't). It's off until you turn it on; if you moved the scoreboard k
 game, set the same key there. The key still reaches the game, since the advisor
 only watches it. *Keep the scoreboard captures* (also off) saves each board it
 read, down to the items, in the captures folder of your data folder (at most
-one every 30 seconds, the latest 300, about 400 MB), for improving item reading; they show every player's name.
+one every 10 seconds, the latest 300, about 400 MB), for improving item reading; they show every player's name.
 
 If there's no scoreboard on screen (a lobby, a loading screen, a hidden
 HUD, or a game captured as a black screen by exclusive fullscreen or HDR),

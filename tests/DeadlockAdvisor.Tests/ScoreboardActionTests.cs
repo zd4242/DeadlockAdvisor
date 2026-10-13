@@ -132,7 +132,7 @@ public sealed class ScoreboardActionTests : IDisposable
     }
 
     [Fact]
-    public async Task BoardsAreKeptNoMoreOftenThanEveryThirtySeconds()
+    public async Task BoardsAreKeptNoMoreOftenThanEveryTenSeconds()
     {
         WithArt();
         _fixture.Settings.Current.KeepScoreboardCaptures = true;
