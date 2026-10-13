@@ -1,0 +1,151 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m1",
+  "phase": "Street Brawl, dead, round 5",
+  "grid": {
+    "version": 3,
+    "center_x": 1280.119389801192,
+    "pitch": 118.19708562981748,
+    "top": 29.8,
+    "gap_ratio": 1.6311532726960845,
+    "width_ratio": 0.5219975834706063
+  },
+  "blank_slots": [
+    0,
+    1,
+    10,
+    11
+  ],
+  "heroes": {
+    "2": {
+      "cells": [
+        "weapon:close_quarters",
+        "spirit:suppressor",
+        "vitality:battle_vest",
+        "vitality",
+        "vitality:veil_walker",
+        "weapon",
+        "spirit",
+        "weapon:express_shot",
+        "weapon:headhunter",
+        "vitality:phantom_strike",
+        "spirit:mystic_reverb",
+        "spirit:spirit_burn"
+      ]
+    },
+    "3": {
+      "cells": [
+        "vitality:healing_rite",
+        "weapon:active_reload",
+        "spirit:improved_spirit",
+        "spirit:radiant_regeneration",
+        "vitality",
+        "weapon:alchemical_fire",
+        "weapon:spirit_rend",
+        "vitality",
+        "spirit",
+        "spirit",
+        "weapon:spiritual_overflow",
+        "vitality:witchmail"
+      ]
+    },
+    "4": {
+      "cells": [
+        "spirit:improved_spirit",
+        "vitality",
+        "weapon:melee_charge",
+        "spirit:suppressor",
+        "weapon:shadow_weave",
+        "weapon:point_blank",
+        "spirit:spirit_snatch",
+        "vitality:lifestrike",
+        "spirit:radiant_regeneration",
+        "weapon:spiritual_overflow",
+        "spirit:escalating_exposure",
+        "vitality:plated_armor"
+      ]
+    },
+    "5": {
+      "cells": [
+        "vitality:healing_rite",
+        "vitality:trophy_collector",
+        "weapon:stalker",
+        "weapon:ballistic_enchantment",
+        "spirit:spirit_snatch",
+        "weapon:point_blank",
+        "vitality:spirit_resilience",
+        "weapon:hunters_aura",
+        "weapon:heroic_aura",
+        "weapon:crushing_fists",
+        "vitality",
+        "vitality:phantom_strike"
+      ]
+    },
+    "6": {
+      "cells": [
+        "vitality:rebuttal",
+        "spirit:suppressor",
+        "spirit:quicksilver_reload",
+        "vitality",
+        "weapon:toxic_bullets",
+        "weapon:shadow_weave",
+        "weapon:hunters_aura",
+        "spirit:superior_duration",
+        "spirit:rapid_recharge",
+        "spirit",
+        "spirit:boundless_spirit",
+        "spirit:lightning_scroll"
+      ]
+    },
+    "7": {
+      "cells": [
+        "weapon:headshot_booster",
+        "vitality",
+        "weapon:mystic_shot",
+        "spirit:spirit_sap",
+        "weapon:spirit_rend",
+        "spirit:superior_duration",
+        "spirit:greater_expansion",
+        "vitality:healing_nova",
+        "vitality:spirit_resilience",
+        "vitality",
+        "spirit",
+        "vitality:juggernaut"
+      ]
+    },
+    "8": {
+      "cells": [
+        "vitality:melee_lifesteal",
+        "vitality:return_fire",
+        "weapon:split_shot",
+        "weapon:burst_fire",
+        "vitality:fortitude",
+        "weapon:heroic_aura",
+        "weapon:weighted_shots",
+        "weapon",
+        "weapon:toxic_bullets",
+        "vitality:inhibitor",
+        "spirit",
+        "weapon:lucky_shot"
+      ]
+    },
+    "9": {
+      "cells": [
+        "spirit:spirit_strike",
+        "vitality:trophy_collector",
+        "vitality:enchanters_emblem",
+        "vitality:spirit_resilience",
+        "spirit:greater_expansion",
+        "spirit:rapid_recharge",
+        "spirit",
+        "vitality:fortitude",
+        "spirit:knockdown",
+        "spirit:refresher",
+        "spirit",
+        "spirit"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_192222_334.png"
+}

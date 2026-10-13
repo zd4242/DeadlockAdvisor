@@ -1,0 +1,185 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m5",
+  "phase": "late, up to eleven items a hero",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.223579883128,
+    "pitch": 116.80100989166884,
+    "top": 29.8,
+    "gap_ratio": 1.6699094926565448,
+    "width_ratio": 0.5282368117301173
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "spirit:arcane_surge",
+        "weapon:mystic_shot",
+        "vitality",
+        "vitality:spirit_lifesteal",
+        "vitality:spirit_shielding",
+        "spirit:duration_extender",
+        "spirit:rapid_recharge",
+        "weapon:toxic_bullets",
+        "weapon:ricochet",
+        "spirit:boundless_spirit",
+        "spirit:escalating_exposure"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:stalker",
+        "weapon:fleetfoot",
+        "weapon:burst_fire",
+        "weapon:point_blank",
+        "spirit:superior_duration",
+        "vitality:veil_walker",
+        "weapon:shadow_weave",
+        "vitality:colossus",
+        "weapon:glass_cannon"
+      ]
+    },
+    "2": {
+      "cells": [
+        "weapon:restorative_shot",
+        "weapon:opening_rounds",
+        "weapon:sharpshooter",
+        "weapon:headhunter",
+        "vitality",
+        "weapon:express_shot",
+        "vitality:fortitude",
+        "spirit:knockdown",
+        "spirit",
+        "spirit:mystic_reverb"
+      ]
+    },
+    "3": {
+      "cells": [
+        "weapon:opening_rounds",
+        "weapon:fleetfoot",
+        "vitality",
+        "vitality:battle_vest",
+        "weapon:titanic_magazine",
+        "weapon:intensifying_magazine",
+        "vitality:bullet_lifesteal",
+        "vitality:spirit_resilience",
+        "weapon:weighted_shots",
+        "weapon:berserker",
+        "vitality:fortitude"
+      ]
+    },
+    "4": {
+      "cells": [
+        "weapon:monster_rounds",
+        "spirit:arcane_surge",
+        "weapon:intensifying_magazine",
+        "vitality:reactive_barrier",
+        "vitality",
+        "vitality:spirit_lifesteal",
+        "weapon:ballistic_enchantment",
+        "weapon:toxic_bullets",
+        "spirit:superior_duration",
+        "spirit:escalating_exposure",
+        "vitality:unstoppable"
+      ]
+    },
+    "5": {
+      "cells": [
+        "spirit:improved_spirit",
+        "weapon:titanic_magazine",
+        "spirit:quicksilver_reload",
+        "spirit:superior_duration",
+        "vitality:warp_stone",
+        "weapon:toxic_bullets",
+        "spirit:escalating_exposure",
+        "weapon:ricochet",
+        "vitality:leech"
+      ]
+    },
+    "6": {
+      "cells": [
+        "vitality:trophy_collector",
+        "spirit:improved_spirit",
+        "spirit:mystic_vulnerability",
+        "vitality",
+        "spirit:radiant_regeneration",
+        "spirit:greater_expansion",
+        "spirit",
+        "vitality:spirit_resilience",
+        "vitality:fortitude",
+        "spirit:superior_duration"
+      ]
+    },
+    "7": {
+      "cells": [
+        "spirit:mystic_burst",
+        "weapon:stalker",
+        "vitality:trophy_collector",
+        "spirit:improved_spirit",
+        "vitality:veil_walker",
+        "vitality:spirit_resilience",
+        "spirit:spirit_snatch",
+        "spirit",
+        "vitality:witchmail",
+        "vitality:plated_armor"
+      ]
+    },
+    "8": {
+      "cells": [
+        "weapon:opening_rounds",
+        "spirit:quicksilver_reload",
+        "vitality:enchanters_emblem",
+        "weapon:recharging_rush",
+        "weapon:swift_striker",
+        "vitality:spirit_shielding",
+        "spirit:rapid_recharge",
+        "weapon:sharpshooter",
+        "spirit",
+        "spirit:boundless_spirit"
+      ]
+    },
+    "9": {
+      "cells": [
+        "vitality:battle_vest",
+        "weapon:swift_striker",
+        "weapon",
+        "vitality",
+        "spirit",
+        "spirit",
+        "vitality:majestic_leap",
+        "spirit:greater_expansion",
+        "spirit:superior_duration",
+        "spirit:spirit_burn"
+      ]
+    },
+    "10": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_expansion",
+        "vitality",
+        "weapon:hunters_aura",
+        "vitality:veil_walker",
+        "vitality:warp_stone",
+        "weapon:point_blank",
+        "weapon:ricochet",
+        "weapon:crushing_fists"
+      ]
+    },
+    "11": {
+      "cells": [
+        "spirit:extra_charge",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "vitality:healing_booster",
+        "spirit:superior_duration",
+        "vitality:warp_stone",
+        "spirit:greater_expansion",
+        "spirit:refresher",
+        "spirit",
+        "vitality:plated_armor"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_202115_595.png"
+}

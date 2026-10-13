@@ -131,7 +131,7 @@ public sealed class TemplateBank
         return new TemplateBank(heroes, rowsHero, vectors, sources);
     }
 
-    private static float Dot(float[] a, float[] b)
+    internal static float Dot(float[] a, float[] b)
     {
         var width = Vector<float>.Count;
         var sum = Vector<float>.Zero;

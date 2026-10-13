@@ -1,0 +1,186 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m4",
+  "phase": "late, a purchase toast on the right",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.223579883127,
+    "pitch": 116.8010098916693,
+    "top": 29.8,
+    "gap_ratio": 1.669909492656524,
+    "width_ratio": 0.5282368117301152
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "vitality:enchanters_emblem",
+        "weapon:mystic_shot",
+        "spirit",
+        "spirit:boundless_spirit",
+        "spirit:spirit_burn",
+        "spirit:escalating_exposure"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:melee_lifesteal",
+        "weapon:close_quarters",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder",
+        "vitality:enchanters_emblem",
+        "weapon:hunters_aura",
+        "spirit:superior_duration",
+        "weapon:crushing_fists"
+      ]
+    },
+    "2": {
+      "cells": [
+        "weapon:stalker",
+        "weapon:kinetic_dash",
+        "vitality:trophy_collector",
+        "weapon:swift_striker",
+        "spirit:slowing_hex",
+        "vitality:fortitude",
+        "weapon:point_blank",
+        "weapon:hunters_aura",
+        "weapon:shadow_weave",
+        "weapon:burst_fire",
+        "vitality:spirit_resilience"
+      ]
+    },
+    "3": {
+      "cells": [
+        "spirit:extra_spirit",
+        "weapon:active_reload",
+        "weapon:swift_striker",
+        "vitality",
+        "weapon:fleetfoot",
+        "weapon:recharging_rush",
+        "vitality:veil_walker",
+        "weapon:burst_fire",
+        "weapon:ricochet",
+        "vitality:inhibitor"
+      ]
+    },
+    "4": {
+      "cells": [
+        "vitality:trophy_collector",
+        "spirit:mystic_vulnerability",
+        "spirit:rapid_recharge",
+        "vitality:veil_walker",
+        "spirit:superior_duration",
+        "spirit:greater_expansion",
+        "spirit",
+        "spirit:boundless_spirit",
+        "spirit:spirit_burn"
+      ]
+    },
+    "5": {
+      "cells": [
+        "weapon:opening_rounds",
+        "weapon:intensifying_magazine",
+        "weapon:fleetfoot",
+        "weapon:titanic_magazine",
+        "vitality:battle_vest",
+        "vitality",
+        "spirit:bullet_resist_shredder",
+        "weapon:weighted_shots",
+        "weapon:berserker",
+        "vitality:spirit_resilience",
+        "vitality:vampiric_burst"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:rebuttal",
+        "vitality:enchanters_emblem",
+        "vitality:battle_vest",
+        "weapon:swift_striker",
+        "weapon",
+        "vitality",
+        "spirit",
+        "vitality:warp_stone",
+        "spirit:superior_duration",
+        "spirit:arctic_blast"
+      ]
+    },
+    "7": {
+      "cells": [
+        "weapon:monster_rounds",
+        "weapon:swift_striker",
+        "vitality:enchanters_emblem",
+        "spirit:improved_spirit",
+        "weapon:tesla_bullets",
+        "spirit",
+        "vitality:fortitude",
+        "weapon:ricochet",
+        "spirit",
+        "weapon:spiritual_overflow"
+      ]
+    },
+    "8": {
+      "cells": [
+        "spirit:extra_charge",
+        "weapon:opening_rounds",
+        "vitality:restorative_locket",
+        "vitality:healing_booster",
+        "spirit:arcane_surge",
+        "spirit:improved_spirit",
+        "spirit:disarming_hex",
+        "spirit:superior_duration",
+        "vitality:divine_barrier",
+        "spirit"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:battle_vest",
+        "spirit:bullet_resist_shredder",
+        "spirit:radiant_regeneration",
+        "weapon:hunters_aura",
+        "weapon:express_shot",
+        "weapon:berserker",
+        "weapon:point_blank",
+        "vitality:warp_stone",
+        "spirit:arctic_blast"
+      ]
+    },
+    "10": {
+      "cells": [
+        "weapon:stalker",
+        "weapon:weakening_headshot",
+        "spirit:bullet_resist_shredder",
+        "vitality:spirit_shielding",
+        "vitality:lifestrike",
+        "spirit:spirit_snatch",
+        "spirit:rapid_recharge",
+        "weapon:berserker",
+        "weapon:point_blank",
+        "weapon:crushing_fists",
+        "vitality:unstoppable"
+      ]
+    },
+    "11": {
+      "cells": [
+        "weapon:swift_striker",
+        "spirit:bullet_resist_shredder",
+        "weapon:titanic_magazine",
+        "weapon:active_reload",
+        "weapon:headhunter",
+        "spirit",
+        "vitality",
+        "vitality:fortitude",
+        "spirit:rapid_recharge",
+        "weapon:sharpshooter"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_201608_260.png"
+}

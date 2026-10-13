@@ -16,7 +16,8 @@ What each hero has built is part of the match: kept, saved, shown on the match b
 2. `NetWorthHistory` is the pattern for per-match readings: kept per match, saved in `SavedMatch`, kept across a re-detect of the same twelve heroes (`VisionApply.ApplyToMatch`) ✔.
 3. `SavedMatch` loads older saves by ignoring what they lack, so a new optional field is safe ✔ (check `LoadSaved` and the JSON options).
 4. Hero cards already show items elsewhere (`ItemCardPresenter`), so chips can reuse it ✔.
-5. WP24: a bar is a saturating share of the souls in its category (about 0.45 at 4k, 0.75 at 10-12k, 0.9 at 18k, full only past about 28k), correlating 0.9 with the cost sums at full size and worse at 1080p and below. Show it as "how invested", not as a count of souls.
+5. WP24 and WP26: a bar is `1 - e^(-souls/10000)` of the souls in its category in a standard match (`BarReader.ExpectedFill`), and every cell's tier numeral gives its cost exactly (800 · 2^(tier-1)), so a hero's souls per category are known from the cells, apart from hidden and unseen ones (`HeroItems.Souls`); the bar is a cross-check (`BarReader.Check`), and in a Street Brawl follows another curve. Show investment as "how invested", from the cells where they are exact and the bar where they are not.
+6. WP26: **an empty or short read is not "has nothing"**: a slot read as covered (`HeroItems.Covered`), unseen cells (`CellKind.Unseen`: the kill feed) and hidden ones (`CellKind.Hidden`: a Street Brawl's enemy picks) say nothing about what was there, and a hero a tooltip's edge half covers can read short. Merge a read into `Builds` as new information about the cells it saw, never as the whole of a hero's items.
 
 ## Read first
 
@@ -26,7 +27,7 @@ as "Hide items your hero rarely builds" work); `PaintedPeer` and one painted con
 ## Scope
 
 In:
-- `HeroBuild`: the hero's cells (each: category; item id or none; confident or not), the three investment shares (items at cost, unknown cells at their category's median, flagged as an estimate),
+- `HeroBuild`: the hero's cells (each: category; item id or none; tier; confident or not; hidden or unseen), the three investment shares (each cell at its cost, from its item or its tier; a hidden or unseen cell flagged),
   the bars if read, and when it was read. `MatchState.Builds`: the latest per hero, replaced by each read, cleared with the match, kept across a re-detect of the same heroes, saved and restored.
   Decide here whether to keep a short history (needed only if WP29 wants a trend; the default is latest only).
 - `ScoreboardAction`'s hook stores what WP26 returns, through the same UI-thread path net worth uses, and the Match page refreshes.

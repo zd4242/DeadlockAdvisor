@@ -113,7 +113,7 @@ Hot files, in the order their packages should run:
 | WP23 | [wp23](wp23-data-menu-simplify.md) | Data menu: one Check for Updates, maintainer tools in Model Tools (done) | M | WP13, WP14 | D |
 | WP24 | [wp24](wp24-tab-view-spike.md) | Tab-view spike: can the scoreboard's items be read, and what do they say? (done: Go) | M | none | A |
 | WP25 | [wp25](wp25-scoreboard-key-and-silent-read.md) | Scoreboard key observer and the silent Tab read (net worth refresh included) | M | WP24 | B |
-| WP26 | [wp26](wp26-scoreboard-item-reader.md) | The item and bar reader, with its corpus | L | WP24 | B |
+| WP26 | [wp26](wp26-scoreboard-item-reader.md) | The item and bar reader, with its corpus (done) | L | WP24 | B |
 | WP27 | [wp27](wp27-builds-in-the-match.md) | Builds in the match: owned marks, roster bars, settings | M | WP25, WP26 | C |
 | WP28 | [wp28](wp28-team-overlap.md) | Overlap: an effect your team already has counts for less | M | WP27 | D |
 | WP29 | [wp29](wp29-build-adjusted-traits.md) | Build-adjusted traits: what a hero built shifts their damage mix | L | WP27, after WP28 | D |

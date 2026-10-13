@@ -1,0 +1,163 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m2",
+  "phase": "late, nothing over the board",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.2565994372692,
+    "pitch": 116.89664211411382,
+    "top": 29.8,
+    "gap_ratio": 1.6662981689520766,
+    "width_ratio": 0.527804665353888
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "spirit:extra_charge",
+        "weapon:titanic_magazine",
+        "weapon:fleetfoot",
+        "weapon:weighted_shots",
+        "vitality:fortitude",
+        "weapon:point_blank",
+        "vitality:plated_armor",
+        "vitality:juggernaut"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:swift_striker",
+        "weapon:active_reload",
+        "weapon:titanic_magazine",
+        "vitality:bullet_lifesteal",
+        "spirit:bullet_resist_shredder",
+        "vitality:fortitude",
+        "weapon:burst_fire",
+        "spirit",
+        "weapon:ricochet",
+        "vitality:siphon_bullets"
+      ]
+    },
+    "2": {
+      "cells": [
+        "spirit:mystic_expansion",
+        "spirit:improved_spirit",
+        "vitality",
+        "spirit:rapid_recharge",
+        "spirit:torment_pulse",
+        "spirit",
+        "spirit",
+        "vitality:healing_nova"
+      ]
+    },
+    "3": {
+      "cells": [
+        "weapon:monster_rounds",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "weapon:mystic_shot",
+        "vitality:enchanters_emblem",
+        "spirit:mystic_vulnerability",
+        "vitality:spirit_lifesteal",
+        "spirit:compress_cooldown",
+        "spirit",
+        "spirit:mystic_reverb"
+      ]
+    },
+    "4": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_burst",
+        "vitality:trophy_collector",
+        "vitality:debuff_reducer",
+        "spirit:radiant_regeneration",
+        "spirit:torment_pulse",
+        "spirit",
+        "vitality:indomitable"
+      ]
+    },
+    "5": {
+      "cells": [
+        "spirit:extra_spirit",
+        "vitality:debuff_reducer",
+        "spirit:rapid_recharge",
+        "vitality:fortitude",
+        "weapon:ballistic_enchantment",
+        "spirit:escalating_exposure"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:close_quarters",
+        "vitality:extra_health",
+        "vitality:sprint_boots",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder",
+        "weapon:melee_charge",
+        "spirit:spirit_snatch",
+        "weapon:hunters_aura",
+        "vitality:lifestrike"
+      ]
+    },
+    "7": {
+      "cells": [
+        "spirit:mystic_burst",
+        "spirit:quicksilver_reload",
+        "vitality:trophy_collector",
+        "spirit:cold_front",
+        "spirit:improved_spirit",
+        "spirit:torment_pulse",
+        "vitality:veil_walker"
+      ]
+    },
+    "8": {
+      "cells": [
+        "weapon:intensifying_magazine",
+        "vitality:reactive_barrier",
+        "weapon:split_shot",
+        "spirit:bullet_resist_shredder",
+        "weapon:burst_fire",
+        "vitality",
+        "spirit"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:opening_rounds",
+        "weapon:mystic_shot",
+        "weapon:recharging_rush",
+        "spirit:improved_spirit",
+        "spirit:rapid_recharge",
+        "vitality",
+        "spirit",
+        "spirit"
+      ]
+    },
+    "10": {
+      "cells": [
+        "weapon:monster_rounds",
+        "weapon:headshot_booster",
+        "spirit:mystic_expansion",
+        "vitality:enchanters_emblem",
+        "spirit:arcane_surge",
+        "spirit:rapid_recharge",
+        "vitality:warp_stone",
+        "spirit:superior_duration",
+        "spirit:disarming_hex"
+      ]
+    },
+    "11": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_expansion",
+        "weapon:melee_charge",
+        "vitality",
+        "weapon:hunters_aura",
+        "vitality:veil_walker",
+        "vitality:warp_stone",
+        "weapon:point_blank"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_200019_531.png"
+}

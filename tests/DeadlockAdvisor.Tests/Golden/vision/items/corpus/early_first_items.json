@@ -1,0 +1,77 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m7",
+  "phase": "early, one item each",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.2235798831296,
+    "pitch": 116.80100989166792,
+    "top": 29.8,
+    "gap_ratio": 1.669909492656589,
+    "width_ratio": 0.5282368117301214
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:monster_rounds"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:restorative_shot"
+      ]
+    },
+    "2": {
+      "cells": [
+        "weapon:high_velocity_rounds"
+      ]
+    },
+    "3": {
+      "cells": [
+        "vitality:extra_regen"
+      ]
+    },
+    "4": {
+      "cells": [
+        "weapon:monster_rounds"
+      ]
+    },
+    "5": {
+      "cells": [
+        "spirit:mystic_burst"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:restorative_shot"
+      ]
+    },
+    "7": {
+      "cells": [
+        "vitality:extra_regen"
+      ]
+    },
+    "8": {
+      "cells": [
+        "spirit:mystic_burst"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:monster_rounds"
+      ]
+    },
+    "10": {
+      "cells": [
+        "spirit:extra_spirit"
+      ]
+    },
+    "11": {
+      "cells": [
+        "vitality:extra_regen"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_204243_899.png"
+}

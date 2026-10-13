@@ -11,7 +11,7 @@ how the parts work. Read this first, then the doc for the area you're touching:
 | [publishing.md](publishing.md) | releases, the published model, shared match data, workflows |
 | [roadmap/README.md](roadmap/README.md) | planned improvements, as work packages ("implement WP08") |
 
-Last checked against the code: 2026-10-10. Names below are stable; line numbers aren't given on purpose. If you add a
+Last checked against the code: 2026-10-12. Names below are stable; line numbers aren't given on purpose. If you add a
 service, page, setting, shortcut or update channel, update the matching section here in the same commit.
 
 ## What the app is
@@ -79,7 +79,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `MatchHistory` (its undo), `NetWorthHistory`, `AppSettings` |
 | `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
-| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec |
+| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec; `Items/` the scoreboard's item and bar reader (`ItemReader`, `ItemTemplates`, `BarReader`; not called by the app yet) |
 | `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Scoreboard`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
 | `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls and their automation peers, behaviours (middle-click autoscroll, popups following the zoom, the `narrow` class), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
@@ -339,7 +339,8 @@ minimises or activates anything), reads it off the UI thread through `Scoreboard
 `NetWorthReader` as Detect, which calls it too) and, only when `RosterContinuity.IsSameMatch`, adds a net worth snapshot and calls
 `MatchViewModel.MatchUpdated`. A board not found is looked for once more 350 ms later; a key let go, another match, no match, a dialog or a
 read still running end it with one log line (`ScoreboardOutcome`). It shows nothing and plays nothing; `ScoreboardAction.OnRead` is where the
-item reader plugs in (roadmap WP26). With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 30 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
+item reader plugs in: `Vision/Items/ItemReader` (roadmap WP26, how it works is in detection_model.md, "The scoreboard's items") reads each hero's items, tiers and bars off the same capture and the same
+grid, but nothing calls it yet (WP27 does, and keeps what it returns in the match); it takes `ItemTemplates.Load(<assets>/items, store.Items)`, which `ArtDownloadService`'s "Item icons" group fills. With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 30 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
 
 `DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`
@@ -367,6 +368,9 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
+- The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, read as captured and at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
+  `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `Support/ItemEval`, `ItemBoardLabel`,
+  `ItemData` and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
 
 ## 10. Recipes
 

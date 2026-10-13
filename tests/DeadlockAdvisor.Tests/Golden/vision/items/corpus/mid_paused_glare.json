@@ -1,0 +1,146 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m3",
+  "phase": "mid, paused, a glare through two panels",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.2565994372699,
+    "pitch": 116.8966421141136,
+    "top": 29.8,
+    "gap_ratio": 1.666298168952086,
+    "width_ratio": 0.5278046653538889
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:monster_rounds",
+        "vitality:spirit_lifesteal",
+        "spirit:improved_spirit",
+        "vitality:trophy_collector",
+        "spirit:duration_extender",
+        "spirit:rapid_recharge"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:close_quarters",
+        "vitality:extra_health",
+        "vitality:weapon_shielding",
+        "spirit:quicksilver_reload",
+        "spirit:bullet_resist_shredder",
+        "spirit:improved_spirit",
+        "weapon:fleetfoot",
+        "vitality",
+        "weapon:tesla_bullets"
+      ]
+    },
+    "2": {
+      "cells": [
+        "spirit:mystic_burst",
+        "spirit:extra_spirit",
+        "spirit:quicksilver_reload",
+        "vitality:trophy_collector",
+        "spirit:cold_front",
+        "vitality",
+        "vitality:healing_booster"
+      ]
+    },
+    "3": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:extra_charge",
+        "weapon:opening_rounds",
+        "spirit:slowing_hex",
+        "spirit:radiant_regeneration",
+        "spirit:disarming_hex"
+      ]
+    },
+    "4": {
+      "cells": [
+        "vitality:melee_lifesteal",
+        "vitality:extra_health",
+        "vitality:sprint_boots",
+        "weapon:stalker",
+        "spirit:spirit_snatch",
+        "spirit"
+      ]
+    },
+    "5": {
+      "cells": [
+        "vitality:extra_regen",
+        "weapon:restorative_shot",
+        "weapon:long_range",
+        "weapon:headhunter",
+        "vitality:fortitude",
+        "weapon:express_shot"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:restorative_shot",
+        "weapon:close_quarters",
+        "weapon:opening_rounds",
+        "weapon:weakening_headshot",
+        "vitality:bullet_lifesteal",
+        "weapon",
+        "vitality:fortitude"
+      ]
+    },
+    "7": {
+      "cells": [
+        "vitality",
+        "weapon:titanic_magazine",
+        "vitality:spirit_shielding",
+        "spirit",
+        "weapon:point_blank"
+      ]
+    },
+    "8": {
+      "cells": [
+        "weapon:close_quarters",
+        "vitality:grit",
+        "spirit:extra_charge",
+        "spirit:spirit_strike",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder",
+        "weapon",
+        "vitality:lifestrike"
+      ]
+    },
+    "9": {
+      "cells": [
+        "vitality:extra_health",
+        "weapon:active_reload",
+        "weapon:swift_striker",
+        "weapon:titanic_magazine",
+        "vitality",
+        "weapon:fleetfoot",
+        "vitality:spirit_resilience"
+      ]
+    },
+    "10": {
+      "cells": [
+        "spirit:mystic_burst",
+        "spirit:mystic_expansion",
+        "vitality:sprint_boots",
+        "spirit:mystic_vulnerability",
+        "spirit:compress_cooldown",
+        "spirit:improved_spirit",
+        "spirit:radiant_regeneration"
+      ]
+    },
+    "11": {
+      "cells": [
+        "spirit:mystic_burst",
+        "spirit:mystic_expansion",
+        "spirit:extra_spirit",
+        "weapon:opening_rounds",
+        "vitality:trophy_collector",
+        "spirit:slowing_hex",
+        "spirit:rapid_recharge"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_201021_327.png"
+}

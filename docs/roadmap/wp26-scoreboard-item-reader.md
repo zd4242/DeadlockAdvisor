@@ -1,6 +1,6 @@
 # WP26 The item and bar reader, with its corpus
 
-Status: todo
+Status: done
 Effort: L · Risk: medium-high (small icons; the one real unknown of the feature) · Depends on: WP24 · Wave: B
 Touches: new `src/Vision/Items/` (`ItemGrid.cs`, `ItemTemplates.cs`, `ItemDerivation.cs`, `ItemReader.cs`, `BarReader.cs`, result records), `src/Services/ArtDownloadService.cs` (only if cut icons are cached), `src/Vision/LabeledCapture.cs` or a sibling label type, `tests/DeadlockAdvisor.Tests` (`ItemCorpusTests`, `Golden/vision/items/`, helpers in `Support/`)
 Docs to update: `docs/detection_model.md` (a new section, "The scoreboard's items"), `docs/architecture.md` (sections 2, 8, 9), `CLAUDE.md`'s detection rules only if the user agrees to extend them to items
@@ -66,3 +66,28 @@ version), `BarReaderTests`. Corpus captures are the user's own, **with the playe
 - A new item arrives with a patch and its icon with the next art download; until then it reads category-only, which is correct.
 - Skins or cosmetic variants of an icon, if the game has them, are handled like hero variants: learn from a correction, never from a guess. WP24 found one already: Tankbuster is drawn dark in game where the API's art is cream, so it never matched.
 - WP24's first-cut matcher (a correlation on colour at the cell's own pixel size, candidates limited to the corner's category, each item once per hero; confident at 0.70 with a lead of 0.08) is `tests/DeadlockAdvisor.Tests/TabViewSpike.cs`; loosening it to 0.55 was not safe. Mask the corner and the "ACTIVE" strip along the bottom, which only active items carry.
+
+## Findings (2026-10-12)
+
+All three stages are built (`src/Vision/Items/`), with the corpus (`tests/DeadlockAdvisor.Tests/Golden/vision/items/`: 12 boards of the user's own native 2560×1440 captures, masked to the heroes' columns below their bars, and the 156 icons at 100 pixels). How it works is in `docs/detection_model.md`, "The scoreboard's items". Nothing in the app calls it yet: `ScoreboardAction.OnRead` is WP27's.
+
+**What it reads, on the corpus** (970 item cells; `mockups/items_report.md`): 86% confidently right at native size, 85% and 86% shrunk to 1080p and 900p (simulated), **none confidently wrong at any size**, every cell found with its category, every tier right, every hero's cells counted right (133 of 133). The rest are unknown, the same cells again and again: icons the game draws differently from the API's art (Tankbuster, Healbane and Enduring Speed, whose API art is a running man while the game draws a boot), some active items, and a few cells at 0.6 to 0.7. WP24's guess of 15 to 25% unknown on soft frames holds on sharp ones at 14%.
+
+**What WP24 got that native captures correct**
+- A cell is **0.30 pitches** square (0.31 on soft video), and sits exactly at the numbers in premise 2 (rows at 3.82 + 0.396 × row, columns -0.185 and +0.213) on a standard board once the grid's own few pixels of error are slid out (-0.02 pitch down, 0 across).
+- **A Street Brawl's grid is a per cent out in pitch (118 against 116.8) and in the gap between the teams**, so its deeper rows drift by up to 0.06 pitches and its two teams sit differently. The reader fits its own lattice (a scale, a vertical slide, a sideways slide per team) from the tags, then settles the scale by matching icons.
+- **The tier numeral is legible** (dark strokes on the tag, I to IV) and **every item costs 800 · 2^(tier-1)** exactly, so a cell's cost is known from its numeral even when its item is not: WP24's "unknown cells at their category's median, flagged as an estimate" is not needed, and WP27's investment is exact except for hidden and unseen cells.
+- **The bars are `1 - e^(-souls/10000)`** of the souls in the category, the same for the three bars, to a mean error of 0.012 over 411 bars (WP24's "rises and flattens, correlation 0.9" was this on soft frames); a Street Brawl's bars follow a steeper curve and aren't checked.
+- Tier numerals also **settle items drawn alike at different tiers** (Superior and Compress Cooldown are both a stopwatch) and **caught two confident misreads a person had checked by eye** (Enduring Speed read as Sprint Boots): a confident read the numeral contradicts is taken back.
+
+**What else is on the board that WP27 and the later packages meet**
+- A **hidden item** is a black cell with a white question mark (a Street Brawl's enemy picks while items are chosen); it counts as filled and has no category (`CellKind.Hidden`). None of the standard-mode boards in the corpus has one.
+- **Something drawn over cells**: the kill feed over a first slot's first rows reads as unseen cells (`CellKind.Unseen`), a tooltip or window over a slot reads as `Covered` (flat where the bars are), and a screen-wide colour wash (a purple flash over everything) reads as every slot covered. **None of these say the hero has nothing**: WP27 must keep what it knew. A slot that a tooltip's edge leaves half visible isn't recognised as covered and can read short (one such board is in the corpus, pinned as it is); the bars check flags it.
+- Glares through the panel look like tags in colour; only the tier numeral's dark strokes tell them apart.
+- A read takes 0.6 to 0.9 seconds on a desktop CPU.
+
+**Left out**
+- Learning an item's in-game look from a correction (there is no review UI for items): `assets/items/<item_id>/*.png` are matched as variants of the item, and nothing writes them. The unknown cells above would be the first to gain.
+- A native capture at 1080p or any other HUD scale: the corpus has only 2560×1440, and the smaller sizes are shrunk from it (WP24 did the same). A native one is worth adding when someone has one.
+- `CLAUDE.md`'s detection rules were not extended to items (the file says only if the user agrees); `docs/detection_model.md`, "Rules", carries the item rule.
+- Wiring (WP27), and what to do with a tooltip's half-covered slot beyond not trusting an empty read.

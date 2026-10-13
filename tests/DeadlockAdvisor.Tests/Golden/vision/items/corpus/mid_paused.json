@@ -1,0 +1,140 @@
+{
+  "screen_width": 2560,
+  "screen_height": 1440,
+  "match": "m5",
+  "phase": "mid, paused",
+  "grid": {
+    "version": 3,
+    "center_x": 1279.2235798831277,
+    "pitch": 116.80100989166893,
+    "top": 29.8,
+    "gap_ratio": 1.6699094926565416,
+    "width_ratio": 0.5282368117301168
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:extra_regen",
+        "vitality:grit",
+        "spirit:arcane_surge",
+        "weapon:mystic_shot",
+        "vitality",
+        "vitality:spirit_lifesteal",
+        "spirit:rapid_recharge"
+      ]
+    },
+    "1": {
+      "cells": [
+        "vitality:extra_health",
+        "vitality:sprint_boots",
+        "weapon:stalker",
+        "weapon:burst_fire",
+        "weapon:point_blank"
+      ]
+    },
+    "2": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:extra_health",
+        "weapon:opening_rounds",
+        "weapon:sharpshooter",
+        "weapon:headhunter",
+        "vitality"
+      ]
+    },
+    "3": {
+      "cells": [
+        "vitality:extra_health",
+        "vitality:extra_regen",
+        "weapon:opening_rounds",
+        "weapon:fleetfoot",
+        "vitality",
+        "vitality:battle_vest",
+        "weapon:titanic_magazine",
+        "weapon:intensifying_magazine"
+      ]
+    },
+    "4": {
+      "cells": [
+        "weapon:monster_rounds",
+        "vitality:extra_regen",
+        "spirit:arcane_surge",
+        "weapon:intensifying_magazine",
+        "vitality:reactive_barrier",
+        "weapon:ballistic_enchantment"
+      ]
+    },
+    "5": {
+      "cells": [
+        "spirit:improved_spirit",
+        "weapon:titanic_magazine",
+        "spirit:quicksilver_reload",
+        "vitality:spirit_lifesteal",
+        "spirit:superior_duration"
+      ]
+    },
+    "6": {
+      "cells": [
+        "vitality:extra_health",
+        "vitality:extra_regen",
+        "spirit:mystic_expansion",
+        "vitality:trophy_collector",
+        "spirit:improved_spirit",
+        "spirit:radiant_regeneration"
+      ]
+    },
+    "7": {
+      "cells": [
+        "spirit:mystic_burst",
+        "vitality:extra_regen",
+        "spirit:spirit_strike",
+        "weapon:stalker",
+        "vitality:trophy_collector",
+        "vitality:veil_walker"
+      ]
+    },
+    "8": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:mystic_burst",
+        "spirit:improved_spirit",
+        "weapon:opening_rounds",
+        "spirit:quicksilver_reload",
+        "vitality:enchanters_emblem",
+        "spirit:rapid_recharge"
+      ]
+    },
+    "9": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_burst",
+        "vitality:battle_vest",
+        "weapon:swift_striker",
+        "weapon",
+        "vitality"
+      ]
+    },
+    "10": {
+      "cells": [
+        "vitality:extra_regen",
+        "weapon:close_quarters",
+        "weapon:melee_charge",
+        "weapon:hunters_aura",
+        "vitality:veil_walker"
+      ]
+    },
+    "11": {
+      "cells": [
+        "weapon:headshot_booster",
+        "spirit:mystic_expansion",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "spirit:compress_cooldown",
+        "spirit:duration_extender",
+        "vitality:healing_booster"
+      ]
+    }
+  },
+  "source": "scoreboard_20261012_202022_111.png"
+}

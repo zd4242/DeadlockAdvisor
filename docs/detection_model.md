@@ -105,6 +105,54 @@ Contrast is what tells a blank from a dead or faded portrait. On the labelled ca
 and the faintest dead one at 0.05. Score doesn't separate them: dead portraits score 0.15 to 0.27,
 the same as a blank. `StreetBrawlTests` checks that no six-a-side capture is taken for one.
 
+## The scoreboard's items
+
+While the scoreboard key is held, the board shows every hero's items and three bars under their portrait (`Vision/Items`, roadmap WP26; `ItemReader.Read(band, grid, templates, blankSlots)` is a
+pure function of the capture, the grid and the icons, like `NetWorthReader`). It answers the same way hero detection does: a cell's identity is only given when it is sure, and unknown is an
+answer. Every length is in pitches (`ItemGrid`), so it holds at any resolution or HUD scale.
+
+**Cells.** A hero holds at most twelve, six rows of two, filled row after row. Cell centres sit at the slot's centre -0.185 and +0.213 pitches, and 3.82 + 0.396 × row pitches below the grid's top;
+the icon is 0.30 pitches square (0.97 of what WP24 measured on soft video frames; 1.00 on native captures). The deepest cell ends 5.95 pitches down, inside the top 52% the capture takes.
+
+**Where the cells are.** The grid comes from the portraits and the cells need not sit where it says: a Street Brawl's grid is a per cent out in pitch (118 against 116.8) and in the gap between the teams,
+and its top varies by a few pixels (and by 12 for a dead player's view). `ItemPlace` is the grid's numbers plus a scale, a vertical slide and a sideways slide for each team. The **tier tags** find
+them: every filled cell has a small solid tag in its top right corner, a triangle 0.47 of a cell along each edge, in its shop category's colour (`TagMap`: weapon hue 31-38, vitality 76-88, spirit 262
+on a blue panel and 303 on a brown one, the same on every board; the panel behind is never as saturated). `ItemPlace.Fit` slides and scales the cells to where the most tag windows fill with tag colour
+and offers the best few scales; `ItemReader.Refine` then slides each candidate, a team at a time, to where a spread of tagged cells match their category's icons best, and the candidate that matches best
+wins (a scale shows only in the deepest rows and trades off against the vertical slide, so the tags alone can't settle it).
+
+**Which cells are filled.** A cell is filled when its tag window holds tag colour **and** the tier numeral's dark strokes (`TierReader.InkShare`: 0.23 or more on real tags at every size, 0.08 or less on
+a glare or a coloured scene seen through the panel, which has the colour and no numeral). Further, a hero's cells are the leading ones, so a tag with more empty cells before it than tags is a stray
+colour, and a gap of more than two empty cells ends the hero's cells (`PlausibleEnd`). A cell that must be filled (a later one is) with no tag is **unseen** (the kill feed is over it); a black cell with
+a white question mark is **hidden** (a Street Brawl's enemy picks while items are chosen) and counts as filled, with no category. A slot is **covered**, and says nothing at all about its items, when the
+band across its bars is flat (a tooltip or window: spread 2 to 3 against 5 and up), or when four of its tag windows hold tag colour with no numeral (a screen-wide colour wash). A hero a tooltip's edge
+leaves half visible isn't recognised as covered; a consumer must not take an empty read for "has nothing" (see the rules).
+
+**Which item.** `ItemFrame` frames a cell as 32×32 area-averaged pixels with the tier corner and the "ACTIVE" strip left out, each colour channel zero-mean and all of them unit length, so a dot product is
+a correlation; `ItemTemplates` frames each `assets/items` icon the same way, shrunk to the cell's own pixels first (it has a `Version`, and `TheFramingMatchesItsVersion` fingerprints it). A cell is scored against
+the icons of its own category, each item once per hero, and given an item at a score of **0.70** and a lead of **0.08** over the runner-up. Anything in `assets/items/<item_id>/` is another way the game
+draws that item and is matched too (a dark variant of an icon the API draws light); there is no review to learn one from yet, so it is a file dropped in.
+
+**Which tier, and the cost.** Every item costs 800 · 2^(tier-1) souls, so a cell's tier is its cost, exactly, even when its item is unknown (`ItemTemplates.CostOf`, `HeroItems.Souls`). The numeral
+(I to IV, dark strokes on the tag) is read against references cut from the **same board**: the cells the icons identified carry a known tier, so each board brings what it needs at its own resolution
+(`TierReader`; leave one out, the numerals of the corpus read as their item's tier or not at all). The tier does three things:
+- **Veto.** A cell read confidently as an item whose tier the numeral clearly contradicts (another tier's references at 0.90 or better, and 0.05 over its own) is made unsure: either the numeral or the
+  item is wrong, and the item is more likely, an upgrade drawn like what it upgrades from (Enduring Speed, tier II, is drawn like Sprint Boots, tier I; the API's art for it is a running man).
+- **A second look** among the items of the numeral's tier alone, for cells still unsure: this settles items drawn alike at different tiers (Superior and Compress Cooldown). Because the best of one tier
+  looks like a match whatever the truth if the true item has no art that matches, it has to be better: a score of **0.75**, and no item of another tier matching more than 0.05 better.
+- Unknown items keep their tier, so their cost is known.
+
+**Bars.** Left to right weapon, spirit and vitality, each a pale fill rising from the foot of a dark track 0.27 pitches tall at 2.17 to 2.44 below the grid's top (`BarReader`, heights in pitches, read by
+brightness). In a standard match a bar's fill is `1 - e^(-souls / 10000)` of the souls in its category, the same for the three (`BarReader.ExpectedFill`: a mean error of 0.012 over 411 bars, never over
+0.19); `BarReader.Check` compares a hero's bars with the items read and flags a bar more than 0.15 from it (with exact souls) or emptier than the least the cells say (an unknown cell). A disagreement says a
+cell was read as the wrong tier or category or a bar was misread, not which. A Street Brawl's bars follow another, steeper curve and aren't checked.
+
+**What it measures.** A read takes 0.6 to 0.9 seconds on a desktop CPU (matching and refining dominate), off the UI thread. On the labelled boards (`Golden/vision/items/corpus`, 12 boards from the start of a match to its end, native 2560×1440, 970 item cells): 86% of the cells read confidently right, none
+confidently wrong, every cell found with its category and tier, every hero's cells counted right, at native size and shrunk to what 1080p and 900p screens draw (85% and 86%; simulated, the corpus has no native
+smaller capture). The rest are unknown, and they repeat from board to board: icons the game draws in a way the API's art doesn't (Tankbuster, Healbane and Enduring Speed are dark or different in game), some
+active items, and cells at a score a little under the bar. The corpus is the user's own captures with everything outside the heroes' columns and above their bars painted black (so no name, kill feed
+or nameplate is in it), and a tooltip over a slot's edge and a screen-wide colour wash are in it as the cases they are.
+
 ## What the numbers are
 
 All of these are measured on the labelled corpus, and each constant's comment says where it came from:
@@ -144,6 +192,15 @@ Tools in `VisionCorpusTools`, each run only when its environment variable is set
 | `DEADLOCK_VISION_FETCH_ART=<folder>` | Run the real art download into a folder. |
 | `DEADLOCK_VISION_DERIVE=<assets>` | Cut every card into portraits and draw them side by side. |
 | `DEADLOCK_VISION_AUDIT=<topbar>` | Score each learned portrait for the reads it rescues and breaks. `DEADLOCK_VISION_AUDIT_APPLY=1` quarantines the ones that don't earn their place. |
+| `DEADLOCK_ITEM_ART=<an assets/items folder>` | Shrink every item icon to 100 pixels into `Golden/vision/items/art` (the item corpus's art). |
+| `DEADLOCK_ITEM_DRAFT=<kept scoreboard captures>` | Draft an item label for each capture, with two sheets in `mockups/item_drafts` to check it by: the confident reads (the cell beside its icon) and the others (the cell beside its three best candidates). `DEADLOCK_ASSETS` uses the full-size art. |
+| `DEADLOCK_ITEM_PROMOTE=<kept scoreboard captures>` | Cut the capture each label in `Golden/vision/items/corpus` names as its `source`, with everything outside the heroes' columns and above their bars painted black. |
+
+**To add item boards:** turn on *Keep the boards it reads* (`AppSettings.KeepScoreboardCaptures`) and hold the scoreboard key in a match; the boards are kept in `<data>/captures/scoreboard_*`, at most one every 30 seconds,
+and the newest 300 only (move the ones you want to keep elsewhere). Draft them, look at **every** confident read on the sheets (a wrong item can look right: the numeral caught two that did), copy the label into the corpus
+with its `match` and `phase`, name the cells you checked (`weapon:active_reload`; one you couldn't tell stays `weapon`), promote, and regenerate the report with
+`dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~ItemCorpusTests|FullyQualifiedName~ItemDerivationTests"`. `ItemCorpusTests.NoCellIsReadConfidentlyWrong` fails for a confident read of a cell the label
+doesn't name, so a change that reads more is never unverified.
 
 **To add captures:** Detect keeps every applied one in `<data>/captures/detect_*.png` and `.json`,
 labelled with the heroes applied and what was read. Draft them, check the contact sheets, write the
@@ -160,3 +217,6 @@ corpus label with its states, promote, and regenerate the report.
 - Say "unknown" rather than guess, for heroes and for you alike: the review, the match already
   applied, and the match page's question about which hero is you handle unknowns. A hint such as
   `LikelyYou` is only ever pointed out for a click, never applied.
+- The same holds for items (`ItemCorpusTests`, `Golden/vision/items/corpus_report.json`): nothing that can make an item read confident may be confidently wrong on the corpus at any size, and a change may
+  add confident reads and take away wrong ones, never the reverse. A read that says nothing (a covered slot, an unseen or hidden cell, an unknown item) is not a read that says "nothing there": a consumer
+  keeps what it knew about those, and a hero a tooltip's edge half covers can read short.
