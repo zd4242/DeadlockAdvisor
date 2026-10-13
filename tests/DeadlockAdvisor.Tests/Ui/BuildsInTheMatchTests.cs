@@ -132,6 +132,8 @@ public class BuildsInTheMatchTests
         ui.Show();
         var match = ui.ViewModel.Match;
         match.SelectedCutoff = MatchViewModel.CutoffPresets[0];
+        // Holding a debuff item also takes its effect off the item's own score (TeamOverlapTests); this is about the mark and the filter alone.
+        match.ByOverlap = false;
         Dictionary<string, string> Scores() => match.Results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId, row => row.Score.Text);
         var before = Scores();
         var top = before.Keys.Take(2).ToList();
@@ -166,6 +168,7 @@ public class BuildsInTheMatchTests
         MatchPageTests.SetUpMatch(ui);
         var match = ui.ViewModel.Match;
         match.SelectedCutoff = MatchViewModel.CutoffPresets[0];
+        match.ByOverlap = false;
         var first = match.Results.Entries.OfType<ResultRowViewModel>().First().ItemId;
         match.Match.Builds.Apply("wraith", Holding(ui.Data.Store, new BarsRead(0.1, 0.1, 0.1), first), DateTimeOffset.UtcNow);
         match.Refresh();

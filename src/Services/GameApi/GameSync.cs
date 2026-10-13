@@ -99,27 +99,39 @@ public static partial class GameSync
         };
 
     /// <summary>
+    /// Debuffs an item puts on enemies: API property → the effect it is, which two properties can share (the API files
+    /// a Bullet Resist reduction under two names). Not scored by a stat rule, and kept in <c>item_effects.csv</c> so a
+    /// second source of one on the team can be told from the first (<see cref="ExtractEffects"/>).
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> EnemyDebuffs = new Dictionary<string, string>
+    {
+        ["BulletArmorReduction"] = "BulletResistReduction",
+        ["BulletResistReduction"] = "BulletResistReduction",
+        ["MagicResistReduction"] = "SpiritResistReduction",
+        ["TechArmorDamageReduction"] = "SpiritResistReduction",
+        ["TechPowerReduction"] = "TechPowerReduction",
+        ["FireRateSlow"] = "FireRateSlow",
+        ["SlowPercent"] = "MoveSlow",
+        ["MovementSpeedSlow"] = "MoveSlow",
+        ["MaxSlowPercent"] = "MoveSlow",
+    };
+
+    /// <summary>
     /// Properties the tooltip shows under a scored stat's label that are left out on purpose, and why.
     /// Any other property sharing such a label is reported by the sync (<see cref="UnmappedStats"/>),
     /// so a patch's new or renamed property gets sorted into <see cref="Stats"/> or here instead of
     /// being silently dropped.
     /// </summary>
-    public static readonly IReadOnlyDictionary<string, string> Unscored = new Dictionary<string, string>
-    {
-        ["BulletArmorReduction"] = "a debuff on enemies",
-        ["BulletResistReduction"] = "a debuff on enemies",
-        ["MagicResistReduction"] = "a debuff on enemies",
-        ["TechArmorDamageReduction"] = "a debuff on enemies",
-        ["TechPowerReduction"] = "a debuff on enemies",
-        ["FireRateSlow"] = "a debuff on enemies",
-        ["SlowPercent"] = "a debuff on enemies",
-        ["MovementSpeedSlow"] = "a debuff on enemies",
-        ["MaxSlowPercent"] = "a debuff on enemies",
-        ["HealLifePercentOutOfCombat"] = "a percent of max health per second, not the flat amount Out of Combat Regen counts",
-        ["GuardianWardCombatBarrier"] = "goes on an ally",
-        ["HealAmpRegenPenaltyPercent"] = "the regen half of a healing reduction HealAmpReceivePenaltyPercent already counts",
-        ["ProcBaseAttackDamagePercent"] = "one proc shot, not a lasting bonus",
-    };
+    public static readonly IReadOnlyDictionary<string, string> Unscored = EnemyDebuffs.Keys
+        .ToDictionary(key => key, _ => "a debuff on enemies")
+        .Concat(new Dictionary<string, string>
+        {
+            ["HealLifePercentOutOfCombat"] = "a percent of max health per second, not the flat amount Out of Combat Regen counts",
+            ["GuardianWardCombatBarrier"] = "goes on an ally",
+            ["HealAmpRegenPenaltyPercent"] = "the regen half of a healing reduction HealAmpReceivePenaltyPercent already counts",
+            ["ProcBaseAttackDamagePercent"] = "one proc shot, not a lasting bonus",
+        })
+        .ToDictionary();
 
     /// <summary>
     /// Properties whose value is per stack of the item's buff. They're counted fully stacked (see
@@ -303,6 +315,43 @@ public static partial class GameSync
                 meta[pair.Key.Stat].Unit, pair.Key.Conditional))
             .ToList();
     }
+
+    /// <summary>
+    /// What the item puts on other heroes, which a second source of it doesn't add to: the debuffs in
+    /// <see cref="EnemyDebuffs"/>, strongest taken where the item has two of one kind, and, for an item with a passive
+    /// <c>Radius</c>, the stats its passive gives (an aura: Heroic Aura's Bullet Resist), named as <see cref="Stats"/> names them.
+    /// Only properties the tooltip shows count, as in <see cref="ExtractStats"/>.
+    /// </summary>
+    public static List<ItemEffect> ExtractEffects(string itemId, JsonNode record)
+    {
+        var name = NameOf(record);
+        var properties = ShownProperties(record);
+        var totals = new OrderedDictionary<(string Effect, string Scope), double>();
+        var isAura = properties.Any(p => p.Key == "Radius" && IsPassive(p.Property) && Number(JsonRecord.Get(p.Property, "value")) is > 0);
+        foreach (var (key, property) in properties)
+        {
+            if (Number(JsonRecord.Get(property, "value")) is not { } value || value == 0)
+                continue;
+            if (EnemyDebuffs.TryGetValue(key, out var debuff))
+            {
+                var slot = (debuff, EffectScope.EnemyDebuff);
+                totals[slot] = Math.Max(totals.GetValueOrDefault(slot), Math.Abs(value));
+            }
+            else if (isAura && IsPassive(property) && Stats.TryGetValue(key, out var stat) && !IsPerStack(name, key) && !_selfInflicted.Contains((name, key)))
+            {
+                var slot = (stat.Stat, EffectScope.Aura);
+                totals[slot] = totals.GetValueOrDefault(slot) + value;
+            }
+        }
+        return totals
+            .OrderBy(pair => pair.Key.Scope, StringComparer.Ordinal)
+            .ThenBy(pair => pair.Key.Effect, StringComparer.Ordinal)
+            .Where(pair => pair.Value > 0)
+            .Select(pair => new ItemEffect(itemId, pair.Key.Effect, pair.Key.Scope, NumberFormat.Round(pair.Value, 4)))
+            .ToList();
+    }
+
+    private static bool IsPassive(JsonNode property) => JsonRecord.Text(property, "tooltip_section") == "passive";
 
     /// <summary>
     /// Each shop's investment bonus, from the heroes' <c>cost_bonuses</c> curves. Every hero has the
@@ -621,6 +670,7 @@ public static partial class GameSync
         ApplyHeroes(store, heroes, report);
         var recordsByItem = ApplyItems(store, itemRecords.OfType<JsonNode>().ToList(), report);
         ApplyStats(store, recordsByItem, knownItems, ShopBonuses(heroes), report);
+        ApplyEffects(store, recordsByItem, report);
         ApplyTooltips(store, recordsByItem, report);
         var records = recordsByItem.Values.ToList();
         report.UnmappedStats.AddRange(UnmappedStats(records));
@@ -947,6 +997,24 @@ public static partial class GameSync
         }
     }
 
+    private static void ApplyEffects(DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, SyncReport report)
+    {
+        var fresh = new OrderedDictionary<string, List<ItemEffect>>();
+        foreach (var (itemId, record) in recordsByItem)
+        {
+            var effects = ExtractEffects(itemId, record);
+            if (effects.Count > 0)
+                fresh[itemId] = effects;
+        }
+        report.EffectRows = fresh.Values.Sum(effects => effects.Count);
+        var same = fresh.Count == store.ItemEffects.Count
+                   && fresh.All(pair => store.ItemEffects.TryGetValue(pair.Key, out var old) && old.SequenceEqual(pair.Value));
+        if (same)
+            return;
+        store.ItemEffects = fresh;
+        report.EffectsChanged = true;
+    }
+
     private static void ApplyTooltips(DataStore store, OrderedDictionary<string, JsonNode> recordsByItem, SyncReport report)
     {
         var classToItem = new Dictionary<string, string>();
@@ -985,6 +1053,8 @@ public static partial class GameSync
             store.SaveItems();
         if (report.StatsChanged)
             store.SaveItemStats();
+        if (report.EffectsChanged)
+            store.SaveItemEffects();
         if (report.TooltipsChanged)
             store.SaveItemTooltips();
     }

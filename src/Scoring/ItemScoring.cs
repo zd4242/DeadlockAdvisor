@@ -40,9 +40,15 @@ public static class ItemScoring
         var profiled = store.Heroes.Keys.Where(store.IsProfiled).ToList();
         var summed = new Dictionary<MatrixKey, double>();
         var ranked = new Dictionary<MatrixKey, double>();
+        var overlapSummed = new Dictionary<MatrixKey, double>();
+        var overlapRanked = new Dictionary<MatrixKey, double>();
+        var shared = OverlapWeights.All(store);
         foreach (var (key, coefficient) in store.EffectiveCoefficients())
         {
-            var weights = store.OnBestTargets(key.ItemId, key.CategoryId, key.Relation) ? ranked : summed;
+            var onBestTargets = store.OnBestTargets(key.ItemId, key.CategoryId, key.Relation);
+            var weights = onBestTargets ? ranked : summed;
+            var overlapWeights = onBestTargets ? overlapRanked : overlapSummed;
+            var overlap = shared.TryGetValue(key.ItemId, out var shape) ? shape.Coefficient(store, key.ItemId, key.CategoryId, key.Relation) : 0.0;
             var baseline = baselines.GetValueOrDefault(key.CategoryId);
             foreach (var heroId in profiled)
             {
@@ -51,19 +57,24 @@ public static class ItemScoring
                 var deviation = score - baseline;
                 var cell = new MatrixKey(key.ItemId, heroId, key.Relation);
                 weights[cell] = weights.GetValueOrDefault(cell) + deviation * coefficient;
+                if (overlap != 0)
+                    overlapWeights[cell] = overlapWeights.GetValueOrDefault(cell) + deviation * overlap;
             }
         }
-        return new WeightMatrix(summed, ranked, profiled);
+        return new WeightMatrix(summed, ranked, profiled, overlapSummed, overlapRanked);
     }
 
     /// <summary>
     /// The match's line-up, its focused enemies counting for more; without <paramref name="netWorth"/> net
-    /// worth leaves every hero as they are.
+    /// worth leaves every hero as they are, and without <paramref name="overlap"/> no effect counts as already on the team.
     /// </summary>
-    public static LineUp RelevantHeroes(MatchState match, NetWorthWeights? netWorth = null)
+    public static LineUp RelevantHeroes(MatchState match, NetWorthWeights? netWorth = null, TeamOverlap? overlap = null)
     {
         var enemies = match.Enemies;
-        return new LineUp(match.Allies, enemies, match.SelfHero, netWorth ?? NetWorthWeights.None, FocusWeights.For(enemies, match.Focused));
+        return new LineUp(match.Allies, enemies, match.SelfHero, netWorth ?? NetWorthWeights.None, FocusWeights.For(enemies, match.Focused))
+        {
+            Overlap = overlap ?? TeamOverlap.None,
+        };
     }
 
     /// <summary>
@@ -71,16 +82,17 @@ public static class ItemScoring
     /// only tiers with an item above 0 appear.
     /// </summary>
     public static OrderedDictionary<int, List<ScoredItem>> FullMatchResults(
-        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null) =>
-        GroupPositive(store, ScoreAll(store, matrix, match, netWorth));
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null, TeamOverlap? overlap = null) =>
+        GroupPositive(store, ScoreAll(store, matrix, match, netWorth, overlap));
 
     /// <summary>
     /// Every item in <see cref="Tiers"/> with its score for the line-up and its match data, however
     /// it scores: highest score first, then by name.
     /// </summary>
-    public static List<ScoredItem> ScoreAll(DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null)
+    public static List<ScoredItem> ScoreAll(
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null, TeamOverlap? overlap = null)
     {
-        var lineUp = RelevantHeroes(match, netWorth);
+        var lineUp = RelevantHeroes(match, netWorth, overlap);
         return store.Items
             .Where(entry => Tiers.Contains(entry.Value.Tier))
             .Select(entry => new ScoredItem(entry.Key, entry.Value.ItemName, entry.Value.Tier, Total(matrix, entry.Key, lineUp),
@@ -112,15 +124,19 @@ public static class ItemScoring
     /// One item's score for one line-up: "against" over the enemies, "with" over the allies, "as" for
     /// you, each hero's weight times their net worth and focus factors. The part of a weight from best-target lines
     /// (<see cref="DataStore.OnBestTargets"/>) counts by <see cref="BestTargets"/> over its team instead of summing,
-    /// less what a typical team focused the same way comes to.
+    /// less what a typical team focused the same way comes to. The part of each weight that is an effect other heroes carry
+    /// (<see cref="WeightMatrix.OverlapSummed"/>) counts for what the team doesn't have of it already
+    /// (<see cref="TeamOverlap.Coverage"/>): a multiplier on a part, never a bonus, with its typical sum scaled the same.
     /// </summary>
     public static double Total(WeightMatrix matrix, string itemId, LineUp lineUp)
     {
         var total = 0.0;
+        var coverage = lineUp.Overlap.Coverage(itemId);
         Dictionary<Relation, List<string>>? targets = null;
         foreach (var (heroId, relation) in lineUp.Members())
         {
-            total += lineUp.Factor(heroId) * matrix.Summed(new MatrixKey(itemId, heroId, relation));
+            var key = new MatrixKey(itemId, heroId, relation);
+            total += lineUp.Factor(heroId) * Uncovered(matrix.Summed(key), matrix.OverlapSummed(key), coverage);
             if (!matrix.OnBestTargets(itemId, relation) || !matrix.IsProfiled(heroId))
                 continue;
             targets ??= [];
@@ -130,11 +146,17 @@ public static class ItemScoring
         }
         foreach (var (relation, team) in targets ?? [])
         {
-            total += BestTargets.Sum(team.Select(heroId => lineUp.Factor(heroId) * matrix.Ranked(new MatrixKey(itemId, heroId, relation))))
-                     - lineUp.Focus.Typical(relation, team, focused => matrix.Typical(itemId, relation, team.Count, focused));
+            total += BestTargets.Sum(team.Select(heroId =>
+                         lineUp.Factor(heroId) * Uncovered(matrix.Ranked(new MatrixKey(itemId, heroId, relation)),
+                             matrix.OverlapRanked(new MatrixKey(itemId, heroId, relation)), coverage)))
+                     - lineUp.Focus.Typical(relation, team, focused => matrix.Typical(itemId, relation, team.Count, focused, coverage));
         }
         return total;
     }
+
+    /// <summary>A weight less the covered share of its shared effect; the weight itself, to the last bit, when nothing is covered.</summary>
+    private static double Uncovered(double weight, double overlapping, double coverage) =>
+        coverage == 0 ? weight : weight - coverage * overlapping;
 
     // -- "why is this recommended?" -------------------------------------------
 
@@ -144,21 +166,24 @@ public static class ItemScoring
     /// lines, each hero's best-target lines count at the hero's rank beside the lines that sum, with a
     /// typical team's sum taken off as one more line.
     /// </summary>
-    public static List<HeroContribution> ExplainItem(DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null)
+    public static List<HeroContribution> ExplainItem(
+        DataStore store, MatchState match, string itemId, NetWorthWeights? netWorth = null, TeamOverlap? overlap = null)
     {
-        var lineUp = RelevantHeroes(match, netWorth);
+        var lineUp = RelevantHeroes(match, netWorth, overlap);
         var baselines = store.TraitBaselines();
+        var shared = OverlapWeights.Of(store, itemId);
+        var coverage = shared is null ? 0.0 : lineUp.Overlap.Coverage(itemId);
         var contributions = new List<HeroContribution>();
         foreach (var relation in new[] { Relation.Against, Relation.With, Relation.As })
         {
             var team = lineUp.Members().Where(member => member.Relation == relation).Select(member => member.HeroId).ToList();
             List<HeroContribution> Found(bool? ranked) => team
                 .Select(heroId => Contribution(store, baselines, itemId, heroId, relation,
-                    lineUp.NetWorth.StandingOf(heroId), lineUp.Focus.Factor(heroId), lineUp.Focus.IsFocused(heroId), ranked))
+                    lineUp.NetWorth.StandingOf(heroId), lineUp.Focus.Factor(heroId), lineUp.Focus.IsFocused(heroId), ranked, shared, coverage))
                 .OfType<HeroContribution>()
                 .ToList();
             contributions.AddRange(store.HasBestTargetLines(itemId, relation)
-                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), lineUp.Focus, Found(null), Found(true))
+                ? OnBestTargets(store, baselines, itemId, relation, team.Where(store.IsProfiled).ToList(), lineUp.Focus, Found(null), Found(true), shared, coverage)
                 : Found(null));
         }
         return contributions.OrderBy(contribution => -contribution.Amount).ToList();
@@ -173,7 +198,8 @@ public static class ItemScoring
     /// <param name="ranked">Each hero's best-target lines only: what ranks them.</param>
     private static IEnumerable<HeroContribution> OnBestTargets(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, Relation relation,
-        IReadOnlyList<string> team, FocusWeights focus, IReadOnlyList<HeroContribution> found, IReadOnlyList<HeroContribution> ranked)
+        IReadOnlyList<string> team, FocusWeights focus, IReadOnlyList<HeroContribution> found, IReadOnlyList<HeroContribution> ranked,
+        OverlapShape? shared, double coverage)
     {
         if (team.Count == 0)
             yield break;
@@ -202,7 +228,7 @@ public static class ItemScoring
             yield break;
         var roster = store.Heroes.Keys
             .Where(store.IsProfiled)
-            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, ranked: true)?.Amount ?? 0.0)
+            .Select(heroId => Contribution(store, baselines, itemId, heroId, relation, ranked: true, shared: shared, coverage: coverage)?.Amount ?? 0.0)
             .ToList();
         var count = Math.Min(team.Count, BestTargets.MaxTeam);
         var typical = focus.Typical(relation, team, focused => BestTargets.Expected(roster, count, focused, FocusWeights.Ratio));
@@ -232,9 +258,11 @@ public static class ItemScoring
     /// </summary>
     /// <param name="focus">The hero's <see cref="FocusWeights"/> factor, and whether they're focused.</param>
     /// <param name="ranked">Only the best-target lines (true) or only the summed ones (false); every line when null.</param>
+    /// <param name="shared">The item's shared effects, when it has any, and <paramref name="coverage"/> how much of them the team has.</param>
     private static HeroContribution? Contribution(
         DataStore store, IReadOnlyDictionary<string, double> baselines, string itemId, string heroId, Relation relation,
-        NetWorthStanding? netWorth = null, double focus = 1.0, bool isFocused = false, bool? ranked = null)
+        NetWorthStanding? netWorth = null, double focus = 1.0, bool isFocused = false, bool? ranked = null,
+        OverlapShape? shared = null, double coverage = 0.0)
     {
         if (!store.IsProfiled(heroId))
             return null;
@@ -253,7 +281,9 @@ public static class ItemScoring
                 store.Coefficient(itemId, categoryId, relation),
                 store.DerivedParts(itemId, categoryId, relation).ToList(),
                 store.TraitWeight(categoryId, relation),
-                baseline));
+                baseline,
+                Overlapping: shared?.Coefficient(store, itemId, categoryId, relation) ?? 0.0,
+                Coverage: coverage));
         }
         if (parts.Count == 0)
             return null;
@@ -340,10 +370,10 @@ public static class ItemScoring
     /// <see cref="DataStrength"/> of at least 1, strongest first.
     /// </summary>
     public static List<ScoredItem> DataOnlyPicks(
-        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null, int limit = 6) =>
-        DataOnlyPicks(ScoreAll(store, matrix, match, netWorth), limit);
+        DataStore store, WeightMatrix matrix, MatchState match, NetWorthWeights? netWorth = null, int limit = 6, TeamOverlap? overlap = null) =>
+        DataOnlyPicks(ScoreAll(store, matrix, match, netWorth, overlap), limit);
 
-    /// <inheritdoc cref="DataOnlyPicks(DataStore, WeightMatrix, MatchState, NetWorthWeights?, int)"/>
+    /// <inheritdoc cref="DataOnlyPicks(DataStore, WeightMatrix, MatchState, NetWorthWeights?, int, TeamOverlap?)"/>
     public static List<ScoredItem> DataOnlyPicks(IEnumerable<ScoredItem> scored, int limit = 6) =>
         scored
             .Where(item => !(item.Score > 0) && item.DataStrength >= 1)

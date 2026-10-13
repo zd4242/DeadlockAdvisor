@@ -985,7 +985,7 @@ public sealed class DataMenuTests : IDisposable
     {
         var dataDir = _fixture.Data.DataDir;
         ModelUpdateService.Record(dataDir, ModelManifest.Of(dataDir, "2026-10-02"));
-        var contents = ModelManifest.ModelFiles.ToDictionary(file => file,
+        var contents = ModelUpdateTests.ModelFilesIn(dataDir).ToDictionary(file => file,
             file => changed.Any(change => change.File == file) ? changed.First(change => change.File == file).Bytes : File.ReadAllBytes(Path.Combine(dataDir, file)));
         var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09",
             contents.ToDictionary(pair => pair.Key, pair => ModelManifest.Hash(pair.Value)), new Dictionary<string, string>()) { Notes = notes };

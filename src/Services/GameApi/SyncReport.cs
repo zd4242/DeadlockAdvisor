@@ -46,11 +46,13 @@ public sealed class SyncReport
     public bool ItemsChanged { get; set; }
     public bool StatsChanged { get; set; }
     public int StatRows { get; set; }
+    public bool EffectsChanged { get; set; }
+    public int EffectRows { get; set; }
     public bool TooltipsChanged { get; set; }
     public int TooltipCount { get; set; }
     public bool HeroScoresChanged => MeasuredChanges.Count > 0 || DurabilityChanges.Count > 0;
 
-    public bool AnythingChanged => HeroesChanged || ItemsChanged || StatsChanged || TooltipsChanged || HeroScoresChanged;
+    public bool AnythingChanged => HeroesChanged || ItemsChanged || StatsChanged || EffectsChanged || TooltipsChanged || HeroScoresChanged;
 
     public List<string> Lines()
     {
@@ -68,6 +70,8 @@ public sealed class SyncReport
         }
         if (StatsChanged)
             lines.Add($"Item stats refreshed: {StatRows} stat row(s).");
+        if (EffectsChanged)
+            lines.Add($"Item effects refreshed: {EffectRows} effect row(s) that land on other heroes.");
         if (TooltipsChanged)
             lines.Add($"Item tooltips refreshed: {TooltipCount} item(s).");
         if (StatChanges.Count > 0)

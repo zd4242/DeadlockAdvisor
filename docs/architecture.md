@@ -77,7 +77,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 | `Program.cs`, `App.axaml(.cs)`, `ViewLocator.cs` | entry point, DI wiring and startup, view lookup |
 | `src/Core` | `ViewModelBase`, formatting, fuzzy match, zoom steps, shortcut keys, wiki links, small helpers |
 | `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `MatchHistory` (its undo), `NetWorthHistory`, `HeroBuild` / `MatchBuilds` (what each hero holds, from the scoreboard), `AppSettings` |
-| `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
+| `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `TeamOverlap` / `OverlapWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
 | `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec; `Items/` the scoreboard's item and bar reader (`ItemReader`, `ItemTemplates`, `BarReader`; `ScoreboardAction` calls it) |
 | `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Scoreboard`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
@@ -144,7 +144,10 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   `SavedMatch.Builds` (an older file without it loads unchanged; an item id the store no longer has is dropped, its cell kept), and stays hidden but kept for a
   hero who leaves, so undo brings it back. `MatchViewModel` marks the items your hero holds (`ResultRowViewModel.IsOwned`, `ResultsViewModel.SetResults(owned)`),
   and `AppSettings.ResultsHideOwned` (Filters → Hide items you already own, `HideOwned`) leaves them out of the list before the cutoff, never out of a score;
-  the explanation notes it (`ExplainViewModel.IsOwned`). Both the marks and the roster's bars (`RosterSlotViewModel.Build`, `BuildSummaries`, painted by
+  the explanation notes it (`ExplainViewModel.IsOwned`). The same builds feed **overlap**: `TeamOverlap.For(store, match)` (you and your allies' held items
+  that have a shared effect in `DataStore.ItemEffects`) goes on the `LineUp` as `Overlap` when `AppSettings.ResultsByOverlap` is on, and `ItemScoring.Total` takes the covered share
+  off the part of each weight that is the shared effect (scoring_model.md, "What your team already has"); `MatchViewModel.OverlapNotices` raises one sentence when a read first
+  shows two teammates on one build, which `MainWindowViewModel.TellOverlap` toasts (with the chime and flash while the game has the screen, as Detect does). Both the marks and the roster's bars (`RosterSlotViewModel.Build`, `BuildSummaries`, painted by
   `BuildBars` inside `RosterSlot`; faded once `BuildSummaries.OldAfter` old) show only while `AppSettings.ReadBuildsOnTab` is on. **A detection that found every hero but not you** leaves them *unsided*: in
   `MatchState.RoleMap` as `Role.None` with a top-bar slot (`Unsided`, `HasUnsided`; the old "former you, unassigned" `None`
   has its slot removed, so the two don't collide), and the page shows a question instead of a list (`MatchViewModel.NeedsSelf`,
@@ -177,7 +180,9 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   reshape its rows; a different pick, or `StoreReplaced` (every download ends in one), builds it again.
 - **Game data:** `Data → Model Tools → Sync from Game API` (`GameApiService` → `GameSync`; the submenu shows only with the model editors on)
   rewrites heroes, items, item stats and tooltips and
-  measures the max-HP and durability traits (scoring_model.md). Everyone else gets those files through the model update.
+  measures the max-HP and durability traits (scoring_model.md), and writes `item_effects.csv` (`GameSync.ExtractEffects`: the debuffs and auras that land on other heroes).
+  Everyone else gets those files through the model update. The effects file is a model file (`ModelManifest.ModelFiles`), but the seed only has it once the maintainer
+  syncs and publishes; an install without it simply discounts nothing, and an older app ignores the file in the manifest, so `CurrentFormat` stays 1.
 
 ## 5. Threading and background jobs
 
@@ -381,7 +386,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
 - The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, read as captured and at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
-  `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `Support/ItemEval`, `ItemBoardLabel`,
+  `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `OverlapTests` and `Ui/TeamOverlapTests` cover the team-overlap discount. `Support/ItemEval`, `ItemBoardLabel`,
   `ItemData` (which also composes a whole scoreboard capture, `ScoreboardOf`: the 1440p fixture's hero strip over a labelled board's items, for `ScoreboardActionTests`) and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
 
 ## 10. Recipes

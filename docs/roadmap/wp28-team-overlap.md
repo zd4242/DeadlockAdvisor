@@ -1,6 +1,6 @@
 # WP28 Overlap: an effect your team already has counts for less
 
-Status: todo
+Status: done
 Effort: M · Risk: medium (touches scoring, the sync and a new model file) · Depends on: WP27 · Wave: D
 Touches: `src/Services/GameApi/GameSync.cs` (record each item's non-stacking effects), `src/Services/DataStore.cs` and `Contracts/IDataService.cs` (`DataFiles`, a load/save pair), `src/Services/ModelPublisher.cs` and `ModelUpdateService.cs` (the file joins the model), new `src/Scoring/OverlapWeights.cs`, `src/Scoring/ItemScoring.cs`, `ScoringTypes.cs` (`LineUp`), `WeightMatrix.cs`, `ModelHealth.cs`, `src/Features/Match/Explain/*` (`ExplainText`), `src/Features/Match/MatchViewModel.cs` (the filter), `src/Models/AppSettings.cs`, tests, goldens (`game_api/*`, `weight_matrix.json`, `scoring_cases.json` as they change)
 Docs to update: `docs/scoring_model.md` (a section), `docs/architecture.md` (sections 4, 7), `docs/publishing.md` ("Changing what the files hold"), `README.md`

@@ -122,7 +122,7 @@ public sealed class UpdatesViewModelTests : IDisposable
     {
         var dataDir = _fixture.Data.DataDir;
         ModelUpdateService.Record(dataDir, ModelManifest.Of(dataDir, "2026-10-02"));
-        var contents = ModelManifest.ModelFiles.ToDictionary(file => file, file => file == DataStore.TraitWeightsFile
+        var contents = ModelUpdateTests.ModelFilesIn(dataDir).ToDictionary(file => file, file => file == DataStore.TraitWeightsFile
             ? ModelUpdateTests.FirstRowEnding(File.ReadAllBytes(Path.Combine(dataDir, file)), "1.3")
             : File.ReadAllBytes(Path.Combine(dataDir, file)));
         var published = new ModelManifest(ModelManifest.CurrentFormat, "2026-10-09",
@@ -529,7 +529,7 @@ public sealed class UpdatesViewModelTests : IDisposable
         ACurrentInstall();
         var dataDir = _fixture.Data.DataDir;
         var published = ModelManifest.Of(dataDir, "2026-10-02") with { Notes = [] };
-        foreach (var file in ModelManifest.ModelFiles)
+        foreach (var file in ModelUpdateTests.ModelFilesIn(dataDir))
             _api.Bytes[published.UrlOf(file)] = File.ReadAllBytes(Path.Combine(dataDir, file));
         _api.Bytes[ModelManifest.ManifestUrl] = published.ToJsonBytes();
 

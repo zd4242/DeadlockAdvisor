@@ -167,8 +167,14 @@ a portrait for their items by name, and for any the advisor couldn't recognise).
 A build read ten minutes ago or more is drawn faded until the next press
 refreshes it. The items your own hero holds are marked **OWNED** in the list,
 and **Hide items you already own** under Filters leaves them out, so the list
-answers "what next". Neither changes a score, and a match you haven't read the
+answers "what next". Neither changes a score by itself, and a match you haven't read the
 scoreboard of looks as it always did.
+
+The same read also stops the list from recommending an effect your team already has. Two copies of one item, or two items of one
+build (Mystic Vulnerability and Escalating Exposure), don't add up where they put a debuff on the enemies or an aura on the team, so the
+second one's share of the score for that effect shrinks to what it adds (its other stats count in full), and the "why" panel says who
+holds what. Items that just happen to share an effect still stack. Untick **Discount what your team already has** under Filters to
+turn it off. When a read first shows two teammates repeating an effect, a message says so.
 
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
@@ -262,7 +268,7 @@ Nothing locks the files, so don't edit them from two places at once.
 | `item_formula_coefficients.csv` | item_id, category_id, relation, coefficient | only the traits an item cares about |
 | `trait_weights.csv` | category_id, relation, weight | only weights other than 1 |
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
-| `item_stats.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
+| `item_stats.csv`, `item_effects.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
 | `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
 | `match_counts/<patch date>.json` | | **generated** by the match data download: one patch's raw totals, every match and per rank; no backups |
 | `model.json` | | which published version of the model each file came from ([formula updates](#formula-updates)) |

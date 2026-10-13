@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Reactive.Subjects;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.HeroTraits;
@@ -11,6 +12,7 @@ using DeadlockAdvisor.Features.Match.Import;
 using DeadlockAdvisor.Features.Match.Results;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using ReactiveUI;
 using ReactiveUI.Fody.Helpers;
@@ -53,7 +55,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         "Leave out the items marked OWNED: the ones your hero holds, so the list answers \"what next\". Their scores don't change.\n"
         + "Needs your hero picked and the scoreboard read (Settings → Detection → Read the scoreboard while you hold its key).";
 
-    public const string FiltersTip = "Filters: which items are listed, how they're laid out, and which matches the results come from";
+    public const string ByOverlapLabel = "Discount what your team already has";
+
+    public const string ByOverlapTip =
+        "An effect that lands on other heroes doesn't stack with the same item's or the same build's: a second Heroic Aura, or a Spirit Resist\n"
+        + "shred on a build whose shred is already there, counts for what it adds over the first. Items that only share the effect still stack.\n"
+        + "Needs the scoreboard read (Settings → Detection → Read the scoreboard while you hold its key).";
+
+    public const string FiltersTip ="Filters: which items are listed, how they're laid out, and which matches the results come from";
 
     public static readonly string HideRarelyBuiltTip =
         $"Leave out the items marked RARELY BUILT: your hero builds them less than 1/{Format.Num(1 / ItemScoring.RareBuildRatio)} as often as the average player.\n"
@@ -123,6 +132,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         HasMatchData = data.Store.MatchLift.Count > 0;
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
+        ByOverlap = settings.Current.ResultsByOverlap;
         ShowTiers = Results.ShowsTiers = settings.Current.ResultsShowTiers;
         HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
         HideDisagreed = settings.Current.ResultsHideDisagreed;
@@ -212,6 +222,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ByOverlap)
+            .Skip(1)
+            .Subscribe(_ =>
+            {
+                _settings.Update(s => s.ResultsByOverlap = ByOverlap);
+                Refresh();
+            })
+            .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.ShowTiers)
             .Skip(1)
             .Subscribe(show =>
@@ -269,6 +287,20 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>Lean scores toward the heroes ahead on net worth, once the match has a reading.</summary>
     [Reactive] public bool ByNetWorth { get; set; }
+
+    /// <summary>Count an item's debuff or aura for what your team doesn't already have of it (<see cref="TeamOverlap"/>).</summary>
+    [Reactive] public bool ByOverlap { get; set; }
+
+    /// <summary>The scoreboard has shown what some hero holds, so there is something to discount by.</summary>
+    [Reactive] public bool HasBuilds { get; private set; }
+
+    /// <summary>
+    /// Two teammates hold items whose effect doesn't add up, newly seen in a scoreboard read: one sentence for each, for the
+    /// window to say aloud. Not raised for the first look at a match the app was opened with.
+    /// </summary>
+    public IObservable<string> OverlapNotices => _overlapNotices;
+    private readonly Subject<string> _overlapNotices = new();
+    private HashSet<string> _toldOverlaps = [];
 
     /// <summary>Leave out the items your hero rarely builds (<see cref="ScoredItem.RarelyBuilt"/>).</summary>
     [Reactive] public bool HideRarelyBuilt { get; set; }
@@ -392,8 +424,24 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         CanSearchItems = !IsMatchEmpty && !NeedsSelf;
         var owned = OwnedItems();
         HasOwnedItems = owned.Count > 0;
-        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale, owned);
+        HasBuilds = _settings.Current.ReadBuildsOnTab && !Match.Builds.IsEmpty;
+        var team = _settings.Current.ReadBuildsOnTab ? TeamOverlap.For(store, Match) : TeamOverlap.None;
+        _overlap = ByOverlap ? team : TeamOverlap.None;
+        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth, _overlap), note, Scale, owned);
         RefreshExplain();
+        TellOverlaps(store, team);
+    }
+
+    /// <summary>What the team already has of the effects items put on others, for scoring and the explanation; none while the filter is off.</summary>
+    private TeamOverlap _overlap = TeamOverlap.None;
+
+    private void TellOverlaps(DataStore store, TeamOverlap team)
+    {
+        var shared = team.Shared();
+        var told = _toldOverlaps;
+        _toldOverlaps = shared.Select(effect => effect.Key).ToHashSet();
+        foreach (var effect in shared.Where(effect => !told.Contains(effect.Key)))
+            _overlapNotices.OnNext(ExplainText.SharedNotice(store, Match, effect));
     }
 
     /// <summary>What your hero holds, as far as the scoreboard has shown it; empty without a read or a hero, and while reading the scoreboard is off.</summary>
@@ -501,5 +549,5 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ShowExplain(string? itemId) =>
         Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy, EffectiveRankBy == RankBy.Both ? Scale() : null,
-            owned: itemId is not null && OwnedItems().Contains(itemId));
+            owned: itemId is not null && OwnedItems().Contains(itemId), overlap: _overlap);
 }

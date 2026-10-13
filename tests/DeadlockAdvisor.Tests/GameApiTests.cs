@@ -214,6 +214,47 @@ public class GameApiTests
         Assert.Equal("Healing Reduction", stat.Label);
     }
 
+    private static Dictionary<(string, string), double> EffectsOf(JsonObject record) =>
+        GameSync.ExtractEffects("x", record).ToDictionary(effect => (effect.Effect, effect.Scope), effect => effect.Value);
+
+    [Fact]
+    public void AnAurasPassiveStatsAreItsEffectsAndItsOwnStatsAreNot()
+    {
+        var heroic = FakeItem("Heroic Aura", 1, 3, "weapon", 3200,
+            Prop("Radius", "35m", "passive"), Prop("BulletResist", "17", "passive"),
+            Prop("ActiveBonusMoveSpeed", "2.25m", "active", "ConditionallyApplied"), Prop("BonusSprintSpeed", "1.5m", "innate"));
+        var reducer = FakeItem("Debuff Reducer", 2, 2, "vitality", 1600, Prop("StatusResistancePercent", "25", "passive"));
+
+        Assert.Equal(new Dictionary<(string, string), double> { [("BulletResist", EffectScope.Aura)] = 17.0 }, EffectsOf(heroic));
+        Assert.Empty(EffectsOf(reducer));
+    }
+
+    [Fact]
+    public void AnItemsDebuffsAreEffectsUnderOneNameWhereTheApiHasTwo()
+    {
+        var shredder = FakeItem("Bullet Resist Shredder", 1, 2, "spirit", 1600,
+            Prop("BulletArmorReduction", "-10", "passive", "ConditionallyApplied"), Prop("BulletResist", "9", "innate", "IntrinsicallyProvidedInAbility"));
+        var rend = FakeItem("Spirit Rend", 2, 3, "weapon", 3200,
+            Prop("MagicResistReduction", "-7", "passive", "ConditionallyApplied"), Prop("TechArmorDamageReduction", "-8", "passive", "ConditionallyApplied"));
+        var hunters = FakeItem("Hunter's Aura", 3, 3, "weapon", 3200,
+            Prop("Radius", "15m", "passive"), Prop("BulletArmorReduction", "-10", "passive", "ConditionallyApplied"),
+            Prop("FireRateSlow", "15", "passive", "ConditionallyEnemyApplied"), Prop("BonusHealth", "100"));
+
+        Assert.Equal(new Dictionary<(string, string), double> { [("BulletResistReduction", EffectScope.EnemyDebuff)] = 10.0 }, EffectsOf(shredder));
+        Assert.Equal(new Dictionary<(string, string), double> { [("SpiritResistReduction", EffectScope.EnemyDebuff)] = 8.0 }, EffectsOf(rend));
+        Assert.Equal(new Dictionary<(string, string), double>
+        {
+            [("BulletResistReduction", EffectScope.EnemyDebuff)] = 10.0,
+            [("FireRateSlow", EffectScope.EnemyDebuff)] = 15.0,
+        }, EffectsOf(hunters));
+    }
+
+    [Fact]
+    public void EveryDebuffTheEffectsNameIsLeftUnscored()
+    {
+        Assert.All(GameSync.EnemyDebuffs.Keys, key => Assert.Equal("a debuff on enemies", GameSync.Unscored[key]));
+    }
+
     private static (string, JsonObject) Labelled(string key, string value, string label) =>
         (key, new JsonObject { ["value"] = value, ["label"] = label, ["tooltip_section"] = "passive" });
 
@@ -723,7 +764,7 @@ public class GameApiTests
 
         var report = GameSync.Apply(store, heroes, items);
         GameSync.SaveSynced(store, report);
-        string[] files = ["heroes.csv", "items.csv", "item_stats.csv", "item_tooltips.json", "hero_category_scores.csv"];
+        string[] files = ["heroes.csv", "items.csv", "item_stats.csv", "item_effects.csv", "item_tooltips.json", "hero_category_scores.csv"];
 
         if (Updating)
         {
@@ -795,6 +836,8 @@ public class GameApiTests
             store.ItemStats = [];
             store.RebuildDerived();
         }
+        if (ops["clear_effects"]!.GetValue<bool>())
+            store.ItemEffects = [];
         if (ops["clear_tooltips"]!.GetValue<bool>())
             store.ItemTooltips = [];
     }
@@ -809,6 +852,7 @@ public class GameApiTests
         store.SaveTraitWeights();
         store.SaveStatRules();
         store.SaveItemStats();
+        store.SaveItemEffects();
         store.SaveItemTooltips();
         store.SaveMatchLift();
     }

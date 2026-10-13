@@ -202,6 +202,48 @@ public class ModelHealthTests
         Assert.InRange(ranked.Average(), -0.02, 0.02);
     }
 
+    /// <summary>
+    /// What the team already has takes a share off an item's effect, never adds one: whatever its allies hold, over random matches
+    /// every item still averages about 0, single-target ones included (their typical sum is scaled with the weights).
+    /// </summary>
+    [Fact]
+    public void AnEffectTheTeamHasLeavesEveryItemAveragingAbout0()
+    {
+        const int matches = 4000;
+        var store = Golden.LoadStore();
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var pool = store.Heroes.Keys.Where(store.IsProfiled).ToArray();
+        var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
+        var shared = store.ItemEffects.Keys.Where(store.Items.ContainsKey).ToList();
+        var (sums, squares) = (new double[items.Count], new double[items.Count]);
+        var (random, holding) = (new Random(1), new Random(2));
+        var covered = 0;
+        for (var match = 0; match < matches; match++)
+        {
+            var drawn = LineUpShape.FullMatch.Draw(random, pool);
+            var held = Enumerable.Range(0, 1 + holding.Next(4))
+                .Select(_ => new HeldItem(drawn.Allies[holding.Next(drawn.Allies.Count)], shared[holding.Next(shared.Count)]));
+            var lineUp = drawn with { Overlap = TeamOverlap.Of(store, held) };
+            for (var i = 0; i < items.Count; i++)
+            {
+                var score = ItemScoring.Total(matrix, items[i], lineUp);
+                covered += lineUp.Overlap.Coverage(items[i]) > 0 ? 1 : 0;
+                sums[i] += score;
+                squares[i] += score * score;
+            }
+        }
+
+        Assert.True(covered > matches, "The held items should have covered something in most matches.");
+        var drift = Enumerable.Range(0, items.Count)
+            .Where(i => squares[i] > 0)
+            .Select(i => (Item: items[i], Mean: sums[i] / matches / Math.Sqrt(squares[i] / matches)))
+            .ToList();
+        Assert.All(drift, item => Assert.InRange(item.Mean, -0.06, 0.06));
+        var ranked = drift.Where(item => store.Items[item.Item].CastOn is not null).Select(item => item.Mean).ToList();
+        Assert.NotEmpty(ranked);
+        Assert.InRange(ranked.Average(), -0.02, 0.02);
+    }
+
     [Fact]
     public void TheRealDataProducesAFullReport()
     {

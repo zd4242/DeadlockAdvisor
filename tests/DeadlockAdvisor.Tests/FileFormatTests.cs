@@ -14,7 +14,7 @@ public class FileFormatTests
     public static TheoryData<string> WrittenFiles() =>
     [
         DataStore.HeroesFile, DataStore.ItemsFile, DataStore.HeroScoresFile, DataStore.ItemCoefficientsFile,
-        DataStore.TraitWeightsFile, DataStore.StatRulesFile, DataStore.ItemStatsFile, DataStore.ItemTooltipsFile,
+        DataStore.TraitWeightsFile, DataStore.StatRulesFile, DataStore.ItemStatsFile, DataStore.ItemEffectsFile, DataStore.ItemTooltipsFile,
         DataStore.MatchLiftFile, DataStore.MatchMetaFile,
     ];
 
@@ -32,6 +32,7 @@ public class FileFormatTests
         store.SaveTraitWeights();
         store.SaveStatRules();
         store.SaveItemStats();
+        store.SaveItemEffects();
         store.SaveItemTooltips();
         store.SaveMatchLift();
 

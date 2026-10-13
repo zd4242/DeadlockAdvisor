@@ -42,7 +42,7 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
     public static readonly IReadOnlyList<string> ModelFiles =
     [
         DataStore.CategoriesFile, DataStore.HeroScoresFile, DataStore.ItemCoefficientsFile, DataStore.TraitWeightsFile,
-        DataStore.StatRulesFile, DataStore.HeroesFile, DataStore.ItemsFile, DataStore.ItemStatsFile, DataStore.ItemTooltipsFile,
+        DataStore.StatRulesFile, DataStore.HeroesFile, DataStore.ItemsFile, DataStore.ItemStatsFile, DataStore.ItemEffectsFile, DataStore.ItemTooltipsFile,
     ];
 
     /// <summary>
@@ -76,6 +76,7 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
         DataStore.HeroesFile => "Heroes",
         DataStore.ItemsFile => "Items",
         DataStore.ItemStatsFile => "Item stats",
+        DataStore.ItemEffectsFile => "Item effects",
         DataStore.ItemTooltipsFile => "Item tooltips",
         _ => file,
     };

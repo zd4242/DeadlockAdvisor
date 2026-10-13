@@ -99,6 +99,9 @@ public class AppSettings
     public bool ResultsByTier { get; set; }
     public bool ResultsShowTiers { get; set; }
     public bool ResultsByNetWorth { get; set; } = true;
+
+    // Counts less an effect on an item that your team already has through the items the scoreboard showed (debuffs, auras); does nothing until builds are read.
+    public bool ResultsByOverlap { get; set; } = true;
     public bool ResultsHideRarelyBuilt { get; set; }
     public bool ResultsHideDisagreed { get; set; }
 

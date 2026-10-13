@@ -218,6 +218,11 @@
                            IsVisible="{Binding IsOwned}"
                            Text="{x:Static explain:ExplainViewModel.OwnedNote}"/>
 
+                <TextBlock Classes="hint"
+                           TextWrapping="Wrap"
+                           IsVisible="{Binding OverlapNote, Converter={x:Static ObjectConverters.IsNotNull}}"
+                           Text="{Binding OverlapNote}"/>
+
                 <!-- Ranked by the match data alone, its card leads and the formula's follow. -->
                 <ContentControl Content="{Binding MatchData}" Margin="0,0,0,8">
                     <ContentControl.IsVisible>

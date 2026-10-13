@@ -30,6 +30,7 @@
    ]
   ],
   "clear_stats": true,
+  "clear_effects": true,
   "clear_tooltips": true
  },
  "cases": {
@@ -147,6 +148,7 @@
      "  Headshot Booster: tier 4 -> 1",
      "  Torment Pulse: tier 2 -> 3",
      "Item stats refreshed: 503 stat row(s).",
+     "Item effects refreshed: 38 effect row(s) that land on other heroes.",
      "Item tooltips refreshed: 156 item(s).",
      "",
      "Single-target changes -- these items are now scored on their best targets on the side they're cast on, or no longer:",

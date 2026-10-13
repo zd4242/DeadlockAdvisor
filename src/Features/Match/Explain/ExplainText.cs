@@ -3,6 +3,7 @@ using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
 
@@ -45,6 +46,64 @@ public static class ExplainText
     public const string FormulaTotalByDataTip =
         "The advisor rating's score, which the heroes below add up to. The list is ranked by the match results instead.";
 
+    /// <summary>
+    /// What the team already has of the item's shared effects, one line each, and what that does to the score; null when it has none of them.
+    /// </summary>
+    public static string? Overlap(DataStore store, MatchState match, string itemId, TeamOverlap? overlap)
+    {
+        var lines = (overlap?.Covers(itemId) ?? [])
+            .Where(cover => cover is { Coverage: > 0, By: not null })
+            .Select(cover =>
+            {
+                var by = cover.By!.Value;
+                var holder = match.SelfHero == by.HeroId ? "You hold" : $"{HeroName(store, by.HeroId)} holds";
+                var held = by.ItemId == itemId ? "this item" : store.Items.TryGetValue(by.ItemId, out var other) ? other.ItemName : by.ItemId;
+                return $"{holder} {held}, which covers {Percent(cover.Coverage)} of this item's {EffectName(store, cover.Effect, cover.Scope)}.";
+            })
+            .ToList();
+        return lines.Count == 0 ? null : string.Join('\n', lines) + "\nThat part of its score counts for the rest; its other stats count in full.";
+    }
+
+    /// <summary>"Haze and Seven both hold Heroic Aura: its Bullet Resist aura doesn't add up, so only one of them is working."</summary>
+    public static string SharedNotice(DataStore store, MatchState match, SharedEffect shared)
+    {
+        string Who(string heroId) => match.SelfHero == heroId ? "you" : HeroName(store, heroId);
+        string ItemName(string itemId) => store.Items.TryGetValue(itemId, out var item) ? item.ItemName : itemId;
+
+        var heroes = shared.Holders.Select(held => held.HeroId).Distinct().Select(Who).ToList();
+        var who = heroes.Count == 2 ? $"{heroes[0]} and {heroes[1]}" : $"{string.Join(", ", heroes.Take(heroes.Count - 1))} and {heroes[^1]}";
+        var items = shared.Holders.Select(held => ItemName(held.ItemId)).Distinct().ToList();
+        var effect = EffectName(store, shared.Effect, shared.Scope);
+        return items.Count == 1
+            ? $"{Capitalise(who)} both hold {items[0]}: its {effect} doesn't add up, so only one of them is working."
+            : $"{Capitalise(who)} hold {string.Join(" and ", items)}: they share one {effect}, and only the stronger counts.";
+    }
+
+    private static string Capitalise(string text) => text.Length == 0 ? text : char.ToUpperInvariant(text[0]) + text[1..];
+
+    private static string HeroName(DataStore store, string heroId) => store.Heroes.TryGetValue(heroId, out var hero) ? hero.HeroName : heroId;
+
+    private static string Percent(double share) => $"{Math.Round(share * 100):0}%";
+
+    /// <summary>"Bullet Resist reduction" or "Bullet Resist aura".</summary>
+    private static string EffectName(DataStore store, string effect, string scope)
+    {
+        if (scope == EffectScope.Aura)
+        {
+            var label = store.ItemStats.Values.SelectMany(stats => stats).FirstOrDefault(stat => stat.Stat == effect)?.Label ?? effect;
+            return $"{label} aura";
+        }
+        return effect switch
+        {
+            "BulletResistReduction" => "Bullet Resist reduction",
+            "SpiritResistReduction" => "Spirit Resist reduction",
+            "TechPowerReduction" => "Spirit Power reduction",
+            "FireRateSlow" => "Fire Rate slow",
+            "MoveSlow" => "Move Speed slow",
+            _ => effect,
+        };
+    }
+
     /// <summary>"Vindicta builds this 1/12 as often as the average player, so the gains against the enemies count ×0.33 …"</summary>
     public static string RarelyBuilt(string who, double ratio) =>
         ratio <= 0
@@ -61,9 +120,9 @@ public static class ExplainText
     /// </summary>
     public static IReadOnlyList<TextSpan>? CoefficientSource(TraitPart part)
     {
-        if (part.StatParts.Count == 0 && part.Weight == 1)
+        if (part.StatParts.Count == 0 && part.Weight == 1 && part.Covered == 0)
             return null;
-        if (part.Coefficient == 0 && part.StatParts.Count == 1 && part.Weight == 1)
+        if (part.Coefficient == 0 && part.StatParts.Count == 1 && part.Weight == 1 && part.Covered == 0)
             return [new TextSpan("from "), .. StatSpans(part.StatParts[0])];
 
         var pieces = new List<IEnumerable<TextSpan>>();
@@ -86,6 +145,8 @@ public static class ExplainText
             spans.Add(new TextSpan(")"));
         if (part.Weight != 1)
             spans.Add(new TextSpan($" × {Format.Num(part.Weight)} trait weight"));
+        if (part.Covered != 0)
+            spans.Add(new TextSpan($" − {Format.Num(NumberFormat.Round(part.Covered, 3))} your team already has"));
         return spans;
     }
 
@@ -108,7 +169,9 @@ public static class ExplainText
         lines.AddRange(part.StatParts.Select(stat => stat.Describe()));
         if (part.Weight != 1)
             lines.Add($"× {Format.Num(part.Weight)} trait weight");
-        lines.Add($"= coefficient {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 3))}");
+        if (part.Covered != 0)
+            lines.Add($"− {Format.Num(NumberFormat.Round(part.Covered, 3))} ({Percent(part.Coverage)} of the part your team already has)");
+        lines.Add($"= coefficient {Format.Num(NumberFormat.Round(part.CountedCoefficient, 3))}");
         return string.Join("\n", lines);
     }
 
@@ -117,7 +180,7 @@ public static class ExplainText
     /// and on a best-target line below the best times its rank's factor: "(80 − 61 avg) × 3 × 0.5".
     /// </summary>
     public static string Arithmetic(TraitPart part) =>
-        $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.EffectiveCoefficient, 2))}"
+        $"{Deviation(part)} × {Format.Num(NumberFormat.Round(part.CountedCoefficient, 2))}"
         + (part.RankFactor == 1 ? "" : $" × {Format.Num(part.RankFactor)}");
 
     /// <summary>"(80 − 61 avg)", or just "80" when the roster averages 0 on the trait.</summary>

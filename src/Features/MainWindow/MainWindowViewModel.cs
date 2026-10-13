@@ -171,6 +171,7 @@ public class MainWindowViewModel : ViewModelBase
         this.WhenAnyValue(vm => vm.IsMatchPage)
             .Subscribe(Match.SetShown)
             .DisposeWith(Disposables);
+        Match.OverlapNotices.Subscribe(TellOverlap).DisposeWith(Disposables);
         // Opened on your hero from the Match page, once it has one.
         this.WhenAnyValue(vm => vm.IsHeroItemsPage)
             .Where(shown => shown)
@@ -603,6 +604,16 @@ public class MainWindowViewModel : ViewModelBase
             ? Match.DetectFinished.Take(1).Subscribe(Chime)
             : null;
         await Match.DetectCommand.Execute();
+    }
+
+    /// <summary>A scoreboard read showed two teammates repeating an effect: a toast, and the chime and flash while the game has the screen.</summary>
+    private void TellOverlap(string notice)
+    {
+        _notifications.ShowInformation(notice, TimeSpan.FromSeconds(8));
+        if (!_settings.Current.SoundOnDetect || !_foreground.IsAnotherAppInFront)
+            return;
+        _attention.Chime(AttentionKind.NeedsLook);
+        _attention.FlashWindow();
     }
 
     private void Chime(DetectOutcome outcome)

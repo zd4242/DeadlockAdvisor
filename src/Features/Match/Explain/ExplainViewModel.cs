@@ -87,6 +87,9 @@ public class ExplainViewModel : ViewModelBase
 
     /// <summary>Your hero holds the item (the last scoreboard read), which does not change why it scores as it does.</summary>
     [Reactive] public bool IsOwned { get; private set; }
+
+    /// <summary>What the team already has of this item's debuff or aura, and so what of its score doesn't count; null when nothing.</summary>
+    [Reactive] public string? OverlapNote { get; private set; }
     [Reactive] public Color ShopColor { get; private set; }
 
     /// <summary>The number the list shows for the item: whatever it's ranked by.</summary>
@@ -145,8 +148,9 @@ public class ExplainViewModel : ViewModelBase
     /// <param name="rankBy">What the list is ranked by, which the headline shows.</param>
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
     /// <param name="owned">Your hero already holds the item; the score is the same, and the header says so.</param>
+    /// <param name="overlap">What the team holds whose effect the item would repeat; the score leaves that out, and the header says so.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
-        RankBy rankBy = RankBy.Formula, BlendScale? blend = null, bool owned = false)
+        RankBy rankBy = RankBy.Formula, BlendScale? blend = null, bool owned = false, TeamOverlap? overlap = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -154,7 +158,7 @@ public class ExplainViewModel : ViewModelBase
             return;
         }
 
-        var contributions = ItemScoring.ExplainItem(store, match, itemId, netWorth);
+        var contributions = ItemScoring.ExplainItem(store, match, itemId, netWorth, overlap);
         var total = 0.0;
         foreach (var contribution in contributions)
             total += contribution.Amount;
@@ -162,6 +166,7 @@ public class ExplainViewModel : ViewModelBase
         HasItem = true;
         ItemId = itemId;
         IsOwned = owned;
+        OverlapNote = ExplainText.Overlap(store, match, itemId, overlap);
         ItemName = item.ItemName;
         ShopColor = Palette.ShopColor(item.Category);
         NoContributions = contributions.Count == 0;
@@ -196,6 +201,7 @@ public class ExplainViewModel : ViewModelBase
         HasItem = false;
         ItemId = null;
         IsOwned = false;
+        OverlapNote = null;
         ItemName = IdleTitle;
         Headline = default;
         FormulaTotal = default;

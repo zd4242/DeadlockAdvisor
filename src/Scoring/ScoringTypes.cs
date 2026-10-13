@@ -34,6 +34,8 @@ public sealed record ScoredItem(
 /// <param name="Coefficient">The hand-typed part only.</param>
 /// <param name="Baseline">The roster's average on the trait: only how far the hero sits from it counts.</param>
 /// <param name="Rank">On a best-target line, its hero's <see cref="BestTargets"/> rank on the team; null when the line sums.</param>
+/// <param name="Overlapping">The part of <see cref="EffectiveCoefficient"/> that stands for an effect other heroes carry (<see cref="OverlapWeights"/>).</param>
+/// <param name="Coverage">How much of that effect the team already has (<see cref="TeamOverlap"/>), 0 to 1.</param>
 public sealed record TraitPart(
     string CategoryId,
     string CategoryName,
@@ -42,12 +44,20 @@ public sealed record TraitPart(
     IReadOnlyList<StatPart> StatParts,
     double Weight = 1.0,
     double Baseline = 0.0,
-    int? Rank = null)
+    int? Rank = null,
+    double Overlapping = 0.0,
+    double Coverage = 0.0)
 {
     public double FromStats => DataStore.SumAmounts(StatParts);
     public double EffectiveCoefficient => Weight * (Coefficient + FromStats);
+
+    /// <summary>What the team's own copy of the effect takes off <see cref="EffectiveCoefficient"/>.</summary>
+    public double Covered => Coverage * Overlapping;
+
+    /// <summary>The coefficient that still counts.</summary>
+    public double CountedCoefficient => Covered == 0 ? EffectiveCoefficient : EffectiveCoefficient - Covered;
     public double Deviation => HeroScore - Baseline;
-    public double Amount => Deviation * EffectiveCoefficient;
+    public double Amount => Deviation * CountedCoefficient;
     public double RankFactor => Rank is { } rank ? BestTargets.RankFactor(rank) : 1.0;
 
     /// <summary>What the line adds to its hero's share: <see cref="Amount"/> at its rank.</summary>
@@ -120,6 +130,9 @@ public readonly record struct LineUpShape(int Enemies, int Allies, bool Self, in
 /// <summary>The heroes one score is summed over, each with the relation they're counted on and the factor their share is weighted by.</summary>
 public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> Enemies, string? Self, NetWorthWeights NetWorth, FocusWeights Focus)
 {
+    /// <summary>What the team already has of the effects items put on other heroes; none unless the match has builds and the filter is on.</summary>
+    public TeamOverlap Overlap { get; init; } = TeamOverlap.None;
+
     /// <summary>What a hero's share is multiplied by: their net worth factor times their focus factor.</summary>
     public double Factor(string heroId) => NetWorth.Factor(heroId) * Focus.Factor(heroId);
 

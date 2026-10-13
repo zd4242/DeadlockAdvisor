@@ -26,7 +26,7 @@ That:
 1. Checks your data folder loads, so a broken file isn't published.
 2. Copies every model file that differs into `src/Assets/SeedData`: `hero_category_scores.csv`,
    `item_formula_coefficients.csv`, `trait_weights.csv`, `stat_rules.csv`, `categories.csv`, and the
-   game data they go with (`heroes.csv`, `items.csv`, `item_stats.csv`, `item_tooltips.json`).
+   game data they go with (`heroes.csv`, `items.csv`, `item_stats.csv`, `item_effects.csv`, `item_tooltips.json`).
 3. Copies the match data too, as the starting point for new installs, unless yours leans toward some
    ranks (switch the Match page's filter back to every rank first).
 4. Rewrites `model.json`, the list of each file's hash, dated today, with your note at the top of its
@@ -228,6 +228,10 @@ Released apps keep reading the files published after them, so a change to a file
 | A model file's columns or meaning | `ModelManifest.CurrentFormat` | older apps ignore the new model instead of misreading it, and say it needs a newer version when asked to check for formula updates |
 | `MatchSegment`'s JSON | `MatchSegment.Version`, and `MatchSnapshot.Version` with it | apps check the manifest's version before downloading anything, so older apps fall back to asking deadlock-api.com instead of failing on each file |
 | The match data manifest | `MatchSnapshot.Version` | the same |
+
+`item_effects.csv` (what an item's debuffs and auras do to others, for the Match page's team-overlap discount) is a model file the sync
+writes, so it reaches the seed the first time you run Sync from Game API and publish. An older app ignores a file its manifest lists but
+it doesn't know, so adding it needed no `CurrentFormat` bump, and an app without it discounts nothing.
 
 Release the app before (or with) publishing data in a new format: until people update, they keep the
 last version their app understands.

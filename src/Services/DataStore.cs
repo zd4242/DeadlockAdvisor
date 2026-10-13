@@ -52,6 +52,7 @@ public sealed class DataStore
     public const string TraitWeightsFile = "trait_weights.csv";
     public const string StatRulesFile = "stat_rules.csv";
     public const string ItemStatsFile = "item_stats.csv";
+    public const string ItemEffectsFile = "item_effects.csv";
     public const string ItemTooltipsFile = "item_tooltips.json";
     public const string MatchLiftFile = "match_item_lift.csv";
     public const string MatchMetaFile = "match_item_lift.meta.json";
@@ -88,6 +89,9 @@ public sealed class DataStore
 
     /// <summary>Each item's stats, as the game sync wrote them.</summary>
     public OrderedDictionary<string, List<ItemStat>> ItemStats { get; set; } = [];
+
+    /// <summary>The effects each item puts on other heroes (debuffs, auras), as the game sync wrote them.</summary>
+    public OrderedDictionary<string, List<ItemEffect>> ItemEffects { get; set; } = [];
 
     /// <summary>Each item's in-game tooltip, as the game sync wrote it.</summary>
     public OrderedDictionary<string, ItemTooltip> ItemTooltips { get; set; } = [];
@@ -152,6 +156,7 @@ public sealed class DataStore
         store.Read(TraitWeightsFile, store.LoadTraitWeights);
         store.Read(StatRulesFile, store.LoadStatRules);
         store.Read(ItemStatsFile, store.LoadItemStats);
+        store.Read(ItemEffectsFile, store.LoadItemEffects);
         store.Read(ItemTooltipsFile, store.LoadItemTooltips);
         store.Read(MatchLiftFile, store.LoadMatchLift);
         store.LoadMatchSegments();
@@ -337,6 +342,22 @@ public sealed class DataStore
                 NumberFormat.ToFloat(row.Get("value")),
                 row.Or("unit", ""),
                 IsTrue(row.Get("conditional"))));
+        }
+    }
+
+    internal void LoadItemEffects()
+    {
+        foreach (var row in ReadOptional(ItemEffectsFile) ?? [])
+        {
+            if (!row.Has("item_id") || !row.Has("effect"))
+                continue;
+            var itemId = row.Required("item_id");
+            if (!ItemEffects.TryGetValue(itemId, out var effects))
+            {
+                effects = [];
+                ItemEffects[itemId] = effects;
+            }
+            effects.Add(new ItemEffect(itemId, row.Required("effect"), row.Or("scope", EffectScope.EnemyDebuff), NumberFormat.ToFloat(row.Get("value"))));
         }
     }
 
@@ -597,6 +618,28 @@ public sealed class DataStore
             .Where(entry => entry.Value.Components.Contains(itemId) && Items.ContainsKey(entry.Key))
             .Select(entry => entry.Key)
             .ToList();
+
+    /// <summary>
+    /// The item and every item on its build chain: what it is built from, and what is built from it, however far.
+    /// Two items of one chain don't add up where they share an effect (<see cref="ItemEffects"/>); two that merely
+    /// share a component do.
+    /// </summary>
+    public HashSet<string> BuildChain(string itemId)
+    {
+        var chain = new HashSet<string> { itemId };
+        Walk(itemId, component => ItemTooltips.TryGetValue(component, out var tooltip) ? tooltip.Components : []);
+        Walk(itemId, UpgradesTo);
+        return chain;
+
+        void Walk(string from, Func<string, IEnumerable<string>> next)
+        {
+            foreach (var other in next(from))
+            {
+                if (chain.Add(other))
+                    Walk(other, next);
+            }
+        }
+    }
 
     /// <summary>
     /// Whether a lowercased search string fuzzily matches the item's name, or appears as typed in its id or anywhere
@@ -898,6 +941,18 @@ public sealed class DataStore
             .Select(stat => Row(
                 stat.ItemId, stat.Stat, stat.Label, NumberFormat.Short(stat.Value), stat.Unit, stat.Conditional ? "1" : "0"));
         WriteCsv(ItemStatsFile, ["item_id", "stat", "label", "value", "unit", "conditional"], rows);
+    }
+
+    /// <summary>Written by the game sync, never edited by hand, like <see cref="SaveItemStats"/>.</summary>
+    public void SaveItemEffects()
+    {
+        var itemOrder = IndexOf(Items.Keys);
+        var rows = ItemEffects.Keys
+            .OrderBy(itemId => itemOrder.GetValueOrDefault(itemId, _missingOrder))
+            .ThenBy(itemId => itemId, StringComparer.Ordinal)
+            .SelectMany(itemId => ItemEffects[itemId])
+            .Select(effect => Row(effect.ItemId, effect.Effect, effect.Scope, NumberFormat.Short(effect.Value)));
+        WriteCsv(ItemEffectsFile, ["item_id", "effect", "scope", "value"], rows);
     }
 
     /// <summary>
