@@ -17,6 +17,7 @@ public static class ShortcutKeys
         [ShortcutAction.Randomize] = new(Key.F6),
         [ShortcutAction.RandomizeKeepSelf] = new(Key.F7),
         [ShortcutAction.RandomizeKeepTeam] = new(Key.F8),
+        [ShortcutAction.Clear] = new(Key.Delete),
     };
 
     /// <summary>The window's fixed keys (and the menus' access keys) that a key allowed here could clash with.</summary>
@@ -36,6 +37,12 @@ public static class ShortcutKeys
         [(Key.H, KeyModifiers.Alt)] = "the Help menu",
         [(Key.F4, KeyModifiers.Alt)] = "closing the window",
     };
+
+    /// <summary>
+    /// Delete edits text, so it's a default only: the recorder reads it as taking a key away, and it can't
+    /// go to Detect's system-wide key. The window sets its shortcut aside while a text box has focus.
+    /// </summary>
+    public static bool EditsText(KeyGesture gesture) => gesture.Key == Key.Delete;
 
     /// <summary>The key <paramref name="action"/> is on, or null if it's been taken away.</summary>
     public static KeyGesture? Gesture(this AppSettings settings, ShortcutAction action)

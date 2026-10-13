@@ -56,6 +56,13 @@
             </StackPanel>
         </Border>
 
+        <TextBlock Classes="section" Text="MATCH"/>
+        <Border Classes="settings">
+            <StackPanel>
+                <settings:SettingRow Title="{Binding Clear.Title}" Description="{Binding Clear.Description}" Content="{Binding Clear}"/>
+            </StackPanel>
+        </Border>
+
         <Button Classes="ghost"
                 Margin="0,16,0,0"
                 HorizontalAlignment="Right"

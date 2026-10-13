@@ -63,6 +63,7 @@ public class MatchBoardViewModel : ViewModelBase
                 RandomGesture = s.Gesture(ShortcutAction.Randomize);
                 RandomKeepSelfGesture = s.Gesture(ShortcutAction.RandomizeKeepSelf);
                 RandomKeepTeamGesture = s.Gesture(ShortcutAction.RandomizeKeepTeam);
+                ClearGesture = s.Gesture(ShortcutAction.Clear);
             })
             .DisposeWith(Disposables);
 
@@ -114,11 +115,12 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>Whether the match bar's menu offers Random, which a setting can hide; its keys go with it, so a stray one can't wipe a detected match.</summary>
     [Reactive] public bool ShowsRandom { get; private set; }
 
-    /// <summary>The keys Settings → Shortcuts has Detect and Random on, as the match bar shows them; null when taken away.</summary>
+    /// <summary>The keys Settings → Shortcuts has Detect, Random and Clear on, as the match bar shows them; null when taken away.</summary>
     [Reactive] public string? DetectKey { get; private set; }
     [Reactive] public KeyGesture? RandomGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepSelfGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepTeamGesture { get; private set; }
+    [Reactive] public KeyGesture? ClearGesture { get; private set; }
 
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";

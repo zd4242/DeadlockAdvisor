@@ -11,7 +11,7 @@ namespace DeadlockAdvisor.Tests;
 public class ShortcutKeysTests
 {
     [Fact]
-    public void TheDefaultsAreF6ToF9AndAllowed()
+    public void TheDefaultsAreF6ToF9AndDelete()
     {
         var settings = new AppSettings();
 
@@ -19,7 +19,17 @@ public class ShortcutKeysTests
         Assert.Equal(new KeyGesture(Key.F6), settings.Gesture(ShortcutAction.Randomize));
         Assert.Equal(new KeyGesture(Key.F7), settings.Gesture(ShortcutAction.RandomizeKeepSelf));
         Assert.Equal(new KeyGesture(Key.F8), settings.Gesture(ShortcutAction.RandomizeKeepTeam));
-        Assert.All(ShortcutKeys.Defaults.Values, gesture => Assert.Null(ShortcutKeys.Problem(gesture)));
+        Assert.Equal(new KeyGesture(Key.Delete), settings.Gesture(ShortcutAction.Clear));
+    }
+
+    /// <summary>Delete is a default only: it isn't a key to move a shortcut onto, and the window sets it aside in a text box.</summary>
+    [Fact]
+    public void EveryDefaultIsAllowedButDelete()
+    {
+        var problems = ShortcutKeys.Defaults.Where(pair => ShortcutKeys.Problem(pair.Value) is not null).Select(pair => pair.Key);
+
+        Assert.Equal([ShortcutAction.Clear], problems);
+        Assert.All(ShortcutKeys.Defaults.Values.Where(ShortcutKeys.EditsText), gesture => Assert.Equal(Key.Delete, gesture.Key));
     }
 
     /// <summary>Only moved keys are saved, so a key put back on its default follows the default from then on.</summary>

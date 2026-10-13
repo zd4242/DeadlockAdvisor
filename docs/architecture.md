@@ -377,6 +377,8 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
 - **A key the game owns** (watched, not taken, so it still reaches the game): `ScoreboardKeys` and `ScoreboardKeyService`, which a `ShortcutRecorder` row in Settings → Detection sets.
 - **A shortcut:** a `ShortcutAction` value, an entry in `ShortcutKeys.Defaults` (mind `_reserved`), a case in
   `MainWindowViewModel.ShortcutBindingFor` and its command; Settings → Shortcuts lists the defaults.
+  A default that edits text (Delete, `ShortcutKeys.EditsText`) is bound through `SkipWhileTypingCommand`, so it stays
+  the text box's own while one has focus, and it is a default only: `Problem` refuses it as a key to move onto.
 - **A background download:** build a `BackgroundJobViewModel`, run it through `DataMenuViewModel.RunInBackgroundAsync` with an
   `IProgress<FetchProgress>` and `job.Token`; report with `Succeeded` / `Failed`; keep a quiet mode for routine checks.
 - **An update source:** a service behind a contract, a check in `OnStartup`/`OnReconnected`, a settings flag, a

@@ -104,7 +104,7 @@
                                           CommandParameter="{x:Static enums:RandomizeKeep.OwnTeam}"
                                           IsVisible="{Binding ShowsRandom}"/>
                                 <Separator/>
-                                <MenuItem Header="Clear match" Command="{Binding ClearCommand}"/>
+                                <MenuItem Header="Clear match" InputGesture="{Binding ClearGesture}" Command="{Binding ClearCommand}"/>
                             </MenuFlyout>
                         </Button.Flyout>
                     </Button>

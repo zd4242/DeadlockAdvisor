@@ -9,7 +9,7 @@ using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Settings.Shortcuts;
 
-/// <summary>The Match page's keys for Detect and Random, each moved by clicking it and pressing the new one.</summary>
+/// <summary>The Match page's keys for Detect, Random and Clear, each moved by clicking it and pressing the new one.</summary>
 public class ShortcutsSettingsViewModel : SettingsPageViewModel
 {
     public ShortcutsSettingsViewModel(ISettingsService settings, IGlobalHotkeyService hotkey) : base(settings)
@@ -20,7 +20,9 @@ public class ShortcutsSettingsViewModel : SettingsPageViewModel
             "Fill the match with random heroes, for trying things out. The Random keys only work while General → Show the Random buttons is on.", Assign);
         RandomizeKeepSelf = new(ShortcutAction.RandomizeKeepSelf, "Random, keeping your hero", "Redraw everyone but you.", Assign);
         RandomizeKeepTeam = new(ShortcutAction.RandomizeKeepTeam, "Random enemies, keeping your team", "Redraw only the enemy team.", Assign);
-        Rows = [Detect, Randomize, RandomizeKeepSelf, RandomizeKeepTeam];
+        Clear = new(ShortcutAction.Clear, "Clear match",
+            "Empty the match. The key stays a text box's own while you're typing in one.", Assign);
+        Rows = [Detect, Randomize, RandomizeKeepSelf, RandomizeKeepTeam, Clear];
 
         settings.SettingsChanged
             .Subscribe(s =>
@@ -45,6 +47,7 @@ public class ShortcutsSettingsViewModel : SettingsPageViewModel
     public ShortcutRowViewModel Randomize { get; }
     public ShortcutRowViewModel RandomizeKeepSelf { get; }
     public ShortcutRowViewModel RandomizeKeepTeam { get; }
+    public ShortcutRowViewModel Clear { get; }
     public IReadOnlyList<ShortcutRowViewModel> Rows { get; }
 
     public ReactiveCommand<Unit, Unit> ResetAllCommand { get; }
@@ -64,19 +67,20 @@ public class ShortcutsSettingsViewModel : SettingsPageViewModel
         if (Equals(gesture, previous))
             return null;
 
-        // Taking another shortcut's key swaps the two, so neither is lost.
+        // Taking another shortcut's key swaps the two, so neither is lost, unless the old key (Delete) can't be handed on.
         var displaced = gesture is null ? null : Rows.FirstOrDefault(other => other != row && Equals(Current.Gesture(other.Action), gesture));
+        var handedOn = previous is not null && ShortcutKeys.Problem(previous) is null ? previous : null;
         Settings.Update(s =>
         {
             if (displaced is not null)
-                s.SetGesture(displaced.Action, previous);
+                s.SetGesture(displaced.Action, handedOn);
             s.SetGesture(row.Action, gesture);
         });
         if (displaced is null)
             return null;
-        return previous is null
+        return handedOn is null
             ? $"Taken from {displaced.Title}, which now has no key."
-            : $"Taken from {displaced.Title}, which moved to {ShortcutKeys.Label(previous)}.";
+            : $"Taken from {displaced.Title}, which moved to {ShortcutKeys.Label(handedOn)}.";
     }
 
     private void ResetAll()

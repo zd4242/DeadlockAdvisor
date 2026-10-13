@@ -6,6 +6,7 @@ using Avalonia.VisualTree;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Features.MainWindow;
+using DeadlockAdvisor.Features.Match.Board;
 using DeadlockAdvisor.Features.Shared.Modals.Base;
 using DeadlockAdvisor.Features.Shared.Modals.Confirmation;
 using DeadlockAdvisor.Features.Shared.Modals.Message;
@@ -83,6 +84,53 @@ public class ShortcutTests
     }
 
     [AvaloniaFact]
+    public void DeleteClearsTheMatchOnlyOnTheMatchPage()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
+        ui.Show();
+        ui.Window.FocusManager!.ClearFocus();
+        var board = ui.ViewModel.Match.Board;
+        IEnumerable<RosterSlotViewModel> Slots() => board.AllySlots.Concat(board.EnemySlots);
+
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(Slots(), slot => Assert.NotNull(slot.HeroId));
+
+        ui.ViewModel.CurrentPage = 1;
+        UiHarness.Settle();
+        ui.Window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(Slots(), slot => Assert.NotNull(slot.HeroId));
+
+        ui.ViewModel.CurrentPage = 0;
+        UiHarness.Settle();
+        ui.Window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        UiHarness.Settle();
+        Assert.All(Slots(), slot => Assert.Null(slot.HeroId));
+    }
+
+    /// <summary>In the hero search, Delete is for deleting letters.</summary>
+    [AvaloniaFact]
+    public void DeleteLeavesTheMatchAloneWhileTypingInATextBox()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        board.StartAssigning(Role.Enemy);
+        UiHarness.Settle();
+        var search = ui.Window.GetVisualDescendants().OfType<TextBox>().First(box => box.Name == "SearchBox");
+        search.Focus();
+        UiHarness.Settle();
+        Assert.Same(search, ui.Window.FocusManager!.GetFocusedElement());
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Delete, RawInputModifiers.None);
+        UiHarness.Settle();
+
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.NotNull(slot.HeroId));
+    }
+
+    [AvaloniaFact]
     public void HidingTheRandomButtonsTurnsTheirKeysOffToo()
     {
         using var ui = new UiHarness();
@@ -149,7 +197,9 @@ public class ShortcutTests
         using var ui = new UiHarness();
         var rebindable = ui.ViewModel.ShortcutBindings.Select(binding => binding.Command).ToHashSet();
 
-        var fixedKeys = ui.Window.KeyBindings.Where(binding => !rebindable.Contains(binding.Command)).ToList();
+        var fixedKeys = ui.Window.KeyBindings
+            .Where(binding => !rebindable.Contains(binding.Command is SkipWhileTypingCommand wrapped ? wrapped.Inner : binding.Command))
+            .ToList();
 
         Assert.NotEmpty(fixedKeys);
         Assert.All(fixedKeys, binding => Assert.NotNull(ShortcutKeys.Problem(binding.Gesture)));

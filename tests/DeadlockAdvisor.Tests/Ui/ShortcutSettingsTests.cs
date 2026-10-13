@@ -57,6 +57,20 @@ public class ShortcutSettingsTests
         Assert.Equal("F9", RecorderFor(ui, "Random").Content);
     }
 
+    /// <summary>Delete can't be handed on, so the shortcut that loses its key to Clear match is left with none rather than a key that wouldn't load.</summary>
+    [AvaloniaFact]
+    public void TakingAKeyFromAShortcutWhoseOldKeyIsDeleteLeavesItWithoutOne()
+    {
+        using var ui = OpenShortcuts();
+
+        Record(ui, "Clear match", PhysicalKey.F6);
+
+        Assert.Equal(new KeyGesture(Key.F6), ui.Settings.Current.Gesture(ShortcutAction.Clear));
+        Assert.Null(ui.Settings.Current.Gesture(ShortcutAction.Randomize));
+        Assert.Equal("Taken from Random, which now has no key.", ui.ViewModel.Settings.Shortcuts.Clear.Description);
+        Assert.Equal("None", RecorderFor(ui, "Random").Content);
+    }
+
     [AvaloniaFact]
     public void AKeyThatCantBeAShortcutIsTurnedAwayWithTheReason()
     {

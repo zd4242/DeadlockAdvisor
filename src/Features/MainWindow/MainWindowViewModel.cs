@@ -273,6 +273,7 @@ public class MainWindowViewModel : ViewModelBase
         RandomizeCommand = ReactiveCommand.CreateFromObservable<RandomizeKeep, Unit>(
             Match.Board.RandomizeCommand.Execute,
             onMatchPage.CombineLatest(Match.Board.RandomizeCommand.CanExecute, (onPage, canRandomize) => onPage && canRandomize));
+        ClearMatchCommand = ReactiveCommand.CreateFromObservable(() => Match.Board.ClearCommand.Execute(), onMatchPage);
         DetectFromAnywhereCommand = ReactiveCommand.CreateFromTask(DetectFromAnywhereAsync);
         hotkey.Pressed.InvokeCommand(DetectFromAnywhereCommand).DisposeWith(Disposables);
         // Holding the game's scoreboard key reads it quietly; nothing here ever shows a thing.
@@ -379,15 +380,16 @@ public class MainWindowViewModel : ViewModelBase
     public ReactiveCommand<Unit, Unit> OpenDataSettingsCommand { get; }
     public ReactiveCommand<Unit, Unit> QuitCommand { get; }
 
-    /// <summary>Alt+1/2/3 (which open the hero picker), Random and Detect, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
+    /// <summary>Alt+1/2/3 (which open the hero picker), Random, Detect and Clear, the Match page's shortcuts: live while it's showing, wherever focus is.</summary>
     public ReactiveCommand<Role, Unit> SetModeCommand { get; }
     public ReactiveCommand<RandomizeKeep, Unit> RandomizeCommand { get; }
     public ReactiveCommand<Unit, Unit> DetectCommand { get; }
+    public ReactiveCommand<Unit, Unit> ClearMatchCommand { get; }
 
     /// <summary>Detect's key while it's held system-wide, pressed here or in the game, on whichever page is showing.</summary>
     public ReactiveCommand<Unit, Unit> DetectFromAnywhereCommand { get; }
 
-    /// <summary>The rebindable keys (F6–F9 unless Settings → Shortcuts moves them), for the window to bind.</summary>
+    /// <summary>The rebindable keys (F6–F9 and Delete unless Settings → Shortcuts moves them), for the window to bind.</summary>
     [Reactive] public IReadOnlyList<ShortcutBinding> ShortcutBindings { get; private set; } = [];
 
     /// <summary>The window is up: time for the background checks and the first-run art offer, and then for the ones every few hours.</summary>
@@ -463,6 +465,7 @@ public class MainWindowViewModel : ViewModelBase
         ShortcutAction.Randomize => new(gesture, RandomizeCommand, RandomizeKeep.Nothing),
         ShortcutAction.RandomizeKeepSelf => new(gesture, RandomizeCommand, RandomizeKeep.Self),
         ShortcutAction.RandomizeKeepTeam => new(gesture, RandomizeCommand, RandomizeKeep.OwnTeam),
+        ShortcutAction.Clear => new(gesture, ClearMatchCommand, Unit.Default),
         _ => throw new ArgumentOutOfRangeException(nameof(action), action, null),
     };
 

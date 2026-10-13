@@ -1,6 +1,7 @@
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Windows.Input;
 using Avalonia.Automation;
 using Avalonia.Controls.Primitives;
 using Avalonia.Input;
@@ -112,11 +113,16 @@ public partial class MainWindow : Window
         _shortcutBindings.Clear();
         foreach (var shortcut in shortcuts)
         {
-            var binding = new KeyBinding { Gesture = shortcut.Gesture, Command = shortcut.Command, CommandParameter = shortcut.Parameter };
+            ICommand command = ShortcutKeys.EditsText(shortcut.Gesture)
+                ? new SkipWhileTypingCommand(shortcut.Command, IsTyping)
+                : shortcut.Command;
+            var binding = new KeyBinding { Gesture = shortcut.Gesture, Command = command, CommandParameter = shortcut.Parameter };
             _shortcutBindings.Add(binding);
             KeyBindings.Add(binding);
         }
     }
+
+    private bool IsTyping() => FocusManager?.GetFocusedElement() is TextBox;
 
     // -- window state -----------------------------------------------------------
 
