@@ -6,8 +6,10 @@ using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using DeadlockAdvisor.Features.Match.Detect;
 using DeadlockAdvisor.Models;
+using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Vision;
+using DeadlockAdvisor.Vision.Items;
 using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Match.Scoreboard;
@@ -47,8 +49,8 @@ public enum ScoreboardOutcome
 
 /// <summary>
 /// The player holds the game's scoreboard key and the advisor quietly reads the board it shows: net worth now, and
-/// each hero's items once the item reader exists. Silent by design (no window, focus, toast or sound, and a read of
-/// anything but the match already applied is dropped), since it runs in the middle of a match.
+/// each hero's items and bars, which are added to the match's builds. Silent by design (no window, focus, toast or
+/// sound, and a read of anything but the match already applied is dropped), since it runs in the middle of a match.
 /// </summary>
 public sealed class ScoreboardAction
 {
@@ -75,6 +77,7 @@ public sealed class ScoreboardAction
     private readonly ILoggingService _log;
     private readonly IScheduler _scheduler;
     private (string Folder, DateTime Stamp, TemplateBank Bank)? _bank;
+    private (string Folder, DateTime Stamp, DataStore Store, ItemTemplates Templates)? _icons;
     private bool _running;
 
     public ScoreboardAction(IScoreboardKeyService key, IScreenCaptureService capture, ISettingsService settings, IDataService data,
@@ -95,13 +98,9 @@ public sealed class ScoreboardAction
         _scheduler = scheduler;
     }
 
-    /// <summary>
-    /// Called with what a successful read found, on the UI thread, after the match's net worth was updated. The item reader
-    /// plugs in here.
-    /// </summary>
-    public Action<MatchState, ScoreboardRead>? OnRead { get; set; }
-
     private string TopbarDir => Path.Combine(_data.AssetsDir, "topbar");
+
+    private string ItemsDir => Path.Combine(_data.AssetsDir, "items");
 
     /// <param name="match">The match applied so far, which a read of the same match updates.</param>
     /// <param name="changed">Called after the match changed, so the page can show it.</param>
@@ -167,11 +166,14 @@ public sealed class ScoreboardAction
 
         if (detection.ConfidentCount > 0)
             _settings.Update(s => s.VisionGeometry[screenKey] = detection.Geometry.ToJson());
-        var snapshot = VisionApply.SnapshotFor(match, read.NetWorth.Souls, DateTimeOffset.UtcNow);
+        var items = await ReadItemsAsync(capture, detection);
+        var at = DateTimeOffset.UtcNow;
+        var snapshot = VisionApply.SnapshotFor(match, read.NetWorth.Souls, at);
         match.NetWorth.Add(snapshot);
+        var built = items is null ? 0 : items.Heroes.Count(hero => match.HeroInSlot(hero.Slot) is { } heroId && match.Builds.Apply(heroId, hero, at));
         changed();
-        OnRead?.Invoke(match, read);
-        _log.Information($"Scoreboard: read the board, net worth for {snapshot.Souls.Count} of 12 heroes");
+        _log.Information($"Scoreboard: read the board, net worth for {snapshot.Souls.Count} of 12 heroes"
+                         + (items is null ? ", items not read" : $", items for {built}"));
         if (_settings.Current.KeepScoreboardCaptures && (_lastKept is not { } last || _scheduler.Now - last >= KeepEvery))
         {
             _lastKept = _scheduler.Now;
@@ -194,6 +196,37 @@ public sealed class ScoreboardAction
         var at = DateTimeOffset.UtcNow;
         var path = await Task.Run(() => CaptureArchive.Scoreboards.Save(_data.DataRoot, capture.Band, at, note.ToJsonString(_noteJson)));
         _log.Information(path is null ? "Scoreboard: couldn't keep the capture" : $"Scoreboard: kept the capture in {path}");
+    }
+
+    /// <summary>Each hero's items and bars off the board, or null when there is no item art to read them with (or the reader failed: net worth is kept all the same).</summary>
+    private async Task<ItemBoardRead?> ReadItemsAsync(ScreenCapture capture, Detection detection)
+    {
+        var directory = ItemsDir;
+        var store = _data.Store;
+        try
+        {
+            return await Task.Run(() =>
+            {
+                var templates = IconsFor(directory, store);
+                return templates.IsEmpty ? null : ItemReader.Read(capture.Band, detection.Geometry, templates, detection.BlankSlots);
+            });
+        }
+        catch (Exception ex)
+        {
+            _log.Error("Scoreboard: the item reader failed", ex);
+            return null;
+        }
+    }
+
+    /// <summary>The item icons, kept from one press to the next until the art or the shop changes.</summary>
+    private ItemTemplates IconsFor(string directory, DataStore store)
+    {
+        var stamp = Directory.Exists(directory) ? Directory.GetLastWriteTimeUtc(directory) : DateTime.MinValue;
+        if (_icons is { } kept && kept.Folder == directory && kept.Stamp == stamp && ReferenceEquals(kept.Store, store))
+            return kept.Templates;
+        var templates = ItemTemplates.Load(directory, store.Items.Values);
+        _icons = (directory, stamp, store, templates);
+        return templates;
     }
 
     /// <summary>The reference art, kept from one press to the next until something under the folder changes (a download, a learned portrait).</summary>

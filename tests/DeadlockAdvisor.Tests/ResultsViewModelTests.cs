@@ -270,6 +270,66 @@ public class ResultsViewModelTests
     }
 
     [Fact]
+    public void AnItemYouHoldIsMarkedOwnedAndKeepsItsScore()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults(_items, "", owned: new HashSet<string> { "b" });
+        results.SetDisplay(RankBy.Formula, false, 0);
+
+        var rows = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId);
+        Assert.Equal(["b"], rows.Values.Where(row => row.IsOwned).Select(row => row.ItemId));
+        Assert.Equal(["a", "b", "c"], rows.Keys);
+        Assert.Equal("5.0", rows["b"].Score.Text);
+    }
+
+    [Fact]
+    public void HidingOwnedItemsLeavesThemOutBeforeTheCutoffAndChangesNoScore()
+    {
+        var owned = new HashSet<string> { "a" };
+        var results = new ResultsViewModel("hint");
+        results.SetResults(_items, "", owned: owned);
+        results.SetDisplay(RankBy.Formula, false, 0.5);
+        var shown = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId, row => row.Score.Text);
+        Assert.Equal(["a", "b", "c"], shown.Keys);
+
+        results.SetDisplay(RankBy.Formula, false, 0.5, hideOwned: true);
+
+        // b is now the best item listed, so the cutoff is half of its 5; the scores it keeps are the ones it had.
+        var hidden = results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId, row => row.Score.Text);
+        Assert.Equal(["b", "c"], hidden.Keys);
+        Assert.Equal(shown["b"], hidden["b"]);
+        Assert.Equal(shown["c"], hidden["c"]);
+
+        results.SetDisplay(RankBy.Formula, false, 0.5, hideOwned: false);
+        Assert.Equal(shown, results.Entries.OfType<ResultRowViewModel>().ToDictionary(row => row.ItemId, row => row.Score.Text));
+    }
+
+    [Fact]
+    public void ASearchFindsAnOwnedItemTheFilterHidesAndSaysWhy()
+    {
+        var results = new ResultsViewModel("hint");
+        results.SetResults(_items, "", owned: new HashSet<string> { "a" });
+        results.SetDisplay(RankBy.Formula, false, 0, hideOwned: true);
+        Assert.DoesNotContain("a", Rows(results));
+
+        results.SearchText = "a";
+
+        var row = results.Entries.OfType<ResultRowViewModel>().Single();
+        Assert.Equal("Left out of the list: you already own it (Filters).", row.HiddenReason);
+        Assert.True(row.IsOwned);
+    }
+
+    [Fact]
+    public void WithNoReadNothingIsOwned()
+    {
+        var results = Show(RankBy.Formula, 0);
+        results.SetDisplay(RankBy.Formula, false, 0, hideOwned: true);
+
+        Assert.Equal(["a", "b", "c"], Rows(results));
+        Assert.DoesNotContain(results.Entries.OfType<ResultRowViewModel>(), row => row.IsOwned);
+    }
+
+    [Fact]
     public void NoHeroesPickedShowsTheHintEvenForEveryItem()
     {
         var results = new ResultsViewModel("hint");

@@ -7,6 +7,7 @@ using DeadlockAdvisor.Services.Contracts;
 using DeadlockAdvisor.Tests.Fakes;
 using DeadlockAdvisor.Tests.Support;
 using DeadlockAdvisor.Vision;
+using DeadlockAdvisor.Vision.Items;
 using static DeadlockAdvisor.Tests.Support.VisionData;
 
 namespace DeadlockAdvisor.Tests;
@@ -316,17 +317,83 @@ public sealed class ScoreboardActionTests : IDisposable
         Assert.Empty(_shown);
     }
 
+    private static ItemCorpusBoard Board(string name) => ItemCorpusBoard.LoadAll(ItemData.CorpusDir).Single(board => board.Name == name);
+
+    /// <summary>The items a label names, by hero, as the board has them.</summary>
+    private static Dictionary<string, string[]> Named(ItemCorpusBoard board) =>
+        _heroes.Select((hero, slot) => (hero, items: board.Label.HeroAt(slot).Cells
+                .Select(cell => HeroLabel.Parse(cell).ItemId).OfType<string>().Order().ToArray()))
+            .ToDictionary(pair => pair.hero, pair => pair.items);
+
     [Fact]
-    public async Task WhatWasReadGoesToTheItemsHook()
+    public async Task EachHerosItemsAndBarsAreKeptInTheMatchAlongsideTheirNetWorth()
     {
         WithArt();
-        _capture.Next = Capture();
-        ScoreboardRead? handed = null;
-        _action.OnRead = (_, read) => handed = read;
+        ItemData.CopyArtInto(_fixture.Data.AssetsDir);
+        var board = Board("late_clean");
+        _capture.Next = ItemData.ScoreboardOf(board);
+        var match = Applied(_heroes);
 
-        await PressAsync(Applied(_heroes));
+        var outcome = await PressAsync(match);
 
-        Assert.NotNull(handed?.Detection);
-        Assert.Equal(_heroes, handed.Detection.Slots.Select(slot => slot.HeroId));
+        Assert.Equal(ScoreboardOutcome.Read, outcome);
+        Assert.Equal(1, _changed);
+        Assert.Equal(_souls, _heroes.Select(hero => match.NetWorth.Latest(hero) ?? 0));
+        // A slot whose panel reads as covered (the fixture's strip is a screenshot with a flat panel over some bars) says nothing, so it has no build.
+        var built = Named(board).Where(pair => match.BuildOf(pair.Key) is not null).ToList();
+        Assert.True(built.Count >= 9, $"builds for {built.Count} of 12 heroes");
+        foreach (var (hero, named) in built)
+        {
+            var build = match.BuildOf(hero)!;
+            Assert.NotNull(build.Bars);
+            Assert.All(build.ItemIds, id => Assert.Contains(id, named));
+            Assert.True(build.ItemIds.Count() >= named.Length - 2, $"{hero}: {build.ItemIds.Count()} of {named.Length}");
+        }
+        Assert.Equal(built.Count, match.Builds.All.Count);
+    }
+
+    [Fact]
+    public async Task ASecondReadAddsToWhatTheFirstShowed()
+    {
+        WithArt();
+        ItemData.CopyArtInto(_fixture.Data.AssetsDir);
+        _capture.Next = ItemData.ScoreboardOf(Board("late_deep"));
+        var match = Applied(_heroes);
+        await PressAsync(match);
+        var first = match.BuildOf("apollo")!;
+
+        _clock.AdvanceBy(TimeSpan.FromMinutes(1));
+        await PressAsync(match);
+
+        var second = match.BuildOf("apollo")!;
+        Assert.NotSame(first, second);
+        Assert.Equal(first.ItemIds.Order(), second.ItemIds.Order());
+        Assert.Equal(2, _changed);
+    }
+
+    [Fact]
+    public async Task WithoutItemArtTheNetWorthIsStillReadAndNoBuildIsKept()
+    {
+        WithArt();
+        _capture.Next = ItemData.ScoreboardOf(Board("late_clean"));
+        var match = Applied(_heroes);
+
+        var outcome = await PressAsync(match);
+
+        Assert.Equal(ScoreboardOutcome.Read, outcome);
+        Assert.Equal(16_000, match.NetWorth.Latest("apollo"));
+        Assert.True(match.Builds.IsEmpty);
+    }
+
+    [Fact]
+    public async Task ABoardOfAnotherMatchAddsNoBuilds()
+    {
+        WithArt();
+        ItemData.CopyArtInto(_fixture.Data.AssetsDir);
+        _capture.Next = ItemData.ScoreboardOf(Board("late_clean"));
+        var match = Applied([.. _heroes.Reverse()]);
+
+        Assert.Equal(ScoreboardOutcome.DifferentMatch, await PressAsync(match));
+        Assert.True(match.Builds.IsEmpty);
     }
 }

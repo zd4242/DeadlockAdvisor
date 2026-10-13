@@ -42,6 +42,8 @@ public class ResultsViewModel : ViewModelBase
     private double? _minFraction;
     private bool _hideRarelyBuilt;
     private bool _hideDisagreed;
+    private bool _hideOwned;
+    private IReadOnlySet<string> _owned = new HashSet<string>();
     private string? _topItemId;
     private string? _searchHitId;
     private readonly Dictionary<string, string> _hiddenReasons = [];
@@ -135,11 +137,13 @@ public class ResultsViewModel : ViewModelBase
     /// The units the formula-and-data ranking adds the two in, for this line-up; asked for only when
     /// ranking that way, since measuring a new shape takes a moment.
     /// </param>
-    public void SetResults(IReadOnlyList<ScoredItem> scored, string dataTip, Func<BlendScale>? blendScale = null)
+    /// <param name="owned">The items your hero already holds, which the rows mark; they are never taken out of a score.</param>
+    public void SetResults(IReadOnlyList<ScoredItem> scored, string dataTip, Func<BlendScale>? blendScale = null, IReadOnlySet<string>? owned = null)
     {
         _scored = scored;
         _dataTip = dataTip;
         _blendScale = blendScale ?? (() => BlendScale.One);
+        _owned = owned ?? new HashSet<string>();
         Render();
     }
 
@@ -149,15 +153,18 @@ public class ResultsViewModel : ViewModelBase
     /// list measures the cutoff against the best item overall; the tier sections against each tier's
     /// best, since a cheap tier's items rarely score as high as a late one's and would all be cut.
     /// Hidden rarely built items, and ranking by both, hidden items the two disagree on are left out
-    /// before any of that, so the cutoff and the counts are over what can be listed.
+    /// before any of that, so the cutoff and the counts are over what can be listed. So are the items you
+    /// already own, when asked to leave them out.
     /// </summary>
-    public void SetDisplay(RankBy rankBy, bool byTier, double? minFraction, bool hideRarelyBuilt = false, bool hideDisagreed = false)
+    public void SetDisplay(RankBy rankBy, bool byTier, double? minFraction, bool hideRarelyBuilt = false, bool hideDisagreed = false,
+        bool hideOwned = false)
     {
         _rankBy = rankBy;
         _byTier = byTier;
         _minFraction = minFraction;
         _hideRarelyBuilt = hideRarelyBuilt;
         _hideDisagreed = hideDisagreed;
+        _hideOwned = hideOwned;
         Render();
     }
 
@@ -306,13 +313,16 @@ public class ResultsViewModel : ViewModelBase
 
     /// <summary>The items the filters leave in. Only blending puts the two opinions on one scale, so only then can they disagree.</summary>
     private IEnumerable<ScoredItem> Listable(BlendScale blend) =>
-        _scored.Where(item => !(_hideRarelyBuilt && item.RarelyBuilt) && !(_hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item)));
+        _scored.Where(item => !(_hideRarelyBuilt && item.RarelyBuilt) && !(_hideOwned && _owned.Contains(item.ItemId))
+                              && !(_hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item)));
 
     /// <summary>Which hide filter leaves the item out of <see cref="Listable"/>, in words for the end of "Left out of the list: ".</summary>
     private string? HiddenReason(ScoredItem item, BlendScale blend)
     {
         if (_hideRarelyBuilt && item.RarelyBuilt)
             return "your hero rarely builds it";
+        if (_hideOwned && _owned.Contains(item.ItemId))
+            return "you already own it";
         return _hideDisagreed && _rankBy == RankBy.Both && blend.Disagree(item) ? "the advisor rating and the match results disagree on it" : null;
     }
 
@@ -448,6 +458,7 @@ public class ResultsViewModel : ViewModelBase
             _rows[scored.ItemId] = row;
         }
         row.SetValues(scored, bars, _dataTip, shown, disagrees);
+        row.IsOwned = _owned.Contains(scored.ItemId);
         row.IsSelected = scored.ItemId == SelectedItemId;
         row.HiddenReason = _hiddenReasons.GetValueOrDefault(scored.ItemId);
         row.ShowsTier = ShowsTiers && (showsTier ?? !_byTier);

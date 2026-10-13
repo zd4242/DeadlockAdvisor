@@ -78,9 +78,15 @@ public class ExplainViewModel : ViewModelBase
         "Click a result to see which heroes and traits produced its score, and what real matches say about it. "
         + "Click it again to come back here.";
 
+    public const string OwnedNote =
+        "You already own this one: the last scoreboard read showed it in your hero's items. Its score is the same.";
+
     [Reactive] public bool HasItem { get; private set; }
     [Reactive] public string? ItemId { get; private set; }
     [Reactive] public string ItemName { get; private set; } = IdleTitle;
+
+    /// <summary>Your hero holds the item (the last scoreboard read), which does not change why it scores as it does.</summary>
+    [Reactive] public bool IsOwned { get; private set; }
     [Reactive] public Color ShopColor { get; private set; }
 
     /// <summary>The number the list shows for the item: whatever it's ranked by.</summary>
@@ -138,8 +144,9 @@ public class ExplainViewModel : ViewModelBase
 
     /// <param name="rankBy">What the list is ranked by, which the headline shows.</param>
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
+    /// <param name="owned">Your hero already holds the item; the score is the same, and the header says so.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
-        RankBy rankBy = RankBy.Formula, BlendScale? blend = null)
+        RankBy rankBy = RankBy.Formula, BlendScale? blend = null, bool owned = false)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -154,6 +161,7 @@ public class ExplainViewModel : ViewModelBase
 
         HasItem = true;
         ItemId = itemId;
+        IsOwned = owned;
         ItemName = item.ItemName;
         ShopColor = Palette.ShopColor(item.Category);
         NoContributions = contributions.Count == 0;
@@ -187,6 +195,7 @@ public class ExplainViewModel : ViewModelBase
     {
         HasItem = false;
         ItemId = null;
+        IsOwned = false;
         ItemName = IdleTitle;
         Headline = default;
         FormulaTotal = default;

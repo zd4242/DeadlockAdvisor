@@ -47,6 +47,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     public const string HideRarelyBuiltLabel = "Hide items your hero rarely builds";
 
+    public const string HideOwnedLabel = "Hide items you already own";
+
+    public const string HideOwnedTip =
+        "Leave out the items marked OWNED: the ones your hero holds, so the list answers \"what next\". Their scores don't change.\n"
+        + "Needs your hero picked and the scoreboard read (Settings → Detection → Read the scoreboard while you hold its key).";
+
     public const string FiltersTip = "Filters: which items are listed, how they're laid out, and which matches the results come from";
 
     public static readonly string HideRarelyBuiltTip =
@@ -104,9 +110,9 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         DataRanks = dataRanks.DisposeWith(Disposables);
 
         if (settings.Current.ReopenLastMatch)
-            Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
+            Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys, data.Store.Items.Keys);
         _history = new MatchHistory(Match.Picks());
-        Board = new MatchBoardViewModel(Match, () => _data.Store, settings);
+        Board = new MatchBoardViewModel(Match, () => _data.Store, settings, () => DateTimeOffset.FromUnixTimeMilliseconds((long)(_now() * 1000)));
         Results = new ResultsViewModel("Pick the heroes in your match above and recommendations appear here.",
             (item, needle) => _data.Store.ItemMatches(item.ItemId, needle));
 
@@ -120,6 +126,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ShowTiers = Results.ShowsTiers = settings.Current.ResultsShowTiers;
         HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
         HideDisagreed = settings.Current.ResultsHideDisagreed;
+        HideOwned = settings.Current.ResultsHideOwned;
         ApplyDisplay();
 
         DetectCommand = ReactiveCommand.CreateFromTask(() => detect.RunAsync(Match, WhenReplaced()));
@@ -163,13 +170,19 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
             .Subscribe(show => Results.ShowsEditors = Explain.ShowsEditors = show)
             .DisposeWith(Disposables);
         settings.SettingsChanged
+            .Select(s => s.ReadBuildsOnTab)
+            .DistinctUntilChanged()
+            .Skip(1)
+            .Subscribe(_ => RefreshWhenShown())
+            .DisposeWith(Disposables);
+        settings.SettingsChanged
             .Select(s => s.ShowExplainMath)
             .DistinctUntilChanged()
             .Subscribe(show => Explain.ShowsMath = show)
             .DisposeWith(Disposables);
 
         this.WhenAnyValue(vm => vm.SelectedCutoff, vm => vm.ByTier, vm => vm.SelectedRank, vm => vm.HasMatchData, vm => vm.HideRarelyBuilt,
-                vm => vm.HideDisagreed)
+                vm => vm.HideDisagreed, vm => vm.HideOwned)
             .Skip(1)
             .Subscribe(_ =>
             {
@@ -180,6 +193,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                     s.ResultsRankBy = SelectedRank.RankBy;
                     s.ResultsHideRarelyBuilt = HideRarelyBuilt;
                     s.ResultsHideDisagreed = HideDisagreed;
+                    s.ResultsHideOwned = HideOwned;
                 });
                 var reranked = SelectedRank != _appliedRank;
                 ApplyDisplay();
@@ -206,8 +220,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Results.ShowsTiers = show;
             })
             .DisposeWith(Disposables);
-        this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.HideDisagreed, vm => vm.RanksByBoth, vm => vm.DataRanks.RankedOnly,
-                vm => vm.DataRanks.CanFilter, vm => vm.DataRanks.From, vm => vm.DataRanks.To)
+        this.WhenAnyValue(vm => vm.HideRarelyBuilt, vm => vm.HideDisagreed, vm => vm.HideOwned, vm => vm.RanksByBoth)
+            .Select(_ => Unit.Default)
+            .Merge(this.WhenAnyValue(vm => vm.DataRanks.RankedOnly, vm => vm.DataRanks.CanFilter, vm => vm.DataRanks.From, vm => vm.DataRanks.To)
+                .Select(_ => Unit.Default))
             .Select(_ => ActiveFilters())
             .Subscribe(active =>
             {
@@ -259,6 +275,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>Leave out the items the formula and the data disagree on (<see cref="BlendScale.Disagree"/>), ranking by both.</summary>
     [Reactive] public bool HideDisagreed { get; set; }
+
+    /// <summary>Leave out the items your hero already holds, from the last scoreboard read. Scores are untouched.</summary>
+    [Reactive] public bool HideOwned { get; set; }
+
+    /// <summary>Your hero's items have been read, so there is something to mark and to hide.</summary>
+    [Reactive] public bool HasOwnedItems { get; private set; }
 
     /// <summary>The list adds the formula and the data together, the only ranking that can tell when they disagree.</summary>
     [Reactive] public bool RanksByBoth { get; private set; }
@@ -368,15 +390,23 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         IsMatchEmpty = Match.IsEmpty;
         NeedsSelf = Match.HasUnsided;
         CanSearchItems = !IsMatchEmpty && !NeedsSelf;
-        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale);
+        var owned = OwnedItems();
+        HasOwnedItems = owned.Count > 0;
+        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth), note, Scale, owned);
         RefreshExplain();
     }
+
+    /// <summary>What your hero holds, as far as the scoreboard has shown it; empty without a read or a hero, and while reading the scoreboard is off.</summary>
+    private HashSet<string> OwnedItems() =>
+        _settings.Current.ReadBuildsOnTab ? Match.BuildOf(Match.SelfHero)?.ItemIds.ToHashSet() ?? [] : [];
 
     private List<string> ActiveFilters()
     {
         var active = new List<string>();
         if (HideRarelyBuilt)
             active.Add("Items your hero rarely builds are hidden");
+        if (HideOwned)
+            active.Add("Items you already own are hidden");
         if (HideDisagreed && RanksByBoth)
             active.Add("Items the advisor rating and results disagree on are hidden");
         if (DataRanks is { CanFilter: true, RangeLabel: { } range })
@@ -452,7 +482,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>Adopt a reloaded store: heroes and items may have changed.</summary>
     private void Rebind()
     {
-        Match.LoadSaved(Match.ToSaved(), _data.Store.Heroes.Keys);
+        Match.LoadSaved(Match.ToSaved(), _data.Store.Heroes.Keys, _data.Store.Items.Keys);
         _history.Reset(Match.Picks());
         (CanUndo, CanRedo) = (false, false);
         Results.Reset();
@@ -464,11 +494,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     {
         _appliedRank = SelectedRank;
         RanksByBoth = EffectiveRankBy == RankBy.Both;
-        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt, HideDisagreed);
+        Results.SetDisplay(EffectiveRankBy, ByTier, SelectedCutoff.MinFraction, HideRarelyBuilt, HideDisagreed, HideOwned);
     }
 
     private void RefreshExplain() => ShowExplain(Results.SelectedItemId);
 
     private void ShowExplain(string? itemId) =>
-        Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy, EffectiveRankBy == RankBy.Both ? Scale() : null);
+        Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy, EffectiveRankBy == RankBy.Both ? Scale() : null,
+            owned: itemId is not null && OwnedItems().Contains(itemId));
 }

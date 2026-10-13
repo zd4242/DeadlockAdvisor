@@ -44,6 +44,11 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
             .DistinctUntilChanged()
             .Subscribe(key => ScoreboardKey = new KeyGesture(key))
             .DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.LastMatch?.Builds.Values.Select(build => (DateTimeOffset?)build.At).Max())
+            .DistinctUntilChanged()
+            .Subscribe(at => LastReadDescription = DescribeLastRead(at))
+            .DisposeWith(Disposables);
         RecordScoreboardKeyCommand = ReactiveCommand.Create<KeyGesture?>(RecordScoreboardKey);
         ResetScoreboardKeyCommand = ReactiveCommand.Create(() => RecordScoreboardKey(new KeyGesture(ScoreboardKeys.Default)),
             settings.SettingsChanged.Select(s => s.Get() != ScoreboardKeys.Default));
@@ -116,6 +121,9 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
     /// <summary>What the scoreboard key is, or while there's something to say about the last key pressed for it, that.</summary>
     [Reactive] public string ScoreboardKeyNote { get; private set; } = _scoreboardKeyHelp;
 
+    /// <summary>When the scoreboard last showed the match's items, or what it takes for it to.</summary>
+    [Reactive] public string LastReadDescription { get; private set; } = "";
+
     [Reactive] public KeyGesture? ScoreboardKey { get; private set; }
 
     /// <summary>Set by the view while it waits for a key.</summary>
@@ -149,13 +157,17 @@ public class DetectionSettingsViewModel : SettingsPageViewModel
         Change(s => s.ScoreboardKey = gesture.Key.ToString(), nameof(ScoreboardKey));
     }
 
+    public static string DescribeLastRead(DateTimeOffset? at) => at is { } read
+        ? $"The items and bars on the match bar were last read at {read.ToLocalTime():t}. Each press of the key adds to them."
+        : "Nothing read yet in this match: apply the match with Detect, then hold the key in the game.";
+
     public static string DescribeScoreboard(Key key, ScoreboardKeyStatus status)
     {
         if (status == ScoreboardKeyStatus.Unsupported)
             return "Only available on Windows.";
         var label = ScoreboardKeys.Label(key);
         return $"While the game is in front and you hold {label} (its scoreboard key: move it here if you moved it in the game), quietly read the board into the match you've applied: "
-               + "each hero's net worth now. Nothing is shown, played or focused, and a board that isn't your match's is ignored. "
+               + "each hero's net worth now, and the items they hold (marked on your recommendations, as three bars on the match bar). Nothing is shown, played or focused, and a board that isn't your match's is ignored. "
                + "Press Detect first so there is a match. The game has to be borderless or windowed, as for Detect.";
     }
 

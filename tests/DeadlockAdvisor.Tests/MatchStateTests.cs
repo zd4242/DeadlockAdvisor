@@ -1,6 +1,7 @@
 using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Vision;
+using DeadlockAdvisor.Vision.Items;
 
 namespace DeadlockAdvisor.Tests;
 
@@ -401,5 +402,103 @@ public class MatchStateTests
         match.Clear();
         match.PlaceUnsided("h4", 4);
         Assert.Null(match.LikelyYou);
+    }
+
+    private static readonly DateTimeOffset _readAt = new(2026, 10, 12, 20, 0, 0, TimeSpan.Zero);
+
+    private static HeroItems Holding(params (string Id, ShopCategory Category, int Tier)[] items) =>
+        new(0, items.Select((item, cell) => new CellRead(cell, CellKind.Item, item.Category, item.Id, 0.9, 0.2, true, item.Tier)).ToList(), new BarsRead(0.1, 0.1, 0.1), false);
+
+    private static MatchState WithBuilds()
+    {
+        string?[] heroes = ["me", "a", null, null, null, null, "x", "y", null, null, null, null];
+        var match = new MatchState();
+        VisionApply.ApplyToMatch(match, heroes, 0);
+        match.Builds.Apply("me", Holding(("active_reload", ShopCategory.Weapon, 1), ("extra_health", ShopCategory.Vitality, 2)), _readAt);
+        match.Builds.Apply("x", Holding(("fleetfoot", ShopCategory.Vitality, 1)), _readAt);
+        return match;
+    }
+
+    [Fact]
+    public void BuildsAreSavedWithTheMatchAndComeBack()
+    {
+        var match = WithBuilds();
+
+        var restored = new MatchState();
+        restored.LoadSaved(match.ToSaved(), ["me", "a", "x", "y"], ["active_reload", "extra_health", "fleetfoot"]);
+
+        Assert.Equal(["active_reload", "extra_health"], restored.BuildOf("me")!.ItemIds);
+        Assert.Equal(_readAt, restored.BuildOf("me")!.At);
+        Assert.Equal(["fleetfoot"], restored.BuildOf("x")!.ItemIds);
+        Assert.Null(restored.BuildOf("a"));
+    }
+
+    [Fact]
+    public void BuildsSurviveTheSettingsFileAndAnOlderFileWithoutThemLoadsUnchanged()
+    {
+        var json = System.Text.Json.JsonSerializer.Serialize(WithBuilds().ToSaved());
+        var reread = System.Text.Json.JsonSerializer.Deserialize<SavedMatch>(json)!;
+        var restored = new MatchState();
+        restored.LoadSaved(reread, ["me", "a", "x", "y"]);
+        Assert.Equal(["active_reload", "extra_health"], restored.BuildOf("me")!.ItemIds);
+
+        var older = System.Text.Json.JsonSerializer.Deserialize<SavedMatch>("""{"Roles":{"me":"self","a":"ally"},"Slots":{},"NetWorth":[],"Focused":[]}""")!;
+        var plain = new MatchState();
+        plain.LoadSaved(older, ["me", "a"]);
+        Assert.Equal(2, plain.RoleMap.Count);
+        Assert.True(plain.Builds.IsEmpty);
+    }
+
+    [Fact]
+    public void AnItemTheShopNoLongerHasIsDroppedQuietlyAndItsCellStays()
+    {
+        var restored = new MatchState();
+        restored.LoadSaved(WithBuilds().ToSaved(), ["me", "a", "x", "y"], ["active_reload"]);
+
+        var build = restored.BuildOf("me")!;
+        Assert.Equal(["active_reload"], build.ItemIds);
+        Assert.Equal(2, build.Cells.Count);
+        Assert.Equal(2, build.Cells[1].Tier);
+    }
+
+    [Fact]
+    public void ABuildGoesWithItsHeroAndIsClearedWithTheMatch()
+    {
+        var match = WithBuilds();
+
+        match.SetRole("x", Role.None);
+        Assert.Null(match.BuildOf("x"));
+        Assert.DoesNotContain("x", match.ToSaved().Builds.Keys);
+        Assert.NotNull(match.BuildOf("me"));
+
+        match.Clear();
+        Assert.True(match.Builds.IsEmpty);
+        Assert.Null(match.BuildOf("me"));
+    }
+
+    [Fact]
+    public void ADetectionOfTheSameHeroesKeepsTheBuildsAndANewLineUpDropsThem()
+    {
+        string?[] heroes = ["me", "a", null, null, null, null, "x", "y", null, null, null, null];
+        var match = WithBuilds();
+
+        VisionApply.ApplyToMatch(match, heroes, 0);
+        Assert.Equal(["active_reload", "extra_health"], match.BuildOf("me")!.ItemIds);
+
+        VisionApply.ApplyToMatch(match, ["me", "a", null, null, null, null, "x", "z", null, null, null, null], 0);
+        Assert.True(match.Builds.IsEmpty);
+    }
+
+    [Fact]
+    public void UndoingAHeroBackInBringsTheirBuildBack()
+    {
+        var match = WithBuilds();
+        var before = match.Picks();
+
+        match.SetRole("x", Role.None);
+        Assert.Null(match.BuildOf("x"));
+        match.Restore(before, ["me", "a", "x", "y"]);
+
+        Assert.Equal(["fleetfoot"], match.BuildOf("x")!.ItemIds);
     }
 }

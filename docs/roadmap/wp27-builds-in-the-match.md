@@ -1,6 +1,6 @@
 # WP27 Builds in the match: owned marks, roster bars, settings
 
-Status: todo
+Status: done
 Effort: M · Risk: low-medium (additive state and UI; no scoring change) · Depends on: WP25, WP26 · Wave: C
 Touches: new `src/Models/HeroBuild.cs`, `src/Models/MatchState.cs` (`Builds`, saved and restored), `src/Models/AppSettings.cs` (`SavedMatch.Builds`, `ResultsHideOwned`), `src/Vision/VisionApply.cs` (keep builds across a re-detect of the same twelve), `src/Features/Match/Scoreboard/ScoreboardAction.cs` (the items hook becomes real), `src/Features/Match/Results/*` (an owned mark and the filter), `src/Features/Match/Board/*` (roster mini-bars and item chips), `src/Controls` (a painted bars control with its automation peer), `src/Features/Settings/Detection/*`, `tests/DeadlockAdvisor.Tests` (`MatchStateTests`, `ScoreboardActionTests`, `ResultsViewModelTests`, `Ui/*`)
 Docs to update: `docs/architecture.md` (sections 2, 4, 8, 10), `README.md` (Match page, Detect, Settings), `docs/detection_model.md` (how a Tab read reaches the match)

@@ -22,6 +22,12 @@ public sealed class MatchState
 
     public NetWorthHistory NetWorth { get; } = new();
 
+    /// <summary>What the scoreboard last showed each hero holding. A hero who leaves the match keeps theirs unseen until they return, so undo can bring it back.</summary>
+    public MatchBuilds Builds { get; } = new();
+
+    /// <summary>The build of a hero in the match, if the scoreboard has shown it.</summary>
+    public HeroBuild? BuildOf(string? heroId) => heroId is not null && RoleMap.ContainsKey(heroId) ? Builds.Of(heroId) : null;
+
     private readonly HashSet<string> _focused = [];
 
     /// <summary>The enemies the recommendations lean toward; a hero who stops being an enemy drops out.</summary>
@@ -187,6 +193,7 @@ public sealed class MatchState
         RoleMap.Clear();
         Slots.Clear();
         NetWorth.Clear();
+        Builds.Clear();
         _focused.Clear();
         _likelyYou = null;
     }
@@ -279,11 +286,12 @@ public sealed class MatchState
             .ToList();
         saved.Focused = Enemies.Where(_focused.Contains).ToList();
         saved.LikelyYou = LikelyYou;
+        saved.Builds = Builds.ToSaved(RoleMap.Keys);
         return saved;
     }
 
-    /// <summary>Restore a saved match, silently dropping heroes that no longer exist.</summary>
-    public void LoadSaved(SavedMatch? saved, IEnumerable<string> validHeroIds)
+    /// <summary>Restore a saved match, silently dropping heroes that no longer exist, and the items too when <paramref name="validItemIds"/> is given.</summary>
+    public void LoadSaved(SavedMatch? saved, IEnumerable<string> validHeroIds, IEnumerable<string>? validItemIds = null)
     {
         Clear();
         if (saved is null)
@@ -305,5 +313,12 @@ public sealed class MatchState
         foreach (var heroId in saved.Focused)
             SetFocus(heroId, true);
         SuggestSelf(saved.LikelyYou);
+
+        var items = validItemIds?.ToHashSet();
+        foreach (var (heroId, build) in saved.Builds)
+        {
+            if (RoleMap.ContainsKey(heroId))
+                Builds.Set(heroId, HeroBuild.FromSaved(build, itemId => items is null || items.Contains(itemId)));
+        }
     }
 }

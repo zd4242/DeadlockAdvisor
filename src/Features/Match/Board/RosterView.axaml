@@ -37,6 +37,8 @@
                                  NetWorth="{Binding NetWorth}"
                                  NetWorthChange="{Binding NetWorthChange}"
                                  ShowsNetWorth="{Binding ShowsNetWorth}"
+                                 Build="{Binding Build}"
+                                 ShowsBuilds="{Binding ShowsBuilds}"
                                  IsFocusTarget="{Binding IsFocused}"
                                  IsDimmed="{Binding IsDimmed}"
                                  CanFocus="{Binding CanFocus}"

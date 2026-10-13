@@ -43,18 +43,32 @@ public class MatchBoardViewModel : ViewModelBase
     private readonly MatchState _match;
     private readonly Func<DataStore> _store;
     private readonly Subject<Unit> _changed = new();
+    private readonly Func<DateTimeOffset> _now;
     private List<string> _visibleOrder = [];
     private int _highlightIndex;
+    private bool _showsBuilds;
 
-    public MatchBoardViewModel(MatchState match, Func<DataStore> store, ISettingsService settings)
+    /// <param name="now">What the age of a build is told against; the clock unless a test sets it.</param>
+    public MatchBoardViewModel(MatchState match, Func<DataStore> store, ISettingsService settings, Func<DateTimeOffset>? now = null)
     {
         _match = match;
         _store = store;
+        _now = now ?? (() => DateTimeOffset.UtcNow);
+        _showsBuilds = settings.Current.ReadBuildsOnTab;
 
         settings.SettingsChanged
             .Select(s => s.ShowRandomButtons)
             .DistinctUntilChanged()
             .Subscribe(show => ShowsRandom = show)
+            .DisposeWith(Disposables);
+        settings.SettingsChanged
+            .Select(s => s.ReadBuildsOnTab)
+            .Where(show => show != _showsBuilds)
+            .Subscribe(show =>
+            {
+                _showsBuilds = show;
+                RefreshRosters();
+            })
             .DisposeWith(Disposables);
         settings.SettingsChanged
             .Subscribe(s =>
@@ -436,24 +450,31 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>The team in order from the first slot, any past the sixth left off the bar.</summary>
     private void FillSlots(IReadOnlyList<RosterSlotViewModel> slots, IEnumerable<string> heroIds, bool unsided = false)
     {
-        var heroes = _store().Heroes;
+        var store = _store();
+        var heroes = store.Heroes;
         var shown = heroIds.Where(heroes.ContainsKey).ToList();
+        var now = _now();
         for (var index = 0; index < slots.Count; index++)
         {
             if (index < shown.Count)
             {
                 var heroId = shown[index];
+                var build = _showsBuilds && _match.BuildOf(heroId) is { } known ? BuildSummaries.Of(known, store, now) : null;
                 slots[index].Fill(heroId, heroes[heroId].HeroName, heroId == _match.SelfHero,
                     _match.NetWorth.Latest(heroId), ChangeText(_match.NetWorth.Change(heroId)),
-                    unsided, unsided && heroId == _match.LikelyYou);
+                    unsided, unsided && heroId == _match.LikelyYou, build);
             }
             else
             {
                 slots[index].Clear();
             }
             slots[index].ShowsNetWorth = HasNetWorth;
+            slots[index].ShowsBuilds = HasBuilds;
         }
     }
+
+    /// <summary>Some hero on the bar has a build to show, which makes room for the bars under every portrait.</summary>
+    private bool HasBuilds => _showsBuilds && _match.RoleMap.Keys.Any(heroId => _match.BuildOf(heroId) is not null);
 
     private void RefreshTotals(IReadOnlyList<string> allies, IReadOnlyList<string> enemies)
     {

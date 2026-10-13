@@ -24,6 +24,10 @@ public class ResultRowViewModel : ViewModelBase
         + $"Its win-rate gain against the enemies, plus a third of its hero fit, comes to {Format.Num(ItemScoring.PickMinAgainst)} point or more\n"
         + "(hero fit usually runs about three times bigger).";
 
+    public const string OwnedTip =
+        "Your hero holds this item, as the last scoreboard read showed. Its score is unchanged.\n"
+        + $"Filters → \"{MatchViewModel.HideOwnedLabel}\" leaves these items out of the list.";
+
     public const string HideRarelyBuiltHint =
         $"Filters → \"{MatchViewModel.HideRarelyBuiltLabel}\" leaves these items out of the list.";
 
@@ -94,6 +98,9 @@ public class ResultRowViewModel : ViewModelBase
     [Reactive] public bool OffersHide { get; private set; }
     [Reactive] public string? DataTip { get; private set; }
     [Reactive] public bool IsSelected { get; set; }
+
+    /// <summary>Your hero holds the item, as the last scoreboard read showed.</summary>
+    [Reactive] public bool IsOwned { get; set; }
 
     /// <summary>Why the plain list leaves the item out, for a search that found it anyway; null when the list has it.</summary>
     [Reactive] public string? HiddenReason { get; set; }

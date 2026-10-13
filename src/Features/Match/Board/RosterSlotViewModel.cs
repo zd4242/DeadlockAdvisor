@@ -1,3 +1,4 @@
+using DeadlockAdvisor.Controls;
 using DeadlockAdvisor.Core;
 using DeadlockAdvisor.Enums;
 using ReactiveUI.Fody.Helpers;
@@ -23,6 +24,12 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
     /// <summary>Whether the match has any net worth, so every slot makes room for it alike.</summary>
     [Reactive] public bool ShowsNetWorth { get; set; }
 
+    /// <summary>What the scoreboard last showed the hero holding; null until a read has.</summary>
+    [Reactive] public BuildSummary? Build { get; private set; }
+
+    /// <summary>Whether any hero has a build, so every slot makes room for the bars alike.</summary>
+    [Reactive] public bool ShowsBuilds { get; set; }
+
     /// <summary>An enemy the recommendations are focused on.</summary>
     [Reactive] public bool IsFocused { get; private set; }
 
@@ -42,13 +49,14 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
     [Reactive] public Role Preview { get; set; }
 
     public void Fill(string heroId, string heroName, bool isSelf, int? netWorth, string? netWorthChange,
-        bool isUnsided = false, bool isLikelySelf = false)
+        bool isUnsided = false, bool isLikelySelf = false, BuildSummary? build = null)
     {
         HeroId = heroId;
         HeroName = heroName;
         IsSelf = isSelf;
         NetWorth = netWorth;
         NetWorthChange = netWorthChange;
+        Build = build;
         IsUnsided = isUnsided;
         IsLikelySelf = isLikelySelf;
         Preview = Role.None;
@@ -71,6 +79,7 @@ public class RosterSlotViewModel(Role team) : ViewModelBase
         IsSelf = false;
         NetWorth = null;
         NetWorthChange = null;
+        Build = null;
         IsUnsided = false;
         IsLikelySelf = false;
         Preview = Role.None;

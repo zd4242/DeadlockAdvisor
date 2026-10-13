@@ -149,7 +149,7 @@ keep their picks, and **Match results from** leans the match results
 toward a range of ranks: the numbers move only where those ranks play
 detectably differently. That's worked out on the spot from the downloaded
 rank groups, and stays set until changed. The button fills in while a
-filter the list doesn't show is on (hiding rarely built items, or leaning
+filter the list doesn't show is on (hiding rarely built or owned items, or leaning
 toward ranks), and its tooltip says which.
 
 When Detect reads the match it also reads each hero's **net worth** (their
@@ -158,6 +158,17 @@ With **Lean toward heroes ahead on net worth** ticked under Filters, a hero's
 share of every score is scaled by how far ahead or behind the match's average
 they are, by at most 30%, so counters to a fed enemy and items for a fed ally
 (or a fed you) count for more. It's greyed out until a reading exists.
+
+With **Read the scoreboard while you hold its key** on (**Settings → Detection**,
+see below), each press of the game's scoreboard key also reads every hero's
+**items**, and the match bar shows each hero's build as three small bars under
+their net worth: how their souls divide among weapon, vitality and spirit (hover
+a portrait for their items by name, and for any the advisor couldn't recognise).
+A build read ten minutes ago or more is drawn faded until the next press
+refreshes it. The items your own hero holds are marked **OWNED** in the list,
+and **Hide items you already own** under Filters leaves them out, so the list
+answers "what next". Neither changes a score, and a match you haven't read the
+scoreboard of looks as it always did.
 
 Click any recommendation to see **why** it scored what it did, per hero
 and per trait, with the arithmetic shown. **Settings → General** can hide
@@ -466,12 +477,17 @@ running, other apps don't get F9; turn that off under **Settings →
 Detection** and F9 only works while the advisor has focus.
 
 **Holding the scoreboard key** (Tab unless you moved it in the game) can
-refresh the match's net worth without Detect: turn on *Read the scoreboard
-while you hold its key* under **Settings → Detection**. While Deadlock is in
+refresh the match's net worth, and read each hero's items, without Detect: turn
+on *Read the scoreboard while you hold its key* under **Settings → Detection**
+(which also says when the last read was). While Deadlock is in
 front and you hold the key, the advisor reads the board it shows into the match
 you've already applied, and does nothing visible: no window, no sound, no
 focus change. A board that isn't your match's (or no match applied yet) is
-ignored. It's off until you turn it on; if you moved the scoreboard key in the
+ignored. What it reads of the items is added to what it knew, never taken as
+the whole of a hero's items: a hero a tooltip covers, an item it couldn't
+recognise, or a cell under the kill feed leaves what was known as it was. The
+items are matched against the item art, so they need the art downloaded (the
+net worth doesn't). It's off until you turn it on; if you moved the scoreboard key in the
 game, set the same key there. The key still reaches the game, since the advisor
 only watches it. *Keep the scoreboard captures* (also off) saves each board it
 read, down to the items, in the captures folder of your data folder (at most

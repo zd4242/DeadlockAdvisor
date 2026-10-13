@@ -55,7 +55,7 @@ is how each step works, why it works that way, and how to change it without maki
 
 **The scoreboard read** shares steps 2 to 6 and the net worth with the pipeline above (`ScoreboardReader.Read`, which `DetectAction` calls
 too) but starts from a capture of the top 52% of the window, taken while the player holds the scoreboard key (`ScoreboardAction`), and ends not in
-a review but in a net worth snapshot, and only when the read is the match already applied (`RosterContinuity.IsSameMatch`); anything else is dropped
+a review but in a net worth snapshot and each hero's items (below), and only when the read is the match already applied (`RosterContinuity.IsSameMatch`); anything else is dropped
 silently. The grid comes from the same per-screen cache, so a read that fits under 0.7 searches afresh as Detect does.
 
 ## The reference art
@@ -195,6 +195,13 @@ Tools in `VisionCorpusTools`, each run only when its environment variable is set
 | `DEADLOCK_ITEM_ART=<an assets/items folder>` | Shrink every item icon to 100 pixels into `Golden/vision/items/art` (the item corpus's art). |
 | `DEADLOCK_ITEM_DRAFT=<kept scoreboard captures>` | Draft an item label for each capture, with two sheets in `mockups/item_drafts` to check it by: the confident reads (the cell beside its icon) and the others (the cell beside its three best candidates). `DEADLOCK_ASSETS` uses the full-size art. |
 | `DEADLOCK_ITEM_PROMOTE=<kept scoreboard captures>` | Cut the capture each label in `Golden/vision/items/corpus` names as its `source`, with everything outside the heroes' columns and above their bars painted black. |
+
+**How a Tab read reaches the match.** `ScoreboardAction` reads the board (strip, net worth), and once it is the match already applied it runs `ItemReader.Read` on the same band and grid (the blank slots of a Street
+Brawl left out) and hands each hero's `HeroItems` to `MatchState.Builds` (`HeroBuild.Merge`), which keeps it as new information about the cells it saw and never as the whole of the hero's items: a covered slot
+changes nothing; a hidden or unseen cell keeps what was known of it; an unsure cell keeps the item it was known as when its category and tier agree; cells past a short read stay; an item is held once. A hero's souls per category are
+the cells at their tiers' costs, and where a cell may hold more (hidden, unseen, no tier) the bar's reading (`1 - e^(-souls/10000)` inverted) raises the figure as an estimate; a Street Brawl's steeper bars are not
+corrected for, so an estimate there runs high. Nothing here is confidence-gated beyond the reader's own: only cells the reader gave an item for count as owned. With no item art the read is skipped and the
+net worth still lands.
 
 **To add item boards:** turn on *Keep the boards it reads* (`AppSettings.KeepScoreboardCaptures`) and hold the scoreboard key in a match; the boards are kept in `<data>/captures/scoreboard_*`, at most one every 30 seconds,
 and the newest 300 only (move the ones you want to keep elsewhere). Draft them, look at **every** confident read on the sheets (a wrong item can look right: the numeral caught two that did), copy the label into the corpus

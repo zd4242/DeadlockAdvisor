@@ -44,6 +44,7 @@
                 <settings:SettingRow Title="Read the scoreboard while you hold its key" Description="{Binding ScoreboardDescription}">
                     <ToggleSwitch IsChecked="{Binding ReadBuildsOnTab}"/>
                 </settings:SettingRow>
+                <settings:SettingRow Title="Last read" Description="{Binding LastReadDescription}"/>
                 <settings:SettingRow Title="Scoreboard key" Description="{Binding ScoreboardKeyNote}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <Button Classes="ghost"

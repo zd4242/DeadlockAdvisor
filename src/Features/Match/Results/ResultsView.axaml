@@ -114,6 +114,11 @@
                                                             Color="{Binding TierColor}"
                                                             IsVisible="{Binding ShowsTier}"
                                                             ToolTip.Tip="The shop tier, and its price in souls"/>
+                                            <controls:Badge VerticalAlignment="Center"
+                                                            Text="OWNED"
+                                                            Color="{x:Static theme:Palette.Ally}"
+                                                            IsVisible="{Binding IsOwned}"
+                                                            ToolTip.Tip="{x:Static results:ResultRowViewModel.OwnedTip}"/>
                                         </StackPanel>
                                         <controls:Badge Grid.Column="1"
                                                         Margin="8,0,0,0"

@@ -66,6 +66,14 @@ public class RosterSlot : Control
     public static readonly StyledProperty<bool> ShowsNetWorthProperty =
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(ShowsNetWorth));
 
+    /// <summary>What the scoreboard last showed the hero holding, as three bars under the portrait; null until a read has.</summary>
+    public static readonly StyledProperty<BuildSummary?> BuildProperty =
+        AvaloniaProperty.Register<RosterSlot, BuildSummary?>(nameof(Build));
+
+    /// <summary>Room for the build's bars under the portrait: on for every slot once any hero has one.</summary>
+    public static readonly StyledProperty<bool> ShowsBuildsProperty =
+        AvaloniaProperty.Register<RosterSlot, bool>(nameof(ShowsBuilds));
+
     /// <summary>An enemy the recommendations are focused on.</summary>
     public static readonly StyledProperty<bool> IsFocusTargetProperty =
         AvaloniaProperty.Register<RosterSlot, bool>(nameof(IsFocusTarget));
@@ -118,10 +126,10 @@ public class RosterSlot : Control
 
     static RosterSlot()
     {
-        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, NetWorthProperty,
+        AffectsRender<RosterSlot>(HeroIdProperty, HeroNameProperty, TeamProperty, IsSelfProperty, NetWorthProperty, BuildProperty,
             IsFocusTargetProperty, IsDimmedProperty, CanFocusProperty, IsUnsidedProperty, IsLikelySelfProperty, PreviewRoleProperty,
             IsPointerOverProperty, ArtHost.ServiceProperty, ArtHost.RevisionProperty);
-        AffectsMeasure<RosterSlot>(ShowsNetWorthProperty);
+        AffectsMeasure<RosterSlot>(ShowsNetWorthProperty, ShowsBuildsProperty);
         CursorProperty.OverrideDefaultValue<RosterSlot>(new Cursor(StandardCursorType.Hand));
     }
 
@@ -170,6 +178,18 @@ public class RosterSlot : Control
     {
         get => GetValue(ShowsNetWorthProperty);
         set => SetValue(ShowsNetWorthProperty, value);
+    }
+
+    public BuildSummary? Build
+    {
+        get => GetValue(BuildProperty);
+        set => SetValue(BuildProperty, value);
+    }
+
+    public bool ShowsBuilds
+    {
+        get => GetValue(ShowsBuildsProperty);
+        set => SetValue(ShowsBuildsProperty, value);
     }
 
     public bool IsFocusTarget
@@ -225,14 +245,14 @@ public class RosterSlot : Control
         base.OnPropertyChanged(change);
         if (change.Property == HeroIdProperty || change.Property == HeroNameProperty || change.Property == TeamProperty
             || change.Property == IsSelfProperty || change.Property == NetWorthProperty || change.Property == NetWorthChangeProperty
-            || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty
+            || change.Property == IsFocusTargetProperty || change.Property == CanFocusProperty || change.Property == BuildProperty
             || change.Property == IsUnsidedProperty || change.Property == IsLikelySelfProperty)
             UpdateToolTip();
     }
 
     // -- accessibility ----------------------------------------------------------
 
-    /// <summary>"Haze, enemy, focused, net worth 25k"; what the tooltip says a click does is the peer's help text.</summary>
+    /// <summary>"Haze, enemy, focused, net worth 25k, weapon 70%, vitality 10%, spirit 20%"; what the tooltip says a click does is the peer's help text.</summary>
     internal string AccessibleName
     {
         get
@@ -247,6 +267,8 @@ public class RosterSlot : Control
                 parts.Add("focused");
             if (NetWorth is { } souls)
                 parts.Add($"net worth {Format.Compact(souls)}");
+            if (Build is { } build)
+                parts.Add(build.Described + (build.IsOld ? " (read a while ago)" : ""));
             return string.Join(", ", parts);
         }
     }
@@ -265,7 +287,7 @@ public class RosterSlot : Control
     protected override Size MeasureOverride(Size availableSize)
     {
         var width = WidthFor(availableSize.Width);
-        return new Size(width, _top + PortraitFor(width) + 3 + PillBand + _nameHeight);
+        return new Size(width, _top + PortraitFor(width) + 3 + PillBand + BarsBand + _nameHeight);
     }
 
     protected override Size ArrangeOverride(Size finalSize)
@@ -280,6 +302,8 @@ public class RosterSlot : Control
     internal Rect PortraitRect => new(Math.Floor((Bounds.Width - _portrait) / 2), _top, _portrait, _portrait);
 
     private double PillBand => ShowsNetWorth ? _pillHeight + 3 : 0;
+
+    private double BarsBand => ShowsBuilds ? BuildBars.Height + 3 : 0;
 
     internal Rect RemoveBounds
     {
@@ -376,6 +400,8 @@ public class RosterSlot : Control
             tip = $"{HeroName} -- click to play as them and see their items, right click to change";
         if (!IsEmpty && !_overRemove && NetWorth is { } souls)
             tip += $"\nNet worth {Format.Compact(souls)}{(NetWorthChange is { } moved ? $" ({moved})" : "")}";
+        if (!IsEmpty && !_overRemove && Build is { } build)
+            tip += $"\n\n{build.Tip}";
         ToolTip.SetTip(this, tip);
     }
 
@@ -438,10 +464,12 @@ public class RosterSlot : Control
 
         if (NetWorth is { } souls)
             PaintNetWorth(context, rect, souls);
+        if (Build is { } build)
+            BuildBars.Paint(context, build, rect.Center.X, rect.Bottom + 3 + PillBand + BuildBars.Height);
 
         var color = IsSelf || IsFocusTarget || hovered ? Palette.Text : Palette.TextDim;
         var name = Fonts.Centered(HeroName, 11, color, Bounds.Width, bold: IsSelf || IsFocusTarget);
-        context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + (_nameHeight - name.Height) / 2));
+        context.DrawText(name, new Point(0, rect.Bottom + 3 + PillBand + BarsBand + (_nameHeight - name.Height) / 2));
     }
 
     /// <summary>A crosshair in the portrait's bottom-left corner: filled red on a focused enemy, outlined on a hovered one as a hint.</summary>

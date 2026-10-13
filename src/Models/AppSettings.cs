@@ -102,6 +102,9 @@ public class AppSettings
     public bool ResultsHideRarelyBuilt { get; set; }
     public bool ResultsHideDisagreed { get; set; }
 
+    // Leaves out of the list the items your hero already holds, once a scoreboard read has shown them.
+    public bool ResultsHideOwned { get; set; }
+
     // Hero Items tab
     public string? HeroItemsHero { get; set; }
 
@@ -142,10 +145,43 @@ public class SavedMatch
 
     /// <summary>The hero a detection thought might be you, while the teams are still unsplit.</summary>
     public string? LikelyYou { get; set; }
+
+    /// <summary>Hero → what the scoreboard last showed them holding.</summary>
+    public Dictionary<string, SavedBuild> Builds { get; set; } = [];
 }
 
 public class SavedNetWorth
 {
     public DateTimeOffset At { get; set; }
     public Dictionary<string, int> Souls { get; set; } = [];
+}
+
+public class SavedBuild
+{
+    public DateTimeOffset At { get; set; }
+    public List<SavedBuildCell> Cells { get; set; } = [];
+
+    /// <summary>The three bars' heights, in pitches, when they were read.</summary>
+    public SavedBars? Bars { get; set; }
+}
+
+public class SavedBuildCell
+{
+    public int Cell { get; set; }
+
+    /// <summary>"item", "hidden" or "unseen".</summary>
+    public string Kind { get; set; } = "item";
+
+    /// <summary>"weapon", "vitality" or "spirit".</summary>
+    public string? Category { get; set; }
+
+    public string? ItemId { get; set; }
+    public int? Tier { get; set; }
+}
+
+public class SavedBars
+{
+    public double Weapon { get; set; }
+    public double Vitality { get; set; }
+    public double Spirit { get; set; }
 }

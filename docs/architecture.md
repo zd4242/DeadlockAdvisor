@@ -76,10 +76,10 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 |---|---|
 | `Program.cs`, `App.axaml(.cs)`, `ViewLocator.cs` | entry point, DI wiring and startup, view lookup |
 | `src/Core` | `ViewModelBase`, formatting, fuzzy match, zoom steps, shortcut keys, wiki links, small helpers |
-| `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `MatchHistory` (its undo), `NetWorthHistory`, `AppSettings` |
+| `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `MatchHistory` (its undo), `NetWorthHistory`, `HeroBuild` / `MatchBuilds` (what each hero holds, from the scoreboard), `AppSettings` |
 | `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
-| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec; `Items/` the scoreboard's item and bar reader (`ItemReader`, `ItemTemplates`, `BarReader`; not called by the app yet) |
+| `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec; `Items/` the scoreboard's item and bar reader (`ItemReader`, `ItemTemplates`, `BarReader`; `ScoreboardAction` calls it) |
 | `src/Features/<Page>` | one folder per page or area, each with its view models and views: `Match` (`Board`, `Results`, `Explain`, `Detect`, `Scoreboard`, `Import`), `HeroItems`, `HeroTraits`, `ItemFormulas` (`ByItem`, `ByTrait`), `Settings` (`General`, `Shortcuts`, `Detection`, `Data`), `MainWindow` (window, menus, status bar, `Updates`, `Welcome`, `MatchDownload`, `ModelUpdate`, `DataMenuViewModel`), `Shared` (`Modals`, `Notifications`, `BackgroundJobs`, `ItemCard`) |
 | `src/Controls`, `src/Behaviors`, `src/Converters`, `src/Theme`, `src/Enums` | custom controls and their automation peers, behaviours (middle-click autoscroll, popups following the zoom, the `narrow` class), converters, palette and fonts, enums |
 | `src/Assets/SeedData` | the starter and published model; the app embeds it |
@@ -134,8 +134,18 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   (`DataStore.EmptyBaseTables`), and Sync New says so.
 - **Match page:** `MatchViewModel` composes `MatchBoardViewModel` (the roster, picker, roles, focus), `ResultsViewModel` (the
   recommendation list), `ExplainViewModel` ("Why this item?"), `DataRanksViewModel` (rank filters), and the `DetectAction` and
-  `ImportMatchAction`. `MatchState` is who is in the match (roles, top-bar slots, net-worth history, focused enemies); it is
-  saved in `AppSettings.LastMatch`. **A detection that found every hero but not you** leaves them *unsided*: in
+  `ImportMatchAction`. `MatchState` is who is in the match (roles, top-bar slots, net-worth history, builds, focused enemies); it is
+  saved in `AppSettings.LastMatch`. **Builds** (`MatchState.Builds`, a `MatchBuilds`; `BuildOf(hero)` for a hero in the match) hold the latest `HeroBuild` per
+  hero: their twelve cells (`BuildCell`: category, item id when the reader was sure, tier, hidden or unseen), their three bars and when they were read.
+  A read is added with `HeroBuild.Merge`, never swapped in: a covered slot or a read of nothing changes nothing, an unsure cell keeps the item it was known
+  as when category and tier agree, hidden and unseen cells keep what was there, cells past a short read stay, and an item is held once. Souls per category
+  are each cell at 800 · 2^(tier-1) (`HeroBuild.InvestmentIn`), raised to what the bar implies where a cell may hold more (`IsEstimate`); `Shares()` is what
+  the roster draws. A build is kept across a re-detect of the same twelve heroes (`VisionApply.ApplyToMatch`), cleared with the match, saved as
+  `SavedMatch.Builds` (an older file without it loads unchanged; an item id the store no longer has is dropped, its cell kept), and stays hidden but kept for a
+  hero who leaves, so undo brings it back. `MatchViewModel` marks the items your hero holds (`ResultRowViewModel.IsOwned`, `ResultsViewModel.SetResults(owned)`),
+  and `AppSettings.ResultsHideOwned` (Filters → Hide items you already own, `HideOwned`) leaves them out of the list before the cutoff, never out of a score;
+  the explanation notes it (`ExplainViewModel.IsOwned`). Both the marks and the roster's bars (`RosterSlotViewModel.Build`, `BuildSummaries`, painted by
+  `BuildBars` inside `RosterSlot`; faded once `BuildSummaries.OldAfter` old) show only while `AppSettings.ReadBuildsOnTab` is on. **A detection that found every hero but not you** leaves them *unsided*: in
   `MatchState.RoleMap` as `Role.None` with a top-bar slot (`Unsided`, `HasUnsided`; the old "former you, unassigned" `None`
   has its slot removed, so the two don't collide), and the page shows a question instead of a list (`MatchViewModel.NeedsSelf`,
   `MatchBoardViewModel.IsPickingSelf`: the bar mirrors the game's two sides in neutral rings, `RosterSlot.IsUnsided`). Any role
@@ -338,9 +348,11 @@ no dialog open, waits 250 ms for the board to fade in, captures the top 52% of t
 minimises or activates anything), reads it off the UI thread through `ScoreboardReader.Read` (the same grid, heroes, `RosterContinuity` and
 `NetWorthReader` as Detect, which calls it too) and, only when `RosterContinuity.IsSameMatch`, adds a net worth snapshot and calls
 `MatchViewModel.MatchUpdated`. A board not found is looked for once more 350 ms later; a key let go, another match, no match, a dialog or a
-read still running end it with one log line (`ScoreboardOutcome`). It shows nothing and plays nothing; `ScoreboardAction.OnRead` is where the
-item reader plugs in: `Vision/Items/ItemReader` (roadmap WP26, how it works is in detection_model.md, "The scoreboard's items") reads each hero's items, tiers and bars off the same capture and the same
-grid, but nothing calls it yet (WP27 does, and keeps what it returns in the match); it takes `ItemTemplates.Load(<assets>/items, store.Items)`, which `ArtDownloadService`'s "Item icons" group fills. With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 30 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
+read still running end it with one log line (`ScoreboardOutcome`). It shows nothing and plays nothing. Past the same-match check it also runs
+`Vision/Items/ItemReader` (how it works is in detection_model.md, "The scoreboard's items") off the UI thread on the same capture and grid, with
+`ItemTemplates.Load(<assets>/items, store.Items)` (which `ArtDownloadService`'s "Item icons" group fills; kept between presses until that folder or the store
+changes, and with no item art the net worth is still read and no build is kept), then adds each hero's read to `MatchState.Builds` (section 4) on the UI thread
+beside the net worth snapshot, and raises one `changed`, so the match bar, the owned marks and the saved match follow. A failing item reader is logged and costs only the items. With `AppSettings.KeepScoreboardCaptures` (off by default) each read of the match applied also keeps its whole band and a note of the grid and heroes read as `captures/scoreboard_*` (`CaptureArchive.Scoreboards`, at most one every 30 seconds, the latest 300, about 1.3 MB each): the material the item reader is built and measured on. The hero art is kept between presses until a folder under `assets/topbar` changes.
 
 `DetectAction.Finished` reports how each run ended (`DetectOutcome`: `Applied`, `NeedsYou`, `NeedsReview`, `NothingFound`,
 `CaptureFailed`, `NoArt`), passed on by `MatchViewModel.DetectFinished`. `MainWindowViewModel.DetectFromAnywhereAsync`
@@ -370,7 +382,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
 - The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, read as captured and at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
   `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `Support/ItemEval`, `ItemBoardLabel`,
-  `ItemData` and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
+  `ItemData` (which also composes a whole scoreboard capture, `ScoreboardOf`: the 1440p fixture's hero strip over a labelled board's items, for `ScoreboardActionTests`) and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
 
 ## 10. Recipes
 
@@ -383,6 +395,10 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   `MainWindowViewModel` add it to `Pages`, `_allPageNames`, the page constants and `IsXPage` flags and their change
   notifications (editor-only pages go last, `_editorPages`); add its panel to `MainWindow.axaml`.
 - **A key the game owns** (watched, not taken, so it still reaches the game): `ScoreboardKeys` and `ScoreboardKeyService`, which a `ShortcutRecorder` row in Settings → Detection sets.
+- **Something read per match** (net worth, builds): a record kept on `MatchState` with `Clear()` emptying it; copy it across in `VisionApply.ApplyToMatch` if a re-detect of
+  the same twelve heroes should keep it; a `SavedMatch` field with a default (so an older `settings.json` loads) written in `ToSaved` and read in `LoadSaved`, which drops
+  what the store no longer has; stored from `ScoreboardAction` after its awaits, on the UI thread; shown by `MatchBoardViewModel.FillSlots` and a painted `RosterSlot`
+  property (with its accessible name).
 - **A shortcut:** a `ShortcutAction` value, an entry in `ShortcutKeys.Defaults` (mind `_reserved`), a case in
   `MainWindowViewModel.ShortcutBindingFor` and its command; Settings → Shortcuts lists the defaults.
   A default a text box uses itself (Delete, Ctrl+Z, Ctrl+Y: `ShortcutKeys.EditsText`) is bound through `SkipWhileTypingCommand`, so it stays
