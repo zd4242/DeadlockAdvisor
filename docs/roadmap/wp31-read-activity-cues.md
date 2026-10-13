@@ -13,8 +13,9 @@ alt-tabs back after a death, can tell at once what the last read did.
 
 ## Why / premise check
 
-1. **The Tab read says nothing.** `ScoreboardAction` ends every press with `Ignored(...)` or a log line and calls `changed()`; no state is exposed, so the Match page rescores and the bar changes with nothing marking
-   that a read just happened ✔ (`ScoreboardAction.OnPressedAsync`, `TryReadAsync`; architecture.md section 8, "It shows nothing and plays nothing"). That was right for the game and wrong for the advisor window.
+1. **The Tab read says nothing about itself.** `ScoreboardAction` ends every press with `Ignored(...)` or a log line and calls `changed()`; no state is exposed, so the Match page rescores and the bar changes with nothing marking
+   that a read just happened ✔ (`ScoreboardAction.OnPressedAsync`, `TryReadAsync`; architecture.md section 8, "It shows nothing and plays nothing"). That was right for the game and wrong for the advisor window. The one
+   exception is WP28's overlap toast (`MatchViewModel.TellOverlaps`, which can also chime and flash the taskbar), and [WP32](wp32-notable-item-alerts.md) replaces that with severity-ranked alerts; WP31 adds nothing of its own to it.
 2. **Detect's only cue is a modal that appears late.** `DetectAction.ReadWithProgressAsync` shows a `ProgressModalViewModel` only when the grid search outlasts `_progressDelay`; a quick F9 or any
    later stage (review, apply) has no cue, and a read from the system-wide F9 while the window is behind the game shows nothing until the window comes forward ✔.
 3. **What a read changed is not recorded.** `RosterSlotViewModel` keeps the latest `NetWorth`, `NetWorthChange` ("+3.1k in 2 min") and `Build`, replaced in place by `Fill`, so the previous value is gone the
@@ -90,7 +91,7 @@ name and live region; settings tests for `ShowReadActivity` and the older-`setti
 
 ## Acceptance criteria
 
-- [ ] Holding the scoreboard key shows the reading cue on the match bar and then what changed; nothing else on the machine changes (no window, focus, sound, toast or taskbar flash).
+- [ ] Holding the scoreboard key shows the reading cue on the match bar and then what changed; this package adds no window, focus change, sound, toast or taskbar flash (WP28's overlap notice, and WP32's alerts after it, are the only things that may).
 - [ ] A hero whose net worth or items changed is marked on the match bar, with the delta, and stays marked until seen.
 - [ ] A press that is ignored for a reason the player can fix says so in the chip, in plain words.
 - [ ] F9 shows the same cues, including for a read quick enough that no progress dialog appeared.
@@ -105,6 +106,7 @@ Updates chip) is a separate surface; keep the two chips visually related but do 
 
 ## Notes
 
+- [WP32](wp32-notable-item-alerts.md) reports through this package's chip and flyout (a "Notable items" list and a count); build the flyout so a second section can be added.
 - Ideas considered and left out: a global "reading" toast (noisy, and intrudes when the advisor is on top of the game); a sound for the Tab read (the player is mid-fight); an always-on-top mini overlay (see Out);
   a net worth sparkline per hero on the bar (that is WP21's curve, after a match).
 - A decision for the user after living with Stage 2: whether the unseen dot should also appear on the Windows taskbar button (a badge, not a flash) when the window is behind the game. It stays off here because it
