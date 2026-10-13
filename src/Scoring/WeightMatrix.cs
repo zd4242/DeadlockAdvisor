@@ -4,6 +4,14 @@ using DeadlockAdvisor.Enums;
 
 namespace DeadlockAdvisor.Scoring;
 
+public readonly record struct TraitKey(string ItemId, string CategoryId, Relation Relation);
+
+/// <summary>One rule line of an item on a trait.</summary>
+/// <param name="Coefficient">What a point of the trait is worth: the line's whole effective coefficient.</param>
+/// <param name="Overlap">The part of <paramref name="Coefficient"/> that is an effect other heroes carry (<see cref="OverlapWeights"/>).</param>
+/// <param name="Ranked">The line counts the hero by <see cref="BestTargets"/> rather than summing.</param>
+public readonly record struct RuleLine(double Coefficient, double Overlap, bool Ranked);
+
 /// <summary>
 /// weight(item, hero, relation) for every combination a nonzero coefficient reaches
 /// (<see cref="ItemScoring.BuildWeightMatrix"/>), plus what <see cref="BestTargets"/> scoring needs: each
@@ -20,6 +28,7 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
     private readonly Dictionary<MatrixKey, double> _ranked;
     private readonly Dictionary<MatrixKey, double> _overlapSummed;
     private readonly Dictionary<MatrixKey, double> _overlapRanked;
+    private readonly Dictionary<TraitKey, RuleLine> _traitLines;
     private readonly HashSet<string> _profiled;
     private readonly List<string> _profiledOrder;
     private readonly Dictionary<(string ItemId, Relation Relation), double[]> _typical = [];
@@ -35,13 +44,16 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
     /// <param name="ranked">The weights from lines scored on their best targets (<see cref="Services.DataStore.OnBestTargets"/>).</param>
     /// <param name="overlapSummed">The part of <paramref name="summed"/> that is a shared effect (<see cref="OverlapWeights"/>), which the team's own copy discounts.</param>
     /// <param name="overlapRanked">The same for <paramref name="ranked"/>.</param>
+    /// <param name="traitLines">The coefficient of each (item, trait, relation) on the traits a build moves (<see cref="BuildShifts.Traits"/>).</param>
     public WeightMatrix(Dictionary<MatrixKey, double> summed, Dictionary<MatrixKey, double> ranked, IReadOnlyCollection<string> profiled,
-        Dictionary<MatrixKey, double>? overlapSummed = null, Dictionary<MatrixKey, double>? overlapRanked = null)
+        Dictionary<MatrixKey, double>? overlapSummed = null, Dictionary<MatrixKey, double>? overlapRanked = null,
+        Dictionary<TraitKey, RuleLine>? traitLines = null)
     {
         _summed = summed;
         _ranked = ranked;
         _overlapSummed = overlapSummed ?? [];
         _overlapRanked = overlapRanked ?? [];
+        _traitLines = traitLines ?? [];
         _weights = new Dictionary<MatrixKey, double>(summed);
         foreach (var (key, weight) in ranked)
             _weights[key] = _weights.GetValueOrDefault(key) + weight;
@@ -75,6 +87,13 @@ public sealed class WeightMatrix : IReadOnlyDictionary<MatrixKey, double>
 
     /// <summary>The part of <see cref="Ranked"/> that is an effect other heroes carry.</summary>
     public double OverlapRanked(MatrixKey key) => _overlapRanked.GetValueOrDefault(key);
+
+    /// <summary>
+    /// What a point on the trait is worth to the item on this relation, for a hero whose score a build moved
+    /// (<see cref="BuildShifts"/>); null when no rule of the item touches the trait.
+    /// </summary>
+    public RuleLine? Line(string itemId, string categoryId, Relation relation) =>
+        _traitLines.TryGetValue(new TraitKey(itemId, categoryId, relation), out var line) ? line : null;
 
     /// <summary><see cref="BestTargets.Sum"/> of the best-target parts on one relation for a team of this many profiled heroes on average; 0 for no heroes.</summary>
     public double Typical(string itemId, Relation relation, int count) =>

@@ -149,8 +149,9 @@ public class ExplainViewModel : ViewModelBase
     /// <param name="blend">The formula-and-data ranking's units, when the list is ranked that way.</param>
     /// <param name="owned">Your hero already holds the item; the score is the same, and the header says so.</param>
     /// <param name="overlap">What the team holds whose effect the item would repeat; the score leaves that out, and the header says so.</param>
+    /// <param name="shifts">What the heroes' builds did to their damage mix; the trait lines show the moved scores.</param>
     public void ShowItem(DataStore store, MatchState match, string? itemId, double now, NetWorthWeights? netWorth = null,
-        RankBy rankBy = RankBy.Formula, BlendScale? blend = null, bool owned = false, TeamOverlap? overlap = null)
+        RankBy rankBy = RankBy.Formula, BlendScale? blend = null, bool owned = false, TeamOverlap? overlap = null, BuildShifts? shifts = null)
     {
         if (itemId is null || !store.Items.TryGetValue(itemId, out var item))
         {
@@ -158,7 +159,7 @@ public class ExplainViewModel : ViewModelBase
             return;
         }
 
-        var contributions = ItemScoring.ExplainItem(store, match, itemId, netWorth, overlap);
+        var contributions = ItemScoring.ExplainItem(store, match, itemId, netWorth, overlap, shifts);
         var total = 0.0;
         foreach (var contribution in contributions)
             total += contribution.Amount;
@@ -243,6 +244,8 @@ public class ExplainViewModel : ViewModelBase
             tips.Add(ExplainText.FocusTooltip(contribution.HeroName, contribution.Focus, contribution.IsFocused));
         if (contribution.NetWorth is { Factor: not 1.0 } standing)
             tips.Add(ExplainText.NetWorthTooltip(standing));
+        if (contribution.Shift is { } shift)
+            tips.Add(ExplainText.ShiftTooltip(contribution.HeroName, shift));
 
         return new ContributionCard(
             contribution.TypicalOf is null ? contribution.HeroId : null,
@@ -254,7 +257,7 @@ public class ExplainViewModel : ViewModelBase
             {
                 var source = ExplainText.CoefficientSource(part);
                 return new TraitLine(
-                    part.CategoryName,
+                    ExplainText.Shifted(part, contribution.Shift) is { } shifted ? $"{part.CategoryName} {shifted}" : part.CategoryName,
                     source,
                     source is null ? null : ExplainText.CoefficientTooltip(part),
                     ExplainText.Arithmetic(part),

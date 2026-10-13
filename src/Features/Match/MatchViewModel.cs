@@ -62,6 +62,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         + "shred on a build whose shred is already there, counts for what it adds over the first. Items that only share the effect still stack.\n"
         + "Needs the scoreboard read (Settings → Detection → Read the scoreboard while you hold its key).";
 
+    public const string ByBuildsLabel = "Lean toward what heroes have built";
+
+    public const string ByBuildsTip =
+        "A hero who has built mostly weapon items counts as more of a bullet-damage hero in this match, and one who has built mostly spirit items\n"
+        + "as more of a spirit-damage one, so the items that answer them follow. It is measured against what that hero usually builds, so a hero\n"
+        + "who always builds the same barely moves. Needs the scoreboard read (Settings → Detection) and the match results downloaded.\n"
+        + "For now it goes by the shop an item is in (its colour), not by what the item does.";
+
     public const string FiltersTip ="Filters: which items are listed, how they're laid out, and which matches the results come from";
 
     public static readonly string HideRarelyBuiltTip =
@@ -133,6 +141,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         ByTier = settings.Current.ResultsByTier;
         ByNetWorth = settings.Current.ResultsByNetWorth;
         ByOverlap = settings.Current.ResultsByOverlap;
+        ByBuilds = settings.Current.ResultsByBuilds;
         ShowTiers = Results.ShowsTiers = settings.Current.ResultsShowTiers;
         HideRarelyBuilt = settings.Current.ResultsHideRarelyBuilt;
         HideDisagreed = settings.Current.ResultsHideDisagreed;
@@ -230,6 +239,14 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
                 Refresh();
             })
             .DisposeWith(Disposables);
+        this.WhenAnyValue(vm => vm.ByBuilds)
+            .Skip(1)
+            .Subscribe(_ =>
+            {
+                _settings.Update(s => s.ResultsByBuilds = ByBuilds);
+                Refresh();
+            })
+            .DisposeWith(Disposables);
         this.WhenAnyValue(vm => vm.ShowTiers)
             .Skip(1)
             .Subscribe(show =>
@@ -293,6 +310,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     /// <summary>The scoreboard has shown what some hero holds, so there is something to discount by.</summary>
     [Reactive] public bool HasBuilds { get; private set; }
+
+    /// <summary>Move a hero's bullet and spirit damage by what they have built against what they usually build (<see cref="BuildShifts"/>).</summary>
+    [Reactive] public bool ByBuilds { get; set; }
+
+    /// <summary>Builds have been read and the downloaded counts give the heroes' usual builds, so <see cref="ByBuilds"/> has something to work with.</summary>
+    [Reactive] public bool CanLeanOnBuilds { get; private set; }
 
     /// <summary>
     /// Two teammates hold items whose effect doesn't add up, newly seen in a scoreboard read: one sentence for each, for the
@@ -427,13 +450,18 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         HasBuilds = _settings.Current.ReadBuildsOnTab && !Match.Builds.IsEmpty;
         var team = _settings.Current.ReadBuildsOnTab ? TeamOverlap.For(store, Match) : TeamOverlap.None;
         _overlap = ByOverlap ? team : TeamOverlap.None;
-        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth, _overlap), note, Scale, owned);
+        CanLeanOnBuilds = HasBuilds && store.TypicalBuilds.Count > 0;
+        _shifts = ByBuilds && CanLeanOnBuilds ? BuildShifts.For(store, Match) : BuildShifts.None;
+        Results.SetResults(ItemScoring.ScoreAll(store, _data.Matrix, Match, netWorth, _overlap, _shifts), note, Scale, owned);
         RefreshExplain();
         TellOverlaps(store, team);
     }
 
     /// <summary>What the team already has of the effects items put on others, for scoring and the explanation; none while the filter is off.</summary>
     private TeamOverlap _overlap = TeamOverlap.None;
+
+    /// <summary>What the heroes' builds did to their damage mix, for scoring and the explanation; none while the filter is off.</summary>
+    private BuildShifts _shifts = BuildShifts.None;
 
     private void TellOverlaps(DataStore store, TeamOverlap team)
     {
@@ -549,5 +577,5 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
     private void ShowExplain(string? itemId) =>
         Explain.ShowItem(_data.Store, Match, itemId, _now(), NetWorth(), EffectiveRankBy, EffectiveRankBy == RankBy.Both ? Scale() : null,
-            owned: itemId is not null && OwnedItems().Contains(itemId), overlap: _overlap);
+            owned: itemId is not null && OwnedItems().Contains(itemId), overlap: _overlap, shifts: _shifts);
 }

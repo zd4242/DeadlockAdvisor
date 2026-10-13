@@ -102,6 +102,9 @@ public class AppSettings
 
     // Counts less an effect on an item that your team already has through the items the scoreboard showed (debuffs, auras); does nothing until builds are read.
     public bool ResultsByOverlap { get; set; } = true;
+
+    // Moves a hero's bullet and spirit damage by what the scoreboard showed them building against what they usually build; does nothing until builds are read and match results are downloaded.
+    public bool ResultsByBuilds { get; set; } = true;
     public bool ResultsHideRarelyBuilt { get; set; }
     public bool ResultsHideDisagreed { get; set; }
 

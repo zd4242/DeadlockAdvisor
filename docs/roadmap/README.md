@@ -116,7 +116,7 @@ Hot files, in the order their packages should run:
 | WP26 | [wp26](wp26-scoreboard-item-reader.md) | The item and bar reader, with its corpus (done) | L | WP24 | B |
 | WP27 | [wp27](wp27-builds-in-the-match.md) | Builds in the match: owned marks, roster bars, settings | M | WP25, WP26 | C |
 | WP28 | [wp28](wp28-team-overlap.md) | Overlap: an effect your team already has counts for less (done) | M | WP27 | D |
-| WP29 | [wp29](wp29-build-adjusted-traits.md) | Build-adjusted traits: what a hero built shifts their damage mix | L | WP27, after WP28 | D |
+| WP29 | [wp29](wp29-build-adjusted-traits.md) | Build-adjusted traits: what a hero built shifts their damage mix (done) | L | WP27, after WP28 | D |
 | WP30 | [wp30](wp30-build-extras.md) | Build extras: real HP and durability, enemy counters, sell hints (optional) | M | WP29 | E |
 | WP31 | [wp31](wp31-read-activity-cues.md) | Read activity cues: a status chip, change marks on the roster and list, for Tab reads and Detect | L | WP27 (done), after WP29 | E |
 | WP32 | [wp32](wp32-notable-item-alerts.md) | Notable item alerts: duplicate ally items and dangerous enemy items, by severity, marked on the match bar | L | WP28 (done), after WP29 and WP31 | E |

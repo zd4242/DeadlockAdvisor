@@ -57,6 +57,7 @@ Where this lives in the code:
 | Net worth factors | `NetWorthWeights.For(match)`; `NetWorthWeights.None` when the toggle is off |
 | Focus factors | `FocusWeights.For(enemies, focused)`, built into every `LineUp` by `RelevantHeroes`; `LineUp.Factor` multiplies both |
 | What the team already has | `TeamOverlap.For(store, match)` (from `MatchState.Builds`), carried on `LineUp.Overlap`; `OverlapWeights` says which lines are the shared effect, `WeightMatrix.OverlapSummed/OverlapRanked` keep that part apart |
+| What heroes have built | `BuildShifts.For(store, match)` (from `MatchState.Builds` and `DataStore.TypicalBuilds`), carried on `LineUp.Shifts`; `WeightMatrix.Line` gives `ItemScoring.Total` each item's coefficient on the two traits a build moves |
 | Per-hero, per-trait explanation | `ItemScoring.Contribution` → `HeroContribution` (with `NetWorth`, `Factor`) → `TraitPart` (`HeroScore`, `Baseline`, `Deviation`, `Amount`) |
 | Displayed arithmetic | `ExplainText.Arithmetic` / `ExplainText.Deviation` show "(80 − 61 avg) × 3"; `FormulaText.Arithmetic` reuses them |
 | User-facing explanation | `MainWindowViewModel.HowScoringWorks` (Help menu) |
@@ -212,6 +213,67 @@ weight             = weight − coverage × (the part of weight that is the shar
   (`MatchViewModel.OverlapNotices`, `ExplainText.SharedNotice`).
 
 A copy of a **single-target** debuff can still buy uptime across the enemy team; the score doesn't credit that.
+
+## What a hero has built
+
+A hero's `deals_bullet_damage_general` and `deals_spirit_damage_general` are their damage mix at their usual build ("Hero scores
+measured from match data"). A hero who has built mostly weapon items in this match is more of a bullet-damage hero than that, and one
+who has built spirit items more of a spirit-damage one, so the items that answer each follow (fire-rate and bullet-resist items against
+the first, spirit resist against the second). It needs no per-hero rule: it is measured against what the hero usually builds, so a hero
+who builds the same every game barely moves and a flexible one moves a lot.
+
+```
+usual(shop)  = share of the hero's item souls in the shop, from the downloaded purchase counts (HeroTypicalBuild)
+built(shop)  = share of the souls in the cells the scoreboard showed (a cell counts at its tier's cost: 800, 1600, 3200, 6400)
+lean         = (built − usual)(weapon) − (built − usual)(spirit)
+ramp         = clamp(souls in the cells ÷ FullRampSouls, 0, 1)
+bullet      += Alpha × ramp × lean            spirit −= Alpha × ramp × lean      (each kept inside the trait's scale)
+```
+
+- **The usual build** counts each purchase at its tier's cost, over every match, each patch by its share of the weight in the lifts, as the
+  build ratios do (a rank range doesn't change how a hero is built, and a thin one only adds noise). A hero with under
+  `HeroTypicalBuild.MinPurchases` purchases has none, and with no counts the effect is off: never a guess.
+- **The built shares** come from `HeroBuild`'s cells: a cell with a category and a tier counts at that tier's cost, a cell whose tier wasn't
+  read at the median cost of its shop (`BuildShifts.MedianCosts`), a hidden or unseen cell not at all. The bars are not used.
+- **The ramp** keeps a small early inventory from swinging a score: the usual build is a whole match's average, and a hero with two items
+  says little of where their damage will come from. `FullRampSouls` is typed (12,000, a third of a full late-game build).
+- **Alpha** is measured, not typed: how many points of damage share a player's mix moves per unit of lean, from finished matches
+  (`BuildShiftFit`, below). It is one number for every hero, a constant in `BuildShifts`. It isn't a model file: a changed number would
+  reach installs only with a release or a published seed, and it should move with the measurement, not between them.
+- **Applying it.** The weight is linear in a hero's score, so the shifted weight is the matrix's plus `points × coefficient(item, trait,
+  relation)` per shifted trait (`ItemScoring.Total`, using `WeightMatrix.Line`, which keeps whether the line is summed or a best-target one
+  and its shared-effect part). Best-target lines rank the shifted weights; their typical sums stay the roster's, as focus's do not.
+  A hero not rated on a trait (a blank score) isn't moved on it, and an unprofiled hero isn't moved at all.
+- **Zero mean.** Nothing is added to an item: the shifts are as likely up as down over matches, and a hero at their usual build moves by 0.
+  `ModelHealthTests.BuildsDrawnFromTheUsualOnesLeaveEveryItemAveragingAbout0` draws random inventories from random usual builds and checks
+  that every item still averages about 0 (within 0.12 of its spread, one item by one; the ranked ones and the whole within 0.03), and that
+  an item's spread grows by under 15% on average. They average a little above 0 because a bigger inventory both counts more (ramp) and
+  leans further, which the test leaves room for. The model health report itself simulates without builds, as it does without net worth.
+- **Off** when the Match filter **Lean toward what heroes have built** (`AppSettings.ResultsByBuilds`, on by default) is off, when
+  *Read the scoreboard* is off, or when no build has been read or no counts are downloaded; every score is then the same to the last bit.
+  The match data (`DataScores`) is never shifted: it is a separate opinion.
+- The explain panel shows "Deals Bullet Damage (General) 62 → 71 (built weapon)" on the hero's trait line, works the line out from the
+  moved score, and explains the shares on hover (`ExplainText.Shifted`, `ShiftTooltip`).
+
+### How Alpha was measured
+
+`BuildShiftFit.MeasureAlpha` (tests; `DEADLOCK_BUILD_FIT=<the app's data folder>`, optionally `DEADLOCK_BUILD_FIT_MATCHES` and
+`DEADLOCK_BUILD_FIT_REFETCH`; it reads the folder and never writes it) samples finished matches through `/v1/matches/{id}/metadata`, one
+request each of about 1.1 MB, spaced half a second apart. For each player it takes their damage to the other team's heroes by kind
+(`damage_matrix`: the `Bullet`, `Ability` and `Melee` rows' last values) and every shop item they bought, and fits, within each hero, the
+bullet share (and the ability share) of their damage against their lean, with a 95% interval from resampling matches. It writes
+`mockups/build_shift_fit/report.md` and the rows (a match, a hero, damage by kind and item ids: no account), nothing else, and nothing is
+committed.
+
+**Result (2026-10-13, 120 matches of at least 20 minutes from the last week, 1,440 players, 41 heroes):** the bullet share of a player's damage
+to the other team moves **24.4 points** per unit of lean (95% interval 21.8 to 26.8) and the ability share **−27.3** (−29.4 to −25.1), so the
+damage mix does follow the investment, and the two measure the same thing from either side. `Alpha` is 26, inside both intervals. A player at
+the 5th to 95th percentile of lean (−0.43 to 0.57) moves their mix by about −11 to +15 points. Players who spent 12k to 24k by the end (102 of
+them) show a smaller slope (16.6, interval 8.7 to 28.0); the fit can't test the ramp itself, which is about a half-built inventory partway
+through a match, while the sample is final builds (1,335 of the 1,440 spent over 24k). `FullRampSouls` is therefore a judgement, to look at
+again when real scoreboard reads exist. Damage by kind is the matrix's `Bullet`, `Ability` and `Melee` rows to enemy heroes (they run 5% to
+30% over the match's own `player_damage` figure, which the source rows don't explain), and builds are every shop item bought, sold or not.
+Re-measure after a patch that reworks the shops or the heroes' damage, the way the hero scores are.
 
 ## Match data on the Match page
 

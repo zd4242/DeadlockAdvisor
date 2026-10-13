@@ -180,6 +180,11 @@
                                                   IsEnabled="{Binding HasBuilds}"
                                                   ToolTip.Tip="{x:Static match:MatchViewModel.ByOverlapTip}"
                                                   ToolTip.ShowOnDisabled="True"/>
+                                        <CheckBox Content="{x:Static match:MatchViewModel.ByBuildsLabel}"
+                                                  IsChecked="{Binding ByBuilds}"
+                                                  IsEnabled="{Binding CanLeanOnBuilds}"
+                                                  ToolTip.Tip="{x:Static match:MatchViewModel.ByBuildsTip}"
+                                                  ToolTip.ShowOnDisabled="True"/>
                                         <StackPanel Spacing="8">
                                             <TextBlock Classes="section" Text="HIDE"/>
                                             <CheckBox Content="{x:Static match:MatchViewModel.HideRarelyBuiltLabel}"

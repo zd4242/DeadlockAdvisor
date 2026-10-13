@@ -3,6 +3,7 @@ using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Tests.Support;
+using DeadlockAdvisor.Vision.Items;
 
 namespace DeadlockAdvisor.Tests;
 
@@ -242,6 +243,94 @@ public class ModelHealthTests
         var ranked = drift.Where(item => store.Items[item.Item].CastOn is not null).Select(item => item.Mean).ToList();
         Assert.NotEmpty(ranked);
         Assert.InRange(ranked.Average(), -0.02, 0.02);
+    }
+
+    /// <summary>
+    /// A build moves a hero's damage mix by how far it is from their usual one, and an inventory drawn from the usual build is as likely
+    /// to lean one way as the other, so over random matches every item still averages about 0 and the shifts stay bounded.
+    /// </summary>
+    [Fact]
+    public void BuildsDrawnFromTheUsualOnesLeaveEveryItemAveragingAbout0()
+    {
+        const int matches = 4000;
+        var store = Golden.LoadStore();
+        var matrix = ItemScoring.BuildWeightMatrix(store);
+        var pool = store.Heroes.Keys.Where(store.IsProfiled).ToArray();
+        var items = store.Items.Values.Where(item => ItemScoring.Tiers.Contains(item.Tier)).Select(item => item.ItemId).ToList();
+        var costs = BuildShifts.MedianCosts(store);
+        var usual = pool.ToDictionary(heroId => heroId, heroId =>
+        {
+            var weights = new Random(heroId.Sum(letter => letter) * 31 + 7);
+            var raw = Enum.GetValues<ShopCategory>().ToDictionary(category => category, _ => 0.2 + weights.NextDouble());
+            return (IReadOnlyDictionary<ShopCategory, double>)raw.ToDictionary(pair => pair.Key, pair => pair.Value / raw.Values.Sum());
+        });
+        var (sums, squares, plain) = (new double[items.Count], new double[items.Count], new double[items.Count]);
+        var (random, building) = (new Random(1), new Random(2));
+        var (moved, net) = (0.0, 0.0);
+        var shiftedHeroes = 0;
+        for (var match = 0; match < matches; match++)
+        {
+            var drawn = LineUpShape.FullMatch.Draw(random, pool);
+            var shifts = BuildShifts.Of(drawn.Enemies.Concat(drawn.Allies).Append(drawn.Self!)
+                .Select(heroId => BuildShifts.Shift(store, heroId, Inventory(building, usual[heroId]), usual[heroId], costs))
+                .OfType<HeroShift>());
+            foreach (var shift in shifts.All)
+            {
+                moved += Math.Abs(shift.PointsOn(BuildShifts.BulletTrait));
+                net += shift.PointsOn(BuildShifts.BulletTrait);
+                shiftedHeroes++;
+                Assert.InRange(shift.Lean, -2.0, 2.0);
+            }
+            var lineUp = drawn with { Shifts = shifts };
+            for (var i = 0; i < items.Count; i++)
+            {
+                var score = ItemScoring.Total(matrix, items[i], lineUp);
+                sums[i] += score;
+                squares[i] += score * score;
+                plain[i] += Math.Pow(ItemScoring.Total(matrix, items[i], drawn), 2);
+            }
+        }
+
+        // A hero moves a few points on a scale of a hundred, and a little more up than down: the cost of a cell ties the lean to the ramp.
+        Assert.InRange(moved / shiftedHeroes, 1.0, BuildShifts.Alpha);
+        Assert.InRange(net / shiftedHeroes, -0.1 * moved / shiftedHeroes, 0.1 * moved / shiftedHeroes);
+
+        // The mean in units of the item's spread, as for focus and overlap, with room for that.
+        var drift = Enumerable.Range(0, items.Count)
+            .Where(i => squares[i] > 0)
+            .Select(i => (Item: items[i], Mean: sums[i] / matches / Math.Sqrt(squares[i] / matches)))
+            .ToList();
+        Assert.All(drift, item => Assert.InRange(item.Mean, -0.12, 0.12));
+        Assert.InRange(drift.Average(item => item.Mean), -0.03, 0.03);
+        var ranked = drift.Where(item => store.Items[item.Item].CastOn is not null).Select(item => item.Mean).ToList();
+        Assert.NotEmpty(ranked);
+        Assert.InRange(ranked.Average(), -0.03, 0.03);
+
+        // The spread of an item's scores grows by a small share at most.
+        var grown = Enumerable.Range(0, items.Count).Where(i => plain[i] > 0).Select(i => Math.Sqrt(squares[i] / plain[i])).ToList();
+        Assert.InRange(grown.Max(), 0.9, 1.5);
+        Assert.InRange(grown.Average(), 1.0, 1.15);
+    }
+
+    /// <summary>Six to twelve cells, each of a shop in the hero's usual proportions and any tier, as a scoreboard read would show.</summary>
+    private static HeroBuild Inventory(Random random, IReadOnlyDictionary<ShopCategory, double> usual)
+    {
+        var cells = new List<BuildCell>();
+        for (var cell = 0; cell < 6 + random.Next(7); cell++)
+        {
+            var pick = random.NextDouble();
+            var category = ShopCategory.Spirit;
+            foreach (var (shop, share) in usual)
+            {
+                pick -= share;
+                if (pick > 0)
+                    continue;
+                category = shop;
+                break;
+            }
+            cells.Add(new BuildCell(cell, CellKind.Item, category, null, 1 + random.Next(4)));
+        }
+        return new HeroBuild(cells, null, DateTimeOffset.UnixEpoch);
     }
 
     [Fact]

@@ -6,6 +6,7 @@ using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services;
 using DeadlockAdvisor.Services.Formats;
 using DeadlockAdvisor.Theme;
+using DeadlockAdvisor.Vision.Items;
 
 namespace DeadlockAdvisor.Features.Match.Explain;
 
@@ -187,10 +188,28 @@ public static class ExplainText
     public static string Deviation(TraitPart part)
     {
         if (part.Baseline == 0)
-            return Format.Num(part.HeroScore);
+            return Format.Num(part.CountedScore);
         var baseline = NumberFormat.Round(part.Baseline, 1);
         var sign = baseline < 0 ? "+" : "−";
-        return $"({Format.Num(part.HeroScore)} {sign} {Format.Num(Math.Abs(baseline))} avg)";
+        return $"({Format.Num(part.CountedScore)} {sign} {Format.Num(Math.Abs(baseline))} avg)";
+    }
+
+    /// <summary>"62 → 71 (built weapon)": the rated score and where the hero's build moved it for this match; null when it didn't.</summary>
+    public static string? Shifted(TraitPart part, HeroShift? shift) =>
+        part.Shift == 0 || shift is null
+            ? null
+            : $"{Format.Num(part.HeroScore)} → {Format.Num(part.CountedScore)} (built {(shift.Lean > 0 ? "weapon" : "spirit")})";
+
+    /// <summary>What a hero has put their souls into against what they usually do, and so how far it moved their damage mix.</summary>
+    public static string ShiftTooltip(string heroName, HeroShift shift)
+    {
+        string Shares(IReadOnlyDictionary<ShopCategory, double> shares) =>
+            $"{Percent(shares.GetValueOrDefault(ShopCategory.Weapon))} weapon, {Percent(shares.GetValueOrDefault(ShopCategory.Spirit))} spirit, "
+            + $"{Percent(shares.GetValueOrDefault(ShopCategory.Vitality))} vitality";
+        var moves = string.Join(", ", shift.Traits.Select(trait => $"{trait.CategoryId.Replace("deals_", "").Replace("_damage_general", "")} {Format.SignedFixed(trait.Points, 1)}"));
+        return $"{heroName}'s items so far are {Shares(shift.Built)} by cost; they usually spend {Shares(shift.Usual)}.\n"
+               +$"That moves their damage mix for this match ({moves} points), counted in full once they have spent {Format.Num(BuildShifts.FullRampSouls)} souls "
+               + $"(now {Format.Num(shift.Spent)}).";
     }
 
     /// <summary>"×1.18 · 25k vs 19k avg": how much the hero's net worth scaled their share, or null when it didn't.</summary>

@@ -6,6 +6,7 @@ using DeadlockAdvisor.Enums;
 using DeadlockAdvisor.Models;
 using DeadlockAdvisor.Scoring;
 using DeadlockAdvisor.Services.Formats;
+using DeadlockAdvisor.Vision.Items;
 
 namespace DeadlockAdvisor.Services;
 
@@ -107,6 +108,7 @@ public sealed class DataStore
         {
             _matchMeta = value;
             _buildRatios = null;
+            _typicalBuilds = null;
         }
     }
     private JsonObject _matchMeta = [];
@@ -123,6 +125,7 @@ public sealed class DataStore
         {
             _matchSegments = value.OrderByDescending(segment => segment.Patch.Start).ToList();
             _buildRatios = null;
+            _typicalBuilds = null;
         }
     }
     private IReadOnlyList<MatchSegment> _matchSegments = [];
@@ -135,6 +138,14 @@ public sealed class DataStore
     public IReadOnlyDictionary<(string ItemId, string HeroId), double> BuildRatios =>
         _buildRatios ??= MatchStatsMath.BuildRatios(MatchSegments, Items.Values, MatchStatsMath.SegmentShares(MatchMeta));
     private Dictionary<(string ItemId, string HeroId), double>? _buildRatios;
+
+    /// <summary>
+    /// How each hero usually divides their item souls among the shops (<see cref="HeroTypicalBuild"/>), from the same counts and patch
+    /// weights as <see cref="BuildRatios"/>; empty without <see cref="MatchSegments"/>. Worked out when first asked for.
+    /// </summary>
+    public IReadOnlyDictionary<string, IReadOnlyDictionary<ShopCategory, double>> TypicalBuilds =>
+        _typicalBuilds ??= HeroTypicalBuild.For(MatchSegments, Items.Values, MatchStatsMath.SegmentShares(MatchMeta));
+    private Dictionary<string, IReadOnlyDictionary<ShopCategory, double>>? _typicalBuilds;
 
     /// <summary>The stat parts making up each stat-derived coefficient. Computed by <see cref="RebuildDerived"/>, never saved.</summary>
     public OrderedDictionary<CoefficientKey, List<StatPart>> Derived { get; set; } = [];
@@ -461,6 +472,7 @@ public sealed class DataStore
     public void RebuildDerived()
     {
         _buildRatios = null;
+        _typicalBuilds = null;
         var rulesByStat = new Dictionary<string, List<StatRule>>();
         foreach (var rule in StatRules.Values)
         {

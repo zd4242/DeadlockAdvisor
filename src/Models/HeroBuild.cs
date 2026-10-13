@@ -12,7 +12,7 @@ public sealed record BuildCell(int Cell, CellKind Kind, ShopCategory? Category, 
     public bool IsIdentified => ItemId is not null;
 
     /// <summary>Every item costs 800 souls at tier 1, and twice as much at each tier after.</summary>
-    public int? Cost => Tier is >= 1 and <= 4 ? HeroBuild.TierOneCost << (Tier.Value - 1) : null;
+    public int? Cost => Tier is >= 1 and <= 4 ? HeroBuild.TierCost(Tier.Value) : null;
 
     public static BuildCell Of(CellRead read) => new(read.Cell, read.Kind, read.Category, read.ItemId, read.Tier);
 }
@@ -29,6 +29,9 @@ public readonly record struct BuildInvestment(ShopCategory Category, int Souls, 
 public sealed class HeroBuild(IReadOnlyList<BuildCell> cells, BarsRead? bars, DateTimeOffset at)
 {
     public const int TierOneCost = 800;
+
+    /// <summary>What an item of this tier counts for in a build, whatever the shop charges: 800, 1600, 3200, 6400.</summary>
+    public static int TierCost(int tier) => TierOneCost << (tier - 1);
 
     /// <summary>A bar this full is the same as one about 28k souls up; the souls a bar implies stop there.</summary>
     private const double _fullestBar = 0.95;

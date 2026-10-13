@@ -36,6 +36,7 @@ public sealed record ScoredItem(
 /// <param name="Rank">On a best-target line, its hero's <see cref="BestTargets"/> rank on the team; null when the line sums.</param>
 /// <param name="Overlapping">The part of <see cref="EffectiveCoefficient"/> that stands for an effect other heroes carry (<see cref="OverlapWeights"/>).</param>
 /// <param name="Coverage">How much of that effect the team already has (<see cref="TeamOverlap"/>), 0 to 1.</param>
+/// <param name="Shift">Points the hero's build moved the score for the match (<see cref="BuildShifts"/>); <see cref="HeroScore"/> is the rated one.</param>
 public sealed record TraitPart(
     string CategoryId,
     string CategoryName,
@@ -46,8 +47,12 @@ public sealed record TraitPart(
     double Baseline = 0.0,
     int? Rank = null,
     double Overlapping = 0.0,
-    double Coverage = 0.0)
+    double Coverage = 0.0,
+    double Shift = 0.0)
 {
+    /// <summary>The score the hero counts with in this match: the rated one, moved by what they have built.</summary>
+    public double CountedScore => HeroScore + Shift;
+
     public double FromStats => DataStore.SumAmounts(StatParts);
     public double EffectiveCoefficient => Weight * (Coefficient + FromStats);
 
@@ -56,7 +61,7 @@ public sealed record TraitPart(
 
     /// <summary>The coefficient that still counts.</summary>
     public double CountedCoefficient => Covered == 0 ? EffectiveCoefficient : EffectiveCoefficient - Covered;
-    public double Deviation => HeroScore - Baseline;
+    public double Deviation => CountedScore - Baseline;
     public double Amount => Deviation * CountedCoefficient;
     public double RankFactor => Rank is { } rank ? BestTargets.RankFactor(rank) : 1.0;
 
@@ -74,6 +79,7 @@ public sealed record TraitPart(
 /// </param>
 /// <param name="Focus">The enemy's <see cref="FocusWeights"/> factor; 1 when no enemy is focused.</param>
 /// <param name="IsFocused">An enemy you focused on, rather than one counting for less because another is.</param>
+/// <param name="Shift">What the hero's build did to their damage mix, when it moved a trait this item answers.</param>
 public sealed record HeroContribution(
     string HeroId,
     string HeroName,
@@ -84,7 +90,8 @@ public sealed record HeroContribution(
     int? Rank = null,
     int? TypicalOf = null,
     double Focus = 1.0,
-    bool IsFocused = false)
+    bool IsFocused = false,
+    HeroShift? Shift = null)
 {
     /// <summary>What the hero's summed lines are multiplied by: their net worth factor times their focus factor.</summary>
     public double Factor => (NetWorth?.Factor ?? 1.0) * Focus;
@@ -132,6 +139,9 @@ public sealed record LineUp(IReadOnlyList<string> Allies, IReadOnlyList<string> 
 {
     /// <summary>What the team already has of the effects items put on other heroes; none unless the match has builds and the filter is on.</summary>
     public TeamOverlap Overlap { get; init; } = TeamOverlap.None;
+
+    /// <summary>What the heroes' builds did to their damage mix; none unless the match has builds and the filter is on.</summary>
+    public BuildShifts Shifts { get; init; } = BuildShifts.None;
 
     /// <summary>What a hero's share is multiplied by: their net worth factor times their focus factor.</summary>
     public double Factor(string heroId) => NetWorth.Factor(heroId) * Focus.Factor(heroId);
