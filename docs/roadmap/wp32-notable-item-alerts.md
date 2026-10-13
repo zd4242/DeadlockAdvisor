@@ -26,7 +26,7 @@ after the alert has gone still sees it, and it goes when the item is sold. Prese
    (below) catches what a formula gets wrong. **Print the derived table for every pair the data has and have the user confirm the thresholds before they are fixed** (as WP28 did for the stacking rules).
 5. **Enemy threats are editorial and can't be derived.** Whether an item can "give someone two ultimates" or "take you out of the fight" is a judgement about the game, not a stat (`GameSync` throws such detail away on
    purpose). A small hand-kept file is the honest source, kept with reasons, like the sync's override sets. Items that exist in the seed today and are plausible entries (ids as in `items.csv`, effect not
-   asserted here; **the user rates them**): `refresher`, `cursed_relic` (the user's "Curse": **confirm this is the item they mean**, the seed has no item named Curse), `silence_wave`, `silencer`, `disarming_hex`,
+   asserted here; **the user rates them**): `refresher`, `cursed_relic` (players' shorthand "Curse"; the user confirmed this is the item they mean, and that it disables its target), `silence_wave`, `silencer`, `disarming_hex`,
    `slowing_hex`, `knockdown`, `unstoppable`, `metal_skin`, `inhibitor`, `phantom_strike`, `ethereal_shift`, `rescue_beam`, `divine_barrier`, `lightning_scroll`, `echo_shard`, `magic_carpet`. `Debuff Remover` and
    `Soul Rebirth` are not in the seed ✔ (check `items.csv` again when starting; a patch may have added them).
 6. **A false alert costs more than a missed one.** A read applies without review, and a toast for a Refresher the enemy doesn't have teaches the player to ignore all of them. The reader never wrongly identifies an item
@@ -103,7 +103,7 @@ path changed).
 ## Acceptance criteria
 
 - [ ] A Tab read that first shows two allies on Heroic Aura raises a Major or Critical alert; two Spirit Saps only mark (Minor) and raise no toast.
-- [ ] A Tab read that first shows an enemy holding Refresher or the user's Curse item raises a Critical alert naming the hero and what the item does, and the hero's tile carries the badge until a read shows it gone.
+- [ ] A Tab read that first shows an enemy holding Refresher or Cursed Relic ("Curse") raises a Critical alert naming the hero and what the item does, and the hero's tile carries the badge until a read shows it gone.
 - [ ] One read raises at most one toast; a restart or a loaded match raises none; a Detect apply or a clear starts clean.
 - [ ] Only confident reads raise or keep an alert; the corpus check shows no false Critical.
 - [ ] With *Item alerts* off there are no marks and no toasts; no score, ranking or explanation changes in any state.
