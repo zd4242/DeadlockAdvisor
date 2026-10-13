@@ -15,7 +15,7 @@ public class FileFormatTests
     [
         DataStore.HeroesFile, DataStore.ItemsFile, DataStore.HeroScoresFile, DataStore.ItemCoefficientsFile,
         DataStore.TraitWeightsFile, DataStore.StatRulesFile, DataStore.ItemStatsFile, DataStore.ItemEffectsFile, DataStore.ItemTooltipsFile,
-        DataStore.MatchLiftFile, DataStore.MatchMetaFile,
+        DataStore.StatLeansFile, DataStore.ItemLeanOverridesFile, DataStore.MatchLiftFile, DataStore.MatchMetaFile,
     ];
 
     [Theory]
@@ -33,6 +33,8 @@ public class FileFormatTests
         store.SaveStatRules();
         store.SaveItemStats();
         store.SaveItemEffects();
+        store.SaveStatLeans();
+        store.SaveItemLeanOverrides();
         store.SaveItemTooltips();
         store.SaveMatchLift();
 

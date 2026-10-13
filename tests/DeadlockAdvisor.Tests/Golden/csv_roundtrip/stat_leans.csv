@@ -1,0 +1,34 @@
+stat,lean,conditional_factor,note
+ShopWeaponDamage,0.25,1,The weapon shop investment bonus (a weapon item colour) a small vote
+BaseAttackDamagePercent,0.5,0.5,Weapon damage
+BonusFireRate,0.5,0.65,Fire rate
+BonusClipSizePercent,0.25,1,Ammo for the gun
+BulletLifestealPercent,0.5,0.5,Heals from bullet damage
+BulletResistReduction,0.75,1,Enemy debuff: the team's bullets hit harder
+ShopSpiritPower,-0.25,1,The spirit shop investment bonus (a spirit item colour) a small vote
+TechPower,-0.5,0.5,Spirit power
+TechPowerPercent,-0.5,1,Spirit power
+TechRangeMultiplier,-0.25,0.5,Ability range
+BonusAbilityDurationPercent,-0.25,0.5,Ability duration
+CooldownReduction,-0.25,1,Abilities come back sooner
+AbilityLifestealPercentHero,-0.5,0.5,Heals from ability damage
+SpiritResistReduction,-0.75,1,Enemy debuff: the team's spirit damage hits harder
+ShopBaseHealth,0,1,The vitality shop's bonus: no damage type
+BonusBaseHealth,0,1,Health
+BonusHealth,0,1,Health
+BonusHealthRegen,0,1,Health
+OutOfCombatHealthRegen,0,1,Health
+Barrier,0,1,Protection
+TechResist,0,1,Protection against spirit damage
+BulletResist,0,1,Protection against bullet damage
+MeleeResistPercent,0,1,Protection against melee damage
+StatusResistancePercent,0,1,Protection against debuffs
+SlowResistancePercent,0,1,Protection against slows
+HealAmpReceivePenaltyPercent,0,1,Reduces enemy healing
+HealAmpCastPercent,0,1,Stronger healing
+BonusMoveSpeed,0,1,Movement
+BonusSprintSpeed,0,1,Movement
+BonusMeleeDamagePercent,0,1,Melee damage is its own trait
+MoveSlow,0,1,Enemy debuff: no damage type
+FireRateSlow,0,1,Enemy debuff: protection
+TechPowerReduction,0,1,Enemy debuff: protection

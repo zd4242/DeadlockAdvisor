@@ -184,6 +184,8 @@ public class DataService : IDataService, IDisposable
                 Store.SaveTraitWeights();
             if (_pending.HasFlag(DataFiles.StatRules))
                 Store.SaveStatRules();
+            if (_pending.HasFlag(DataFiles.ItemLeanOverrides))
+                Store.SaveItemLeanOverrides();
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {

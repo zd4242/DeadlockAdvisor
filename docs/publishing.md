@@ -233,6 +233,10 @@ Released apps keep reading the files published after them, so a change to a file
 writes, so it reaches the seed the first time you run Sync from Game API and publish. An older app ignores a file its manifest lists but
 it doesn't know, so adding it needed no `CurrentFormat` bump, and an app without it discounts nothing.
 
+`stat_leans.csv` and `item_lean_overrides.csv` (what an item pushes its holder's damage toward, for the build-adjusted traits) are hand-kept model files
+the sync never writes. They are new files too, so no `CurrentFormat` bump: an older app ignores them, and an install without them counts every item at its
+shop's colour. They reach the seed when you copy them into the data folder you publish from and run Publish.
+
 Release the app before (or with) publishing data in a new format: until people update, they keep the
 last version their app understands.
 

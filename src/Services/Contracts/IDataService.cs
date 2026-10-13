@@ -12,6 +12,7 @@ public enum DataFiles
     ItemCoefficients = 2,
     TraitWeights = 4,
     StatRules = 8,
+    ItemLeanOverrides = 16,
 }
 
 public enum SaveState

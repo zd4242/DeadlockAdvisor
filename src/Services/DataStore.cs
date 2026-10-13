@@ -54,6 +54,8 @@ public sealed class DataStore
     public const string StatRulesFile = "stat_rules.csv";
     public const string ItemStatsFile = "item_stats.csv";
     public const string ItemEffectsFile = "item_effects.csv";
+    public const string StatLeansFile = "stat_leans.csv";
+    public const string ItemLeanOverridesFile = "item_lean_overrides.csv";
     public const string ItemTooltipsFile = "item_tooltips.json";
     public const string MatchLiftFile = "match_item_lift.csv";
     public const string MatchMetaFile = "match_item_lift.meta.json";
@@ -93,6 +95,15 @@ public sealed class DataStore
 
     /// <summary>The effects each item puts on other heroes (debuffs, auras), as the game sync wrote them.</summary>
     public OrderedDictionary<string, List<ItemEffect>> ItemEffects { get; set; } = [];
+
+    /// <summary>
+    /// What each stat (and enemy debuff) pushes its holder's damage toward, by stat name (<see cref="StatLean"/>): the table
+    /// <see cref="LeanOf"/> works an item's lean out from. Hand-kept; the game sync never touches it.
+    /// </summary>
+    public OrderedDictionary<string, StatLean> StatLeans { get; set; } = [];
+
+    /// <summary>Items whose lean is fixed by hand, by item id. Hand-kept; the game sync never touches it.</summary>
+    public OrderedDictionary<string, ItemLeanOverride> ItemLeanOverrides { get; set; } = [];
 
     /// <summary>Each item's in-game tooltip, as the game sync wrote it.</summary>
     public OrderedDictionary<string, ItemTooltip> ItemTooltips { get; set; } = [];
@@ -140,6 +151,71 @@ public sealed class DataStore
     private Dictionary<(string ItemId, string HeroId), double>? _buildRatios;
 
     /// <summary>
+    /// What <paramref name="itemId"/> pushes its holder's damage toward, from -1 (spirit) to +1 (bullet), worked out when first asked
+    /// for: an override if the item has one; otherwise the votes of the stats it has and the enemy debuffs it puts on (<see cref="StatLeans"/>,
+    /// each stat counted once, a conditional one at its factor), added and kept within -1 and 1; and the item's shop alone
+    /// (<see cref="ItemLean.OfShop"/>) when the table has no vote on it. Votes count presence, not size, so a patch that changes a
+    /// number never moves an item; one that adds or removes a stat does.
+    /// </summary>
+    public ItemLean LeanOf(string itemId)
+    {
+        _itemLeans ??= [];
+        if (!_itemLeans.TryGetValue(itemId, out var lean))
+            _itemLeans[itemId] = lean = WorkOutLean(itemId);
+        return lean;
+    }
+    private Dictionary<string, ItemLean>? _itemLeans;
+
+    private ItemLean WorkOutLean(string itemId)
+    {
+        if (ItemLeanOverrides.TryGetValue(itemId, out var fixedLean))
+            return new ItemLean(Math.Clamp(fixedLean.Lean, -1.0, 1.0), LeanSource.Override, []);
+
+        var votes = new List<LeanVote>();
+        var voted = new HashSet<string>();
+        foreach (var stat in (ItemStats.GetValueOrDefault(itemId) ?? []).OrderBy(stat => stat.Conditional))
+        {
+            if (StatLeans.TryGetValue(stat.Stat, out var rule) && voted.Add(stat.Stat))
+                votes.Add(new LeanVote(stat.Stat, stat.Label, rule.Lean * (stat.Conditional ? rule.ConditionalFactor : 1.0)));
+        }
+        foreach (var effect in (ItemEffects.GetValueOrDefault(itemId) ?? []).Where(effect => effect.Scope == EffectScope.EnemyDebuff))
+        {
+            if (StatLeans.TryGetValue(effect.Effect, out var rule) && voted.Add(effect.Effect))
+                votes.Add(new LeanVote(effect.Effect, effect.Effect, rule.Lean));
+        }
+        if (votes.Count == 0)
+            return new ItemLean(Items.TryGetValue(itemId, out var item) ? ItemLean.OfShop(item.Category) : 0.0, LeanSource.Shop, []);
+        return new ItemLean(Math.Clamp(votes.Sum(vote => vote.Vote), -1.0, 1.0), LeanSource.Derived, votes);
+    }
+
+    /// <summary>Fix an item's lean by hand; false when it already was that, for that reason.</summary>
+    public bool SetItemLean(string itemId, double lean, string reason)
+    {
+        var entry = new ItemLeanOverride(itemId, Math.Clamp(lean, -1.0, 1.0), reason.Trim());
+        if (ItemLeanOverrides.TryGetValue(itemId, out var was) && was == entry)
+            return false;
+        ItemLeanOverrides[itemId] = entry;
+        ForgetLeans();
+        return true;
+    }
+
+    /// <summary>Let the item's lean come from its stats again; false when it had no override.</summary>
+    public bool ClearItemLean(string itemId)
+    {
+        if (!ItemLeanOverrides.Remove(itemId))
+            return false;
+        ForgetLeans();
+        return true;
+    }
+
+    /// <summary>The leans, and what is worked out from them, start over.</summary>
+    private void ForgetLeans()
+    {
+        _itemLeans = null;
+        _typicalBuilds = null;
+    }
+
+    /// <summary>
     /// How each hero usually divides their item souls among the shops (<see cref="HeroTypicalBuild"/>), from the same counts and patch
     /// weights as <see cref="BuildRatios"/>; empty without <see cref="MatchSegments"/>. Worked out when first asked for.
     /// </summary>
@@ -168,6 +244,8 @@ public sealed class DataStore
         store.Read(StatRulesFile, store.LoadStatRules);
         store.Read(ItemStatsFile, store.LoadItemStats);
         store.Read(ItemEffectsFile, store.LoadItemEffects);
+        store.Read(StatLeansFile, store.LoadStatLeans);
+        store.Read(ItemLeanOverridesFile, store.LoadItemLeanOverrides);
         store.Read(ItemTooltipsFile, store.LoadItemTooltips);
         store.Read(MatchLiftFile, store.LoadMatchLift);
         store.LoadMatchSegments();
@@ -372,6 +450,27 @@ public sealed class DataStore
         }
     }
 
+    internal void LoadStatLeans()
+    {
+        foreach (var row in ReadOptional(StatLeansFile) ?? [])
+        {
+            var stat = (row.Get("stat") ?? "").Trim();
+            if (stat.Length > 0)
+                StatLeans[stat] = new StatLean(stat, NumberFormat.ToFloat(row.Get("lean")), NumberFormat.ToFloat(row.Get("conditional_factor"), 1.0),
+                    (row.Get("note") ?? "").Trim());
+        }
+    }
+
+    internal void LoadItemLeanOverrides()
+    {
+        foreach (var row in ReadOptional(ItemLeanOverridesFile) ?? [])
+        {
+            var itemId = (row.Get("item_id") ?? "").Trim();
+            if (itemId.Length > 0)
+                ItemLeanOverrides[itemId] = new ItemLeanOverride(itemId, NumberFormat.ToFloat(row.Get("lean")), (row.Get("reason") ?? "").Trim());
+        }
+    }
+
     /// <summary>A CSV flag: "1", "true" or "yes", in any case; anything else, or a missing column, is false.</summary>
     private static bool IsTrue(string? text) => (text ?? "").Trim().ToLowerInvariant() is "1" or "true" or "yes";
 
@@ -472,7 +571,7 @@ public sealed class DataStore
     public void RebuildDerived()
     {
         _buildRatios = null;
-        _typicalBuilds = null;
+        ForgetLeans();
         var rulesByStat = new Dictionary<string, List<StatRule>>();
         foreach (var rule in StatRules.Values)
         {
@@ -927,6 +1026,22 @@ public sealed class DataStore
             rule.Stat, rule.CategoryId, rule.Relation.Key(), NumberFormat.Short(rule.PerUnit),
             NumberFormat.Short(rule.ConditionalFactor), rule.Note));
         WriteCsv(StatRulesFile, ["stat", "category_id", "relation", "per_unit", "conditional_factor", "note"], rows);
+    }
+
+    public void SaveStatLeans()
+    {
+        var rows = StatLeans.Values.Select(rule => Row(rule.Stat, NumberFormat.Short(rule.Lean), NumberFormat.Short(rule.ConditionalFactor), rule.Note));
+        WriteCsv(StatLeansFile, ["stat", "lean", "conditional_factor", "note"], rows);
+    }
+
+    public void SaveItemLeanOverrides()
+    {
+        var itemOrder = IndexOf(Items.Keys);
+        var rows = ItemLeanOverrides.Values
+            .OrderBy(entry => itemOrder.GetValueOrDefault(entry.ItemId, _missingOrder))
+            .ThenBy(entry => entry.ItemId, StringComparer.Ordinal)
+            .Select(entry => Row(entry.ItemId, NumberFormat.Short(entry.Lean), entry.Reason));
+        WriteCsv(ItemLeanOverridesFile, ["item_id", "lean", "reason"], rows);
     }
 
     public void SaveHeroes()

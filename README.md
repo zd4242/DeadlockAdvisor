@@ -275,6 +275,8 @@ Nothing locks the files, so don't edit them from two places at once.
 | `item_formula_coefficients.csv` | item_id, category_id, relation, coefficient | only the traits an item cares about |
 | `trait_weights.csv` | category_id, relation, weight | only weights other than 1 |
 | `stat_rules.csv` | stat, category_id, relation, per_unit, conditional_factor, note | see below |
+| `stat_leans.csv` | stat, lean, conditional_factor, note | what each stat (or enemy debuff) pushes its holder's damage toward, -1 (spirit) to 1 (bullet); a row of 0 is a decision |
+| `item_lean_overrides.csv` | item_id, lean, reason | an item's lean fixed by hand where its stats don't say; edited on the Item Formulas page |
 | `item_stats.csv`, `item_effects.csv`, `item_tooltips.json` | | **generated** by the game sync; don't edit |
 | `match_item_lift.csv` + `.meta.json` | | **generated** from the match counts, for the chosen ranks; no backups |
 | `match_counts/<patch date>.json` | | **generated** by the match data download: one patch's raw totals, every match and per rank; no backups |

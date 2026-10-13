@@ -43,6 +43,7 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
     [
         DataStore.CategoriesFile, DataStore.HeroScoresFile, DataStore.ItemCoefficientsFile, DataStore.TraitWeightsFile,
         DataStore.StatRulesFile, DataStore.HeroesFile, DataStore.ItemsFile, DataStore.ItemStatsFile, DataStore.ItemEffectsFile, DataStore.ItemTooltipsFile,
+        DataStore.StatLeansFile, DataStore.ItemLeanOverridesFile,
     ];
 
     /// <summary>
@@ -78,6 +79,8 @@ public sealed record ModelManifest(int Format, string Published, IReadOnlyDictio
         DataStore.ItemStatsFile => "Item stats",
         DataStore.ItemEffectsFile => "Item effects",
         DataStore.ItemTooltipsFile => "Item tooltips",
+        DataStore.StatLeansFile => "Damage leans of stats",
+        DataStore.ItemLeanOverridesFile => "Damage leans of items",
         _ => file,
     };
 
