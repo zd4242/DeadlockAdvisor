@@ -8,4 +8,6 @@ public enum ShortcutAction
     RandomizeKeepSelf,
     RandomizeKeepTeam,
     Clear,
+    Undo,
+    Redo,
 }

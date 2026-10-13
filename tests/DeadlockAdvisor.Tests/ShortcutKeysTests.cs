@@ -22,14 +22,26 @@ public class ShortcutKeysTests
         Assert.Equal(new KeyGesture(Key.Delete), settings.Gesture(ShortcutAction.Clear));
     }
 
-    /// <summary>Delete is a default only: it isn't a key to move a shortcut onto, and the window sets it aside in a text box.</summary>
     [Fact]
-    public void EveryDefaultIsAllowedButDelete()
+    public void UndoAndRedoAreCtrlZAndCtrlY()
+    {
+        var settings = new AppSettings();
+
+        Assert.Equal(new KeyGesture(Key.Z, KeyModifiers.Control), settings.Gesture(ShortcutAction.Undo));
+        Assert.Equal(new KeyGesture(Key.Y, KeyModifiers.Control), settings.Gesture(ShortcutAction.Redo));
+    }
+
+    /// <summary>Delete is a default only: it isn't a key to move a shortcut onto. The keys a text box uses are set aside by the window while one has focus.</summary>
+    [Fact]
+    public void EveryDefaultIsAllowedButDeleteAndTheOnesATextBoxUsesAreFlagged()
     {
         var problems = ShortcutKeys.Defaults.Where(pair => ShortcutKeys.Problem(pair.Value) is not null).Select(pair => pair.Key);
+        var editsText = ShortcutKeys.Defaults.Where(pair => ShortcutKeys.EditsText(pair.Value)).Select(pair => pair.Key);
 
         Assert.Equal([ShortcutAction.Clear], problems);
-        Assert.All(ShortcutKeys.Defaults.Values.Where(ShortcutKeys.EditsText), gesture => Assert.Equal(Key.Delete, gesture.Key));
+        Assert.Equal([ShortcutAction.Clear, ShortcutAction.Undo, ShortcutAction.Redo], editsText);
+        Assert.False(ShortcutKeys.EditsText(new KeyGesture(Key.F6)));
+        Assert.False(ShortcutKeys.EditsText(new KeyGesture(Key.Z, KeyModifiers.Alt)));
     }
 
     /// <summary>Only moved keys are saved, so a key put back on its default follows the default from then on.</summary>

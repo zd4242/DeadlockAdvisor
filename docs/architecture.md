@@ -76,7 +76,7 @@ segments), **net worth** (a hero's souls, read by Detect), **focus** (enemies th
 |---|---|
 | `Program.cs`, `App.axaml(.cs)`, `ViewLocator.cs` | entry point, DI wiring and startup, view lookup |
 | `src/Core` | `ViewModelBase`, formatting, fuzzy match, zoom steps, shortcut keys, wiki links, small helpers |
-| `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `NetWorthHistory`, `AppSettings` |
+| `src/Models` | `Hero`, `Item`, `Category`, `StatRule`, `MatchState` (who's in the match), `MatchHistory` (its undo), `NetWorthHistory`, `AppSettings` |
 | `src/Scoring` | pure scoring and statistics: `ItemScoring`, `WeightMatrix`, `BestTargets`, `FocusWeights`, `NetWorthWeights`, `ScoreScales`, `MatchStatsMath`, `MatchSegment`, `HeroItemTable`, `HeroFits`, `ModelHealth` |
 | `src/Services` | data and I/O: `DataStore`, `DataService`, settings, logging, notifications, modals, API client, downloads and updates, screen capture, hotkey; `Contracts/` interfaces, `Formats/` CSV/JSON/number formats, `GameApi/` (`GameSync`, `SyncReport`, tooltip parsing) |
 | `src/Vision` | detection: `Detector`, `Layout`, `TemplateBank`, `Matcher`, `NetWorthReader`, `ScoreboardReader` (Detect's front half, shared), image ops and PNG codec |
@@ -147,7 +147,11 @@ Settings → Data's choice) holds `data/` (CSV tables, `.backups/`, `match_count
   (`DetectAction.LabelSelf`). Every page stays alive, so `MainWindowViewModel` tells `MatchViewModel.SetShown` when
   the Match tab is on screen (Settings covers it, which counts as hidden): while hidden, `ScoresChanged` (a formula edit)
   only marks the list stale and the page rescores once when it shows again. A changed match or `StoreReplaced` still
-  refreshes at once.
+  refreshes at once. **Undo and redo** (`MatchViewModel.UndoCommand`, Ctrl+Z / Ctrl+Y) work from the one place every change
+  passes through, `OnMatchChanged`: it hands `MatchState.Picks()` (the roles, slots, focus and likely-you, not the net
+  worth) to `MatchHistory`, which keeps the line-up before each change, so the board, Detect, Import and Clear are all covered
+  without each saying so. A step is `MatchState.Restore` and then the same refresh a detection does (`WhenReplaced`); a
+  `StoreReplaced` starts the history over.
 - **Match lookup:** `MatchLookupService.LookUpAsync` reads a finished match's `/v1/matches/{id}/metadata` into a
   `LookedUpMatch`: when it started, how long it ran, who won, and per player the account, hero, team and slot plus
   `Items` (`PurchasedItem`: the game's item id, when bought, when sold or null; ability upgrades that have no shop item are
@@ -377,7 +381,7 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
 - **A key the game owns** (watched, not taken, so it still reaches the game): `ScoreboardKeys` and `ScoreboardKeyService`, which a `ShortcutRecorder` row in Settings → Detection sets.
 - **A shortcut:** a `ShortcutAction` value, an entry in `ShortcutKeys.Defaults` (mind `_reserved`), a case in
   `MainWindowViewModel.ShortcutBindingFor` and its command; Settings → Shortcuts lists the defaults.
-  A default that edits text (Delete, `ShortcutKeys.EditsText`) is bound through `SkipWhileTypingCommand`, so it stays
+  A default a text box uses itself (Delete, Ctrl+Z, Ctrl+Y: `ShortcutKeys.EditsText`) is bound through `SkipWhileTypingCommand`, so it stays
   the text box's own while one has focus, and it is a default only: `Problem` refuses it as a key to move onto.
 - **A background download:** build a `BackgroundJobViewModel`, run it through `DataMenuViewModel.RunInBackgroundAsync` with an
   `IProgress<FetchProgress>` and `job.Token`; report with `Succeeded` / `Failed`; keep a quiet mode for routine checks.

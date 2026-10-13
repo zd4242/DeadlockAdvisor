@@ -18,6 +18,8 @@ public static class ShortcutKeys
         [ShortcutAction.RandomizeKeepSelf] = new(Key.F7),
         [ShortcutAction.RandomizeKeepTeam] = new(Key.F8),
         [ShortcutAction.Clear] = new(Key.Delete),
+        [ShortcutAction.Undo] = new(Key.Z, KeyModifiers.Control),
+        [ShortcutAction.Redo] = new(Key.Y, KeyModifiers.Control),
     };
 
     /// <summary>The window's fixed keys (and the menus' access keys) that a key allowed here could clash with.</summary>
@@ -39,10 +41,12 @@ public static class ShortcutKeys
     };
 
     /// <summary>
-    /// Delete edits text, so it's a default only: the recorder reads it as taking a key away, and it can't
-    /// go to Detect's system-wide key. The window sets its shortcut aside while a text box has focus.
+    /// A key a text box uses itself: Delete, and Ctrl+Z and Ctrl+Y for its own undo. The window sets such a shortcut
+    /// aside while one has focus. Delete is a default only: the recorder reads it as taking a key away, and it can't
+    /// go to Detect's system-wide key.
     /// </summary>
-    public static bool EditsText(KeyGesture gesture) => gesture.Key == Key.Delete;
+    public static bool EditsText(KeyGesture gesture) =>
+        gesture.Key == Key.Delete || gesture is { Key: Key.Z or Key.Y, KeyModifiers: var modifiers } && modifiers.HasFlag(KeyModifiers.Control);
 
     /// <summary>The key <paramref name="action"/> is on, or null if it's been taken away.</summary>
     public static KeyGesture? Gesture(this AppSettings settings, ShortcutAction action)

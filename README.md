@@ -227,10 +227,11 @@ the Match page rescores as you go.
 | <kbd>F9</kbd> | detect the match from the screen, from the game too (see below) |
 | <kbd>F6</kbd> / <kbd>F7</kbd> / <kbd>F8</kbd> | random match / keeping your hero / random enemies, keeping your team (with **Settings → General → Show the Random buttons** on) |
 | <kbd>Delete</kbd> | clear the match (not while typing in a text box) |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> / <kbd>Ctrl</kbd>+<kbd>Y</kbd> | undo / redo a change to the match: picking, clearing, random, a detection or an import (not while typing in a text box) |
 | mouse back / forward buttons | step back and forward through the pages (Settings closes on back) |
 | middle click | autoscroll |
 
-F9, F6–F8 and Delete can be moved or taken away under **Settings → Shortcuts**: click
+F9, F6–F8, Delete, Ctrl+Z and Ctrl+Y can be moved or taken away under **Settings → Shortcuts**: click
 a key, press the new one.
 
 ## Data folder

@@ -64,6 +64,8 @@ public class MatchBoardViewModel : ViewModelBase
                 RandomKeepSelfGesture = s.Gesture(ShortcutAction.RandomizeKeepSelf);
                 RandomKeepTeamGesture = s.Gesture(ShortcutAction.RandomizeKeepTeam);
                 ClearGesture = s.Gesture(ShortcutAction.Clear);
+                UndoGesture = s.Gesture(ShortcutAction.Undo);
+                RedoGesture = s.Gesture(ShortcutAction.Redo);
             })
             .DisposeWith(Disposables);
 
@@ -115,12 +117,14 @@ public class MatchBoardViewModel : ViewModelBase
     /// <summary>Whether the match bar's menu offers Random, which a setting can hide; its keys go with it, so a stray one can't wipe a detected match.</summary>
     [Reactive] public bool ShowsRandom { get; private set; }
 
-    /// <summary>The keys Settings → Shortcuts has Detect, Random and Clear on, as the match bar shows them; null when taken away.</summary>
+    /// <summary>The keys Settings → Shortcuts has Detect, Random, Clear, Undo and Redo on, as the match bar shows them; null when taken away.</summary>
     [Reactive] public string? DetectKey { get; private set; }
     [Reactive] public KeyGesture? RandomGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepSelfGesture { get; private set; }
     [Reactive] public KeyGesture? RandomKeepTeamGesture { get; private set; }
     [Reactive] public KeyGesture? ClearGesture { get; private set; }
+    [Reactive] public KeyGesture? UndoGesture { get; private set; }
+    [Reactive] public KeyGesture? RedoGesture { get; private set; }
 
     [Reactive] public string SearchText { get; set; } = "";
     [Reactive] public string SearchPlaceholder { get; private set; } = "";
@@ -182,6 +186,10 @@ public class MatchBoardViewModel : ViewModelBase
 
     /// <summary>Reviewing a detection that was applied without review, owned by the Match tab.</summary>
     public System.Windows.Input.ICommand? ReviewDetectionCommand { get; set; }
+
+    /// <summary>Set by the Match page, which knows how to step back and forward through the line-ups.</summary>
+    public System.Windows.Input.ICommand? UndoCommand { get; set; }
+    public System.Windows.Input.ICommand? RedoCommand { get; set; }
 
     /// <summary>The last detection was applied without review, and can be looked back at.</summary>
     [Reactive] public bool CanReviewDetection { get; set; }

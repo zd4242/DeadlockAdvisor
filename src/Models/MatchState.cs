@@ -191,6 +191,30 @@ public sealed class MatchState
         _likelyYou = null;
     }
 
+    public MatchPicks Picks() => new(RoleMap, Slots, _focused, _likelyYou);
+
+    /// <summary>Put the match back to <paramref name="picks"/>, dropping heroes that no longer exist. The net worth readings stay as they are.</summary>
+    public void Restore(MatchPicks picks, IEnumerable<string> validHeroIds)
+    {
+        var valid = validHeroIds.ToHashSet();
+        RoleMap.Clear();
+        Slots.Clear();
+        _focused.Clear();
+        foreach (var (heroId, role) in picks.Roles)
+        {
+            if (valid.Contains(heroId))
+                RoleMap[heroId] = role;
+        }
+        foreach (var (heroId, slot) in picks.Slots)
+        {
+            if (RoleMap.ContainsKey(heroId))
+                Slots[heroId] = slot;
+        }
+        foreach (var heroId in picks.Focused)
+            SetFocus(heroId, true);
+        SuggestSelf(picks.LikelyYou);
+    }
+
     /// <summary>Who a detection placed in a top-bar slot, if anyone still in the match.</summary>
     public string? HeroInSlot(int slot) => Slots.FirstOrDefault(entry => entry.Value == slot).Key;
 

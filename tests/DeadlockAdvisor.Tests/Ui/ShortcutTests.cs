@@ -109,6 +109,63 @@ public class ShortcutTests
         Assert.All(Slots(), slot => Assert.Null(slot.HeroId));
     }
 
+    [AvaloniaFact]
+    public void CtrlZUndoesTheMatchAndCtrlYRedoesItOnlyOnTheMatchPage()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
+        ui.Show();
+        ui.Window.FocusManager!.ClearFocus();
+        var board = ui.ViewModel.Match.Board;
+        List<string?> Heroes() => board.AllySlots.Concat(board.EnemySlots).Select(slot => slot.HeroId).ToList();
+        void Press(PhysicalKey key, RawInputModifiers modifiers = RawInputModifiers.Control)
+        {
+            ui.Window.KeyPressQwerty(key, modifiers);
+            UiHarness.Settle();
+        }
+
+        Press(PhysicalKey.F6, RawInputModifiers.None);
+        var random = Heroes();
+        Assert.All(random, hero => Assert.NotNull(hero));
+        Press(PhysicalKey.Delete, RawInputModifiers.None);
+        Assert.All(Heroes(), hero => Assert.Null(hero));
+
+        ui.ViewModel.CurrentPage = 1;
+        UiHarness.Settle();
+        Press(PhysicalKey.Z);
+        ui.ViewModel.CurrentPage = 0;
+        UiHarness.Settle();
+        Assert.All(Heroes(), hero => Assert.Null(hero));
+
+        Press(PhysicalKey.Z);
+        Assert.Equal(random, Heroes());
+        Press(PhysicalKey.Z);
+        Assert.All(Heroes(), hero => Assert.Null(hero));
+        Press(PhysicalKey.Y);
+        Assert.Equal(random, Heroes());
+        Press(PhysicalKey.Y);
+        Assert.All(Heroes(), hero => Assert.Null(hero));
+    }
+
+    /// <summary>In the hero search, Ctrl+Z is the box's own undo.</summary>
+    [AvaloniaFact]
+    public void CtrlZLeavesTheMatchAloneWhileTypingInATextBox()
+    {
+        using var ui = new UiHarness(settings => UiHarness.Editing(settings));
+        ui.Show();
+        var board = ui.ViewModel.Match.Board;
+        ui.Window.KeyPressQwerty(PhysicalKey.F6, RawInputModifiers.None);
+        board.StartAssigning(Role.Enemy);
+        UiHarness.Settle();
+        var search = ui.Window.GetVisualDescendants().OfType<TextBox>().First(box => box.Name == "SearchBox");
+        search.Focus();
+        UiHarness.Settle();
+
+        ui.Window.KeyPressQwerty(PhysicalKey.Z, RawInputModifiers.Control);
+        UiHarness.Settle();
+
+        Assert.All(board.AllySlots.Concat(board.EnemySlots), slot => Assert.NotNull(slot.HeroId));
+    }
+
     /// <summary>In the hero search, Delete is for deleting letters.</summary>
     [AvaloniaFact]
     public void DeleteLeavesTheMatchAloneWhileTypingInATextBox()

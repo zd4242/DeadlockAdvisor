@@ -85,6 +85,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     /// <summary>The rank option the list was last laid out for, so picking another can start on its best item.</summary>
     private RankPreset? _appliedRank;
 
+    private readonly MatchHistory _history;
     private bool _shown = true;
     private bool _stale;
 
@@ -104,6 +105,7 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
 
         if (settings.Current.ReopenLastMatch)
             Match.LoadSaved(settings.Current.LastMatch, data.Store.Heroes.Keys);
+        _history = new MatchHistory(Match.Picks());
         Board = new MatchBoardViewModel(Match, () => _data.Store, settings);
         Results = new ResultsViewModel("Pick the heroes in your match above and recommendations appear here.",
             (item, needle) => _data.Store.ItemMatches(item.ItemId, needle));
@@ -135,6 +137,10 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         DetectFinished = detect.Finished;
         ImportCommand = ReactiveCommand.Create(() => import.Run(Match, WhenReplaced()));
         Board.ImportCommand = ImportCommand;
+        UndoCommand = ReactiveCommand.Create(() => StepHistory(_history.Undo), this.WhenAnyValue(vm => vm.CanUndo));
+        RedoCommand = ReactiveCommand.Create(() => StepHistory(_history.Redo), this.WhenAnyValue(vm => vm.CanRedo));
+        Board.UndoCommand = UndoCommand;
+        Board.RedoCommand = RedoCommand;
         PickHeroesCommand = ReactiveCommand.Create(Board.OpenPicker);
         ToggleItemSearchCommand = ReactiveCommand.Create(() =>
         {
@@ -276,6 +282,12 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     public IObservable<DetectOutcome> DetectFinished { get; }
     public ReactiveCommand<Unit, Unit> ImportCommand { get; }
 
+    /// <summary>Step back through the line-ups the match has been through, however they were made, and forward again.</summary>
+    public ReactiveCommand<Unit, Unit> UndoCommand { get; }
+    public ReactiveCommand<Unit, Unit> RedoCommand { get; }
+    [Reactive] public bool CanUndo { get; private set; }
+    [Reactive] public bool CanRedo { get; private set; }
+
     /// <summary>Open the hero picker, from the empty match's quick start.</summary>
     public ReactiveCommand<Unit, Unit> PickHeroesCommand { get; }
 
@@ -415,8 +427,19 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
         RefreshExplain();
     }
 
+    private void StepHistory(Func<MatchPicks?> step)
+    {
+        var replaced = WhenReplaced();
+        if (step() is not { } picks)
+            return;
+        Match.Restore(picks, _data.Store.Heroes.Keys);
+        replaced();
+    }
+
     private void OnMatchChanged()
     {
+        _history.Record(Match.Picks());
+        (CanUndo, CanRedo) = (_history.CanUndo, _history.CanRedo);
         var pickedSelf = NeedsSelf && !Match.HasUnsided;
         Refresh();
         // Picking yourself builds the line-up, so it opens on its best item like any new one.
@@ -430,6 +453,8 @@ public class MatchViewModel : ViewModelBase, ISearchablePage
     private void Rebind()
     {
         Match.LoadSaved(Match.ToSaved(), _data.Store.Heroes.Keys);
+        _history.Reset(Match.Picks());
+        (CanUndo, CanRedo) = (false, false);
         Results.Reset();
         Board.Rebind();
         Refresh();

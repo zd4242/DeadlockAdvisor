@@ -9,7 +9,7 @@ using ReactiveUI;
 
 namespace DeadlockAdvisor.Features.Settings.Shortcuts;
 
-/// <summary>The Match page's keys for Detect, Random and Clear, each moved by clicking it and pressing the new one.</summary>
+/// <summary>The Match page's keys for Detect, Random, Clear and Undo, each moved by clicking it and pressing the new one.</summary>
 public class ShortcutsSettingsViewModel : SettingsPageViewModel
 {
     public ShortcutsSettingsViewModel(ISettingsService settings, IGlobalHotkeyService hotkey) : base(settings)
@@ -22,7 +22,10 @@ public class ShortcutsSettingsViewModel : SettingsPageViewModel
         RandomizeKeepTeam = new(ShortcutAction.RandomizeKeepTeam, "Random enemies, keeping your team", "Redraw only the enemy team.", Assign);
         Clear = new(ShortcutAction.Clear, "Clear match",
             "Empty the match. The key stays a text box's own while you're typing in one.", Assign);
-        Rows = [Detect, Randomize, RandomizeKeepSelf, RandomizeKeepTeam, Clear];
+        Undo = new(ShortcutAction.Undo, "Undo",
+            "Step the match back through its line-ups, whether you picked them, detected them or cleared them. Typing in a box keeps its own.", Assign);
+        Redo = new(ShortcutAction.Redo, "Redo", "Step forward again, until the match changes.", Assign);
+        Rows = [Detect, Randomize, RandomizeKeepSelf, RandomizeKeepTeam, Clear, Undo, Redo];
 
         settings.SettingsChanged
             .Subscribe(s =>
@@ -48,6 +51,8 @@ public class ShortcutsSettingsViewModel : SettingsPageViewModel
     public ShortcutRowViewModel RandomizeKeepSelf { get; }
     public ShortcutRowViewModel RandomizeKeepTeam { get; }
     public ShortcutRowViewModel Clear { get; }
+    public ShortcutRowViewModel Undo { get; }
+    public ShortcutRowViewModel Redo { get; }
     public IReadOnlyList<ShortcutRowViewModel> Rows { get; }
 
     public ReactiveCommand<Unit, Unit> ResetAllCommand { get; }

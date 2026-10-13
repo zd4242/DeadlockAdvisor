@@ -60,6 +60,8 @@
         <Border Classes="settings">
             <StackPanel>
                 <settings:SettingRow Title="{Binding Clear.Title}" Description="{Binding Clear.Description}" Content="{Binding Clear}"/>
+                <settings:SettingRow Title="{Binding Undo.Title}" Description="{Binding Undo.Description}" Content="{Binding Undo}"/>
+                <settings:SettingRow Title="{Binding Redo.Title}" Description="{Binding Redo.Description}" Content="{Binding Redo}"/>
             </StackPanel>
         </Border>
 
