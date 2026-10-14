@@ -1,6 +1,6 @@
 # WP29 Build-adjusted traits: what a hero built shifts their damage mix
 
-Status: done
+Status: done (bf6b487; item-level leans followed in 091da41 and 77ca58c, see docs/scoring_model.md, "What an item pushes toward")
 Effort: L · Risk: medium-high (new scoring input; must stay mean-zero) · Depends on: WP27 (and after WP28, which touches the same scoring files) · Wave: D
 Touches: new `src/Scoring/BuildShifts.cs`, `src/Scoring/HeroTypicalBuild.cs`, `src/Services/DataStore.cs` (a cached typical-build lookup beside `BuildRatios`), `src/Scoring/ItemScoring.cs`, `ScoringTypes.cs` (`LineUp.Shifts`), `WeightMatrix.cs` (a small coefficient table), `ModelHealth.cs`, `src/Features/Match/Explain/*`, `src/Features/Match/MatchViewModel.cs`, `src/Models/AppSettings.cs`, a measuring tool (see Scope), tests and goldens
 Docs to update: `docs/scoring_model.md` (a section and the table of where things live), `docs/architecture.md` (section 4), `README.md`

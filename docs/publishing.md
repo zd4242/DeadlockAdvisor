@@ -235,7 +235,8 @@ it doesn't know, so adding it needed no `CurrentFormat` bump, and an app without
 
 `stat_leans.csv` and `item_lean_overrides.csv` (what an item pushes its holder's damage toward, for the build-adjusted traits) are hand-kept model files
 the sync never writes. They are new files too, so no `CurrentFormat` bump: an older app ignores them, and an install without them counts every item at its
-shop's colour. They reach the seed when you copy them into the data folder you publish from and run Publish.
+shop's colour. They were first published on 2026-10-14; `stat_leans.csv` is edited in the data folder (then Data → Model Tools → Reload) and the overrides
+on Item Formulas → By Item, and both go out with the next Publish like any model file.
 
 Release the app before (or with) publishing data in a new format: until people update, they keep the
 last version their app understands.
