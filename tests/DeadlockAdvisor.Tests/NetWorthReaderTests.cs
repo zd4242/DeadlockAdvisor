@@ -13,10 +13,21 @@ public class NetWorthReaderTests
          "souls_under_1k_2560x1440_band", "two_k_2560x1440_band",
          "eight_min_2560x1440_band", "live_2560x1440_band"];
 
+    /// <summary>
+    /// Strips of native 1920×1080 captures (Golden/vision/networth), where the strokes are 1 to 2 pixels wide and the 1440p references
+    /// score a 7 at 0.79 to 0.85. They stand beside the fixtures, as references and as captures to read.
+    /// </summary>
+    public static readonly string[] Native1080 =
+        ["native_1080_start", "native_1080_first_items", "native_1080_early", "native_1080_mid", "native_1080_late", "native_1080_dead"];
+
+    private static string[] AllLabelled => [.. Labelled, .. Native1080];
+
+    private static string FolderOf(string fixture) => Native1080.Contains(fixture) ? "networth" : "fixtures";
+
     /// <summary>The fixture's labels, as the game prints them: twelve pills left to right, then the two totals.</summary>
     private static (string[] Pills, string[] Totals) Labels(string fixture)
     {
-        var spec = FixtureSpec(fixture);
+        var spec = JsonNode.Parse(File.ReadAllText(Golden.PathOf("vision", FolderOf(fixture), fixture + ".json")))!;
         return (spec["net_worth"]!.AsArray().Select(value => (string)value!).ToArray(),
             spec["team_totals"]!.AsArray().Select(value => (string)value!).ToArray());
     }
@@ -28,6 +39,8 @@ public class NetWorthReaderTests
     private static Geometry GridOf(string image) =>
         Geometry.Parse(Golden.Json("vision/" + Path.ChangeExtension(image, ".json"))["grid"]!.AsObject())!;
 
+    private static string ImageOf(string fixture) => $"{FolderOf(fixture)}/{fixture}.png";
+
     private static NetWorthReading Read(string image) => NetWorthReader.Read(Image(image), GridOf(image), NetWorthGlyphs.Bundled);
 
     /// <summary>What the labels come to in souls: the pills, then the totals.</summary>
@@ -38,14 +51,14 @@ public class NetWorthReaderTests
         return (pills.Select((printed, slot) => NetWorthReader.PillSouls(printed, totalSouls[slot / Layout.PerTeam])).ToArray(), totalSouls);
     }
 
-    public static TheoryData<string> Fixtures() => new(Labelled);
+    public static TheoryData<string> Fixtures() => new(AllLabelled);
 
     [Theory]
     [MemberData(nameof(Fixtures))]
     public void EveryPillAndTotalIsReadAndAddsUp(string fixture)
     {
         var (pills, totals) = Expected(fixture);
-        var reading = Read($"fixtures/{fixture}.png");
+        var reading = Read(ImageOf(fixture));
 
         Assert.Equal(pills, reading.Pills);
         Assert.Equal(totals, reading.Totals);
@@ -163,8 +176,8 @@ public class NetWorthReaderTests
     [MemberData(nameof(Fixtures))]
     public void ACaptureTheDigitsWereNotCutFromReadsNothingWrong(string fixture)
     {
-        var glyphs = new NetWorthGlyphs(ReferenceFrames(Labelled.Where(other => other != fixture)));
-        var image = $"fixtures/{fixture}.png";
+        var glyphs = new NetWorthGlyphs(ReferenceFrames(AllLabelled.Where(other => other != fixture)));
+        var image = ImageOf(fixture);
         var reading = NetWorthReader.Read(Image(image), GridOf(image), glyphs);
 
         var (pills, _) = Expected(fixture);
@@ -185,7 +198,7 @@ public class NetWorthReaderTests
         foreach (var fixture in fixtures)
         {
             var (pills, totals) = Labels(fixture);
-            var image = $"fixtures/{fixture}.png";
+            var image = ImageOf(fixture);
             var found = NetWorthReader.DigitFrames(Image(image), GridOf(image));
             foreach (var (glyphs, label) in found.Zip(pills.Concat(totals)))
             {
@@ -204,11 +217,11 @@ public class NetWorthReaderTests
     [Fact]
     public void ReferenceDigitsAreBuiltFromTheLabelledFixtures()
     {
-        var frames = ReferenceFrames(Labelled);
+        var frames = ReferenceFrames(AllLabelled);
 
         // Every digit needs a reference, and nearly every glyph should have lined up with its label.
         Assert.Equal("0123456789", string.Concat(frames.Select(frame => frame.Digit).Distinct().Order()));
-        var labelledDigits = Labelled.Select(Labels).Sum(labels => labels.Pills.Concat(labels.Totals).Sum(label => label.Count(char.IsDigit)));
+        var labelledDigits = AllLabelled.Select(Labels).Sum(labels => labels.Pills.Concat(labels.Totals).Sum(label => label.Count(char.IsDigit)));
         Assert.True(frames.Count >= labelledDigits * 0.95, $"only {frames.Count} of {labelledDigits} digits lined up with their labels");
 
         if (!Golden.Updating)

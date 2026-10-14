@@ -1,0 +1,33 @@
+{
+  "notes": [
+    "The start, 0:42: every pill is plain souls, three digits.",
+    "A native 1920x1080 capture of a spectated match, cut to the strip: the portraits and the pills, none of the names."
+  ],
+  "screen_height": 1080,
+  "net_worth": [
+    "708",
+    "712",
+    "625",
+    "625",
+    "764",
+    "766",
+    "708",
+    "710",
+    "792",
+    "792",
+    "600",
+    "600"
+  ],
+  "team_totals": [
+    "4",
+    "4"
+  ],
+  "grid": {
+    "version": 3,
+    "center_x": 659.754223615021,
+    "pitch": 87.9961937778294,
+    "top": 21.6,
+    "gap_ratio": 1.656000777721247,
+    "width_ratio": 0.5270429306367336
+  }
+}

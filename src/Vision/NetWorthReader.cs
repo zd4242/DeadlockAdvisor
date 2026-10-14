@@ -41,6 +41,10 @@ public static partial class NetWorthReader
     private const double _totalsInner = 0.05;
     private const double _totalsOuter = 1.25;
 
+    // The left total's crest is black and fills 0.18 to 0.40 pitches from the clock's centre: in the window it sets the
+    // darkest value, so the digits (dark brown, not black) fall short of strong ink. The number ends before it.
+    private const double _totalsCrest = 0.42;
+
     // Ink is 0 (background) to 1 (text), scaled per patch.
     private const float _strongInk = 0.85f;
     private const float _inkRow = 0.5f;
@@ -234,9 +238,26 @@ public static partial class NetWorthReader
             return columnTop >= top + 0.6 * height && columnBottom >= bottom - Math.Max(1, 0.12 * height);
         }
 
-        var runs = strongRuns.SelectMany(run => CutLeading(run, DotColumn, 0.12 * height, 0.42 * height)).ToList();
+        // A column the dot is in, past a digit that overhangs it: any faint ink above the digit's lower part is the overhang's, and the
+        // dot is the ink in it.
+        bool DotTail(int x)
+        {
+            var lower = (int)Math.Ceiling(top + 0.6 * height);
+            for (var y = 0; y < Math.Min(lower, ink.Height); y++)
+            {
+                if (ink[x, y] >= _strongInk)
+                    return false;
+            }
+            return Enumerable.Range(lower, Math.Max(0, Math.Min(bottom, ink.Height) - lower)).Any(y => ink[x, y] >= _inkRow);
+        }
+
+        var trailingDots = new HashSet<(int Start, int End)>();
+        var runs = strongRuns.SelectMany(run => CutLeading(run, DotColumn, 0.12 * height, 0.42 * height))
+            .SelectMany(run => CutTrailing(ink, run, DotTail, 0.12 * height, 0.42 * height, 0.3 * height, trailingDots))
+            .ToList();
         var extents = runs.Select(run => InkRows(ink, Math.Max(0, run.Start - 1), Math.Min(ink.Width, run.End + 1))).ToList();
-        bool DotLike(int i) => runs[i].End - runs[i].Start <= 0.5 * height && Enumerable.Range(runs[i].Start, runs[i].End - runs[i].Start).All(DotColumn);
+        bool DotLike(int i) => trailingDots.Contains(runs[i])
+            || (runs[i].End - runs[i].Start <= 0.5 * height && Enumerable.Range(runs[i].Start, runs[i].End - runs[i].Start).All(DotColumn));
 
         var merged = new List<(int Start, int End, int Top, int Bottom, bool IsDot)>();
         for (var i = 0; i < runs.Count; i++)
@@ -295,7 +316,7 @@ public static partial class NetWorthReader
         var middle = line - _totalsAboveLine * pitch;
         var top = Math.Max(0, (int)Math.Round(middle - _totalsHalfHeight * pitch));
         var bottom = Math.Min(band.Height, (int)Math.Round(middle + _totalsHalfHeight * pitch));
-        var (inner, outer) = (_totalsInner * pitch, _totalsOuter * pitch);
+        var (inner, outer) = ((side == 0 ? _totalsCrest : _totalsInner) * pitch, _totalsOuter * pitch);
         var left = Math.Max(0, (int)Math.Round(side == 0 ? geometry.CenterX - outer : geometry.CenterX + inner));
         var right = Math.Min(band.Width, (int)Math.Round(side == 0 ? geometry.CenterX - inner : geometry.CenterX + outer));
         if (right - left < 4 || bottom - top < 4 || Ink(Luminance(band, left, top, right, bottom)) is not { } ink)
@@ -376,8 +397,11 @@ public static partial class NetWorthReader
             yield return new Token(cuts[i], cuts[i + 1], false);
     }
 
-    /// <summary>Whether a stretch of columns, padded by one either side, is no wider than a single digit.</summary>
-    private static bool OneGlyphWide(int width, int height) => width <= 0.95 * height;
+    /// <summary>
+    /// Whether a stretch of columns, padded by one either side, is no wider than a single digit. The padding is two pixels at
+    /// any size, so it is taken off before the digit's share of the height: at 1080p a 3 is 7 wide and 9 tall.
+    /// </summary>
+    private static bool OneGlyphWide(int width, int height) => width - 2 <= 0.95 * height;
 
     /// <summary>
     /// The run split after its leading columns of one kind, when there are at least
@@ -393,6 +417,31 @@ public static partial class NetWorthReader
             yield return run;
             yield break;
         }
+        yield return (run.Start, cut);
+        yield return (cut, run.End);
+    }
+
+    /// <summary>
+    /// The run split before its trailing columns of one kind, when there are at least <paramref name="minTrail"/> and at most
+    /// <paramref name="maxTrail"/> of them, at least <paramref name="minRest"/> are left, and the column before them is clear of ink where
+    /// they are: a decimal point set after a 7 (or any digit that overhangs it) at 1080p, where it is two pixels away. The base of a 2 is
+    /// inked low down to its end in the same way, but it is one stroke, with no clear column in it. What it cuts off is recorded in
+    /// <paramref name="dots"/>, as a dot, since its columns have the faint ink of the overhang above them.
+    /// </summary>
+    private static IEnumerable<(int Start, int End)> CutTrailing(Patch ink, (int Start, int End) run, Func<int, bool> trailing, double minTrail, double maxTrail, double minRest,
+        HashSet<(int Start, int End)> dots)
+    {
+        var cut = run.End;
+        while (cut > run.Start && trailing(cut - 1))
+            cut--;
+        var (top, bottom) = InkRows(ink, cut, run.End);
+        var clear = cut > run.Start && Enumerable.Range(top, Math.Max(0, bottom - top)).All(y => ink[cut - 1, y] < _inkRow);
+        if (run.End - cut < minTrail || run.End - cut > maxTrail || cut - run.Start < minRest || !clear)
+        {
+            yield return run;
+            yield break;
+        }
+        dots.Add((cut, run.End));
         yield return (run.Start, cut);
         yield return (cut, run.End);
     }
@@ -421,17 +470,18 @@ public static partial class NetWorthReader
         return (runs, peak);
     }
 
-    /// <summary>The rows a stretch of columns has ink on.</summary>
+    /// <summary>The rows a stretch of columns has ink on: in two columns at least, so a speck of noise beside a digit doesn't lengthen it.</summary>
     private static (int Top, int Bottom) InkRows(Patch ink, int x0, int x1)
     {
         int? first = null;
         var last = 0;
+        var needed = Math.Min(2, x1 - x0);
         for (var y = 0; y < ink.Height; y++)
         {
-            var inked = false;
-            for (var x = x0; x < x1 && !inked; x++)
-                inked = ink[x, y] >= _inkRow;
-            if (!inked)
+            var inked = 0;
+            for (var x = x0; x < x1 && inked < needed; x++)
+                inked += ink[x, y] >= _inkRow ? 1 : 0;
+            if (inked < needed)
                 continue;
             first ??= y;
             last = y;

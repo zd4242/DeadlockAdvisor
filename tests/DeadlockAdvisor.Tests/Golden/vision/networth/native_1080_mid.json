@@ -1,0 +1,33 @@
+{
+  "notes": [
+    "Mid: whole thousands and a total past 100k. Slot 1 is the spectated hero's mint pill, slot 11's is dim: that hero is dead.",
+    "A native 1920x1080 capture of a spectated match, cut to the strip: the portraits and the pills, none of the names."
+  ],
+  "screen_height": 1080,
+  "net_worth": [
+    "21",
+    "30",
+    "17",
+    "19",
+    "18",
+    "18",
+    "19",
+    "13",
+    "20",
+    "20",
+    "20",
+    "20"
+  ],
+  "team_totals": [
+    "124",
+    "111"
+  ],
+  "grid": {
+    "version": 3,
+    "center_x": 659.7542236150214,
+    "pitch": 87.9961937778292,
+    "top": 21.6,
+    "gap_ratio": 1.6560007777212622,
+    "width_ratio": 0.5270429306367348
+  }
+}
