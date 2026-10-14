@@ -1,0 +1,159 @@
+{
+  "screen_width": 1920,
+  "screen_height": 1080,
+  "match": "m10",
+  "phase": "mid, native 1080p: pale tags over pale icons",
+  "grid": {
+    "version": 3,
+    "center_x": 959.7542236150243,
+    "pitch": 87.9961937778282,
+    "top": 21.6,
+    "gap_ratio": 1.6560007777213124,
+    "width_ratio": 0.5270429306367411
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "vitality:enchanters_emblem",
+        "weapon:mystic_shot",
+        "spirit:mystic_vulnerability",
+        "spirit",
+        "spirit:boundless_spirit"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:melee_lifesteal",
+        "weapon:close_quarters",
+        "weapon:melee_charge",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder",
+        "vitality:enchanters_emblem",
+        "weapon:hunters_aura"
+      ]
+    },
+    "2": {
+      "cells": [
+        "vitality:extra_regen",
+        "weapon:stalker",
+        "weapon:kinetic_dash",
+        "vitality:trophy_collector",
+        "weapon:swift_striker",
+        "vitality:fortitude",
+        "weapon:point_blank"
+      ]
+    },
+    "3": {
+      "cells": [
+        "spirit:extra_spirit",
+        "weapon:active_reload",
+        "weapon:swift_striker",
+        "vitality",
+        "weapon:fleetfoot",
+        "vitality:veil_walker",
+        "weapon:ricochet"
+      ]
+    },
+    "4": {
+      "cells": [
+        "spirit:mystic_expansion",
+        "vitality:trophy_collector",
+        "spirit:duration_extender",
+        "spirit:mystic_vulnerability",
+        "spirit:rapid_recharge",
+        "vitality:veil_walker",
+        "spirit:boundless_spirit"
+      ]
+    },
+    "5": {
+      "cells": [
+        "weapon:opening_rounds",
+        "weapon:intensifying_magazine",
+        "weapon:fleetfoot",
+        "weapon:titanic_magazine",
+        "vitality:battle_vest",
+        "vitality:bullet_lifesteal",
+        "vitality",
+        "weapon:weighted_shots"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:healing_rite",
+        "vitality:rebuttal",
+        "spirit:mystic_burst",
+        "vitality:enchanters_emblem",
+        "vitality:battle_vest",
+        "weapon:swift_striker",
+        "weapon:headhunter",
+        "vitality:majestic_leap"
+      ]
+    },
+    "7": {
+      "cells": [
+        "weapon:monster_rounds",
+        "spirit:quicksilver_reload",
+        "weapon:swift_striker",
+        "vitality:enchanters_emblem",
+        "weapon:tesla_bullets",
+        "spirit",
+        "vitality:fortitude"
+      ]
+    },
+    "8": {
+      "cells": [
+        "spirit:extra_charge",
+        "weapon:opening_rounds",
+        "vitality",
+        "vitality:restorative_locket",
+        "vitality:healing_booster",
+        "spirit:arcane_surge",
+        "spirit:improved_spirit",
+        "spirit:disarming_hex"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:restorative_shot",
+        "weapon:close_quarters",
+        "vitality:battle_vest",
+        "spirit:bullet_resist_shredder",
+        "spirit:radiant_regeneration",
+        "weapon:hunters_aura",
+        "weapon:express_shot"
+      ]
+    },
+    "10": {
+      "cells": [
+        "weapon:monster_rounds",
+        "weapon:close_quarters",
+        "spirit:extra_charge",
+        "weapon:stalker",
+        "weapon:weakening_headshot",
+        "spirit:bullet_resist_shredder",
+        "weapon:melee_charge",
+        "vitality:spirit_shielding",
+        "vitality:lifestrike",
+        "spirit:spirit_snatch"
+      ]
+    },
+    "11": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:extra_charge",
+        "vitality:extra_health",
+        "vitality:extra_stamina",
+        "weapon:swift_striker",
+        "spirit:bullet_resist_shredder",
+        "weapon:titanic_magazine",
+        "weapon:headhunter",
+        "spirit"
+      ]
+    }
+  }
+}

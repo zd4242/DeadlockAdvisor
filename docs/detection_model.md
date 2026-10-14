@@ -117,14 +117,16 @@ the icon is 0.30 pitches square (0.97 of what WP24 measured on soft video frames
 **Where the cells are.** The grid comes from the portraits and the cells need not sit where it says: a Street Brawl's grid is a per cent out in pitch (118 against 116.8) and in the gap between the teams,
 and its top varies by a few pixels (and by 12 for a dead player's view). `ItemPlace` is the grid's numbers plus a scale, a vertical slide and a sideways slide for each team. The **tier tags** find
 them: every filled cell has a small solid tag in its top right corner, a triangle 0.47 of a cell along each edge, in its shop category's colour (`TagMap`: weapon hue 31-38, vitality 76-88, spirit 262
-on a blue panel and 303 on a brown one, the same on every board; the panel behind is never as saturated). `ItemPlace.Fit` slides and scales the cells to where the most tag windows fill with tag colour
+on a blue panel and 303 on a brown one, the same on every board; the panel behind is never as saturated; a freshly bought item's tag flashes, which blows spirit's purple out to a pale lilac, 255 231 255, that
+`TagMap` takes by its hue alone, and leaves vitality's lime and weapon's orange as they were: the newest cell of a hero is the one this shows on). `ItemPlace.Fit` slides and scales the cells to where the most tag windows fill with tag colour
 and offers the best few scales; `ItemReader.Refine` then slides each candidate, a team at a time, to where a spread of tagged cells match their category's icons best, and the candidate that matches best
 wins (a scale shows only in the deepest rows and trades off against the vertical slide, so the tags alone can't settle it).
 
 **Which cells are filled.** A cell is filled when its tag window holds tag colour **and** the tier numeral's dark strokes (`TierReader.InkShare`: 0.23 or more on real tags at every size, 0.08 or less on
 a glare or a coloured scene seen through the panel, which has the colour and no numeral). Further, a hero's cells are the leading ones, so a tag with more empty cells before it than tags is a stray
 colour, and a gap of more than two empty cells ends the hero's cells (`PlausibleEnd`). A cell that must be filled (a later one is) with no tag is **unseen** (the kill feed is over it); a black cell with
-a white question mark is **hidden** (a Street Brawl's enemy picks while items are chosen) and counts as filled, with no category. A slot is **covered**, and says nothing at all about its items, when the
+a white question mark is **hidden** (a Street Brawl's enemy picks while items are chosen) and counts as filled, with no category. The mark is in the middle of the cell: black with light reaching its
+edge (`ItemReader.Glyph`'s third number) is something else, such as the pause banner's lettering below a hero's short panel, and is nothing. A slot is **covered**, and says nothing at all about its items, when the
 band across its bars is flat (a tooltip or window: spread 2 to 3 against 5 and up), or when four of its tag windows hold tag colour with no numeral (a screen-wide colour wash). A hero a tooltip's edge
 leaves half visible isn't recognised as covered; a consumer must not take an empty read for "has nothing" (see the rules).
 
@@ -137,7 +139,13 @@ draws that item and is matched too (a dark variant of an icon the API draws ligh
 (I to IV, dark strokes on the tag) is read against references cut from the **same board**: the cells the icons identified carry a known tier, so each board brings what it needs at its own resolution
 (`TierReader`; leave one out, the numerals of the corpus read as their item's tier or not at all). The tier does three things:
 - **Veto.** A cell read confidently as an item whose tier the numeral clearly contradicts (another tier's references at 0.90 or better, and 0.05 over its own) is made unsure: either the numeral or the
-  item is wrong, and the item is more likely, an upgrade drawn like what it upgrades from (Enduring Speed, tier II, is drawn like Sprint Boots, tier I; the API's art for it is a running man).
+  item is wrong, and the item is more likely, an upgrade drawn like what it upgrades from (Enduring Speed, tier II, is drawn like Sprint Boots, tier I; the API's art for it is a running man). At 1080p
+  the veto is what keeps Sprint Boots (a black boot the game draws darker than the API's winged one) from being read as Debuff Reducer (a dark arrow), which the icons score at 0.91 against 0.83.
+- **The ink, at 1080p.** The strokes of the numeral are a pixel wide there, and the shapes of I, II and III correlate at 0.96 or better, so the shape can't say. The ink can: the share of the tag's brightness
+  its strokes take away (`TierReader.Numeral.Mass`, in thousandths of the cell's area) was I 4.0, II 5.4, III 5.9 and IV 5.0 on every native 1080p board, each within 0.1, where the references the board's own
+  confident cells give say where each tier's is. A cell whose ink is within 3 spreads of one tier (a spread is at least 2% of its median) and at least 3.5 and twice as far from the next is that tier, and a
+  confident read whose ink is 5 spreads from its tier's and 3 from another's is vetoed. Only between cells of 24 and 31 pixels: at 1440p (35) the shapes read every tier and the ink doesn't (the strokes of
+  IV fall on the pixels differently from tag to tag, 6.0 to 8.5 beside III's 8.9), and at 900p (22) I and II blur into each other. A tag brighter than 1.5 times the board's usual is a flash and its numeral is not read by ink.
 - **A second look** among the items of the numeral's tier alone, for cells still unsure: this settles items drawn alike at different tiers (Superior and Compress Cooldown). Because the best of one tier
   looks like a match whatever the truth if the true item has no art that matches, it has to be better: a score of **0.75**, and no item of another tier matching more than 0.05 better.
 - Unknown items keep their tier, so their cost is known.
@@ -147,11 +155,31 @@ brightness). In a standard match a bar's fill is `1 - e^(-souls / 10000)` of the
 0.19); `BarReader.Check` compares a hero's bars with the items read and flags a bar more than 0.15 from it (with exact souls) or emptier than the least the cells say (an unknown cell). A disagreement says a
 cell was read as the wrong tier or category or a bar was misread, not which. A Street Brawl's bars follow another, steeper curve and aren't checked.
 
-**What it measures.** A read takes 0.6 to 0.9 seconds on a desktop CPU (matching and refining dominate), off the UI thread. On the labelled boards (`Golden/vision/items/corpus`, 12 boards from the start of a match to its end, native 2560×1440, 970 item cells): 86% of the cells read confidently right, none
-confidently wrong, every cell found with its category and tier, every hero's cells counted right, at native size and shrunk to what 1080p and 900p screens draw (85% and 86%; simulated, the corpus has no native
-smaller capture). The rest are unknown, and they repeat from board to board: icons the game draws in a way the API's art doesn't (Tankbuster, Healbane and Enduring Speed are dark or different in game), some
+**What it measures.** A read takes 0.6 to 0.9 seconds on a desktop CPU (matching and refining dominate), off the UI thread. On the labelled boards (`Golden/vision/items/corpus`: 13 native 2560×1440, from the start of a match to its end, and 12 native 1920×1080 spectated, 1075 and 920 item cells): 85% of the 1440p cells and 89% of the
+1080p ones read confidently right, none confidently wrong, every cell found with its category, every hero's cells counted right, and the 1440p boards shrunk to what 1080p and 900p screens draw read 85% (simulated).
+The same paused moment captured at both sizes (`native1080_paused`, `native1440_paused`) reads the same 88 cells at native size, where the shrunk copy reads 87 and the 900p one 85: a native 1080p capture is no
+worse than a 1440p one, and the shrinking was a little harsher than the game. What native 1080p showed that shrinking did not (the numerals, Sprint Boots, the flash of a new item's tag, the pause banner) is above.
+The rest are unknown, and they repeat from board to board: icons the game draws in a way the API's art doesn't (Tankbuster, Healbane and Enduring Speed are dark or different in game), some
 active items, and cells at a score a little under the bar. The corpus is the user's own captures with everything outside the heroes' columns and above their bars painted black (so no name, kill feed
 or nameplate is in it), and a tooltip over a slot's edge and a screen-wide colour wash are in it as the cases they are.
+
+## Net worth
+
+`NetWorthReader` reads the pill under each portrait and each team's total beside the clock, all in pitches (`NetWorthReading` keeps a side only when its pills add up to its total, within the game's rounding, so a
+misread digit costs the side and never gives a wrong figure). The digits are matched against `Vision/net_worth_glyphs.json`, cut from the labelled strips in the tests (`Golden/vision/fixtures`, nine at 1440p, and
+`Golden/vision/networth`, six native 1080p strips of a spectated match with their labels as the game prints them: the pills, then the totals). Rebuild them after adding a strip with
+`dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~ReferenceDigitsAreBuiltFromTheLabelledFixtures"`; `NetWorthReaderTests` reads every strip, and each with the digits
+cut only from the others, and nothing it reports may be wrong. `DEADLOCK_NETWORTH_DUMP=<kept captures>` writes every pill's and total's glyphs with their score and margin to `mockups/net_worth_dump.txt`.
+
+What 1080p, where a digit is 7 pixels wide and 9 tall, showed (the left total never read, so the whole left team was dropped; any pill with a 3, a 7 or a dead hero's dim digits didn't):
+- **The left total's crest** is black and sits 0.18 to 0.40 pitches left of the clock's centre. In the window it set the darkest value, so the digits (dark brown, not black) fell under the "strong ink" bar and
+  were not found at all. The window now stops short of it (`NetWorthReader._totalsCrest`).
+- **Padding.** A glyph's columns are padded by a pixel either side, and a stretch no wider than 0.95 of the digit height is one glyph; the padding is two pixels at any size, so a 3 (7 wide, 9 tall) came out as two
+  digits at 1080p. The padding is taken off first (`OneGlyphWide`).
+- **Specks.** Noise in the frame (a spectator's HUD has it) lengthened a digit's rows by a pixel or two, enough to fail the height a total's digits must have; a row counts when two columns have ink in it (`InkRows`).
+- **A point after a 7.** At 1080p the decimal point is two pixels from a 7 whose top bar overhangs it, so they came out as one glyph read as "78" for "7.8"; the columns that carry strong ink only low down, past a
+  clear column, are cut off as the point (`CutTrailing`). The base of a 2 is the same low ink but one stroke with no clear column.
+- **Digits at this size** need references from it: a 7 scored 0.79 to 0.85 against the 1440p ones, under the 0.85 bar.
 
 ## What the numbers are
 
@@ -195,6 +223,7 @@ Tools in `VisionCorpusTools`, each run only when its environment variable is set
 | `DEADLOCK_ITEM_ART=<an assets/items folder>` | Shrink every item icon to 100 pixels into `Golden/vision/items/art` (the item corpus's art). |
 | `DEADLOCK_ITEM_DRAFT=<kept scoreboard captures>` | Draft an item label for each capture, with two sheets in `mockups/item_drafts` to check it by: the confident reads (the cell beside its icon) and the others (the cell beside its three best candidates). `DEADLOCK_ASSETS` uses the full-size art. |
 | `DEADLOCK_ITEM_PROMOTE=<kept scoreboard captures>` | Cut the capture each label in `Golden/vision/items/corpus` names as its `source`, with everything outside the heroes' columns and above their bars painted black. |
+| `DEADLOCK_NETWORTH_DUMP=<kept captures>` | Every pill's and total's glyphs, with the best digit, its score and margin, and what the reader makes of it, into `mockups/net_worth_dump.txt` (see "Net worth"). |
 
 **How a Tab read reaches the match.** `ScoreboardAction` reads the board (strip, net worth), and once it is the match already applied it runs `ItemReader.Read` on the same band and grid (the blank slots of a Street
 Brawl left out) and hands each hero's `HeroItems` to `MatchState.Builds` (`HeroBuild.Merge`), which keeps it as new information about the cells it saw and never as the whole of the hero's items: a covered slot
@@ -207,7 +236,9 @@ net worth still lands.
 and the newest 300 only (move the ones you want to keep elsewhere). Draft them, look at **every** confident read on the sheets (a wrong item can look right: the numeral caught two that did), copy the label into the corpus
 with its `match` and `phase`, name the cells you checked (`weapon:active_reload`; one you couldn't tell stays `weapon`), promote, and regenerate the report with
 `dotnet test <tests csproj> -c Release -e DEADLOCK_UPDATE_GOLDENS=1 --filter "FullyQualifiedName~ItemCorpusTests|FullyQualifiedName~ItemDerivationTests"`. `ItemCorpusTests.NoCellIsReadConfidentlyWrong` fails for a confident read of a cell the label
-doesn't name, so a change that reads more is never unverified.
+doesn't name, so a change that reads more is never unverified. A board of a native 1440p is also read shrunk to 1080p and 900p; one captured smaller is read only as it is (`ItemEval.ScalesOf`), and the
+report's sizes say which are native. Two things to look for on the sheets that a draft can't tell you: an icon the game draws unlike the API's (a wrong confident read looks right beside an icon that scores
+0.91), and a cell the draft calls *unseen* with nothing over it, which is a tag the reader missed.
 
 **To add captures:** Detect keeps every applied one in `<data>/captures/detect_*.png` and `.json`,
 labelled with the heroes applied and what was read. Draft them, check the contact sheets, write the

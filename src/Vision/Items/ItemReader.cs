@@ -35,6 +35,7 @@ public static class ItemReader
     private const double _hiddenGlyphLuminance = 100;
     private const double _hiddenMinGlyph = 0.006;
     private const double _hiddenMaxGlyph = 0.12;
+    private const double _hiddenMaxEdge = 0.05;
 
     /// <summary>The cells the refinement looks at, spread over the board, and the fewest of a team's it moves that team on.</summary>
     private const int _referenceCells = 36;
@@ -82,7 +83,7 @@ public static class ItemReader
         foreach (var pass in passes)
         {
             foreach (var cell in pass.Cells.Where(cell => cell.Tier is not null && cell.Confident))
-                tiers.Add(cell.Tier!.Value, TierReader.Frame(band, place, pass.Slot, cell.Cell), pass.Slot, cell.Cell);
+                tiers.Add(cell.Tier!.Value, TierReader.Read(band, place, pass.Slot, cell.Cell), pass.Slot, cell.Cell);
         }
         return tiers;
     }
@@ -102,7 +103,7 @@ public static class ItemReader
             {
                 var cell = changed[at];
                 if (!cell.Confident || cell.Tier is not { } tier
-                    || tiers.Contradicts(TierReader.Frame(band, place, pass.Slot, cell.Cell), tier, pass.Slot, cell.Cell) is not { } seen)
+                    || tiers.Contradicts(TierReader.Read(band, place, pass.Slot, cell.Cell), tier, pass.Slot, cell.Cell) is not { } seen)
                     continue;
                 changed[at] = cell with { ItemId = null, Confident = false, Tier = seen };
                 vetoed++;
@@ -244,7 +245,7 @@ public static class ItemReader
         {
             if (cell.IsIdentified || tiers.ReferenceCount == 0)
                 continue;
-            if (tiers.Classify(TierReader.Frame(band, place, pass.Slot, cell.Cell)) is { } tier)
+            if (tiers.Classify(TierReader.Read(band, place, pass.Slot, cell.Cell)) is { } tier)
             {
                 tierOf[cell.Cell] = tier;
                 open.Add((cell.Cell, pass.Scores[cell.Cell]));
@@ -393,29 +394,36 @@ public static class ItemReader
         return Math.Sqrt(Math.Max(0, squares / count - mean * mean));
     }
 
-    /// <summary>The mean luminance of a cell and the share of it that is bright, over its whole area.</summary>
-    internal static (double Mean, double Bright) Glyph(RgbImage band, ItemPlace place, int slot, int cell)
+    /// <summary>The mean luminance of a cell, the share of it that is bright, and the share of the bright that is in its outer fifth, over its whole area.</summary>
+    internal static (double Mean, double Bright, double Edge) Glyph(RgbImage band, ItemPlace place, int slot, int cell)
     {
         var (x, y) = place.Cell(slot, cell);
         if (x - place.Side / 2 < 0 || y - place.Side / 2 < 0 || x + place.Side / 2 > band.Width || y + place.Side / 2 > band.Height)
-            return (double.NaN, double.NaN);
+            return (double.NaN, double.NaN, double.NaN);
         var sample = ItemFrame.Sample(band, x, y, place.Side, _hiddenSize);
         double total = 0;
-        var bright = 0;
+        int bright = 0, edge = 0;
         var cells = _hiddenSize * _hiddenSize;
         for (var i = 0; i < cells; i++)
         {
             var luminance = 0.299 * sample.Pixels[i * 3] + 0.587 * sample.Pixels[i * 3 + 1] + 0.114 * sample.Pixels[i * 3 + 2];
             total += luminance;
-            bright += luminance >= _hiddenGlyphLuminance ? 1 : 0;
+            if (luminance < _hiddenGlyphLuminance)
+                continue;
+            bright++;
+            var (column, row) = (i % _hiddenSize, i / _hiddenSize);
+            edge += Math.Min(Math.Min(column, row), Math.Min(_hiddenSize - 1 - column, _hiddenSize - 1 - row)) < _hiddenSize / 5 ? 1 : 0;
         }
-        return (total / cells, (double)bright / cells);
+        return (total / cells, (double)bright / cells, bright == 0 ? 0 : (double)edge / bright);
     }
 
-    /// <summary>A black cell with a white mark in the middle: the question mark the game draws for an item it keeps hidden.</summary>
+    /// <summary>
+    /// A black cell with a white mark in the middle: the question mark the game draws for an item it keeps hidden. Black with light
+    /// reaching its edge is something else drawn over the panel, such as the pause banner's lettering under a short panel.
+    /// </summary>
     private static bool IsHidden(RgbImage band, ItemPlace place, int slot, int cell)
     {
-        var (mean, bright) = Glyph(band, place, slot, cell);
-        return mean <= _hiddenMaxMean && bright is >= _hiddenMinGlyph and <= _hiddenMaxGlyph;
+        var (mean, bright, edge) = Glyph(band, place, slot, cell);
+        return mean <= _hiddenMaxMean && bright is >= _hiddenMinGlyph and <= _hiddenMaxGlyph && edge <= _hiddenMaxEdge;
     }
 }

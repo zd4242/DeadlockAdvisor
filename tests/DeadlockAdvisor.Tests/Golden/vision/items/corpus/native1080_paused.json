@@ -1,0 +1,168 @@
+{
+  "screen_width": 1920,
+  "screen_height": 1080,
+  "match": "m8",
+  "phase": "late, paused, native 1080p",
+  "grid": {
+    "version": 3,
+    "center_x": 959.7542236150215,
+    "pitch": 87.99619377782895,
+    "top": 21.6,
+    "gap_ratio": 1.6560007777212746,
+    "width_ratio": 0.5270429306367364
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "spirit:extra_charge",
+        "weapon:titanic_magazine",
+        "weapon:fleetfoot",
+        "weapon:weighted_shots",
+        "vitality:fortitude",
+        "weapon:point_blank",
+        "vitality:plated_armor",
+        "vitality:juggernaut"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:swift_striker",
+        "weapon:active_reload",
+        "weapon:titanic_magazine",
+        "vitality:bullet_lifesteal",
+        "spirit:bullet_resist_shredder",
+        "vitality:fortitude",
+        "weapon:burst_fire",
+        "spirit@3",
+        "weapon:ricochet",
+        "vitality:siphon_bullets",
+        "weapon:silencer"
+      ]
+    },
+    "2": {
+      "cells": [
+        "spirit:mystic_expansion",
+        "spirit:improved_spirit",
+        "vitality@2",
+        "spirit:rapid_recharge",
+        "spirit:torment_pulse",
+        "spirit@3",
+        "spirit@3",
+        "vitality:healing_nova"
+      ]
+    },
+    "3": {
+      "cells": [
+        "weapon:monster_rounds",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "weapon:mystic_shot",
+        "vitality:enchanters_emblem",
+        "spirit:mystic_vulnerability",
+        "vitality:spirit_lifesteal",
+        "spirit@3",
+        "spirit@3",
+        "spirit:mystic_reverb"
+      ]
+    },
+    "4": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_burst",
+        "vitality:trophy_collector",
+        "vitality:debuff_reducer",
+        "spirit:radiant_regeneration",
+        "spirit:torment_pulse",
+        "spirit@3",
+        "vitality:indomitable"
+      ]
+    },
+    "5": {
+      "cells": [
+        "spirit:extra_spirit",
+        "vitality:debuff_reducer",
+        "spirit:rapid_recharge",
+        "vitality:fortitude",
+        "weapon:ballistic_enchantment",
+        "spirit:escalating_exposure",
+        "spirit:magic_carpet"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:close_quarters",
+        "vitality:extra_health",
+        "vitality@1",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder",
+        "vitality:debuff_reducer",
+        "spirit:spirit_snatch",
+        "weapon:hunters_aura",
+        "vitality:lifestrike",
+        "weapon:crushing_fists"
+      ]
+    },
+    "7": {
+      "cells": [
+        "spirit:quicksilver_reload",
+        "vitality:trophy_collector",
+        "spirit:cold_front",
+        "spirit:improved_spirit",
+        "spirit:duration_extender",
+        "spirit:torment_pulse",
+        "vitality:veil_walker",
+        "spirit@3"
+      ]
+    },
+    "8": {
+      "cells": [
+        "weapon:intensifying_magazine",
+        "vitality:reactive_barrier",
+        "weapon:split_shot",
+        "spirit:bullet_resist_shredder",
+        "weapon:burst_fire",
+        "vitality@3",
+        "spirit@4"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:opening_rounds",
+        "weapon:mystic_shot",
+        "weapon:recharging_rush",
+        "spirit:improved_spirit",
+        "spirit:rapid_recharge",
+        "vitality@3",
+        "spirit@3",
+        "spirit@3"
+      ]
+    },
+    "10": {
+      "cells": [
+        "weapon:monster_rounds",
+        "weapon:headshot_booster",
+        "vitality:enchanters_emblem",
+        "spirit:arcane_surge",
+        "spirit:rapid_recharge",
+        "vitality:warp_stone",
+        "spirit:superior_duration",
+        "spirit:disarming_hex",
+        "spirit:greater_expansion",
+        "spirit@3"
+      ]
+    },
+    "11": {
+      "cells": [
+        "vitality:extra_regen",
+        "spirit:mystic_expansion",
+        "weapon:melee_charge",
+        "vitality@2",
+        "weapon:hunters_aura",
+        "vitality:veil_walker",
+        "vitality:warp_stone",
+        "weapon:point_blank",
+        "spirit:echo_shard"
+      ]
+    }
+  }
+}

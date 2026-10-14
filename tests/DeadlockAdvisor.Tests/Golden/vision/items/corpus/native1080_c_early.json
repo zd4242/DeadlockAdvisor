@@ -1,0 +1,134 @@
+{
+  "screen_width": 1920,
+  "screen_height": 1080,
+  "match": "m10",
+  "phase": "early, native 1080p",
+  "grid": {
+    "version": 3,
+    "center_x": 959.7542236150241,
+    "pitch": 87.99619377782817,
+    "top": 21.6,
+    "gap_ratio": 1.6560007777213146,
+    "width_ratio": 0.5270429306367412
+  },
+  "heroes": {
+    "0": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:arcane_surge",
+        "vitality:trophy_collector",
+        "spirit:improved_spirit",
+        "vitality:enchanters_emblem",
+        "weapon:mystic_shot"
+      ]
+    },
+    "1": {
+      "cells": [
+        "weapon:restorative_shot",
+        "vitality:melee_lifesteal",
+        "weapon:close_quarters",
+        "weapon:melee_charge",
+        "weapon:stalker",
+        "spirit:bullet_resist_shredder"
+      ]
+    },
+    "2": {
+      "cells": [
+        "weapon:close_quarters",
+        "vitality:extra_regen",
+        "weapon:rapid_rounds",
+        "vitality:extra_health",
+        "weapon:stalker",
+        "weapon:kinetic_dash",
+        "vitality:trophy_collector"
+      ]
+    },
+    "3": {
+      "cells": [
+        "spirit:extra_spirit",
+        "vitality",
+        "weapon:active_reload",
+        "weapon:swift_striker",
+        "vitality:veil_walker"
+      ]
+    },
+    "4": {
+      "cells": [
+        "spirit:improved_spirit",
+        "vitality:trophy_collector",
+        "spirit:rapid_recharge"
+      ]
+    },
+    "5": {
+      "cells": [
+        "vitality",
+        "weapon:opening_rounds",
+        "weapon:intensifying_magazine",
+        "weapon:fleetfoot",
+        "weapon:titanic_magazine"
+      ]
+    },
+    "6": {
+      "cells": [
+        "weapon:restorative_shot",
+        "weapon:rapid_rounds",
+        "vitality:healing_rite",
+        "vitality:rebuttal",
+        "vitality:enchanters_emblem",
+        "vitality:battle_vest",
+        "weapon"
+      ]
+    },
+    "7": {
+      "cells": [
+        "weapon:monster_rounds",
+        "vitality:extra_health",
+        "spirit:quicksilver_reload",
+        "weapon:swift_striker",
+        "weapon:tesla_bullets"
+      ]
+    },
+    "8": {
+      "cells": [
+        "spirit:rusted_barrel",
+        "spirit:extra_charge",
+        "vitality:extra_stamina",
+        "weapon:opening_rounds",
+        "vitality",
+        "vitality:restorative_locket",
+        "vitality:healing_booster"
+      ]
+    },
+    "9": {
+      "cells": [
+        "weapon:restorative_shot",
+        "weapon:close_quarters",
+        "vitality:battle_vest",
+        "spirit:bullet_resist_shredder",
+        "spirit:radiant_regeneration"
+      ]
+    },
+    "10": {
+      "cells": [
+        "vitality:melee_lifesteal",
+        "weapon:monster_rounds",
+        "weapon:close_quarters",
+        "weapon:stalker",
+        "weapon:weakening_headshot",
+        "spirit:bullet_resist_shredder",
+        "weapon:melee_charge"
+      ]
+    },
+    "11": {
+      "cells": [
+        "weapon:restorative_shot",
+        "spirit:extra_charge",
+        "vitality:extra_health",
+        "weapon:extended_magazine",
+        "weapon:swift_striker",
+        "spirit:bullet_resist_shredder",
+        "weapon:headhunter"
+      ]
+    }
+  }
+}

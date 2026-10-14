@@ -11,6 +11,9 @@ public sealed record ItemOutcome(ItemCorpusBoard Board, double Scale, ItemBoardR
 {
     public int Height => (int)Math.Round(Board.Label.ScreenHeight * Scale);
 
+    /// <summary>Whether the board was shrunk from a larger capture rather than captured at this size.</summary>
+    public bool Simulated => Scale != 1.0;
+
     public string Name => $"{Board.Name}@{Height}";
 
     public IEnumerable<HeroItems> Heroes => Read.Heroes;
@@ -34,6 +37,9 @@ public sealed class ItemTally
 
     /// <summary>The cells of items a label and a read both have, which the rest are shares of.</summary>
     public int Cells { get; set; }
+
+    /// <summary>How many of the unknown cells have their tier read from the numeral, which gives their cost.</summary>
+    public int UnknownWithTier { get; set; }
 }
 
 /// <summary>
@@ -42,11 +48,15 @@ public sealed class ItemTally
 /// </summary>
 public static class ItemEval
 {
-    /// <summary>The sizes read: as captured, and shrunk to what a 1080p and a 900p screen draw (simulated, from the 1440p captures).</summary>
-    public static readonly double[] Scales = [1.0, 0.75, 0.625];
+    /// <summary>The screen heights read: a 1440p board as captured, and shrunk to the others (simulated, as what a 1080p and a 900p screen draw).</summary>
+    public static readonly int[] Heights = [1440, 1080, 900];
+
+    /// <summary>1 for the board as captured, then the scale of each smaller height for a board of the biggest (a smaller capture is read only as it is).</summary>
+    public static double[] ScalesOf(ItemCorpusBoard board) =>
+        board.Label.ScreenHeight == Heights[0] ? [1.0, .. Heights.Skip(1).Select(height => (double)height / board.Label.ScreenHeight)] : [1.0];
 
     public static List<ItemOutcome> Run(IEnumerable<ItemCorpusBoard> boards, ItemTemplates templates, double[]? scales = null) =>
-        boards.SelectMany(board => (scales ?? Scales).Select(scale => Run(board, scale, templates))).ToList();
+        boards.SelectMany(board => (scales ?? ScalesOf(board)).Select(scale => Run(board, scale, templates))).ToList();
 
     public static ItemOutcome Run(ItemCorpusBoard board, double scale, ItemTemplates templates)
     {
@@ -96,7 +106,10 @@ public static class ItemEval
                 if (read.Tier is { } tier && truthTier is { } wanted && tier != wanted)
                     tally.TierWrong.Add(where);
                 if (!read.IsIdentified)
+                {
                     tally.Unknown.Add(where);
+                    tally.UnknownWithTier += read.Tier is not null ? 1 : 0;
+                }
                 else if (id is null)
                     tally.Unverified.Add($"{where} ({read.ItemId})");
                 else if (id == read.ItemId)
@@ -137,10 +150,10 @@ public static class ItemEval
     {
         var report = new StringBuilder("# The item reader on the labelled boards\n\n");
         report.AppendLine(string.Create(CultureInfo.InvariantCulture,
-            $"{outcomes.Select(o => o.Board.Name).Distinct().Count()} boards, each read as captured and shrunk to what 1080p and 900p screens draw (simulated). Every confident read is checked against its label; an \"unverified\" one is a cell the label doesn't name.\n"));
-        report.AppendLine("| size | cells | confident right | confident wrong | unverified | unknown | category wrong | tier wrong | heroes' counts right | slots covered right | bars disagreeing |");
-        report.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|");
-        foreach (var size in outcomes.GroupBy(outcome => outcome.Height).OrderByDescending(group => group.Key))
+            $"{outcomes.Select(o => o.Board.Name).Distinct().Count()} boards, each read as captured and, where it is bigger, shrunk to what 1080p and 900p screens draw (simulated). A size with boards captured at it is *native*, one shrunk from a larger capture *simulated*. Every confident read is checked against its label; an \"unverified\" one is a cell the label doesn't name.\n"));
+        report.AppendLine("| size | boards | cells | confident right | confident wrong | unverified | unknown | unknown with a tier | category wrong | tier wrong | heroes' counts right | slots covered right | bars disagreeing |");
+        report.AppendLine("|---|---|---|---|---|---|---|---|---|---|---|---|---|");
+        foreach (var size in outcomes.GroupBy(outcome => (outcome.Height, outcome.Simulated)).OrderByDescending(group => group.Key.Height).ThenBy(group => group.Key.Simulated))
         {
             var tallies = size.Select(outcome => (outcome, tally: Tally(outcome, templates))).ToList();
             var cells = tallies.Sum(t => t.tally.Cells);
@@ -150,7 +163,7 @@ public static class ItemEval
                 .SelectMany(outcome => outcome.Heroes.SelectMany(hero => hero.Covered ? [] : BarReader.Check(hero, templates))).ToList();
             var covered = size.Sum(outcome => outcome.Heroes.Count(hero => hero.Covered));
             report.AppendLine(string.Create(CultureInfo.InvariantCulture,
-                $"| {size.Key}p | {cells} | {Share(Sum(t => t.ConfidentCorrect.Count), cells)} | {Sum(t => t.ConfidentWrong.Count)} | {Sum(t => t.Unverified.Count)} | {Share(Sum(t => t.Unknown.Count), cells)} | {Sum(t => t.CategoryWrong.Count)} | {Sum(t => t.TierWrong.Count)} | {heroes - Sum(t => t.CountWrong.Count)} of {heroes} | {covered} read as covered, {Sum(t => t.CoverWrong.Count)} wrong | {checks.Count(check => check.Disagrees)} of {checks.Count} ({checks.Count(check => check.Exact)} exact) |"));
+                $"| {size.Key.Height}p {(size.Key.Simulated ? "simulated" : "native")} | {size.Count()} | {cells} | {Share(Sum(t => t.ConfidentCorrect.Count), cells)} | {Sum(t => t.ConfidentWrong.Count)} | {Sum(t => t.Unverified.Count)} | {Share(Sum(t => t.Unknown.Count), cells)} | {Share(Sum(t => t.UnknownWithTier), Sum(t => t.Unknown.Count))} | {Sum(t => t.CategoryWrong.Count)} | {Sum(t => t.TierWrong.Count)} | {heroes - Sum(t => t.CountWrong.Count)} of {heroes} | {covered} read as covered, {Sum(t => t.CoverWrong.Count)} wrong | {checks.Count(check => check.Disagrees)} of {checks.Count} ({checks.Count(check => check.Exact)} exact) |"));
         }
 
         report.AppendLine("\n## Per board\n");

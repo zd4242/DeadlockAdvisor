@@ -11,7 +11,7 @@ how the parts work. Read this first, then the doc for the area you're touching:
 | [publishing.md](publishing.md) | releases, the published model, shared match data, workflows |
 | [roadmap/README.md](roadmap/README.md) | planned improvements, as work packages ("implement WP08") |
 
-Last checked against the code: 2026-10-12. Names below are stable; line numbers aren't given on purpose. If you add a
+Last checked against the code: 2026-10-13. Names below are stable; line numbers aren't given on purpose. If you add a
 service, page, setting, shortcut or update channel, update the matching section here in the same commit.
 
 ## What the app is
@@ -398,10 +398,11 @@ included (it needs a click). With `AppSettings.ComeUpForReview` the window also 
   `Golden`, `PumpContext`: a stand-in UI thread whose continuations the test runs itself, to show what ran off it, vision helpers), `Golden/` (reference outputs; regenerate with `DEADLOCK_UPDATE_GOLDENS=1` as CLAUDE.md and
   scoring_model.md say). Live network tests run only with `DEADLOCK_LIVE_API` set. The vision corpus tools run on environment
   variables (detection_model.md), and so does `TabViewSpike`, the measurements behind the Tab-scoreboard packages (roadmap WP24).
-- The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, read as captured and at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
+- The item reader's tests: `ItemCorpusTests` (every board in `Golden/vision/items/corpus`, 1440p and native 1080p, read as captured and, for the 1440p ones, at 1080p and 900p, against its label and `corpus_report.json`; `mockups/items_report.md`),
   `ItemGridTests` (cell geometry, tags and the fit, on synthetic boards), `ItemDerivationTests` (icon framing and its fingerprint, `mockups/item_frames.md`), `BarReaderTests`. `OverlapTests` and `Ui/TeamOverlapTests` cover the team-overlap discount; `BuildShiftTests`, `ItemLeanTests`, `Ui/BuildShiftUiTests`, `Ui/ItemLeanUiTests` and `ModelHealthTests` the build shifts and item leans, and `BuildShiftFit` is the
   env-driven measurement of their `Alpha` (`DEADLOCK_BUILD_FIT`, scoring_model.md). `Support/ItemEval`, `ItemBoardLabel`,
-  `ItemData` (which also composes a whole scoreboard capture, `ScoreboardOf`: the 1440p fixture's hero strip over a labelled board's items, for `ScoreboardActionTests`) and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md). Boards are masked to the heroes' columns below their bars, so no name is committed.
+  `ItemData` (which also composes a whole scoreboard capture, `ScoreboardOf`: the 1440p fixture's hero strip over a labelled board's items, for `ScoreboardActionTests`) and `ContactSheet` are theirs, and `ItemCorpusTools` makes corpus boards (detection_model.md).
+  `NetWorthReaderTests` reads the strips in `Golden/vision/fixtures` and the native 1080p ones in `Golden/vision/networth` and builds `Vision/net_worth_glyphs.json` from both; `NetWorthCorpusTools` dumps what the reader sees in kept captures (detection_model.md, "Net worth"). Boards are masked to the heroes' columns below their bars, so no name is committed.
 
 ## 10. Recipes
 

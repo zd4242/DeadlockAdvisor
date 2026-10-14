@@ -88,6 +88,25 @@ All three stages are built (`src/Vision/Items/`), with the corpus (`tests/Deadlo
 
 **Left out**
 - Learning an item's in-game look from a correction (there is no review UI for items): `assets/items/<item_id>/*.png` are matched as variants of the item, and nothing writes them. The unknown cells above would be the first to gain.
-- A native capture at 1080p or any other HUD scale: the corpus has only 2560×1440, and the smaller sizes are shrunk from it (WP24 did the same). A native one is worth adding when someone has one.
+- A native capture at 1080p or any other HUD scale: the corpus had only 2560×1440, and the smaller sizes were shrunk from it (WP24 did the same). Native 1080p boards were added on 2026-10-13, below.
 - `CLAUDE.md`'s detection rules were not extended to items (the file says only if the user agrees); `docs/detection_model.md`, "Rules", carries the item rule.
 - Wiring (WP27), and what to do with a tooltip's half-covered slot beyond not trusting an empty read.
+
+## Findings: native 1080p (2026-10-13)
+
+Twelve native 1920×1080 boards of three spectated matches (and a 1440p twin of one paused moment) went into the corpus, and the reader was changed for what they showed. The numbers, against the shrunk copies of the
+1440p boards (`mockups/items_report.md`): native 1080p reads **89%** of 920 cells confidently right, none wrong, every hero's cells counted right; the 1440p boards shrunk to 1080p read 85%. The same paused moment
+captured at both sizes reads the same 88 cells natively, 87 shrunk, 85 at 900p: a native 1080p capture is as good as a 1440p one. What native showed that shrinking hid:
+
+- **A confident wrong read.** Sprint Boots (tier I; a black boot, drawn darker than the API's winged one) read as Debuff Reducer (tier II, a dark arrow), 0.91 against 0.83, in four cells of two boards. Nothing in the
+  corpus had a Sprint Boots. The tier numeral would have caught it, but at 1080p the numeral's shape can't be read (strokes a pixel wide, I, II and III correlate at 0.96 or better). The numeral's **ink** can
+  (I 4.0, II 5.4, III 5.9, IV 5.0, each within 0.1): `TierReader` uses it between cells of 24 and 31 pixels, to read the tier of unknown cells (85% of them now have one, they had none) and to veto. The boots are
+  now unknown at tier I, which is their cost, exactly. Above 31 pixels the shapes read and the ink doesn't (IV varies 6.0 to 8.5 at 1440p); below 24 neither does.
+- **Missed cells.** A freshly bought item's tag flashes, and spirit's purple is blown out to a pale lilac (255, 231, 255) that the tag test (saturation 0.30) didn't take for a tag: the newest cell of a hero went
+  unread, or read as *unseen*. It had been missed on a 1440p Street Brawl board too, and the corpus label had missed it with the reader (`brawl_item_choice`, slot 6, Boundless Spirit). `TagMap` takes a pale lilac of hue 280 to 330 as spirit.
+- **Phantom cells.** The pause banner's black and white lettering lay below a short panel (a hero with one item) and read as five hidden and unseen cells; a hidden cell is a black cell with a mark *in the middle*,
+  not one with light at its edge.
+- **A tier numeral test that was written for 1440p** (5% unread) is per size now (25% allowed at 1080p).
+- **Net worth** at 1080p had four faults of its own (the left total, a 3, a point after a 7, dead heroes' dim digits), fixed in `NetWorthReader` with six native strips as references: detection_model.md, "Net worth".
+
+Still open: the 900p numerals (simulated only), and a slot whose first cells lie under the pause banner reads as having nothing there (the half-covered case above), which a spectator can see and a player can't.

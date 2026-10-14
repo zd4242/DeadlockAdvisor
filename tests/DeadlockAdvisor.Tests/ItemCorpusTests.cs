@@ -96,13 +96,15 @@ public class ItemCorpusTests
 
     /// <summary>
     /// The tier numeral is read against references cut from the same board, so each of the labelled cells has to read as its item's
-    /// tier by the references of the others, or not at all.
+    /// tier by the references of the others, or not at all. At 1440p the shapes read nearly all of them; at 1080p they can't and the
+    /// ink of the strokes does (<see cref="TierReader"/>), for most.
     /// </summary>
     [Fact]
     public void ANumeralReadsAsItsItemsTierOrNotAtAll()
     {
         var templates = ItemData.Templates;
-        var (cells, unread) = (0, 0);
+        var cellsAt = new Dictionary<int, int>();
+        var unreadAt = new Dictionary<int, int>();
         var wrong = new List<string>();
         foreach (var outcome in _outcomes.Value.Where(outcome => outcome.Scale == 1.0))
         {
@@ -114,21 +116,22 @@ public class ItemCorpusTests
             };
             var known = outcome.Heroes.SelectMany(hero => hero.Cells.Where(cell => cell.IsIdentified).Select(cell => (hero.Slot, cell))).ToList();
             var reader = new TierReader();
-            var frames = known.Select(pair => (Tier: templates.Items[templates.IndexOf(pair.cell.ItemId!)!.Value].Tier, Frame: TierReader.Frame(image, place, pair.Slot, pair.cell.Cell))).ToList();
+            var frames = known.Select(pair => (Tier: templates.Items[templates.IndexOf(pair.cell.ItemId!)!.Value].Tier, Frame: TierReader.Read(image, place, pair.Slot, pair.cell.Cell))).ToList();
             for (var i = 0; i < frames.Count; i++)
                 reader.Add(frames[i].Tier, frames[i].Frame, known[i].Slot, known[i].cell.Cell);
             for (var i = 0; i < frames.Count; i++)
             {
-                cells++;
+                cellsAt[outcome.Height] = cellsAt.GetValueOrDefault(outcome.Height) + 1;
                 if (reader.Classify(frames[i].Frame, known[i].Slot, known[i].cell.Cell) is not { } tier)
-                    unread++;
+                    unreadAt[outcome.Height] = unreadAt.GetValueOrDefault(outcome.Height) + 1;
                 else if (tier != frames[i].Tier)
                     wrong.Add($"{outcome.Name} {known[i].Slot}:{known[i].cell.Cell} {known[i].cell.ItemId} reads as tier {tier}, not {frames[i].Tier}");
             }
         }
         Assert.True(wrong.Count == 0, string.Join("\n", wrong));
-        Assert.True(cells > 500, $"only {cells} cells");
-        Assert.True(unread <= 0.05 * cells, $"{unread} of {cells} numerals read as no tier");
+        Assert.True(cellsAt[1440] > 500 && cellsAt[1080] > 500, $"only {cellsAt[1440]} cells at 1440p and {cellsAt[1080]} at 1080p");
+        Assert.True(unreadAt.GetValueOrDefault(1440) <= 0.05 * cellsAt[1440], $"{unreadAt.GetValueOrDefault(1440)} of {cellsAt[1440]} numerals read as no tier at 1440p");
+        Assert.True(unreadAt.GetValueOrDefault(1080) <= 0.25 * cellsAt[1080], $"{unreadAt.GetValueOrDefault(1080)} of {cellsAt[1080]} numerals read as no tier at 1080p");
     }
 
     /// <summary>

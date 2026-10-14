@@ -18,6 +18,9 @@ internal sealed class TagMap
     /// <summary>A pixel this dark (no channel over this) is the numeral's stroke and counts neither for the tag nor against it.</summary>
     private const int _dark = 50;
 
+    private const double _flashSaturation = 0.07;
+    private const double _flashBrightness = 0.95;
+
     /// <summary>The image the map was made from.</summary>
     public RgbImage Source { get; }
 
@@ -78,12 +81,17 @@ internal sealed class TagMap
             return -1;
         double delta = max - min;
         var saturation = delta / max;
-        if (saturation < 0.30)
+        if (delta == 0)
             return -1;
         var hue = max == r ? 60 * ((g - b) / delta % 6) : max == g ? 60 * ((b - r) / delta + 2) : 60 * ((r - g) / delta + 4);
         if (hue < 0)
             hue += 360;
         var brightness = max / 255.0;
+        // A freshly bought item's tag flashes: spirit's purple is blown out to a pale lilac (255, 231, 255), which only its hue is left of.
+        if (saturation is >= _flashSaturation and < 0.30 && brightness >= _flashBrightness && hue is >= 280 and < 330)
+            return (sbyte)ShopCategory.Spirit;
+        if (saturation < 0.30)
+            return -1;
         return hue switch
         {
             >= 22 and < 48 when saturation >= 0.65 && brightness >= 0.30 => (sbyte)ShopCategory.Weapon,
