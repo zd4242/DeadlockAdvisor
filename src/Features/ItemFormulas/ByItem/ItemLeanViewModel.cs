@@ -126,7 +126,7 @@ public sealed class ItemLeanViewModel : ViewModelBase
         if (choice == LeanChoice.Auto)
         {
             if (store.ClearItemLean(itemId))
-                Changed(itemId);
+                Saved(itemId);
             return;
         }
         if (Reason.Trim().Length == 0)
@@ -136,7 +136,7 @@ public sealed class ItemLeanViewModel : ViewModelBase
         }
         var lean = choice switch { LeanChoice.Bullet => 1.0, LeanChoice.Spirit => -1.0, _ => 0.0 };
         if (store.SetItemLean(itemId, lean, Reason))
-            Changed(itemId);
+            Saved(itemId);
     }
 
     /// <summary>Edit the reason of a lean fixed by hand; a reason typed before choosing waits for the choice.</summary>
@@ -150,7 +150,7 @@ public sealed class ItemLeanViewModel : ViewModelBase
             _data.MarkEdited(DataFiles.ItemLeanOverrides);
     }
 
-    private void Changed(string itemId)
+    private void Saved(string itemId)
     {
         _data.MarkEdited(DataFiles.ItemLeanOverrides);
         _changed(itemId);
