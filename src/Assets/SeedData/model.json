@@ -1,7 +1,11 @@
 {
   "format": 1,
-  "published": "2026-10-09",
+  "published": "2026-10-14",
   "notes": [
+    {
+      "published": "2026-10-14",
+      "text": "Rat King, Solomon and Baba are rated; Warden, Venator, Apollo and Calico adjusted. Deadman Danny added, ratings still to come. Item stats refreshed."
+    },
     {
       "published": "2026-10-09",
       "text": "New hero: Solomon. Its ratings are still to come, so recommendations leave it out until then."
@@ -25,13 +29,16 @@
   ],
   "files": {
     "categories.csv": "5abd1c4a81c22c72c77d5e640d2d2f2299d4293651b7fca3807219a311f12431",
-    "hero_category_scores.csv": "2b08cd6588b3c5f1e09ec300679ca43e0a0499e6a432e42ebe88e511c3be4eb1",
+    "hero_category_scores.csv": "1f1b7760112dd77525aad985658e18920ce85653d8650c5d9670575007bf238e",
     "item_formula_coefficients.csv": "63e7dfa551c3bcf39a03dcfe4f94dc0414ea65ee3a30f4d58d31a8ecbd94894b",
     "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
     "stat_rules.csv": "d523b5c5ed362025859d0f82949aa96ca06855cc7498119b91517046ba65342b",
-    "heroes.csv": "3af214c5c4f68dff795b5281c754eb74de244c37a0d7026a259dbd187b9e865a",
+    "heroes.csv": "cee898c681fa77bcf332bcf7e8a0085be9efb183894f3315dfa86c828510974b",
     "items.csv": "3e950d20b89efbc1a8ec2f2eec17219d9cf03dcf272d840c2b0b1b4c7b070f0f",
-    "item_stats.csv": "14046dc5e5a2fa133393d36750df8ee36b6edb2abcb912765116ad45ca15a2fe",
-    "item_tooltips.json": "d5a870c7665019a69b959878ea1785c15380c686bfeac6854652ed212adbb88c"
+    "item_stats.csv": "133c7ad2d4f30ae50b93601bada0deae7effcf8ebfe037e82ad0753e034bb6bc",
+    "item_effects.csv": "6dc82cfbc427b5d9fd3352fb2da11685b9f91a6b805fdcdac5ab3523c8f2f82f",
+    "item_tooltips.json": "d5a870c7665019a69b959878ea1785c15380c686bfeac6854652ed212adbb88c",
+    "stat_leans.csv": "f97659143bdfb0ef892ae34d0fda457147b1cc9009fec57bf3e04e7cc5390c42",
+    "item_lean_overrides.csv": "6e9dc5e6f3631e741f7f5451182d55b54d5407ac6d20714a4e3ea3d002fe7fa7"
   }
 }
