@@ -65,7 +65,7 @@ once; separate git worktrees avoid that.
 | B | WP03 (after WP01), WP04 (after WP01), WP07, WP08, WP16, WP25 and WP26 (after WP24) |
 | C | WP09 (after WP08), WP10, WP11 (after WP08), WP12 (after WP03), WP21 (after WP20), WP27 (after WP25 and WP26) |
 | D | WP13 (after WP09 and WP10), WP14 (after WP13), WP18 (after WP16), WP19, WP28 (after WP27), then WP29 (after WP28) |
-| E | WP17 (after WP13), WP30 (after WP29, optional), WP31 (after WP29), WP32 (after WP29 and WP31), then WP22's final sweep |
+| E | WP17 (after WP13), WP30 (after WP29, optional), WP31 (after WP29), WP33 (after WP31), WP32 (after WP29, WP31 and, best, WP33), then WP22's final sweep |
 
 Hot files, in the order their packages should run:
 
@@ -120,8 +120,9 @@ Hot files, in the order their packages should run:
 | WP30 | [wp30](wp30-build-extras.md) | Build extras: real HP and durability, enemy counters, sell hints (optional) | M | WP29 | E |
 | WP31 | [wp31](wp31-read-activity-cues.md) | Read activity cues: a status chip, change marks on the roster and list, for Tab reads and Detect | L | WP27 (done), after WP29 | E |
 | WP32 | [wp32](wp32-notable-item-alerts.md) | Notable item alerts: duplicate ally items and dangerous enemy items, by severity, marked on the match bar | L | WP28 (done), after WP29 and WP31 | E |
+| WP33 | [wp33](wp33-items-as-pictures.md) | Items as pictures: a hero's held items shown as icons in the game's layout, not a list of names (`ItemChip` for WP30, WP31, WP32) | M | WP27 (done), best before WP32 | E |
 
-WP13, WP18, WP21, WP26, WP31 and WP32 list stages: stop at a stage boundary with a green commit if the session runs short. WP24 (done) decided **Go**: WP25 to WP30 go ahead with the corrections in its Findings (capture the top 52%, category from the tier corner, identity about 75% confident and never wrong on soft video frames, so native captures are WP26's first test).
+WP13, WP18, WP21, WP26, WP31, WP32 and WP33 list stages: stop at a stage boundary with a green commit if the session runs short. WP24 (done) decided **Go**: WP25 to WP30 go ahead with the corrections in its Findings (capture the top 52%, category from the tier corner, identity about 75% confident and never wrong on soft video frames, so native captures are WP26's first test).
 
 ## Where this came from
 

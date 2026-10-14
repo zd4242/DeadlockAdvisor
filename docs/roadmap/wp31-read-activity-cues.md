@@ -43,7 +43,7 @@ Stages; stop at a stage boundary with a green commit if the session runs short.
   (`DifferentMatch`: "The heroes on the board aren't this match's. Detect again to switch."; `NotFound`: "No scoreboard found. Hold the key until the board is up."; `NoArt`; `CaptureFailed`).
   `Off`, `Busy`, `Released`, `ModalOpen` and `NoMatch` stay quiet (they are the player's own doing or nothing to say).
 - `DetectAction` reports `Reading` from the start (so a fast read has a cue; the late modal stays for a long search) and `Updated` or `Skipped` at the end, with the same vocabulary as its `DetectOutcome`.
-- `ReadReport`: when; the source; per hero (by slot) the net worth before and after, the items added and removed (names, from `DataStore.Items`), and the heroes whose bars moved by more than a few points;
+- `ReadReport`: when; the source; per hero (by slot) the net worth before and after, the items added and removed (ids, with names from `DataStore.Items`; drawn as `ItemChip`s once [WP33](wp33-items-as-pictures.md) has landed, as names until then), and the heroes whose bars moved by more than a few points;
   the number of results rows whose rank changed (Stage 3). Built where the data is already compared (`HeroBuild.Apply` already knows whether a hero's build changed; extend it to say what).
 - **A status chip on the match bar** beside Detect: a small dot or ring while `Reading` (a slow indeterminate pulse, not a spinner that suggests a long wait), a tick with the time when `Updated`
   ("Read 2:41 · 3 items, net worth"), a plain muted line for `Skipped`. The text ages ("2 min ago", amber when `IsOld`, the same rule as the bars). Clicking it opens a **flyout: what the last read changed**,
@@ -55,7 +55,7 @@ Stages; stop at a stage boundary with a green commit if the session runs short.
 - `RosterSlotViewModel` keeps what the last read changed for that hero (`ReadChange`: net worth delta, items added and removed, a monotonically increasing `ReadSerial`). `Fill` computes it from the previous values
   instead of overwriting them blind.
 - On the match bar: the net worth number briefly highlights and shows its delta ("+1,240") for about two seconds; the mini-bars ease to their new lengths; a hero with new items gets a one-off glint on the
-  bars and the new item names at the top of their tooltip ("New: Mystic Burst, Improved Spirit").
+  bars and the new item names at the top of their tooltip ("New: Mystic Burst, Improved Spirit"; with WP33 the new items show as icons in the roster's item strip, marked new).
 - **Unseen changes stay marked.** A two-second flash is easy to miss from the other monitor, so a hero changed by a read carries a small dot that stays until the player has seen it: the window is
   activated, or the pointer rests on the match bar. The flash gets attention; the dot answers "did anything change while I was away?".
 - Motion rule: one short pulse style in `src/Theme`, durations at most 600 ms for an ease and 2 s for a highlight, never looping except the reading ring. Honour a setting (below) and, when the platform

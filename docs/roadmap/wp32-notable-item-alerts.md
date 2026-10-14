@@ -60,11 +60,11 @@ Stages; stop at a stage boundary with a green commit.
 
 **Stage 2: the marks and the report.**
 - A **badge on the hero's tile** for each alert that hero holds an item in: an icon whose shape and a short word carry the severity (never colour alone), tooltip "Haze holds Refresher: can reset an ultimate. Seen 2 min ago.
-  Counters: Debuff Remover." Two allies sharing an effect each get a badge naming the other. A badge stays while the item is held and goes when a read shows it gone; it names what it was read from.
+  Counters: Debuff Remover.", with the item's icon beside its name (`ItemChip`, [WP33](wp33-items-as-pictures.md): run that first, or fall back to names and swap them in then) Two allies sharing an effect each get a badge naming the other. A badge stays while the item is held and goes when a read shows it gone; it names what it was read from.
 - **One toast per read, not per item.** A read that brings in several alerts raises one toast headed by the most severe ("Critical: Haze holds Refresher") with "and 2 more" opening the list; Minor alerts never
   toast, they only mark. A Critical toast stays until dismissed or 20 s; Major uses the existing 8 s. The chime and window flash follow *Sound on detect* and *Window flash* exactly as `TellOverlap` does today, and only
   for Critical (today they sound for every overlap); a Major is silent. No other sound is added.
-- **A "Notable items" list** (in WP31's flyout when it has landed, else a small flyout on the match bar): current alerts by severity, each with its holders, its age and a dismiss ("Got it" quiets that key for this match,
+- **A "Notable items" list** (in WP31's flyout when it has landed, else a small flyout on the match bar): current alerts by severity, each with the item as an icon and name (`ItemChip`), its holders, its age and a dismiss ("Got it" quiets that key for this match,
   kept in the saved match so a restart doesn't resurrect it). The count shows on the chip or the match bar.
 - Accessible names and a polite live-region announcement for a new Critical; `AccessibilityTests` for the badges and the list.
 

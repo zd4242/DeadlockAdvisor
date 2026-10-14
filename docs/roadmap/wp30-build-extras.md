@@ -16,7 +16,8 @@ Spend what the build reading knows on the next three things, one at a time, each
    (`MaxHpSpread`). The estimate stays as the baseline: shift = (hero's real health from items) − (their typical items' health).
 2. **Enemies who already hold a counter.** An enemy with a Debuff Remover, a Metal Skin or a stack of slow resist makes your debuff items worth less against them. Derive "holds a counter" from the
    same effects data as WP28 (a resist or removal effect matching a debuff the item applies), as a per-enemy factor on that item's `against` lines, like focus.
-3. **Sell and swap hints.** Items you hold that now score at or below 0 for this match, shown as "consider selling" beside the list; presentation only.
+3. **Sell and swap hints.** Items you hold that now score at or below 0 for this match, shown as "consider selling" beside the list; presentation only. Show them as the items (an `ItemChip`: icon, name, tier;
+   [WP33](wp33-items-as-pictures.md)), not a line of names, so the player recognises them at a glance.
 
 ## Why / premise check
 
