@@ -28,7 +28,7 @@ abrams,countered_by_counterspell,75
 abrams,countered_by_dispel_magic,5
 abrams,countered_by_divine_barrier,0
 abrams,consistent_heavy_spirit_hits,27
-abrams,large_single_hits,0
+abrams,large_single_hits,19
 apollo,deals_bullet_damage_general,10
 apollo,deals_bullet_damage_burst,0
 apollo,deals_spirit_damage_general,84
@@ -58,7 +58,7 @@ apollo,countered_by_counterspell,60
 apollo,countered_by_dispel_magic,5
 apollo,countered_by_divine_barrier,0
 apollo,consistent_heavy_spirit_hits,59
-apollo,large_single_hits,0
+apollo,large_single_hits,35
 bebop,deals_bullet_damage_general,27
 bebop,deals_bullet_damage_burst,15
 bebop,deals_spirit_damage_general,53
@@ -88,7 +88,7 @@ bebop,countered_by_counterspell,50
 bebop,countered_by_dispel_magic,60
 bebop,countered_by_divine_barrier,65
 bebop,consistent_heavy_spirit_hits,40
-bebop,large_single_hits,0
+bebop,large_single_hits,100
 billy,deals_bullet_damage_general,21
 billy,deals_bullet_damage_burst,35
 billy,deals_spirit_damage_general,46
@@ -118,7 +118,7 @@ billy,countered_by_counterspell,25
 billy,countered_by_dispel_magic,35
 billy,countered_by_divine_barrier,25
 billy,consistent_heavy_spirit_hits,39
-billy,large_single_hits,0
+billy,large_single_hits,5
 calico,deals_bullet_damage_general,14
 calico,deals_bullet_damage_burst,10
 calico,deals_spirit_damage_general,65
@@ -148,7 +148,7 @@ calico,countered_by_counterspell,25
 calico,countered_by_dispel_magic,15
 calico,countered_by_divine_barrier,0
 calico,consistent_heavy_spirit_hits,22
-calico,large_single_hits,0
+calico,large_single_hits,19
 celeste,deals_bullet_damage_general,25
 celeste,deals_bullet_damage_burst,0
 celeste,deals_spirit_damage_general,81
@@ -178,7 +178,7 @@ celeste,countered_by_counterspell,15
 celeste,countered_by_dispel_magic,25
 celeste,countered_by_divine_barrier,15
 celeste,consistent_heavy_spirit_hits,100
-celeste,large_single_hits,0
+celeste,large_single_hits,19
 drifter,deals_bullet_damage_general,54
 drifter,deals_bullet_damage_burst,15
 drifter,deals_spirit_damage_general,37
@@ -208,7 +208,7 @@ drifter,countered_by_counterspell,40
 drifter,countered_by_dispel_magic,40
 drifter,countered_by_divine_barrier,60
 drifter,consistent_heavy_spirit_hits,43
-drifter,large_single_hits,0
+drifter,large_single_hits,12
 dynamo,deals_bullet_damage_general,23
 dynamo,deals_bullet_damage_burst,0
 dynamo,deals_spirit_damage_general,55
@@ -238,7 +238,7 @@ dynamo,countered_by_counterspell,15
 dynamo,countered_by_dispel_magic,5
 dynamo,countered_by_divine_barrier,0
 dynamo,consistent_heavy_spirit_hits,14
-dynamo,large_single_hits,0
+dynamo,large_single_hits,65
 graves,deals_bullet_damage_general,19
 graves,deals_bullet_damage_burst,5
 graves,deals_spirit_damage_general,78
@@ -268,7 +268,7 @@ graves,countered_by_counterspell,0
 graves,countered_by_dispel_magic,15
 graves,countered_by_divine_barrier,0
 graves,consistent_heavy_spirit_hits,11
-graves,large_single_hits,0
+graves,large_single_hits,35
 grey_talon,deals_bullet_damage_general,43
 grey_talon,deals_bullet_damage_burst,10
 grey_talon,deals_spirit_damage_general,64
@@ -298,7 +298,7 @@ grey_talon,countered_by_counterspell,20
 grey_talon,countered_by_dispel_magic,5
 grey_talon,countered_by_divine_barrier,0
 grey_talon,consistent_heavy_spirit_hits,24
-grey_talon,large_single_hits,0
+grey_talon,large_single_hits,54
 haze,deals_bullet_damage_general,74
 haze,deals_bullet_damage_burst,90
 haze,deals_spirit_damage_general,27
@@ -328,7 +328,7 @@ haze,countered_by_counterspell,0
 haze,countered_by_dispel_magic,15
 haze,countered_by_divine_barrier,25
 haze,consistent_heavy_spirit_hits,24
-haze,large_single_hits,0
+haze,large_single_hits,2
 holliday,deals_bullet_damage_general,22
 holliday,deals_bullet_damage_burst,35
 holliday,deals_spirit_damage_general,75
@@ -358,7 +358,7 @@ holliday,countered_by_counterspell,30
 holliday,countered_by_dispel_magic,25
 holliday,countered_by_divine_barrier,15
 holliday,consistent_heavy_spirit_hits,47
-holliday,large_single_hits,0
+holliday,large_single_hits,23
 infernus,deals_bullet_damage_general,24
 infernus,deals_bullet_damage_burst,0
 infernus,deals_spirit_damage_general,73
@@ -388,7 +388,7 @@ infernus,countered_by_counterspell,15
 infernus,countered_by_dispel_magic,95
 infernus,countered_by_divine_barrier,80
 infernus,consistent_heavy_spirit_hits,70
-infernus,large_single_hits,0
+infernus,large_single_hits,7
 ivy,deals_bullet_damage_general,30
 ivy,deals_bullet_damage_burst,5
 ivy,deals_spirit_damage_general,55
@@ -418,7 +418,7 @@ ivy,countered_by_counterspell,30
 ivy,countered_by_dispel_magic,5
 ivy,countered_by_divine_barrier,0
 ivy,consistent_heavy_spirit_hits,16
-ivy,large_single_hits,0
+ivy,large_single_hits,48
 kelvin,deals_bullet_damage_general,11
 kelvin,deals_bullet_damage_burst,0
 kelvin,deals_spirit_damage_general,78
@@ -448,7 +448,7 @@ kelvin,countered_by_counterspell,0
 kelvin,countered_by_dispel_magic,5
 kelvin,countered_by_divine_barrier,0
 kelvin,consistent_heavy_spirit_hits,16
-kelvin,large_single_hits,0
+kelvin,large_single_hits,45
 lady_geist,deals_bullet_damage_general,47
 lady_geist,deals_bullet_damage_burst,0
 lady_geist,deals_spirit_damage_general,59
@@ -478,7 +478,7 @@ lady_geist,countered_by_counterspell,50
 lady_geist,countered_by_dispel_magic,15
 lady_geist,countered_by_divine_barrier,0
 lady_geist,consistent_heavy_spirit_hits,60
-lady_geist,large_single_hits,0
+lady_geist,large_single_hits,31
 lash,deals_bullet_damage_general,23
 lash,deals_bullet_damage_burst,0
 lash,deals_spirit_damage_general,76
@@ -508,7 +508,7 @@ lash,countered_by_counterspell,90
 lash,countered_by_dispel_magic,5
 lash,countered_by_divine_barrier,0
 lash,consistent_heavy_spirit_hits,57
-lash,large_single_hits,0
+lash,large_single_hits,76
 mcginnis,deals_bullet_damage_general,20
 mcginnis,deals_bullet_damage_burst,10
 mcginnis,deals_spirit_damage_general,80
@@ -538,7 +538,7 @@ mcginnis,countered_by_counterspell,5
 mcginnis,countered_by_dispel_magic,0
 mcginnis,countered_by_divine_barrier,0
 mcginnis,consistent_heavy_spirit_hits,6
-mcginnis,large_single_hits,0
+mcginnis,large_single_hits,5
 mina,deals_bullet_damage_general,12
 mina,deals_bullet_damage_burst,0
 mina,deals_spirit_damage_general,88
@@ -568,7 +568,7 @@ mina,countered_by_counterspell,10
 mina,countered_by_dispel_magic,5
 mina,countered_by_divine_barrier,0
 mina,consistent_heavy_spirit_hits,51
-mina,large_single_hits,0
+mina,large_single_hits,27
 mirage,deals_bullet_damage_general,29
 mirage,deals_bullet_damage_burst,0
 mirage,deals_spirit_damage_general,65
@@ -598,7 +598,7 @@ mirage,countered_by_counterspell,5
 mirage,countered_by_dispel_magic,50
 mirage,countered_by_divine_barrier,30
 mirage,consistent_heavy_spirit_hits,26
-mirage,large_single_hits,0
+mirage,large_single_hits,100
 mo_and_krill,deals_bullet_damage_general,10
 mo_and_krill,deals_bullet_damage_burst,0
 mo_and_krill,deals_spirit_damage_general,85
@@ -628,7 +628,7 @@ mo_and_krill,countered_by_counterspell,15
 mo_and_krill,countered_by_dispel_magic,15
 mo_and_krill,countered_by_divine_barrier,0
 mo_and_krill,consistent_heavy_spirit_hits,37
-mo_and_krill,large_single_hits,0
+mo_and_krill,large_single_hits,9
 paige,deals_bullet_damage_general,29
 paige,deals_bullet_damage_burst,0
 paige,deals_spirit_damage_general,58
@@ -658,7 +658,7 @@ paige,countered_by_counterspell,35
 paige,countered_by_dispel_magic,20
 paige,countered_by_divine_barrier,10
 paige,consistent_heavy_spirit_hits,28
-paige,large_single_hits,0
+paige,large_single_hits,35
 paradox,deals_bullet_damage_general,36
 paradox,deals_bullet_damage_burst,20
 paradox,deals_spirit_damage_general,67
@@ -688,7 +688,7 @@ paradox,countered_by_counterspell,10
 paradox,countered_by_dispel_magic,10
 paradox,countered_by_divine_barrier,0
 paradox,consistent_heavy_spirit_hits,33
-paradox,large_single_hits,0
+paradox,large_single_hits,76
 pocket,deals_bullet_damage_general,15
 pocket,deals_bullet_damage_burst,10
 pocket,deals_spirit_damage_general,93
@@ -718,7 +718,7 @@ pocket,countered_by_counterspell,80
 pocket,countered_by_dispel_magic,5
 pocket,countered_by_divine_barrier,100
 pocket,consistent_heavy_spirit_hits,52
-pocket,large_single_hits,0
+pocket,large_single_hits,32
 rem,deals_bullet_damage_general,16
 rem,deals_bullet_damage_burst,0
 rem,deals_spirit_damage_general,55
@@ -748,7 +748,7 @@ rem,countered_by_counterspell,65
 rem,countered_by_dispel_magic,5
 rem,countered_by_divine_barrier,0
 rem,consistent_heavy_spirit_hits,16
-rem,large_single_hits,0
+rem,large_single_hits,45
 seven,deals_bullet_damage_general,20
 seven,deals_bullet_damage_burst,0
 seven,deals_spirit_damage_general,83
@@ -778,7 +778,7 @@ seven,countered_by_counterspell,30
 seven,countered_by_dispel_magic,35
 seven,countered_by_divine_barrier,40
 seven,consistent_heavy_spirit_hits,36
-seven,large_single_hits,0
+seven,large_single_hits,7
 shiv,deals_bullet_damage_general,18
 shiv,deals_bullet_damage_burst,0
 shiv,deals_spirit_damage_general,72
@@ -808,7 +808,7 @@ shiv,countered_by_counterspell,10
 shiv,countered_by_dispel_magic,60
 shiv,countered_by_divine_barrier,40
 shiv,consistent_heavy_spirit_hits,53
-shiv,large_single_hits,0
+shiv,large_single_hits,35
 silver,deals_bullet_damage_general,51
 silver,deals_bullet_damage_burst,65
 silver,deals_spirit_damage_general,22
@@ -838,7 +838,7 @@ silver,countered_by_counterspell,10
 silver,countered_by_dispel_magic,20
 silver,countered_by_divine_barrier,25
 silver,consistent_heavy_spirit_hits,50
-silver,large_single_hits,0
+silver,large_single_hits,12
 doorman,deals_bullet_damage_general,24
 doorman,deals_bullet_damage_burst,0
 doorman,deals_spirit_damage_general,70
@@ -868,7 +868,7 @@ doorman,countered_by_counterspell,30
 doorman,countered_by_dispel_magic,15
 doorman,countered_by_divine_barrier,0
 doorman,consistent_heavy_spirit_hits,33
-doorman,large_single_hits,0
+doorman,large_single_hits,23
 sinclair,deals_bullet_damage_general,19
 sinclair,deals_bullet_damage_burst,0
 sinclair,deals_spirit_damage_general,71
@@ -898,7 +898,7 @@ sinclair,countered_by_counterspell,45
 sinclair,countered_by_dispel_magic,0
 sinclair,countered_by_divine_barrier,0
 sinclair,consistent_heavy_spirit_hits,27
-sinclair,large_single_hits,0
+sinclair,large_single_hits,60
 venator,deals_bullet_damage_general,94
 venator,deals_bullet_damage_burst,80
 venator,deals_spirit_damage_general,4
@@ -928,7 +928,7 @@ venator,countered_by_counterspell,10
 venator,countered_by_dispel_magic,20
 venator,countered_by_divine_barrier,0
 venator,consistent_heavy_spirit_hits,0
-venator,large_single_hits,0
+venator,large_single_hits,12
 victor,deals_bullet_damage_general,23
 victor,deals_bullet_damage_burst,20
 victor,deals_spirit_damage_general,79
@@ -958,7 +958,7 @@ victor,countered_by_counterspell,10
 victor,countered_by_dispel_magic,0
 victor,countered_by_divine_barrier,0
 victor,consistent_heavy_spirit_hits,17
-victor,large_single_hits,0
+victor,large_single_hits,65
 vindicta,deals_bullet_damage_general,47
 vindicta,deals_bullet_damage_burst,40
 vindicta,deals_spirit_damage_general,61
@@ -988,7 +988,7 @@ vindicta,countered_by_counterspell,10
 vindicta,countered_by_dispel_magic,35
 vindicta,countered_by_divine_barrier,35
 vindicta,consistent_heavy_spirit_hits,32
-vindicta,large_single_hits,0
+vindicta,large_single_hits,35
 viscous,deals_bullet_damage_general,16
 viscous,deals_bullet_damage_burst,25
 viscous,deals_spirit_damage_general,81
@@ -1018,7 +1018,7 @@ viscous,countered_by_counterspell,10
 viscous,countered_by_dispel_magic,5
 viscous,countered_by_divine_barrier,0
 viscous,consistent_heavy_spirit_hits,36
-viscous,large_single_hits,0
+viscous,large_single_hits,27
 vyper,deals_bullet_damage_general,62
 vyper,deals_bullet_damage_burst,80
 vyper,deals_spirit_damage_general,38
@@ -1048,7 +1048,7 @@ vyper,countered_by_counterspell,5
 vyper,countered_by_dispel_magic,25
 vyper,countered_by_divine_barrier,0
 vyper,consistent_heavy_spirit_hits,42
-vyper,large_single_hits,0
+vyper,large_single_hits,54
 warden,deals_bullet_damage_general,49
 warden,deals_bullet_damage_burst,45
 warden,deals_spirit_damage_general,54
@@ -1078,7 +1078,7 @@ warden,countered_by_counterspell,30
 warden,countered_by_dispel_magic,35
 warden,countered_by_divine_barrier,20
 warden,consistent_heavy_spirit_hits,96
-warden,large_single_hits,0
+warden,large_single_hits,12
 wraith,deals_bullet_damage_general,41
 wraith,deals_bullet_damage_burst,35
 wraith,deals_spirit_damage_general,61
@@ -1108,7 +1108,7 @@ wraith,countered_by_counterspell,25
 wraith,countered_by_dispel_magic,5
 wraith,countered_by_divine_barrier,0
 wraith,consistent_heavy_spirit_hits,40
-wraith,large_single_hits,0
+wraith,large_single_hits,12
 yamato,deals_bullet_damage_general,17
 yamato,deals_bullet_damage_burst,5
 yamato,deals_spirit_damage_general,69
@@ -1138,7 +1138,7 @@ yamato,countered_by_counterspell,70
 yamato,countered_by_dispel_magic,45
 yamato,countered_by_divine_barrier,0
 yamato,consistent_heavy_spirit_hits,59
-yamato,large_single_hits,0
+yamato,large_single_hits,100
 rat_king,deals_bullet_damage_general,70
 rat_king,deals_bullet_damage_burst,45
 rat_king,deals_spirit_damage_general,25
@@ -1168,7 +1168,7 @@ rat_king,countered_by_counterspell,10
 rat_king,countered_by_dispel_magic,30
 rat_king,countered_by_divine_barrier,5
 rat_king,consistent_heavy_spirit_hits,0
-rat_king,large_single_hits,0
+rat_king,large_single_hits,27
 baba,deals_bullet_damage_general,0
 baba,deals_bullet_damage_burst,0
 baba,deals_spirit_damage_general,0
@@ -1198,7 +1198,7 @@ baba,countered_by_counterspell,0
 baba,countered_by_dispel_magic,0
 baba,countered_by_divine_barrier,0
 baba,consistent_heavy_spirit_hits,21
-baba,large_single_hits,0
+baba,large_single_hits,5
 solomon,deals_bullet_damage_general,30
 solomon,deals_bullet_damage_burst,
 solomon,deals_spirit_damage_general,65
@@ -1228,7 +1228,7 @@ solomon,countered_by_counterspell,
 solomon,countered_by_dispel_magic,
 solomon,countered_by_divine_barrier,
 solomon,consistent_heavy_spirit_hits,
-solomon,large_single_hits,
+solomon,large_single_hits,45
 deadman_danny,deals_bullet_damage_general,
 deadman_danny,deals_bullet_damage_burst,
 deadman_danny,deals_spirit_damage_general,
@@ -1258,4 +1258,4 @@ deadman_danny,countered_by_counterspell,
 deadman_danny,countered_by_dispel_magic,
 deadman_danny,countered_by_divine_barrier,
 deadman_danny,consistent_heavy_spirit_hits,
-deadman_danny,large_single_hits,
+deadman_danny,large_single_hits,35
