@@ -4,6 +4,10 @@
   "notes": [
     {
       "published": "2026-10-14",
+      "text": "Large Single Hits ratings adjusted for Grey Talon, Lash, Mirage, Paradox and Yamato."
+    },
+    {
+      "published": "2026-10-14",
       "text": "Every hero is now rated on Large Single Hits, so Mystic Reverb favours heroes with big individual spirit hits and Spellbreaker counts the enemies who land them."
     },
     {
@@ -33,7 +37,7 @@
   ],
   "files": {
     "categories.csv": "5abd1c4a81c22c72c77d5e640d2d2f2299d4293651b7fca3807219a311f12431",
-    "hero_category_scores.csv": "8f1f77472bd05d72048270662e126047b7bf06c8ee1a6c171e5fbcbd0ff7964d",
+    "hero_category_scores.csv": "d083629402466ecc9b2469fdcd399552a4333378e55b9d4982a5f4de81c72881",
     "item_formula_coefficients.csv": "63e7dfa551c3bcf39a03dcfe4f94dc0414ea65ee3a30f4d58d31a8ecbd94894b",
     "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
     "stat_rules.csv": "d523b5c5ed362025859d0f82949aa96ca06855cc7498119b91517046ba65342b",

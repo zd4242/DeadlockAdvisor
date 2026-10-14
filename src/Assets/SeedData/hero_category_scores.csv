@@ -298,7 +298,7 @@ grey_talon,countered_by_counterspell,20
 grey_talon,countered_by_dispel_magic,5
 grey_talon,countered_by_divine_barrier,0
 grey_talon,consistent_heavy_spirit_hits,24
-grey_talon,large_single_hits,54
+grey_talon,large_single_hits,59
 haze,deals_bullet_damage_general,74
 haze,deals_bullet_damage_burst,90
 haze,deals_spirit_damage_general,27
@@ -508,7 +508,7 @@ lash,countered_by_counterspell,90
 lash,countered_by_dispel_magic,5
 lash,countered_by_divine_barrier,0
 lash,consistent_heavy_spirit_hits,57
-lash,large_single_hits,76
+lash,large_single_hits,91
 mcginnis,deals_bullet_damage_general,20
 mcginnis,deals_bullet_damage_burst,10
 mcginnis,deals_spirit_damage_general,80
@@ -598,7 +598,7 @@ mirage,countered_by_counterspell,5
 mirage,countered_by_dispel_magic,50
 mirage,countered_by_divine_barrier,30
 mirage,consistent_heavy_spirit_hits,26
-mirage,large_single_hits,100
+mirage,large_single_hits,70
 mo_and_krill,deals_bullet_damage_general,10
 mo_and_krill,deals_bullet_damage_burst,0
 mo_and_krill,deals_spirit_damage_general,85
@@ -688,7 +688,7 @@ paradox,countered_by_counterspell,10
 paradox,countered_by_dispel_magic,10
 paradox,countered_by_divine_barrier,0
 paradox,consistent_heavy_spirit_hits,33
-paradox,large_single_hits,76
+paradox,large_single_hits,91
 pocket,deals_bullet_damage_general,15
 pocket,deals_bullet_damage_burst,10
 pocket,deals_spirit_damage_general,93
@@ -1138,7 +1138,7 @@ yamato,countered_by_counterspell,70
 yamato,countered_by_dispel_magic,45
 yamato,countered_by_divine_barrier,0
 yamato,consistent_heavy_spirit_hits,59
-yamato,large_single_hits,100
+yamato,large_single_hits,95
 rat_king,deals_bullet_damage_general,70
 rat_king,deals_bullet_damage_burst,45
 rat_king,deals_spirit_damage_general,25
