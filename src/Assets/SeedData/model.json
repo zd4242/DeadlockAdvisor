@@ -1,7 +1,11 @@
 {
   "format": 1,
-  "published": "2026-10-14",
+  "published": "2026-10-17",
   "notes": [
+    {
+      "published": "2026-10-17",
+      "text": "New hero: Violet. Its ratings are still to come, so recommendations leave it out until then."
+    },
     {
       "published": "2026-10-14",
       "text": "Large Single Hits ratings adjusted for Grey Talon, Lash, Mirage, Paradox and Yamato."
@@ -37,11 +41,11 @@
   ],
   "files": {
     "categories.csv": "5abd1c4a81c22c72c77d5e640d2d2f2299d4293651b7fca3807219a311f12431",
-    "hero_category_scores.csv": "d083629402466ecc9b2469fdcd399552a4333378e55b9d4982a5f4de81c72881",
+    "hero_category_scores.csv": "407f579c8246ea023a247c5cfe827dc2c48e58dfc1d30445bbfe8d688dcc05d2",
     "item_formula_coefficients.csv": "63e7dfa551c3bcf39a03dcfe4f94dc0414ea65ee3a30f4d58d31a8ecbd94894b",
     "trait_weights.csv": "aff236a07db04003cc42d021e1ffada876591bfd884e8d91abca0295f6664c04",
     "stat_rules.csv": "d523b5c5ed362025859d0f82949aa96ca06855cc7498119b91517046ba65342b",
-    "heroes.csv": "cee898c681fa77bcf332bcf7e8a0085be9efb183894f3315dfa86c828510974b",
+    "heroes.csv": "9f277608e13b7a8a897fb0f9693092ad23b210a78da0e4220993d17197dd153b",
     "items.csv": "3e950d20b89efbc1a8ec2f2eec17219d9cf03dcf272d840c2b0b1b4c7b070f0f",
     "item_stats.csv": "133c7ad2d4f30ae50b93601bada0deae7effcf8ebfe037e82ad0753e034bb6bc",
     "item_effects.csv": "6dc82cfbc427b5d9fd3352fb2da11685b9f91a6b805fdcdac5ab3523c8f2f82f",
